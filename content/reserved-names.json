@@ -1,0 +1,51 @@
+{
+  "_comment": "รายชื่อที่สงวนไว้ ห้ามผู้เรียนใช้ตั้งชื่อโดเมน — นำเข้าโครงจาก CEO_Domain_Quest_Feature_Spec.md หัวข้อ 11.13 (บรรทัด 4312-4322) เมื่อ 29 ก.ย. 2569",
+  "_relation": "คนละไฟล์กับ content/taken-domains.json ซึ่งเก็บชื่อที่ 'ถูกจดไปแล้ว' ในโลกสมมติของเกม ไฟล์นี้เก็บชื่อที่ 'ห้ามใช้' ด้วยเหตุผลทางกฎหมายหรือความเหมาะสม และแต่ละกลุ่มมีข้อความแจ้งคนละแบบ",
+  "_matchRules": "กลุ่ม brand และ reserved เทียบแบบ **ตรงทั้งคำเท่านั้น** เพราะชื่อสุจริตอย่าง bankhanomyai มีคำว่า bank อยู่ข้างใน ต้องไม่ถูกกัน · กลุ่ม inappropriate เทียบแบบ **มีอยู่ในชื่อ** ตามสเปก",
+  "_status": "กลุ่ม brand สเปกขอประมาณ 100 ชื่อ ตอนนี้ใส่ไว้ 24 ชื่อเป็นตัวตั้งต้นเฉพาะแบรนด์สากลที่ไม่มีข้อถกเถียง **ทีมเขียนเนื้อหาต้องเติมให้ครบและครูต้องตรวจก่อนใช้** · กลุ่ม inappropriate ตั้งใจเว้นว่างไว้ ให้ครูเป็นผู้เติมโดยตรง ไม่ควรให้ใครเติมแทน",
+
+  "groups": [
+    {
+      "id": "grp-brand",
+      "label": "แบรนด์ของคนอื่น",
+      "matchMode": "exact",
+      "message": "ชื่อนี้เป็นแบรนด์ของคนอื่น ถ้าเอาไปจดอาจผิดกฎหมาย ลองตั้งชื่อของเราเองนะ",
+      "needsTeacherReview": true,
+      "targetCount": 100,
+      "items": [
+        "coke", "cocacola", "pepsi", "sprite", "fanta",
+        "nike", "adidas", "puma", "converse", "vans",
+        "apple", "samsung", "iphone", "android", "huawei",
+        "netflix", "youtube", "tiktok", "facebook", "instagram",
+        "shopee", "lazada", "grab", "lineman"
+      ]
+    },
+    {
+      "id": "grp-exercise",
+      "label": "ชื่อที่ใช้ในแบบฝึกและข้อสอบ",
+      "matchMode": "exact",
+      "message": "ชื่อนี้ถูกจดไปแล้ว ลองชื่ออื่นนะ",
+      "needsTeacherReview": false,
+      "note": "ชื่อพวกนี้ปรากฏเป็นตัวอย่างในคำถามและบทเรียน ถ้าปล่อยให้ผู้เรียนจดได้ จะสับสนว่าเป็นของตัวเองหรือของตัวอย่าง",
+      "items": ["vec", "moe", "bangkokshop", "sodchuen", "kanomwan", "fastfix", "mycake", "mynoodle", "kanomthai", "kanombanyai"]
+    },
+    {
+      "id": "grp-reserved",
+      "label": "คำสงวนทางเทคนิค",
+      "matchMode": "exact",
+      "message": "ชื่อนี้สงวนไว้ ลองชื่ออื่นนะ",
+      "needsTeacherReview": false,
+      "note": "คำพวกนี้ระบบอินเทอร์เน็ตใช้เป็นชื่อเฉพาะอยู่แล้ว หรือทำให้ผู้ใช้เข้าใจผิดว่าเป็นเว็บทางการ",
+      "items": ["www", "mail", "ftp", "admin", "root", "gov", "police", "bank", "login", "secure"]
+    },
+    {
+      "id": "grp-inappropriate",
+      "label": "คำไม่เหมาะสม",
+      "matchMode": "contains",
+      "message": "ชื่อนี้ใช้ไม่ได้ ลองชื่ออื่นนะ",
+      "needsTeacherReview": true,
+      "note": "**ตั้งใจเว้นว่างไว้** ให้ครูเป็นผู้เติมรายการนี้เอง ไม่ควรให้ทีมเขียนเนื้อหาหรือผู้ช่วยเติมแทน · ระวังคำสั้นที่บังเอิญเป็นส่วนหนึ่งของคำสุภาพ เพราะกลุ่มนี้เทียบแบบมีอยู่ในชื่อ",
+      "items": []
+    }
+  ]
+}

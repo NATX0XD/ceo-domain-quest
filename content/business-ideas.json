@@ -1,0 +1,81 @@
+{
+  "_comment": "ไอเดียธุรกิจสำรองตามงานอดิเรก — นำเข้าจาก CEO_Domain_Quest_Feature_Spec.md หัวข้อ 11.11 (บรรทัด 4272-4285) เมื่อ 29 ก.ย. 2569 · ไฟล์นี้ปลอดภัยสำหรับฝั่งเบราว์เซอร์ ไม่มีเฉลย",
+  "_use": "ใช้ตอน AI ใช้ไม่ได้ในขั้นตั้งค่าร้าน ผู้เรียนเลือกงานอดิเรกไม่เกิน 2 อย่าง ระบบแสดงไอเดียรวมไม่เกิน 3 ไอเดีย",
+  "_relation": "คนละชุดกับ content/business-types.json ซึ่งเป็นประเภทร้าน 8 แบบที่ผู้เรียนเลือกในหน้าตั้งค่าร้าน ไฟล์นี้ช่วยคนที่ยังคิดไม่ออกว่าจะทำร้านอะไร แล้วค่อยไปจับคู่กับประเภทร้าน",
+  "_importNote": "นำเข้าครบ 8 งานอดิเรก 24 ไอเดียตามสเปกทุกตัว เพิ่มฟิลด์ suggestedBusinessType เพื่อจับคู่กับประเภทร้านใน business-types.json ให้ระบบเลือกต่อได้เลย ตัวข้อความไอเดียไม่ได้แก้",
+
+  "hobbies": [
+    {
+      "id": "hobby-game",
+      "label": "เล่นเกม",
+      "ideas": [
+        { "id": "idea-game-1", "text": "ทีมอีสปอร์ตของวิทยาลัย", "suggestedBusinessType": "game" },
+        { "id": "idea-game-2", "text": "ร้านอุปกรณ์เกมมิ่ง", "suggestedBusinessType": "game" },
+        { "id": "idea-game-3", "text": "ช่องสอนเล่นเกมสำหรับมือใหม่", "suggestedBusinessType": "game" }
+      ]
+    },
+    {
+      "id": "hobby-cooking",
+      "label": "ทำอาหาร",
+      "ideas": [
+        { "id": "idea-cook-1", "text": "ข้าวกล่องส่งถึงหอพัก", "suggestedBusinessType": "food" },
+        { "id": "idea-cook-2", "text": "เบเกอรีโฮมเมด", "suggestedBusinessType": "bakery" },
+        { "id": "idea-cook-3", "text": "น้ำพริกสูตรที่บ้าน", "suggestedBusinessType": "food" }
+      ]
+    },
+    {
+      "id": "hobby-fashion",
+      "label": "แต่งตัว",
+      "ideas": [
+        { "id": "idea-fash-1", "text": "เสื้อมือสองคัดเกรด", "suggestedBusinessType": "secondhand" },
+        { "id": "idea-fash-2", "text": "แบรนด์เสื้อสกรีนลายเอง", "suggestedBusinessType": "clothes" },
+        { "id": "idea-fash-3", "text": "เครื่องประดับทำมือ", "suggestedBusinessType": "clothes" }
+      ]
+    },
+    {
+      "id": "hobby-sport",
+      "label": "เล่นกีฬา",
+      "ideas": [
+        { "id": "idea-sport-1", "text": "ร้านอุปกรณ์ฟุตซอล", "suggestedBusinessType": "game" },
+        { "id": "idea-sport-2", "text": "คลาสออกกำลังกายสำหรับวัยรุ่น", "suggestedBusinessType": "game" },
+        { "id": "idea-sport-3", "text": "ร้านเช่าอุปกรณ์กีฬา", "suggestedBusinessType": "secondhand" }
+      ]
+    },
+    {
+      "id": "hobby-photo",
+      "label": "ถ่ายรูป",
+      "ideas": [
+        { "id": "idea-photo-1", "text": "รับถ่ายภาพรับปริญญา", "suggestedBusinessType": "clothes" },
+        { "id": "idea-photo-2", "text": "ร้านพิมพ์รูปโพลารอยด์", "suggestedBusinessType": "phone-repair" },
+        { "id": "idea-photo-3", "text": "รับถ่ายภาพสินค้าให้ร้านออนไลน์", "suggestedBusinessType": "phone-repair" }
+      ]
+    },
+    {
+      "id": "hobby-music",
+      "label": "ดนตรี",
+      "ideas": [
+        { "id": "idea-music-1", "text": "สอนกีตาร์เบื้องต้น", "suggestedBusinessType": "game" },
+        { "id": "idea-music-2", "text": "วงดนตรีรับงานอีเวนต์", "suggestedBusinessType": "game" },
+        { "id": "idea-music-3", "text": "ร้านเครื่องดนตรีมือสอง", "suggestedBusinessType": "secondhand" }
+      ]
+    },
+    {
+      "id": "hobby-pet",
+      "label": "สัตว์เลี้ยง",
+      "ideas": [
+        { "id": "idea-pet-1", "text": "ขนมสัตว์เลี้ยงโฮมเมด", "suggestedBusinessType": "bakery" },
+        { "id": "idea-pet-2", "text": "รับอาบน้ำตัดขนสุนัข", "suggestedBusinessType": "flower" },
+        { "id": "idea-pet-3", "text": "ร้านของเล่นแมว", "suggestedBusinessType": "game" }
+      ]
+    },
+    {
+      "id": "hobby-home",
+      "label": "ช่วยงานที่บ้าน",
+      "ideas": [
+        { "id": "idea-home-1", "text": "ผักปลอดสารจากสวนที่บ้าน", "suggestedBusinessType": "food" },
+        { "id": "idea-home-2", "text": "ร้านซ่อมเครื่องใช้ไฟฟ้าเล็ก", "suggestedBusinessType": "phone-repair" },
+        { "id": "idea-home-3", "text": "ร้านของฝากประจำตำบล", "suggestedBusinessType": "food" }
+      ]
+    }
+  ]
+}

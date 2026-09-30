@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="ตราเกียรติบัตรนักธุรกิจออนไลน์รุ่นเยาว์">
+  <title>ตราเกียรติบัตรนักธุรกิจออนไลน์รุ่นเยาว์</title>
+  <!-- ริบบิ้น -->
+  <path d="M44 74 L44 112 L60 102 L76 112 L76 74 Z" fill="#D65C19" stroke="#843217" stroke-width="3" stroke-linejoin="round"/>
+  <!-- วงตรา -->
+  <circle cx="60" cy="52" r="40" fill="#F3CE71" stroke="#985C00" stroke-width="4"/>
+  <circle cx="60" cy="52" r="31" fill="#FCEEC5" stroke="#985C00" stroke-width="2.5"/>
+  <!-- หยักขอบตรา -->
+  <g fill="#EAB532">
+    <circle cx="60" cy="10" r="5"/>
+    <circle cx="90" cy="22" r="5"/>
+    <circle cx="102" cy="52" r="5"/>
+    <circle cx="90" cy="82" r="5"/>
+    <circle cx="30" cy="82" r="5"/>
+    <circle cx="18" cy="52" r="5"/>
+    <circle cx="30" cy="22" r="5"/>
+  </g>
+  <!-- ดาวกลาง -->
+  <path d="M60 30 66 45 82 47 70 58 73 74 60 66 47 74 50 58 38 47 54 45 Z"
+        fill="#EAB532" stroke="#985C00" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- ติ๊กถูกเล็กมุมล่าง -->
+  <circle cx="88" cy="76" r="14" fill="#008257" stroke="#FFFFFF" stroke-width="3"/>
+  <path d="M81 76 L86 81 L95 71" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

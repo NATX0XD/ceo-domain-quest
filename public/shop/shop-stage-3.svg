@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 260" width="320" height="260" role="img" aria-label="ขั้นที่ 3 จาก 4: ก่อผนังและมุงหลังคาเสร็จ">
+  <title>ขั้นที่ 3 จาก 4: ก่อผนังและมุงหลังคาเสร็จ</title>
+  <path d="M160 122 L300 190 L160 258 L20 190 Z" fill="#A3E8C5"/>
+  <path d="M160 258 L20 190 L20 198 L160 266 L300 198 L300 190 Z" fill="#2FB983"/>
+  <!-- ผนังสองด้าน -->
+  <path d="M70 190 L160 234 L160 172 L70 128 Z" fill="#FFE6CD" stroke="#AD4216" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M250 190 L160 234 L160 172 L250 128 Z" fill="#FFD0A3" stroke="#AD4216" stroke-width="3" stroke-linejoin="round"/>
+  <!-- หลังคา -->
+  <path d="M160 78 L262 128 L160 178 L58 128 Z" fill="#D65C19" stroke="#843217" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M160 78 L262 128 L160 178 Z" fill="#AD4216"/>
+  <!-- ช่องหน้าต่าง -->
+  <path d="M96 166 L128 182 L128 158 L96 142 Z" fill="#CBF3DE" stroke="#AD4216" stroke-width="3" stroke-linejoin="round"/>
+  <!-- ช่องประตู/เคาน์เตอร์ยังไม่ตกแต่ง -->
+  <path d="M196 174 L226 158 L226 186 L196 202 Z" fill="#F5F0E4" stroke="#AD4216" stroke-width="3" stroke-linejoin="round"/>
+  <!-- ป้ายร้านเปล่ารอตั้งชื่อ -->
+  <path d="M140 150 L180 150 L180 132 L140 132 Z" fill="#FFFFFF" stroke="#AD4216" stroke-width="3"/>
+  <g stroke="#868397" stroke-width="3" stroke-linecap="round">
+    <path d="M148 140 L172 140"/>
+  </g>
+  <g>
+    <rect x="58" y="146" width="6" height="14" rx="3" fill="#AD4216"/>
+    <circle cx="61" cy="140" r="14" fill="#2FB983"/>
+  </g>
+  <ellipse cx="248" cy="218" rx="13" ry="7" fill="#73D5A7"/>
+</svg>

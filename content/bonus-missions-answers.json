@@ -1,0 +1,51 @@
+{
+  "_comment": "เฉลยภารกิจเสริม X1 X2 X3 จากสเปกหัวข้อ 11.7",
+  "_warning": "ฝั่งเซิร์ฟเวอร์เท่านั้น ห้าม import ไฟล์นี้จาก client component หรือ re-export ผ่าน core/content.ts เด็ดขาด ถ้าหลุดไป ผู้เรียนเปิด DevTools อ่านเฉลยได้ทั้งชุด",
+  "_pairing": "จับคู่กับ content/bonus-missions.json ด้วยรหัสข้อ answerIndex นับจาก 0 ตามลำดับใน choices ของไฟล์คำถาม",
+  "_explanationNote": "ใส่เฉพาะข้อความที่สเปกหัวข้อ 11.7 เขียนไว้จริง ข้อที่สเปกไม่ได้เขียนคำอธิบายไว้ ปล่อยเป็น null รอทีมเขียนเนื้อหา ไม่แต่งเอง ดูรายการที่ขอไว้ใน docs/content-request.md",
+  "items": [
+    {
+      "id": "x1-q1",
+      "answerIndex": 1,
+      "explanation": null,
+      "choiceFeedback": [
+        { "index": 0, "text": "ชื่อต่างจากเดิม และนามสกุลก็ต่างด้วย" },
+        { "index": 2, "text": "อ่านจากขวาไปซ้าย ชื่อโดเมนจริงของลิงก์นี้คือ promo-ok.com" },
+        { "index": 3, "text": "ดูตัวสะกดดี ๆ มีตัวอักษรหนึ่งตัวถูกเปลี่ยน" }
+      ]
+    },
+    {
+      "id": "x1-q2",
+      "answerIndexes": [1, 3],
+      "explanation": null,
+      "choiceFeedback": []
+    },
+    {
+      "id": "x2-q1",
+      "gradedBy": "rules",
+      "answerIndex": null,
+      "explanation": null
+    },
+    {
+      "id": "x2-q2",
+      "groupAnswers": [
+        { "groupId": "x2-q2-advantage", "answerIndex": 0, "explanation": null },
+        { "groupId": "x2-q2-caution", "answerIndex": 1, "explanation": null }
+      ]
+    },
+    {
+      "id": "x3-q1",
+      "groupKey": [
+        { "groupId": "x3-g-domain", "cardIds": ["x3-c1", "x3-c2", "x3-c3"] },
+        { "groupId": "x3-g-hosting", "cardIds": ["x3-c4", "x3-c5", "x3-c6"] }
+      ],
+      "explanation": null
+    },
+    {
+      "id": "x3-q2",
+      "answerIndex": 1,
+      "explanation": null,
+      "choiceFeedback": []
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "_comment": "ประเภทธุรกิจที่นักเรียนเลือกตอนเริ่มเกม — keywords ใช้ตรวจกฎข้อ 4 (ชื่อสื่อถึงธุรกิจ) แก้ไฟล์นี้ได้โดยไม่ต้องแตะโค้ด",
+  "items": [
+    {
+      "id": "bakery",
+      "label": "ร้านเบเกอรี่ / ขนมเค้ก",
+      "icon": "🧁",
+      "keywords": ["cake", "bakery", "bake", "sweet", "dessert", "cookie", "bread", "kanom"]
+    },
+    {
+      "id": "clothes",
+      "label": "ร้านเสื้อผ้า / แฟชั่น",
+      "icon": "👕",
+      "keywords": ["cloth", "shirt", "fashion", "wear", "style", "dress", "shop", "closet"]
+    },
+    {
+      "id": "coffee",
+      "label": "ร้านกาแฟ / เครื่องดื่ม",
+      "icon": "☕",
+      "keywords": ["coffee", "cafe", "brew", "bean", "drink", "tea", "latte"]
+    },
+    {
+      "id": "secondhand",
+      "label": "ร้านของมือสอง",
+      "icon": "♻️",
+      "keywords": ["second", "used", "vintage", "thrift", "reuse", "market", "shop"]
+    },
+    {
+      "id": "phone-repair",
+      "label": "ร้านซ่อมมือถือ / อุปกรณ์ไอที",
+      "icon": "📱",
+      "keywords": ["fix", "repair", "phone", "mobile", "tech", "service", "care"]
+    },
+    {
+      "id": "flower",
+      "label": "ร้านดอกไม้",
+      "icon": "💐",
+      "keywords": ["flower", "bloom", "floral", "garden", "petal", "rose"]
+    },
+    {
+      "id": "food",
+      "label": "ร้านอาหารตามสั่ง / อาหารกล่อง",
+      "icon": "🍜",
+      "keywords": ["food", "kitchen", "cook", "meal", "eat", "rice", "noodle", "krua"]
+    },
+    {
+      "id": "game",
+      "label": "ร้านอุปกรณ์เกม",
+      "icon": "🎮",
+      "keywords": ["game", "play", "gear", "gaming", "console", "esport"]
+    }
+  ]
+}

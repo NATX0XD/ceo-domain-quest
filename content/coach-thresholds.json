@@ -1,0 +1,25 @@
+{
+  "_comment": "เกณฑ์ธงเตือนครูบนแผงห้องเรียน — ทีมปรับตัวเลขได้หลังทดลองสอนจริงโดยไม่ต้องแก้โค้ด ห้ามเปลี่ยนคีย์ เพราะ shouldCoach ใน core/personalize.ts อ้างอิงอยู่",
+  "_whyTheseNumbers": "ภารกิจย่อยแต่ละอันมีเวลาแค่ 4 นาที ถ้ารอถึง 180 วินาทีค่อยเตือน ภารกิจจบไปแล้วครูเข้าไปช่วยไม่ทัน เกณฑ์จึงตั้งไว้ที่ 60/90/150 วินาที",
+  "_scale": "idleSeconds นับจากเวลาที่ผู้เรียนขยับครั้งล่าสุด · attempts คือจำนวนครั้งที่ลองแล้วยังไม่ผ่าน · hintsExhausted เป็น true เมื่อใช้คำใบ้ครบทุกระดับแล้วยังไม่ผ่าน",
+  "levels": {
+    "yellow": {
+      "idleSeconds": 60,
+      "attempts": null,
+      "hintsExhausted": false,
+      "label": "เริ่มนิ่ง ลองมองดูก่อน"
+    },
+    "orange": {
+      "idleSeconds": 90,
+      "attempts": 3,
+      "hintsExhausted": false,
+      "label": "ติดแล้ว เตรียมเดินไปหา"
+    },
+    "red": {
+      "idleSeconds": 150,
+      "attempts": null,
+      "hintsExhausted": true,
+      "label": "ต้องเข้าไปช่วยตอนนี้"
+    }
+  }
+}

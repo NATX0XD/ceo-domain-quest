@@ -1,0 +1,310 @@
+import rubric from '@/content/rubric.json'
+import { listPendingReview, listSubmissions, type Submission } from '@/lib/db/repo'
+import { TeacherConfirmScore, type RubricDimensionView } from '@/components/teacher-confirm-client'
+import { Card, EmptyState, InfoIcon, CheckIcon, AlertIcon, DomeAvatar } from '@/components/ui'
+import { sourceLabel, type AiSourceInfo } from '@/components/server/ai'
+import { MAX_REVISION_ROUNDS } from '@/components/server/revision'
+import { isTeacherConfirmed } from '@/lib/db/submission-scores'
+
+/**
+ * คิวตรวจงานของครู — ย้ายออกมาเป็นชิ้นเดียวที่ใช้ซ้ำได้ (UX-6 แตกหน้าเป็นแดชบอร์ด)
+ *
+ * ⚠️ `teacherId` มาจากคุกกี้ของหน้าที่เรียก · `listPendingReview` ตรวจเจ้าของห้องในคิวรีเดียวกับที่อ่าน
+ * ⚠️ คะแนนทุกก้อนเป็น "ข้อเสนอ" ครูเป็นคนยืนยันเสมอ — การ์ดนี้แสดงคู่กันทั้งคะแนนกฎและคะแนน AI
+ */
+
+interface ScoreBlock {
+  weightedTotal?: number
+  weightedMax?: number
+  stars?: number
+  feedback?: string
+}
+
+interface AiScoreBag extends Partial<AiSourceInfo> {
+  /** 'pending-ai' = คะแนนที่เห็นมาจากกฎ ส่วนของ AI ยังตรวจไม่เสร็จ */
+  gradingStatus?: string
+  ruleScores?: ScoreBlock
+  aiProposed?: ScoreBlock | null
+  score?: number
+  maxScore?: number
+  feedback?: string
+  dimensions?: RubricDimensionView[]
+}
+
+/**
+ * ชื่อไทยของด้านในรูบริก — ของเดิมโชว์รหัสดิบ `dim-customer-reason` บนการ์ด (UAT-7 ข้อ ค-3)
+ * ทั้งที่ `content/rubric.json` มีชื่อไทยอยู่แล้ว และตารางรูบริกในการ์ดใบเดียวกันก็แสดงถูกอยู่
+ */
+const DIMENSION_THAI_NAME: Record<string, string> = Object.fromEntries(
+  rubric.dimensions.map((d) => [d.id, d.name]),
+)
+
+/** รูปแบบส่งงาน — ของเดิมโชว์รหัส `write` / `voice` ดิบ ๆ ให้ครูอ่าน (flow-1 ข้อ 12) */
+const FORMAT_THAI: Record<string, string> = {
+  write: 'ส่งงานแบบพิมพ์',
+  voice: 'ส่งงานแบบอัดเสียง',
+  choose: 'ส่งงานแบบเลือกคำ',
+}
+
+function emphasisName(id: string): string {
+  return DIMENSION_THAI_NAME[id] ?? id
+}
+
+/** อ่านคะแนนที่ครูยืนยันไว้จริงจาก teacher_confirmed_scores เพื่อแสดงกลับ ไม่ใช่โชว์ค่าที่พิมพ์ค้าง */
+export function readTeacherScores(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const bag = value as Record<string, unknown>
+  const dims =
+    bag.dimensions && typeof bag.dimensions === 'object' && !Array.isArray(bag.dimensions)
+      ? (bag.dimensions as Record<string, number>)
+      : null
+  return {
+    // รูปแบบใหม่เก็บ weightedTotal/weightedMax ส่วนรูปแบบเก่าเก็บ score/maxScore
+    score:
+      typeof bag.weightedTotal === 'number'
+        ? bag.weightedTotal
+        : typeof bag.score === 'number'
+          ? bag.score
+          : undefined,
+    maxScore:
+      typeof bag.weightedMax === 'number'
+        ? bag.weightedMax
+        : typeof bag.maxScore === 'number'
+          ? bag.maxScore
+          : undefined,
+    stars: typeof bag.stars === 'number' ? bag.stars : undefined,
+    note: typeof bag.note === 'string' ? bag.note : null,
+    dimensionScores: dims,
+  }
+}
+
+function readAiScores(value: unknown): AiScoreBag | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const bag = value as Record<string, unknown>
+  return {
+    score: typeof bag.score === 'number' ? bag.score : undefined,
+    maxScore: typeof bag.maxScore === 'number' ? bag.maxScore : undefined,
+    feedback: typeof bag.feedback === 'string' ? bag.feedback : undefined,
+    dimensions: Array.isArray(bag.dimensions)
+      ? (bag.dimensions as RubricDimensionView[])
+      : undefined,
+    gradingStatus: typeof bag.gradingStatus === 'string' ? bag.gradingStatus : undefined,
+    ruleScores:
+      bag.ruleScores && typeof bag.ruleScores === 'object'
+        ? (bag.ruleScores as ScoreBlock)
+        : undefined,
+    aiProposed:
+      bag.aiProposed && typeof bag.aiProposed === 'object' ? (bag.aiProposed as ScoreBlock) : null,
+    source: bag.source === 'ai' ? 'ai' : bag.source === 'fallback' ? 'fallback' : undefined,
+    provider:
+      bag.provider === 'gemini' || bag.provider === 'typhoon' || bag.provider === 'rules'
+        ? bag.provider
+        : undefined,
+    fallbackReason: typeof bag.fallbackReason === 'string' ? (bag.fallbackReason as never) : null,
+  }
+}
+
+export async function ReviewList({
+  teacherId,
+  classroomId,
+}: {
+  teacherId: string
+  classroomId: string | null
+}) {
+  if (!classroomId) {
+    return (
+      <EmptyState
+        as="h2"
+        title="ยังไม่มีห้องเรียน"
+        description="เปิดห้องเรียนก่อน แล้วงานที่นักเรียนส่งจะมาโผล่ตรงนี้"
+        illustration={<DomeAvatar mood="greet" size={72} decorative />}
+      />
+    )
+  }
+
+  const pending = await listPendingReview(teacherId, classroomId)
+  if (pending === null) {
+    return (
+      <p
+        role="alert"
+        className="flex items-start gap-2 rounded-2xl bg-danger-100 p-4 text-body font-semibold text-danger-700"
+      >
+        <AlertIcon width={22} height={22} className="mt-0.5 shrink-0" />
+        <span>ไม่พบห้องนี้ หรือห้องนี้ไม่ใช่ของครู</span>
+      </p>
+    )
+  }
+
+  if (pending.length === 0) {
+    return (
+      <EmptyState
+        as="h2"
+        title="ยังไม่มีงานรอตรวจในห้องนี้"
+        description="เมื่อนักเรียนส่งงาน การ์ดจะขึ้นตรงนี้ให้ครูตรวจทีละใบ"
+        illustration={<CheckIcon width={48} height={48} className="text-quest-600" />}
+      />
+    )
+  }
+
+  /**
+   * ประวัติใบเสนอของแต่ละคน — ครูต้องเห็น "ฉบับก่อนหน้า" คู่กับฉบับล่าสุด
+   * ไม่งั้นส่งกลับให้แก้ไปแล้วก็ไม่รู้ว่านักเรียนแก้อะไรมา (สเปกข้อ 3.3)
+   * เจ้าของห้องถูกตรวจไปแล้วที่ listPendingReview ตรงนี้จึงดึงตามรหัสนักเรียนที่ได้มาเท่านั้น
+   */
+  const historyByStudent = new Map<string, Submission[]>()
+  const studentIds = [...new Set(pending.map((row) => row.student_id))]
+  const lists = await Promise.all(studentIds.map((id) => listSubmissions(id)))
+  studentIds.forEach((id, index) => {
+    historyByStudent.set(id, (lists[index] ?? []).filter((row) => row.emphasis_criterion !== null))
+  })
+
+  return (
+    <ul aria-live="polite" className="flex flex-col gap-3">
+      {pending.map((row) => {
+        const ai = readAiScores(row.ai_scores)
+        // ฉบับทั้งหมดของคนนี้ ใหม่สุดอยู่หน้าสุด (listSubmissions เรียง created_at DESC)
+        const versions = historyByStudent.get(row.student_id) ?? []
+        const indexFromNewest = versions.findIndex((v) => v.id === row.id)
+        const versionNo = indexFromNewest >= 0 ? versions.length - indexFromNewest : 1
+        const older = indexFromNewest >= 0 ? versions.slice(indexFromNewest + 1) : []
+        return (
+          <Card as="li" key={row.id} padding="sm" className="p-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <p className="min-w-0 text-body-lg font-bold text-ink">{row.nickname}</p>
+              <p className="min-w-0 text-body font-semibold break-all text-brand-700">
+                {row.domain_name}
+                {row.tld}
+              </p>
+            </div>
+            <p className="mt-1 text-label text-ink-muted">
+              {row.emphasis_criterion
+                ? `ภารกิจใหญ่ CEO · ผู้เรียนขอให้เน้นด้าน ${emphasisName(row.emphasis_criterion)} (คิดคะแนน 2 เท่า)`
+                : 'สถานี B · ยื่นจดทะเบียน'}{' '}
+              · {FORMAT_THAI[row.format] ?? `ส่งงานแบบ ${row.format}`}
+            </p>
+
+            {versions.length > 1 ? (
+              <p className="mt-2 inline-flex items-center rounded-full bg-spark-100 px-3 py-1 text-label font-bold text-spark-800">
+                ฉบับที่ {versionNo} จาก {versions.length} (แก้มาแล้ว {versions.length - 1} รอบ)
+              </p>
+            ) : null}
+
+            {row.reason_text ? (
+              <p className="mt-3 rounded-xl bg-surface-sunken p-3 text-body whitespace-pre-line text-ink">
+                {row.reason_text}
+              </p>
+            ) : null}
+
+            {/* ฉบับก่อนหน้า — เปิดดูเทียบได้ว่านักเรียนแก้อะไรมา */}
+            {older.length > 0 ? (
+              <details className="mt-3 rounded-xl bg-surface-sunken p-3">
+                <summary className="cursor-pointer text-label font-bold text-ink">
+                  ดูฉบับก่อนหน้า {older.length} ฉบับ
+                </summary>
+                <ul className="mt-2 flex flex-col gap-2">
+                  {older.map((old, i) => {
+                    const teacherBag = readTeacherScores(old.teacher_confirmed_scores)
+                    return (
+                      <li
+                        key={old.id}
+                        className="rounded-lg bg-surface-raised p-3 ring-1 ring-line ring-inset"
+                      >
+                        <p className="text-label font-bold text-ink">
+                          ฉบับที่ {older.length - i} · {old.domain_name}
+                          {old.tld}
+                        </p>
+                        {old.reason_text ? (
+                          <p className="mt-1 text-label whitespace-pre-line text-ink-muted">
+                            {old.reason_text}
+                          </p>
+                        ) : null}
+                        {teacherBag?.note ? (
+                          <p className="mt-1 text-note text-brand-700">
+                            ครูเคยบอกไว้: {teacherBag.note}
+                          </p>
+                        ) : null}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </details>
+            ) : null}
+
+            {ai ? (
+              <div className="mt-3 rounded-xl bg-brand-50 p-3 ring-1 ring-brand-100 ring-inset">
+                {/* สองค่าคู่กันเสมอ: กฎให้เท่าไร AI เสนอเท่าไร ครูเป็นคนตัดสินคะแนนจริง */}
+                <dl className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-surface-raised p-2">
+                    <dt className="text-label font-bold text-ink-muted">ระบบตรวจตามเกณฑ์ให้</dt>
+                    <dd className="text-body font-bold text-ink">
+                      {ai.ruleScores?.weightedTotal ?? ai.score ?? '-'}/
+                      {ai.ruleScores?.weightedMax ?? ai.maxScore ?? '-'}
+                    </dd>
+                  </div>
+                  <div className="rounded-lg bg-surface-raised p-2">
+                    <dt className="text-label font-bold text-ink-muted">AI อ่านแล้วเสนอ</dt>
+                    <dd className="text-body font-bold text-ink">
+                      {ai.aiProposed?.weightedTotal !== undefined
+                        ? `${ai.aiProposed.weightedTotal}/${ai.aiProposed.weightedMax ?? ai.maxScore ?? '-'}`
+                        : ai.gradingStatus === 'pending-ai'
+                          ? 'กำลังตรวจ…'
+                          : 'ไม่ได้เรียก AI'}
+                    </dd>
+                  </div>
+                </dl>
+                {ai.feedback ? <p className="mt-1 text-body text-ink-muted">{ai.feedback}</p> : null}
+                {/* flow-1 ข้อ 17: ครูไม่ต้องรอ AI ก่อนยืนยัน */}
+                {ai.gradingStatus === 'pending-ai' && !ai.aiProposed ? (
+                  <p className="mt-2 text-label font-bold text-ink">
+                    AI กำลังอ่านอยู่ ปกติไม่เกิน 5 วินาที ·
+                    <strong> ครูยืนยันคะแนนได้เลยไม่ต้องรอ</strong>{' '}
+                    ความเห็นของ AI เป็นแค่ข้อมูลประกอบ
+                  </p>
+                ) : null}
+                <p className="mt-2 flex items-start gap-1.5 text-label font-bold text-brand-700">
+                  <InfoIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0" />
+                  <span>
+                    ที่มาของคะแนนที่เสนอ:{' '}
+                    {sourceLabel({
+                      source: ai.source ?? 'fallback',
+                      provider: ai.provider ?? 'rules',
+                      fallbackReason: ai.fallbackReason ?? null,
+                    })}
+                  </span>
+                </p>
+              </div>
+            ) : (
+              <p className="mt-3 flex items-start gap-1.5 text-label text-ink-muted">
+                <InfoIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0" />
+                <span>ยังไม่มีคะแนนที่เสนอไว้</span>
+              </p>
+            )}
+
+            {/* flow-1 ข้อ 24: บอกให้ชัดว่ากดยืนยันแล้วเกิดอะไรกับเด็ก ครูจะได้ไม่ลังเล */}
+            <p className="mt-3 rounded-xl bg-brand-50 p-3 text-label text-ink ring-1 ring-brand-100 ring-inset">
+              กดยืนยันแล้ว <strong>นักเรียนเห็นคะแนนกับข้อความของครูทันที</strong> และได้ใบประกาศ
+              ถ้าได้ระดับ 3 ครบทั้ง 4 ด้าน · <strong>แก้คะแนนทีหลังได้</strong> ·
+              ถ้ายังไม่พร้อมให้คะแนน กด “ส่งกลับให้แก้” แล้วเขียนบอกว่าต้องเติมอะไร
+            </p>
+
+            <TeacherConfirmScore
+              submissionId={row.id}
+              proposedScore={ai?.score ?? 0}
+              maxScore={ai?.maxScore ?? 15}
+              dimensions={ai?.dimensions ?? []}
+              savedScores={readTeacherScores(row.teacher_confirmed_scores)}
+              /**
+               * ต้องถาม `isTeacherConfirmed()` ไม่ใช่เช็กว่าคอลัมน์ไม่ null
+               * เพราะก้อนที่ครูสั่งให้แก้ (`status: 'revise'`) ก็ไม่ null เหมือนกัน
+               * เช็กแบบเดิมทำให้งานที่เพิ่งตีกลับขึ้นว่า "ยืนยันแล้ว" (กติกาเดียวกับ T65 · /api/ceo)
+               */
+              confirmed={isTeacherConfirmed(row)}
+              roundsUsed={Math.max(0, versions.length - 1)}
+              maxRounds={MAX_REVISION_ROUNDS}
+            />
+          </Card>
+        )
+      })}
+    </ul>
+  )
+}

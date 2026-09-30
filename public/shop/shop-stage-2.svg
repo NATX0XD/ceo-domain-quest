@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 260" width="320" height="260" role="img" aria-label="ขั้นที่ 2 จาก 4: ลงเสาและวางโครงร้าน">
+  <title>ขั้นที่ 2 จาก 4: ลงเสาและวางโครงร้าน</title>
+  <path d="M160 122 L300 190 L160 258 L20 190 Z" fill="#A3E8C5"/>
+  <path d="M160 258 L20 190 L20 198 L160 266 L300 198 L300 190 Z" fill="#2FB983"/>
+  <!-- พื้นร้าน -->
+  <path d="M160 146 L250 190 L160 234 L70 190 Z" fill="#F3CE71" stroke="#AD4216" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M70 190 L160 234 L160 240 L70 196 Z" fill="#AD4216"/>
+  <path d="M250 190 L160 234 L160 240 L250 196 Z" fill="#843217"/>
+  <!-- เสาโครง 4 ต้น -->
+  <g fill="#AD4216">
+    <rect x="66" y="142" width="8" height="48" rx="2"/>
+    <rect x="246" y="142" width="8" height="48" rx="2"/>
+    <rect x="156" y="186" width="8" height="48" rx="2"/>
+    <rect x="156" y="98" width="8" height="48" rx="2"/>
+  </g>
+  <!-- คานบน -->
+  <g stroke="#D65C19" stroke-width="7" stroke-linecap="round">
+    <path d="M70 142 L160 98"/>
+    <path d="M250 142 L160 98"/>
+    <path d="M70 142 L160 186"/>
+    <path d="M250 142 L160 186"/>
+  </g>
+  <!-- นั่งร้าน -->
+  <g stroke="#F3CE71" stroke-width="4" stroke-linecap="round" opacity="0.95">
+    <path d="M78 168 L166 124"/>
+    <path d="M242 168 L166 124"/>
+  </g>
+  <!-- กรวยจราจร -->
+  <g>
+    <path d="M276 208 L282 188 L288 208 Z" fill="#ED7A2D"/>
+    <rect x="272" y="206" width="20" height="6" rx="3" fill="#AD4216"/>
+  </g>
+  <g>
+    <rect x="58" y="146" width="6" height="14" rx="3" fill="#AD4216"/>
+    <circle cx="61" cy="140" r="14" fill="#2FB983"/>
+  </g>
+</svg>

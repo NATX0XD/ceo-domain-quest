@@ -1,0 +1,314 @@
+{
+ "room": "UAT777",
+ "hero": "อาร์ม",
+ "shots": [
+  {
+   "file": "student-01-join.png",
+   "route": "/join",
+   "as": null,
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "หน้าเข้าห้องเรียน ใส่รหัสห้อง 6 ตัวกับรหัส 4 หลัก",
+   "slide": "สไลด์ 4 ขั้น 1 · สไลด์ 5 (แผนสำรองชั้น C)",
+   "ok": true,
+   "note": "353 ตัวอักษร"
+  },
+  {
+   "file": "student-02-intro.png",
+   "route": "/intro",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "การ์ดแนะนำวิธีใช้ ข้ามได้",
+   "slide": "สไลด์ 4 ขั้น 1",
+   "ok": true,
+   "note": "118 ตัวอักษร"
+  },
+  {
+   "file": "student-03-setup.png",
+   "route": "/setup",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "ร้านของฉัน 3 คำถาม (ขั้นวิเคราะห์ผู้เรียน)",
+   "slide": "สไลด์ 4 ขั้น 1 · สไลด์ 5 วินาทีที่ 0-15",
+   "ok": true,
+   "note": "141 ตัวอักษร"
+  },
+  {
+   "file": "student-04-check.png",
+   "route": "/check",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "เช็กความเข้าใจ 4 ข้อ — ไม่เก็บคะแนน ใช้เสนอระดับตัวช่วย",
+   "slide": "สไลด์ 4 ขั้น 1",
+   "ok": true,
+   "note": "959 ตัวอักษร"
+  },
+  {
+   "file": "student-05-pretest.png",
+   "route": "/pretest",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "แบบทดสอบก่อนเรียน 10 ข้อ",
+   "slide": "สไลด์ 4 ขั้น 1 · สไลด์ 6 ชั้น ก",
+   "ok": true,
+   "note": "445 ตัวอักษร"
+  },
+  {
+   "file": "student-06-profile.png",
+   "route": "/profile",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "เลือกเส้นทางการเรียน — ระบบเสนอ ผู้เรียนกดเลือกเอง",
+   "slide": "สไลด์ 4 ขั้น 2 · สไลด์ 5 วินาทีที่ 15-55",
+   "ok": true,
+   "note": "3324 ตัวอักษร"
+  },
+  {
+   "file": "student-07-map.png",
+   "route": "/map",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "แผนภารกิจทั้งคาบ",
+   "slide": "สไลด์ 4 ขั้น 3",
+   "ok": true,
+   "note": "600 ตัวอักษร"
+  },
+  {
+   "file": "student-08-ceo-form.png",
+   "route": "/ceo",
+   "as": "ปูเป้",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "ด่านบอส — เลือกวิธีส่งงานและเลือกด้านที่ให้ครูประเมินหนัก (ยังไม่ส่ง)",
+   "slide": "สไลด์ 4 ขั้น 5",
+   "ok": true,
+   "note": "3310 ตัวอักษร"
+  },
+  {
+   "file": "student-09-ceo-status.png",
+   "route": "/ceo",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "ด่านบอสหลังส่งงาน — แถบสถานะการตรวจ",
+   "slide": "สไลด์ 4 ขั้น 5",
+   "ok": true,
+   "note": "1526 ตัวอักษร"
+  },
+  {
+   "file": "student-10-result-top.png",
+   "route": "/result",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "หน้าสรุปผล — ดาวที่เก็บได้กับด้านที่ครูยืนยัน เห็นโดยไม่ต้องเลื่อน",
+   "slide": "สไลด์ 4 ขั้น 5 · สไลด์ 6",
+   "ok": true,
+   "note": "3366 ตัวอักษร"
+  },
+  {
+   "file": "student-11-result-certificate.png",
+   "route": "/result",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "scroll": 520,
+   "caption": "เกียรติบัตรบนหน้าจอ ออกให้เมื่อครูยืนยันครบ 4 ด้าน",
+   "slide": "สไลด์ 4 ขั้น 5",
+   "ok": true,
+   "note": "3366 ตัวอักษร"
+  },
+  {
+   "file": "student-12-result-selfassess.png",
+   "route": "/result",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "scroll": 2200,
+   "caption": "ส่วนคะแนน 3 แหล่งบนหน้าสรุปผล (สภาพจริงในห้อง UAT777 ดูหมายเหตุ)",
+   "slide": "สไลด์ 4 ขั้น 5",
+   "ok": true,
+   "note": "3366 ตัวอักษร"
+  },
+  {
+   "file": "student-13-home-shop.png",
+   "route": "/home",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "หน้าหลัก — ร้านโตตามด่านที่ผ่านจริง (ภาพ 6 ขั้น)",
+   "slide": "สไลด์ 5 วินาทีที่ 75-90",
+   "ok": true,
+   "note": "615 ตัวอักษร"
+  },
+  {
+   "file": "student-14-showcase.png",
+   "route": "/showcase",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "ผนังผลงานของห้อง — ไม่มีดาวและไม่มีคะแนนของใคร",
+   "slide": "สไลด์ 4 ขั้น 5",
+   "ok": true,
+   "note": "998 ตัวอักษร"
+  },
+  {
+   "file": "student-15-reflect.png",
+   "route": "/reflect",
+   "as": "อาร์ม",
+   "viewport": {
+    "width": 390,
+    "height": 844,
+    "mobile": true,
+    "scale": 2
+   },
+   "caption": "ทบทวนตัวเองหลังจบภารกิจ",
+   "slide": "สไลด์ 4 ขั้น 5",
+   "ok": true,
+   "note": "971 ตัวอักษร"
+  },
+  {
+   "file": "teacher-01-live-panel.png",
+   "route": "/teacher",
+   "as": "teacher",
+   "viewport": {
+    "width": 1280,
+    "height": 800,
+    "mobile": false,
+    "scale": 2
+   },
+   "caption": "แผงห้องเรียนสด — นับสดทุก 3 วินาที มีธงควรคุย/ควรชม",
+   "slide": "สไลด์ 8",
+   "ok": true,
+   "note": "5609 ตัวอักษร"
+  },
+  {
+   "file": "teacher-02-class-report.png",
+   "route": "/teacher/report",
+   "as": "teacher",
+   "viewport": {
+    "width": 1280,
+    "height": 800,
+    "mobile": false,
+    "scale": 2
+   },
+   "caption": "รายงานรายห้อง — E1/E2 · ค่าที · ขนาดอิทธิพล · จุดประสงค์ที่ห้องอ่อนสุด",
+   "slide": "สไลด์ 6 ชั้น ข · สไลด์ 8",
+   "ok": true,
+   "note": "7947 ตัวอักษร"
+  },
+  {
+   "file": "teacher-03-class-report-stats.png",
+   "route": "/teacher/report",
+   "as": "teacher",
+   "viewport": {
+    "width": 1280,
+    "height": 800,
+    "mobile": false,
+    "scale": 2
+   },
+   "scroll": 700,
+   "caption": "รายงานรายห้อง ช่วงสถิติก่อน-หลังเรียนและร้อยละความตรงกัน",
+   "slide": "สไลด์ 6 ชั้น ข",
+   "ok": true,
+   "note": "7947 ตัวอักษร"
+  },
+  {
+   "file": "teacher-05-board.png",
+   "route": "/board",
+   "as": "teacher",
+   "viewport": {
+    "width": 1280,
+    "height": 720,
+    "mobile": false,
+    "scale": 2
+   },
+   "caption": "จอหน้าห้องบนโปรเจกเตอร์ — เปลี่ยนตามช่วงของคาบเอง",
+   "slide": "สไลด์ 8",
+   "ok": true,
+   "note": "89 ตัวอักษร"
+  },
+  {
+   "file": "teacher-04-student-report.png",
+   "route": "/teacher/student?studentId=c9706837-8aaa-4b05-8d8d-b3db566b173a",
+   "as": "teacher",
+   "viewport": {
+    "width": 1280,
+    "height": 800,
+    "mobile": false,
+    "scale": 2
+   },
+   "caption": "รายงานรายคน — ร่องรอยปรับเหมาะ \"ระบบเสนอ X แต่เลือก Y เอง\"",
+   "slide": "สไลด์ 6 ชั้น ข · สไลด์ 8",
+   "ok": true,
+   "note": "1460 ตัวอักษร"
+  }
+ ],
+ "blocked": [
+  "POST /api/presence",
+  "POST /__nextjs_original-stack-frames"
+ ],
+ "dbChanged": []
+}

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="โดมยกมือทักทาย">
+  <title>โดมยกมือทักทาย</title>
+  <ellipse cx="100" cy="186" rx="46" ry="8" fill="#2C2644" opacity="0.08"/>
+
+  <!-- แขนขวายกทักทาย -->
+  <g stroke="#7651D3" stroke-width="4" stroke-linecap="round" fill="#A28AF6">
+    <path d="M134 140 L156 118" stroke-width="13"/>
+    <circle cx="160" cy="112" r="11"/>
+  </g>
+  <!-- แขนซ้ายแนบลำตัว -->
+  <g stroke="#7651D3" stroke-width="4" stroke-linecap="round" fill="#A28AF6">
+    <path d="M66 140 L50 156" stroke-width="13"/>
+    <circle cx="46" cy="160" r="11"/>
+  </g>
+
+  <!-- ลำตัว -->
+  <rect x="62" y="122" width="76" height="54" rx="24" fill="#FFFFFF" stroke="#7651D3" stroke-width="4"/>
+  <path d="M100 128 L109 140 L100 158 L91 140 Z" fill="#ED7A2D"/>
+
+  <!-- หูฟัง -->
+  <rect x="34" y="72" width="20" height="40" rx="10" fill="#7651D3"/>
+  <rect x="146" y="72" width="20" height="40" rx="10" fill="#7651D3"/>
+
+  <!-- เสาอากาศ -->
+  <path d="M100 44 L100 28" stroke="#7651D3" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="100" cy="22" r="8" fill="#ED7A2D"/>
+
+  <!-- หัว -->
+  <rect x="46" y="40" width="108" height="86" rx="36" fill="#BFB1FF" stroke="#7651D3" stroke-width="4"/>
+  <rect x="60" y="58" width="80" height="50" rx="24" fill="#2C2644"/>
+
+  <!-- ตายิ้ม -->
+  <g stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none">
+    <path d="M76 84 q7 -11 14 0"/>
+    <path d="M110 84 q7 -11 14 0"/>
+  </g>
+  <circle cx="68" cy="98" r="6" fill="#F9944B" opacity="0.7"/>
+  <circle cx="132" cy="98" r="6" fill="#F9944B" opacity="0.7"/>
+
+  <!-- ประกาย -->
+  <g fill="#EAB532">
+    <path d="M168 40 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3 Z"/>
+    <path d="M30 52 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2 Z"/>
+  </g>
+</svg>

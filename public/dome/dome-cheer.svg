@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="โดมชูกำปั้นให้กำลังใจ">
+  <title>โดมชูกำปั้นให้กำลังใจ</title>
+  <ellipse cx="100" cy="186" rx="46" ry="8" fill="#2C2644" opacity="0.08"/>
+
+  <!-- แขนชูกำปั้น -->
+  <g stroke="#7651D3" stroke-width="4" stroke-linecap="round" fill="#A28AF6">
+    <path d="M136 138 L150 124" stroke-width="13"/>
+    <rect x="142" y="104" width="24" height="22" rx="10"/>
+    <path d="M64 138 L50 150" stroke-width="13"/>
+    <circle cx="46" cy="154" r="11"/>
+  </g>
+
+  <!-- ลำตัว -->
+  <rect x="62" y="122" width="76" height="54" rx="24" fill="#FFFFFF" stroke="#7651D3" stroke-width="4"/>
+  <path d="M100 128 L109 140 L100 158 L91 140 Z" fill="#ED7A2D"/>
+
+  <!-- หูฟัง -->
+  <rect x="34" y="72" width="20" height="40" rx="10" fill="#7651D3"/>
+  <rect x="146" y="72" width="20" height="40" rx="10" fill="#7651D3"/>
+
+  <!-- เสาอากาศ -->
+  <path d="M100 44 L100 28" stroke="#7651D3" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="100" cy="22" r="8" fill="#ED7A2D"/>
+
+  <!-- หัว -->
+  <rect x="46" y="40" width="108" height="86" rx="36" fill="#BFB1FF" stroke="#7651D3" stroke-width="4"/>
+  <rect x="60" y="58" width="80" height="50" rx="24" fill="#2C2644"/>
+
+  <!-- ตาเบิกกว้าง มุ่งมั่น -->
+  <g fill="#FFFFFF">
+    <circle cx="83" cy="82" r="9"/>
+    <circle cx="117" cy="82" r="9"/>
+  </g>
+  <g fill="#2C2644">
+    <circle cx="85" cy="84" r="4"/>
+    <circle cx="119" cy="84" r="4"/>
+  </g>
+  <!-- คิ้วมุ่งมั่น -->
+  <g stroke="#FFFFFF" stroke-width="5" stroke-linecap="round">
+    <path d="M74 68 L92 72"/>
+    <path d="M126 68 L108 72"/>
+  </g>
+  <circle cx="68" cy="98" r="6" fill="#F9944B" opacity="0.7"/>
+  <circle cx="132" cy="98" r="6" fill="#F9944B" opacity="0.7"/>
+
+  <!-- เส้นพลัง -->
+  <g stroke="#2FB983" stroke-width="5" stroke-linecap="round">
+    <path d="M176 96 L188 88"/>
+    <path d="M176 112 L190 112"/>
+    <path d="M24 96 L12 88"/>
+    <path d="M24 112 L10 112"/>
+  </g>
+</svg>

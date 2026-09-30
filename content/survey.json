@@ -1,0 +1,63 @@
+{
+  "_comment": "แบบสอบถามความพึงพอใจ — นำเข้าจาก CEO_Domain_Quest_Feature_Spec.md หัวข้อ S-40 (บรรทัด 2002-2045) เมื่อ 29 ก.ย. 2569 · ไฟล์นี้ปลอดภัยสำหรับฝั่งเบราว์เซอร์ ไม่มีเฉลย เพราะแบบสอบถามไม่มีคำตอบถูกผิด",
+  "_where": "หัวข้อ 11.10 ของสเปกไม่ได้เขียนข้อคำถามไว้ แค่ชี้ไปที่ S-40 ตัวข้อคำถามจริงทั้ง 10 ข้อและเกณฑ์แปลผลอยู่ที่ S-40 จึงนำเข้าจากที่นั่น",
+  "_dbMapping": "ข้อ 1-8 ตรงกับคอลัมน์ q1 ถึง q8 ในตาราง survey_responses · ข้อ 9 ตรงกับ like_text · ข้อ 10 ตรงกับ improve_text (ดู supabase/migrations/20261001000000_session_control_survey_buddy.sql) ลำดับข้อในไฟล์นี้ห้ามสลับ เพราะผูกกับชื่อคอลัมน์",
+  "_privacy": "ตาราง survey_responses ไม่มีคอลัมน์ระบุตัวนักเรียนเลย ระบบจำแค่ว่าใครตอบแล้วไว้อีกตารางหนึ่ง ข้อความหน้าจอต้องบอกผู้เรียนให้ชัดว่าครูเห็นเป็นภาพรวมเท่านั้น",
+
+  "meta": {
+    "id": "survey-satisfaction",
+    "title": "ช่วยบอกหน่อย ใช้เวลาไม่ถึง 2 นาที",
+    "note": "คำตอบไม่มีผลต่อคะแนน และครูเห็นเป็นภาพรวมเท่านั้น",
+    "submitButtonLabel": "ส่ง",
+    "deferButtonLabel": "ทำภายหลัง",
+    "whenShown": "แสดงหลังส่งคำตอบสะท้อนตนเอง ผู้เรียนกดทำภายหลังได้ และทำต่อที่บ้านได้",
+    "defaultState": "ปิด ครูเป็นคนเปิดในหน้าตั้งค่าคาบเมื่อต้องการเก็บผลทดลอง",
+    "requiredItems": "ข้อ 1 ถึง 8 ต้องตอบครบ ข้อ 9 และ 10 ไม่บังคับ",
+    "onePerStudentPerSession": true
+  },
+
+  "scale": {
+    "type": "rating",
+    "min": 1,
+    "max": 5,
+    "minLabel": "น้อยที่สุด",
+    "maxLabel": "มากที่สุด",
+    "points": [
+      { "value": 1, "label": "น้อยที่สุด", "emoji": "😣" },
+      { "value": 2, "label": "น้อย", "emoji": "🙁" },
+      { "value": 3, "label": "ปานกลาง", "emoji": "😐" },
+      { "value": 4, "label": "มาก", "emoji": "🙂" },
+      { "value": 5, "label": "มากที่สุด", "emoji": "😍" }
+    ]
+  },
+
+  "items": [
+    { "id": "sv-q1", "order": 1, "column": "q1", "type": "rating", "required": true, "aspect": "การใช้งาน", "text": "สื่อนี้ใช้งานง่าย" },
+    { "id": "sv-q2", "order": 2, "column": "q2", "type": "rating", "required": true, "aspect": "การใช้งาน", "text": "คำแนะนำการใช้งานชัดเจน" },
+    { "id": "sv-q3", "order": 3, "column": "q3", "type": "rating", "required": true, "aspect": "การปรับตามผู้เรียน", "text": "ภารกิจเกี่ยวกับสิ่งที่ฉันสนใจ" },
+    { "id": "sv-q4", "order": 4, "column": "q4", "type": "rating", "required": true, "aspect": "การปรับตามผู้เรียน", "text": "ความยากของภารกิจพอดีกับฉัน" },
+    { "id": "sv-q5", "order": 5, "column": "q5", "type": "rating", "required": true, "aspect": "การเรียนรู้", "text": "ตัวช่วยช่วยให้ฉันเข้าใจมากขึ้น" },
+    { "id": "sv-q6", "order": 6, "column": "q6", "type": "rating", "required": true, "aspect": "การเรียนรู้", "text": "ข้อมูลตอบกลับช่วยให้ฉันรู้ว่าต้องปรับอะไร" },
+    { "id": "sv-q7", "order": 7, "column": "q7", "type": "rating", "required": true, "aspect": "แรงจูงใจ", "text": "ฉันอยากเรียนเรื่องอื่นด้วยสื่อแบบนี้" },
+    { "id": "sv-q8", "order": 8, "column": "q8", "type": "rating", "required": true, "aspect": "ภาพรวม", "text": "โดยรวมฉันพึงพอใจสื่อนี้" },
+    { "id": "sv-q9", "order": 9, "column": "like_text", "type": "openText", "required": false, "aspect": "ปลายเปิด", "text": "ชอบอะไรในสื่อนี้มากที่สุด", "placeholder": "เขียนสั้น ๆ ก็ได้" },
+    { "id": "sv-q10", "order": 10, "column": "improve_text", "type": "openText", "required": false, "aspect": "ปลายเปิด", "text": "อยากให้ปรับอะไร", "placeholder": "บอกตรง ๆ ได้เลย" }
+  ],
+
+  "interpretation": {
+    "_use": "ใช้แปลค่าเฉลี่ยของข้อ 1 ถึง 8 เป็นคำอธิบายสำหรับรายงานผลการทดลอง",
+    "bands": [
+      { "min": 4.51, "max": 5.0, "label": "มากที่สุด" },
+      { "min": 3.51, "max": 4.5, "label": "มาก" },
+      { "min": 2.51, "max": 3.5, "label": "ปานกลาง" },
+      { "min": 1.51, "max": 2.5, "label": "น้อย" },
+      { "min": 1.0, "max": 1.5, "label": "น้อยที่สุด" }
+    ],
+    "passCriteria": {
+      "_source": "สเปกตัวชี้วัด K8 (บรรทัด 3612)",
+      "meanAtLeast": 4.0,
+      "noItemBelow": 3.51,
+      "text": "ค่าเฉลี่ยรวมไม่ต่ำกว่า 4.00 และไม่มีข้อใดต่ำกว่า 3.51"
+    }
+  }
+}

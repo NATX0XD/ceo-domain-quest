@@ -1,0 +1,639 @@
+@import 'tailwindcss';
+
+/* ============================================================================
+   ระบบดีไซน์ CEO Domain Quest (ภารกิจ CEO ตั้งชื่อเว็บ)
+   กลุ่มเป้าหมาย: ปวช.1 (15–16 ปี) · มือถือ 390px เป็นหลัก · แท็บเล็ต 820px รอง
+   เอกสารเหตุผลการเลือกทุกค่า + ตารางค่า contrast จริง: docs/design-system.md
+   ตั้งชื่อโทเคนตาม "ความหมาย" ไม่ใช่ชื่อสี เพื่อให้เปลี่ยนสีได้โดยไม่ต้องไล่แก้ทุกหน้า
+   ============================================================================ */
+
+@theme {
+  /* ---------- ตัวอักษร ---------- */
+  --font-sans: var(--font-noto-sans-thai), ui-sans-serif, system-ui, sans-serif;
+
+  /* สเกลตัวอักษรไทย — ใหญ่กว่าสเกลอังกฤษหนึ่งขั้น เพราะสระบน/ล่างของไทย
+     (ไ ำ ิ ี ุ ู ่ ้) จะตันเมื่อฟอนต์เล็กกว่า 15px และ line-height ต่ำกว่า 1.6 */
+  --text-note: 0.8125rem;              /* 13px — ข้อความประกอบที่ไม่สำคัญเท่านั้น */
+  --text-note--line-height: 1.6;
+  --text-label: 0.9375rem;             /* 15px — ป้ายกำกับ ชิป แท็บ */
+  --text-label--line-height: 1.6;
+  --text-body: 1.0625rem;              /* 17px — เนื้อหาหลัก (ขั้นต่ำที่อ่านสบายบนมือถือ) */
+  --text-body--line-height: 1.75;
+  --text-body-lg: 1.1875rem;           /* 19px — โจทย์ภารกิจ คำถาม */
+  --text-body-lg--line-height: 1.7;
+  --text-title-sm: 1.3125rem;          /* 21px — หัวการ์ด */
+  --text-title-sm--line-height: 1.5;
+  --text-title: 1.5rem;                /* 24px — หัวส่วน */
+  --text-title--line-height: 1.45;
+  --text-display: 1.875rem;            /* 30px — หัวหน้าจอ */
+  --text-display--line-height: 1.35;
+  --text-hero: 2.25rem;                /* 36px — ตัวเลขคะแนน/หน้าฉลอง */
+  --text-hero--line-height: 1.25;
+
+  /* ---------- สี: แบรนด์ (ม่วง) = ตัวตนของโดมและปุ่มหลัก ---------- */
+  --color-brand-50: oklch(0.972 0.018 292);
+  --color-brand-100: oklch(0.936 0.042 292);
+  --color-brand-200: oklch(0.882 0.072 292);
+  --color-brand-300: oklch(0.8 0.11 292);
+  --color-brand-400: oklch(0.7 0.155 292);
+  --color-brand-500: oklch(0.615 0.185 292);
+  --color-brand-600: oklch(0.545 0.19 292);
+  --color-brand-700: oklch(0.47 0.165 292);
+  --color-brand-800: oklch(0.395 0.13 292);
+  --color-brand-900: oklch(0.32 0.095 292);
+
+  /* ---------- สี: เควสต์ (เขียว) = ผ่าน/ยืนยัน/ความคืบหน้า ---------- */
+  --color-quest-50: oklch(0.968 0.022 162);
+  --color-quest-100: oklch(0.93 0.05 162);
+  --color-quest-200: oklch(0.875 0.085 162);
+  --color-quest-300: oklch(0.8 0.115 162);
+  --color-quest-400: oklch(0.7 0.14 162);
+  --color-quest-500: oklch(0.615 0.135 162);
+  --color-quest-600: oklch(0.535 0.12 162);
+  --color-quest-700: oklch(0.45 0.1 162);
+  --color-quest-800: oklch(0.375 0.08 162);
+
+  /* ---------- สี: สปาร์ก (ส้ม) = สิ่งที่ต้องลงมือทำต่อ/ของใหม่ ---------- */
+  --color-spark-50: oklch(0.975 0.02 62);
+  --color-spark-100: oklch(0.945 0.048 62);
+  --color-spark-200: oklch(0.895 0.085 62);
+  --color-spark-300: oklch(0.83 0.12 58);
+  --color-spark-400: oklch(0.76 0.15 54);
+  --color-spark-500: oklch(0.7 0.165 50);
+  --color-spark-600: oklch(0.575 0.163 44);
+  --color-spark-700: oklch(0.52 0.15 40);
+  --color-spark-800: oklch(0.43 0.12 38);
+
+  /* ---------- สี: รางวัล (ทอง) = ดาว เกียรติบัตร ---------- */
+  --color-reward-100: oklch(0.95 0.055 92);
+  --color-reward-300: oklch(0.865 0.12 88);
+  --color-reward-500: oklch(0.8 0.15 85);
+  --color-reward-600: oklch(0.7 0.15 75);
+  --color-reward-700: oklch(0.53 0.118 68);
+
+  /* ---------- สี: ผิดพลาด ---------- */
+  --color-danger-100: oklch(0.93 0.045 25);
+  /* ขั้น 300 ใช้เป็นขอบการ์ดโทนเตือน (components/ui/card.tsx tone="danger")
+     เคยไม่มีขั้นนี้ในระบบ คลาส ring-danger-300 จึงไม่ถูกสร้างเลยและการ์ดนั้นไม่มีขอบ
+     ค่าอยู่กึ่งกลางระหว่างขั้น 100 กับ 500 ตามสเกลเดียวกับโทนอื่น
+     ขอบนี้เป็นของประดับ ความหมาย "ต้องเข้าไปช่วยก่อน" สื่อด้วยพื้นการ์ดกับข้อความข้างใน
+     จึงไม่เข้าเกณฑ์ 3:1 ของ WCAG 1.4.11 (วัดได้ 1.70 บนพื้นการ์ด เทียบกับขอบทอง reward-300 ที่ 1.31) */
+  --color-danger-300: oklch(0.775 0.13 25);
+  --color-danger-500: oklch(0.605 0.205 25);
+  --color-danger-600: oklch(0.53 0.2 25);
+  --color-danger-700: oklch(0.455 0.175 25);
+
+  /* ---------- สี: พื้นผิว (ครีมอุ่นตามภาพต้นแบบ ไม่ใช่ขาวจ้า) ---------- */
+  --color-surface: oklch(0.983 0.012 85);
+  --color-surface-raised: oklch(1 0 0);
+  --color-surface-sunken: oklch(0.955 0.016 85);
+  --color-surface-alt: oklch(0.972 0.018 292);
+
+  /* ---------- สี: ตัวอักษร ---------- */
+  --color-ink: oklch(0.29 0.055 292);
+  --color-ink-muted: oklch(0.47 0.04 292);
+  /* 0.53 ไม่ใช่ 0.548 — ค่าเดิมผ่าน 4.94:1 บนการ์ดขาว แต่พอไปวางบนพื้นครีมจม
+     (--color-surface-sunken) เหลือ 4.33:1 ซึ่งตกเกณฑ์ AA ค่านี้จูนกับพื้นที่เข้มที่สุด
+     ในกลุ่มพื้นสว่าง จึงผ่านทุกพื้นผิวของระบบ (ต่ำสุด 4.67:1) */
+  --color-ink-subtle: oklch(0.53 0.032 292);
+  --color-ink-onbrand: oklch(1 0 0);
+
+  /* ---------- สี: เส้น ---------- */
+  --color-line: oklch(0.9 0.02 292);
+  --color-line-strong: oklch(0.815 0.04 292);
+  --color-line-contrast: oklch(0.62 0.03 292); /* ขอบช่องกรอก — ผ่าน 3:1 */
+
+  --color-focus: oklch(0.545 0.19 292);
+
+  /* ---------- ระยะห่าง: ฐาน 4px ---------- */
+  --spacing: 0.25rem;
+
+  /* ---------- รัศมีมุม: โค้งเยอะตามภาพต้นแบบ ---------- */
+  --radius-xs: 0.5rem;    /* 8px  — ชิปเล็ก แท็ก */
+  --radius-sm: 0.75rem;   /* 12px — ช่องกรอก */
+  --radius-md: 1rem;      /* 16px — ปุ่มเล็ก */
+  --radius-lg: 1.25rem;   /* 20px — ปุ่มหลัก */
+  --radius-xl: 1.5rem;    /* 24px — การ์ด */
+  --radius-2xl: 2rem;     /* 32px — การ์ดใหญ่ แผ่นเนื้อหา */
+  --radius-3xl: 2.5rem;   /* 40px — กล่องคำพูดโดม แผงฉลอง */
+
+  /* ---------- เงา: นุ่ม ฟุ้ง ไม่มีเส้นคม (claymorphism) ---------- */
+  --shadow-soft-1: 0 1px 2px oklch(0.32 0.095 292 / 0.06), 0 2px 8px oklch(0.32 0.095 292 / 0.06);
+  --shadow-soft-2: 0 2px 4px oklch(0.32 0.095 292 / 0.07), 0 8px 20px oklch(0.32 0.095 292 / 0.09);
+  --shadow-soft-3: 0 4px 8px oklch(0.32 0.095 292 / 0.08), 0 16px 36px oklch(0.32 0.095 292 / 0.12);
+  --shadow-lift: 0 10px 28px oklch(0.47 0.165 292 / 0.24);
+  --shadow-inset-soft: inset 0 2px 4px oklch(0.32 0.095 292 / 0.08);
+
+  /* ---------- จังหวะเคลื่อนไหว ---------- */
+  --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --animate-pop-in: pop-in 0.26s var(--ease-pop) both;
+  --animate-rise-in: rise-in 0.3s var(--ease-soft) both;
+  --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -150% 0;
+  }
+  to {
+    background-position: 250% 0;
+  }
+}
+
+/* ============================================================================
+   ฐานของเอกสาร
+   ============================================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* พื้นที่ปลอดภัยของ iPhone จอบาก — เก็บไว้เป็นตัวแปรเพื่อให้ component
+     เอาไปบวกกับ padding ของตัวเองได้ โดยไม่ต้องเขียน env() ซ้ำทุกที่
+     ค่า fallback 0px จำเป็นสำหรับเบราว์เซอร์ที่ไม่รู้จัก env() */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* ความสูงจริงของแถบเมนูล่าง (รวมพื้นที่ปลอดภัย) — หน้าเนื้อหาใช้ค่านี้
+     เว้นระยะท้ายหน้า จะได้ไม่มีปุ่มไหนถูกแถบเมนูทับ */
+  --bottom-nav-height: calc(4.5rem + var(--safe-bottom));
+
+  /* ลำดับชั้น z — ประกาศไว้ที่เดียวกันหมดเพื่อไม่ให้ไล่เดา z-[9999] กันเอง */
+  --z-sticky: 10;
+  --z-nav: 20;
+  --z-overlay: 30;
+  --z-toast: 50;
+}
+
+/* --- โครงแบบแอป: เอกสารทั้งใบไม่เลื่อน มีแต่ส่วนเนื้อหาที่เลื่อน ---
+   html/body ถูกตรึงความสูงเท่าจอ และปิดการเลื่อนไว้ ส่วนที่เลื่อนได้จริงมีที่เดียว
+   คือ .app-shell-main ข้างใน AppShell ทำแบบนี้แล้วแถบหัวกับปุ่มลงมือท้ายจอ
+   จะไม่ขยับตามนิ้ว และไม่มีแถบเลื่อนซ้อนสองชั้นให้เด็กกดพลาด */
+html {
+  /* กันหน้าเด้งตอนคีย์บอร์ดมือถือเด้งขึ้น */
+  -webkit-text-size-adjust: 100%;
+  /* ให้สีพื้นลามเต็มจอตอนดึงหน้าเกินขอบบน iOS */
+  background-color: var(--color-surface);
+
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  @apply bg-surface text-ink antialiased;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+
+  /* 100dvh ไม่ใช่ 100vh — แถบที่อยู่ของเบราว์เซอร์มือถือยุบ/ขยายได้ 100vh จึงสูงเกินจอจริง
+     แล้วเกิดแถบเลื่อนของทั้งหน้าซ้อนขึ้นมาอีกชั้น ส่วน dvh วัดความสูงที่มองเห็นจริงตอนนั้น */
+  height: 100dvh;
+  overflow: hidden;
+
+  /* กันหน้าทั้งใบเด้ง/ดึงรีเฟรชตอนเลื่อนเนื้อหาข้างในจนสุด */
+  overscroll-behavior: none;
+
+  /* พื้นที่ปลอดภัยของ iPhone ไม่ได้อยู่ตรงนี้แล้ว — ย้ายไปอยู่ที่ header/footer ของ AppShell
+     เพื่อให้สีพื้นของแถบหัว/แถบเมนูลามเข้าไปใต้จอบากและแถบ home indicator จริง ๆ */
+}
+
+/* ห้ามให้ภาพ/วิดีโอดันความกว้างจนเกิดแถบเลื่อนแนวนอนบนจอ 390px */
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ค่ามาตรฐานของวงแหวนโฟกัส — เห็นชัดบนทุกพื้นหลังในระบบนี้ (>= 3:1)
+   ใช้ :focus-visible เพื่อให้วงแหวนขึ้นตอนใช้คีย์บอร์ด/สวิตช์ แต่ไม่ขึ้นตอนแตะนิ้ว */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ป้องกันการ zoom อัตโนมัติของ iOS Safari: ช่องกรอกที่เล็กกว่า 16px จะโดนซูม */
+input,
+textarea,
+select {
+  font-size: max(1rem, var(--text-body));
+}
+
+/* สีไฮไลต์ตอนเลือกข้อความให้เข้าชุดกับแบรนด์ */
+::selection {
+  background-color: var(--color-brand-200);
+  color: var(--color-ink);
+}
+
+/* ============================================================================
+   ปิดการเคลื่อนไหวให้ผู้ที่ตั้งค่า "ลดการเคลื่อนไหว" ไว้ในระบบ
+   (นักเรียนบางคนเวียนหัวกับภาพเคลื่อนไหว — iOS/Android มีสวิตช์นี้ให้ตั้ง)
+   ไม่ตั้งเป็น 0s เพราะ transitionend/animationend บางตัวจะไม่ยิง
+   ============================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   Utility ที่ใช้ซ้ำบ่อย
+   ============================================================================ */
+
+/* พื้นที่แตะขั้นต่ำ 44x44px ตาม WCAG 2.5.8 / Apple HIG
+   ใช้กับปุ่มไอคอนหรืออะไรก็ตามที่ "ดูเล็กกว่านิ้ว" */
+@utility tap-target {
+  @apply inline-flex min-h-11 min-w-11 items-center justify-center;
+}
+
+/* วงแหวนโฟกัสแบบสั่งเอง สำหรับ element ที่อยากคุมรัศมีมุมเอง */
+@utility focus-ring {
+  @apply focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus;
+}
+
+/* ฐานของปุ่มทุกแบบ — สูง 48px (เกินขั้นต่ำ 44px) เพราะนิ้วนักเรียนกดบนรถเมล์ */
+@utility btn-base {
+  @apply inline-flex min-h-12 cursor-pointer items-center justify-center gap-2
+    rounded-lg px-5 text-body font-semibold
+    transition-[background-color,box-shadow,transform,color] duration-200 ease-[var(--ease-soft)]
+    select-none
+    focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus
+    disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none;
+}
+
+/* ปุ่มหลักของเกม — เต็มความกว้าง สูง 56px สำหรับ CTA เดียวของหน้า */
+@utility btn-quest {
+  @apply btn-base min-h-14 w-full rounded-xl px-6 text-body-lg shadow-soft-2
+    active:translate-y-px active:shadow-soft-1;
+}
+
+/* การ์ดลอยมีเงานุ่ม — ลุคหลักของทั้งแอปตามภาพต้นแบบ */
+@utility card-soft {
+  @apply rounded-2xl bg-surface-raised p-5 shadow-soft-2;
+}
+
+/* การ์ดที่กดได้ — เพิ่ม cursor + ฟีดแบ็กตอนกด */
+@utility card-tap {
+  @apply card-soft cursor-pointer text-left transition-[box-shadow,transform] duration-200
+    ease-[var(--ease-soft)] active:translate-y-px active:shadow-soft-1
+    focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus;
+}
+
+/* คอนเทนเนอร์หน้าจอ — ผูกไว้ที่ 480px เพื่อไม่ให้บรรทัดยาวเกินอ่านบนแท็บเล็ต 820px
+   ใช้ความกว้างแบบยืดหยุ่นล้วน ไม่มี fixed width ที่ไหนในระบบนี้ */
+@utility screen-shell {
+  @apply mx-auto w-full max-w-[30rem] px-4;
+}
+
+/* เว้นท้ายหน้าให้พ้นแถบเมนูล่าง — ใช้เฉพาะกรณีที่แถบเมนูลอยทับเนื้อหาจริง ๆ
+   ใน AppShell แถบเมนูเป็นชั้น footer แยกอยู่แล้ว จึงไม่ต้องเว้นระยะนี้ */
+@utility pb-nav {
+  padding-bottom: calc(var(--bottom-nav-height) + calc(var(--spacing) * 4));
+}
+
+/* ============================================================================
+   โครงหน้าจอแบบแอป 3 ชั้น (ใช้ผ่าน components/app-shell.tsx เท่านั้น ห้ามก๊อปโครงซ้ำรายหน้า)
+
+     app-shell           สูงเท่าจอพอดี ไม่เลื่อน เป็นกล่อง flex แนวตั้ง
+     ├─ app-shell-header  อยู่กับที่ ไม่หด (ปุ่มย้อนกลับ ชื่อหน้า ดาว นาฬิกา)
+     ├─ app-shell-main    ชั้นเดียวในหน้าที่เลื่อนได้
+     └─ app-shell-footer  อยู่กับที่ ไม่หด (ปุ่มลงมือหลัก หรือแถบเมนูล่าง)
+
+   ทำไมต้องมี min-height: 0 ที่ main: ค่าเริ่มต้นของ flex item คือ min-height:auto
+   ซึ่ง "ห้ามหดเล็กกว่าเนื้อหา" ผลคือ main ดันกล่องจนสูงเกินจอ แล้ว footer ถูกดันตกจอ
+   ============================================================================ */
+
+@utility app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  /* ต้องมี ไม่งั้นลูกที่เป็น position:absolute จะไปผูกกับ html แทน
+     แล้วหลุดออกนอกกรอบที่ตั้งใจให้ตัด ทำให้พื้นที่เลื่อนของเอกสารโตตามไปด้วย */
+  position: relative;
+  width: 100%;
+  margin-inline: auto;
+  background-color: var(--color-surface);
+
+  /* แสงนวลสองก้อนหลังทุกหน้า — ม่วงจาง ๆ ที่มุมบน ส้มจาง ๆ ที่มุมล่างขวา
+     ทำให้หน้าจอรู้สึกเป็น "ฉากของเกม" แทนที่จะเป็นกระดาษเปล่า โดยไม่ต้องใส่ภาพพื้นหลัง
+     ใช้โทเคนขั้น 50 ซึ่งตรวจแล้วว่าตัวอักษรทุกระดับยังผ่าน 4.5:1 บนพื้นนี้
+     (ต่ำสุด ink-subtle บน brand-50 = 4.89:1 · ดู docs/design-system.md) */
+  background-image:
+    radial-gradient(64rem 30rem at 50% -8%, var(--color-brand-50), transparent 62%),
+    radial-gradient(44rem 26rem at 112% 104%, var(--color-spark-50), transparent 66%);
+
+  /* จอแนวนอน/จอบากด้านข้าง — กันเนื้อหาไปอยู่ใต้ขอบโค้ง */
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* แถบหัว/แถบท้ายต้องโปร่งพอให้แสงนวลของ shell ลอดขึ้นมา ไม่งั้นจะเห็นเป็นแถบสีทับ
+   ใช้ตัวนี้แทน bg-surface ทึบ ๆ ใน AppHeader/AppFooter */
+@utility surface-veil {
+  /* 95% ไม่ใช่ 82% — ถ่ายภาพจริงมาดูแล้วที่ 82% ตัวหนังสือของเนื้อหาที่เลื่อนลอดอยู่ข้างใต้
+     ยังทะลุขึ้นมาเห็นครึ่งบรรทัด อ่านออกมาเหมือนจอเพี้ยนมากกว่าเหมือนกระจกฝ้า */
+  background-color: color-mix(in oklab, var(--color-surface) 95%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+/* จอคอมกว้าง ๆ ยังใช้โครงเดิมทุกอย่าง แค่จำกัดความกว้างไว้กลางจอ
+   ไม่ยืดบรรทัดยาวจนอ่านยาก และไม่เปลี่ยนไปเป็นโครงแบบเลื่อนทั้งหน้า */
+@utility app-shell-app {
+  max-width: 30rem;
+}
+@utility app-shell-wide {
+  max-width: 64rem;
+}
+
+@utility app-shell-header {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: var(--z-sticky);
+  padding-top: var(--safe-top);
+}
+
+@utility app-shell-main {
+  flex: 1 1 auto;
+  /* จำเป็น ดูคำอธิบายด้านบน */
+  min-height: 0;
+  /* เหตุผลเดียวกับที่ .app-shell ต้องมี — ลูกแบบ absolute ต้องถูกตัดที่กล่องนี้
+     ไม่ใช่วิ่งไปโผล่ท้ายเอกสาร (อาการที่เจอจริงตอนวัด: หน้า /ceo เอกสารสูง 2055 ทั้งที่จอสูง 844) */
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* การเลื่อนจบที่กล่องนี้ ไม่ส่งต่อไปให้หน้าทั้งใบหรือแถบเบราว์เซอร์ */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================================================
+   โหมด "จบในหน้าเดียว" — ไม่มีการเลื่อนแม้แต่ในชั้นเนื้อหา (UX-1 ข้อ 1)
+
+   เปิดด้วย <AppShell fit> เท่านั้น **ไม่ใช่ค่าตั้งต้น** เพราะหน้าที่ยังไม่ได้ออกแบบใหม่
+   (ข้อสอบ 10 ข้อ · คลังความรู้ · คู่มือดีไซน์) ถ้าถูกตัดการเลื่อนทิ้งเฉย ๆ
+   เนื้อหาครึ่งล่างจะหายไปเลยและกดไม่ได้ ซึ่งแย่กว่าการเลื่อน
+   หน้าไหนออกแบบให้จบในจอเดียวแล้วค่อยเปิดโหมดนี้ทีละหน้า
+   ============================================================================ */
+@utility app-shell-main-fit {
+  overflow: hidden;
+  /* กล่องลูกทุกชั้นต้องหดตามได้ ไม่งั้นลูกที่สูงกว่าจอจะดันกล่องนี้จนล้น */
+  min-height: 0;
+}
+
+@utility app-shell-footer {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: var(--z-sticky);
+  padding-bottom: var(--safe-bottom);
+
+  /* วาล์วนิรภัย: กันกรณีจอเตี้ยมาก (คีย์บอร์ดเด้งขึ้นบนมือถือเครื่องเล็ก) แล้วแถบท้าย
+     ที่มีปุ่มหลายปุ่มสูงเกินจอ จนล้นออกไปกดไม่ได้เลย จำกัดไว้ครึ่งจอแล้วให้เลื่อนในตัวเอง
+     บนจอปกติเนื้อหาพอดีอยู่แล้ว จึงไม่มีแถบเลื่อนโผล่และไม่เปลี่ยนหน้าตาอะไร */
+  max-height: 55dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ใช้เมื่อหน้านั้นไม่มี header/footer — เอาพื้นที่ปลอดภัยด้านนั้นมาไว้ที่ตัว shell แทน
+   จะได้ไม่มีเนื้อหาไปโผล่ใต้จอบากหรือใต้แถบ home indicator */
+@utility app-shell-safe-t {
+  padding-top: var(--safe-top);
+}
+@utility app-shell-safe-b {
+  padding-bottom: var(--safe-bottom);
+}
+
+/* พื้นที่ปลอดภัยแบบสั่งทีละด้าน สำหรับ element ที่ fixed ติดขอบจอ */
+@utility safe-t {
+  padding-top: var(--safe-top);
+}
+@utility safe-b {
+  padding-bottom: var(--safe-bottom);
+}
+@utility safe-x {
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* แถบเลื่อนแนวนอนแบบ snap สำหรับแถวชิป/การ์ดบนจอแคบ
+   ซ่อน scrollbar เพราะบนมือถือมันบังเนื้อหา แต่ยังเลื่อนด้วยนิ้ว/คีย์บอร์ดได้ */
+@utility row-scroll {
+  @apply -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ตัวอักษรที่ผู้ใช้สายตาปกติไม่เห็น แต่โปรแกรมอ่านหน้าจออ่านได้ */
+@utility sr-only-text {
+  @apply sr-only;
+}
+
+/* ============================================================================
+   ชั้นตกแต่ง — ใช้จัดลำดับสายตาให้หน้าดูเป็นเกม ไม่ใช่แบบฟอร์ม
+   ทุกตัวสร้างจากโทเคนเดิมล้วน ไม่มีสีใหม่ ไม่มีภาพจากข้างนอก
+   ============================================================================ */
+
+/* ป้ายเล็กเหนือหัวข้อ — บอกว่าตอนนี้อยู่ตรงไหนของคาบ กวาดตาเจอก่อนหัวข้อเสมอ */
+@utility eyebrow-chip {
+  @apply inline-flex min-h-7 items-center gap-1.5 rounded-full bg-brand-100 px-3
+    text-label font-bold text-brand-700;
+}
+
+/* แผงพระเอกของหน้า (หน้าฉลอง/หน้าผลงาน) — ไล่สีม่วงเข้มไปเขียว ตัวหนังสือขาว
+   ใช้ได้หน้าละแผงเดียว ไม่งั้นจะไม่มีอะไรเป็นพระเอก
+   ไล่สีจาก brand-700 ไป quest-700 ซึ่งทั้งคู่ผ่าน 4.5:1 กับตัวอักษรขาว (5.38 และ 7.05) */
+@utility panel-hero {
+  @apply relative overflow-hidden rounded-3xl p-6 text-ink-onbrand shadow-soft-3;
+  background-image: linear-gradient(
+    145deg,
+    var(--color-brand-700) 0%,
+    var(--color-brand-600) 42%,
+    var(--color-quest-700) 100%
+  );
+}
+
+/* วงแสงจาง ๆ ในแผงพระเอก ใช้คู่กับ panel-hero เพื่อไม่ให้พื้นดูแบน */
+@utility panel-hero-glow {
+  @apply pointer-events-none absolute -top-16 -right-10 size-56 rounded-full;
+  background-image: radial-gradient(circle, var(--color-brand-400) 0%, transparent 68%);
+
+  /* 0.20 ไม่ใช่ 0.55 — วงแสงนี้ทำให้พื้นใต้ตัวหนังสือสว่างขึ้น
+     ที่ 0.55 ตัวอักษรขาวบนจุดสว่างสุดของไล่สี (brand-600) เหลือ 3.73:1 ซึ่งตกเกณฑ์ AA
+     0.20 ได้ 4.71:1 ยังเห็นวงแสงอยู่แต่ไม่กินคอนทราสต์
+     (วัดแบบผสมสีจริงตามอัตราส่วน alpha ไม่ใช่เทียบโทเคนเปล่า ๆ) */
+  opacity: 0.2;
+}
+
+/* ขีดสีหน้าหัวข้อย่อย — ช่วยให้สายตาแยก "หัวข้อ" ออกจาก "เนื้อหา" ได้โดยไม่ต้องขยายตัวอักษร */
+@utility accent-rule {
+  @apply h-6 w-1.5 shrink-0 rounded-full bg-brand-500;
+}
+
+/* การ์ดสำหรับรายการผลงาน — ยกขึ้นเล็กน้อยตอนชี้/กด และมีขอบบนเป็นแถบสี */
+@utility card-work {
+  @apply relative overflow-hidden rounded-2xl bg-surface-raised p-5 shadow-soft-2
+    transition-[box-shadow,transform] duration-200 ease-[var(--ease-soft)]
+    hover:-translate-y-0.5 hover:shadow-soft-3
+    motion-reduce:transition-none motion-reduce:hover:translate-y-0;
+}
+
+/* ตัวเลขใหญ่ประจำหน้า (คะแนน ดาว จำนวนผลงาน) — ไล่สีในตัวอักษรให้ดูเป็นรางวัล */
+@utility stat-hero {
+  @apply text-hero font-black tabular-nums;
+  background-image: linear-gradient(135deg, var(--color-brand-700), var(--color-brand-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ============================================================================
+   UX-1 — ฉากการ์ตูนกับปุ่มที่แยกสีตามหน้าที่
+
+   กติกา 2 ข้อที่ทุกตัวในบล็อกนี้เคารพ
+     1. ของตกแต่งห้ามกินคอนทราสต์ — ทุกตัวเป็น pointer-events:none และ
+        ใช้เฉพาะโทเคนขั้น 50/100 ซึ่งวัดแล้วว่าตัวอักษรทุกระดับยังผ่าน 4.5:1 บนพื้นนั้น
+     2. ของตกแต่งห้ามขยับเมื่อผู้ใช้ตั้งค่า "ลดการเคลื่อนไหว"
+        (กติกาใหญ่อยู่ที่บล็อก prefers-reduced-motion ด้านบนแล้ว ที่นี่ย้ำเฉพาะตัวที่มี animation)
+   ============================================================================ */
+
+/* ท้องฟ้าไล่สีของฉากด้านบนหน้าจอ — ใช้เป็นพื้นของกล่องภาพร้าน/ภาพฉาก */
+@utility scene-sky {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-brand-50) 0%,
+    var(--color-surface-alt) 45%,
+    var(--color-quest-50) 100%
+  );
+}
+
+/* ลายจุดบาง ๆ ทับพื้นหลัง ให้พื้นครีมเปล่าดูเป็นกระดาษสมุดของเกม
+   ขนาดจุด 1.5px ระยะ 18px — จางพอที่ตัวอักษรบนพื้นนี้ยังวัดได้เท่าเดิม */
+@utility scene-dots {
+  background-image: radial-gradient(
+    var(--color-brand-100) 1.5px,
+    transparent 1.6px
+  );
+  background-size: 18px 18px;
+}
+
+/* แถบริบบิ้นโค้งใต้หัวข้อ ใช้แทนเส้นคั่นตรง ๆ */
+@utility ribbon-underline {
+  @apply block h-1.5 rounded-full;
+  background-image: linear-gradient(
+    90deg,
+    var(--color-brand-400),
+    var(--color-spark-400) 60%,
+    transparent
+  );
+}
+
+/* กระดาษโน้ตติดขอบ — ใช้กับกล่องคำแนะนำ/รายการสั้น ๆ ให้ดูเป็นโน้ตที่แปะไว้ */
+@utility note-paper {
+  @apply relative rounded-2xl bg-surface-raised p-4 shadow-soft-2 ring-1 ring-line ring-inset;
+}
+
+/* ============================================================================
+   ปุ่มแยกสีตามหน้าที่ (UX-1 ข้อ 2) — สีเดียวกันทั้งแอปแปลว่าอะไรก็ได้ = ไม่แปลว่าอะไรเลย
+     เขียว  = ยืนยัน/ตรวจคำตอบ/ผ่านแล้ว
+     ม่วง   = ไปต่อ (ปุ่มหลักของหน้า)
+     ทอง    = ดาว/รางวัล
+     ฟ้าคราม = ความรู้เพิ่มเติม
+   ทุกคู่สีวัดแล้วผ่าน 4.5:1 กับตัวอักษรบนปุ่ม
+   ============================================================================ */
+@utility btn-confirm {
+  @apply btn-quest bg-quest-600 text-ink-onbrand hover:bg-quest-700;
+}
+@utility btn-go {
+  @apply btn-quest bg-brand-600 text-ink-onbrand hover:bg-brand-700;
+}
+
+/* แถวชิปปุ่มรอง — แทนกล่องใหญ่ซ้อนกันหลายกล่อง กินที่น้อยกว่ามากและกวาดตาเจอเร็วกว่า */
+@utility chip-row {
+  @apply flex flex-wrap items-center gap-2;
+}
+
+/* ============================================================================
+   แผ่นเลื่อนขึ้นจากด้านล่าง (bottom sheet) แบบไม่ใช้ JavaScript
+
+   ทำไมไม่ใช้ JS: หน้าที่ใช้ตัวนี้เป็น server component ทั้งหมด และไฟล์ -client.tsx
+   เป็นของ session อื่น · <details>/<summary> เปิด-ปิดได้เองในตัวเบราว์เซอร์
+   คีย์บอร์ดใช้ได้ (Enter/Space) และโปรแกรมอ่านหน้าจอรู้สถานะเปิด/ปิดให้เอง
+
+   นี่คือ **ที่เดียว** ที่ยังมีการเลื่อนได้ตามกติกา UX-1 ข้อ 1 — ของยาวย้ายมาอยู่ในแผ่นนี้
+   แทนที่จะต่อหน้าให้ยาวขึ้น
+   ============================================================================ */
+@utility sheet-backdrop {
+  @apply pointer-events-none fixed inset-0 z-(--z-overlay) bg-ink/35 opacity-0
+    transition-opacity duration-200 ease-[var(--ease-soft)]
+    motion-reduce:transition-none;
+}
+@utility sheet-panel {
+  @apply fixed inset-x-0 bottom-0 mx-auto flex max-h-[82dvh] w-full
+    max-w-[30rem] translate-y-full flex-col overflow-y-auto overscroll-contain
+    rounded-t-3xl bg-surface-raised px-5 pt-3 shadow-soft-3
+    transition-transform duration-250 ease-[var(--ease-pop)]
+    motion-reduce:transition-none;
+  /* สูงกว่าฉากหลังหนึ่งชั้น ลำดับใน DOM จึงไม่ต้องสลับ */
+  z-index: calc(var(--z-overlay) + 1);
+  padding-bottom: calc(var(--safe-bottom) + calc(var(--spacing) * 8));
+}
+/* ขีดจับด้านบนแผ่น บอกว่าปิดได้ */
+@utility sheet-grip {
+  @apply mx-auto mb-3 block h-1.5 w-12 shrink-0 rounded-full bg-line-strong;
+}
+
+/* ตัวเปิด-ปิดจริงของแผ่น: ไม่มี JavaScript มีแต่ตัวเลือก :target ของ CSS
+   เขียนเป็นกฎ CSS ตรง ๆ เพราะต้องอ้างถึง "พี่น้องที่อยู่หลังตัวที่ถูก target" ซึ่ง utility ทำไม่ได้ */
+.sheet-panel:target {
+  transform: translateY(0);
+}
+.sheet-panel:target ~ .sheet-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}

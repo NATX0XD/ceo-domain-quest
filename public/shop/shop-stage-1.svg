@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 260" width="320" height="260" role="img" aria-label="ขั้นที่ 1 จาก 4: ที่ดินเปล่ารอสร้างร้าน">
+  <title>ขั้นที่ 1 จาก 4: ที่ดินเปล่ารอสร้างร้าน</title>
+  <!-- พื้นหญ้า -->
+  <path d="M160 122 L300 190 L160 258 L20 190 Z" fill="#A3E8C5"/>
+  <path d="M160 258 L20 190 L20 198 L160 266 L300 198 L300 190 Z" fill="#2FB983"/>
+  <!-- ผังพื้นร้านที่ยังว่าง -->
+  <path d="M160 146 L250 190 L160 234 L70 190 Z" fill="#F5F0E4" stroke="#AD4216" stroke-width="3" stroke-dasharray="9 7" stroke-linejoin="round"/>
+  <!-- หมุดมุมผัง -->
+  <g fill="#AD4216">
+    <circle cx="160" cy="146" r="4"/>
+    <circle cx="250" cy="190" r="4"/>
+    <circle cx="160" cy="234" r="4"/>
+    <circle cx="70" cy="190" r="4"/>
+  </g>
+  <!-- ป้ายชื่อร้านที่ยังว่าง -->
+  <rect x="146" y="176" width="8" height="34" rx="3" fill="#AD4216"/>
+  <rect x="112" y="142" width="76" height="40" rx="10" fill="#FFFFFF" stroke="#AD4216" stroke-width="3"/>
+  <g stroke="#868397" stroke-width="4" stroke-linecap="round">
+    <path d="M126 158 L174 158"/>
+    <path d="M126 168 L158 168"/>
+  </g>
+  <!-- ต้นไม้และก้อนหิน -->
+  <g>
+    <rect x="58" y="146" width="6" height="14" rx="3" fill="#AD4216"/>
+    <circle cx="61" cy="140" r="14" fill="#2FB983"/>
+    <circle cx="53" cy="146" r="9" fill="#73D5A7"/>
+  </g>
+  <ellipse cx="238" cy="216" rx="15" ry="8" fill="#C2BEDB"/>
+  <ellipse cx="92" cy="222" rx="10" ry="5" fill="#C2BEDB"/>
+</svg>
