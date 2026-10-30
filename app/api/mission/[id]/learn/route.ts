@@ -14,6 +14,7 @@ import {
   scoreOpenAnswers,
   scoreWarmup,
 } from '@/components/server/learn-path'
+import { ai } from '@/components/server/ai'
 import { checkCounterStep, scoreCounter } from '@/components/server/learn-counter'
 import { checkRegistrarStep, scoreRegistrar } from '@/components/server/learn-registrar'
 import {
@@ -99,13 +100,20 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
       const answers = Object.fromEntries(
         path[body.mode].questions.map((q) => [q.id, body.answers[q.id] ?? '']),
       )
-      const result = await scoreOpenAnswers(path, body.mode, answers)
+      // AI ช่วยตรวจคำตอบที่ใช้คำของตัวเอง (งบ 5 วินาที) คะแนนไม่มีวันต่ำกว่าคำสำคัญ ล่ม = คำสำคัญล้วน
+      const result = await scoreOpenAnswers(path, body.mode, answers, { checker: ai, studentId })
       await logEvent(studentId, LEARN_EVENTS.answer, {
         missionId,
         mode: body.mode,
         score: result.score,
         passed: result.passed,
-        perQuestion: result.perQuestion.map((q) => ({ id: q.id, score: q.score })),
+        perQuestion: result.perQuestion.map((q) => ({
+          id: q.id,
+          score: q.score,
+          source: q.source,
+          keywordScore: q.keywordScore,
+          aiScore: q.aiScore,
+        })),
         answers,
       })
       if (result.passed) await logEvent(studentId, LEARN_EVENTS.done, { missionId, mode: body.mode, score: result.score })

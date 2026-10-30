@@ -31,7 +31,16 @@ export interface LatestLearnAnswer {
   score: number | null
   passed: boolean | null
   at: string
-  answers: { id: string; text: string; score: number | null }[]
+  answers: { id: string; text: string; score: number | null; checkedBy: LearnAnswerCheckedBy }[]
+}
+
+/** ใครตรวจข้อนี้ — 'ai' = AI ช่วยตรวจ · 'keyword' = คำสำคัญล้วน · null = event เก่าที่ยังไม่บันทึก */
+export type LearnAnswerCheckedBy = 'ai' | 'keyword' | null
+
+function checkedByOf(source: unknown): LearnAnswerCheckedBy {
+  if (source === 'typhoon' || source === 'gemini') return 'ai'
+  if (source === 'rule') return 'keyword'
+  return null
 }
 
 export const ANSWER_TEXT_MAX = 1000
@@ -116,15 +125,24 @@ function emptyMission(missionId: string): StudentMissionLearn {
 function latestAnswerOf(p: Record<string, unknown>, mode: LearnResultMode, at: string): LatestLearnAnswer | null {
   const texts = bag(p.answers)
   const scores = new Map<string, number | null>()
+  const checkers = new Map<string, LearnAnswerCheckedBy>()
   if (Array.isArray(p.perQuestion)) {
     for (const q of p.perQuestion) {
       const b = bag(q)
-      if (typeof b.id === 'string') scores.set(b.id, finite(b.score))
+      if (typeof b.id === 'string') {
+        scores.set(b.id, finite(b.score))
+        checkers.set(b.id, checkedByOf(b.source))
+      }
     }
   }
   const answers = Object.entries(texts)
     .filter(([, v]) => typeof v === 'string')
-    .map(([id, v]) => ({ id, text: (v as string).slice(0, ANSWER_TEXT_MAX), score: scores.get(id) ?? null }))
+    .map(([id, v]) => ({
+      id,
+      text: (v as string).slice(0, ANSWER_TEXT_MAX),
+      score: scores.get(id) ?? null,
+      checkedBy: checkers.get(id) ?? null,
+    }))
   if (answers.length === 0) return null
   return { mode, score: finite(p.score), passed: typeof p.passed === 'boolean' ? p.passed : null, at, answers }
 }

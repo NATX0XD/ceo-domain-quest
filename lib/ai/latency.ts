@@ -24,12 +24,23 @@
 import type { AiProvider } from './types'
 
 export type MeasurableProvider = Exclude<AiProvider, 'rules'>
-export type AiTaskId = 'hint' | 'grade' | 'customer' | 'story'
+/**
+ * learnCheck = ตรวจคำตอบปลายเปิดของเส้นทางเรียนว่าครอบคลุมแนวคิดไหนบ้าง (ผู้เรียนรอ งบ 5 วินาที)
+ */
+export type AiTaskId = 'hint' | 'grade' | 'customer' | 'story' | 'learnCheck'
+
+/**
+ * learnCheck วัดแยกเมื่อ 31 ตุลาคม 2569 (npx tsx scripts/check-learn-ai.ts) ยิงตรง ไม่ผ่านคิว
+ * คำตอบ 2 ข้อของ m1 (แนวคิด 2 + 3) ในการเรียกครั้งเดียว เจ้าละ 3 ครั้ง ใช้มัธยฐาน
+ *   Typhoon 3,158 ms [3158, 2982, 3515] · Gemini 1,517 ms [1517, 1436, 1690]
+ */
+const LEARN_CHECK_TYPHOON_MS = 3_158
+const LEARN_CHECK_GEMINI_MS = 1_517
 
 /** มัธยฐานที่วัดได้จริง 30 กันยายน 2569 (มิลลิวินาที) */
 export const MEASURED_LATENCY_MS: Record<MeasurableProvider, Record<AiTaskId, number>> = {
-  typhoon: { hint: 811, grade: 13_304, customer: 938, story: 9_281 },
-  gemini: { hint: 1_020, grade: 2_240, customer: 1_017, story: 2_934 },
+  typhoon: { hint: 811, grade: 13_304, customer: 938, story: 9_281, learnCheck: LEARN_CHECK_TYPHOON_MS },
+  gemini: { hint: 1_020, grade: 2_240, customer: 1_017, story: 2_934, learnCheck: LEARN_CHECK_GEMINI_MS },
 }
 
 /**

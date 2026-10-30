@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url'
 import { z } from 'zod'
 import learnPathsJson from '@/content/learn-paths.json' with { type: 'json' }
 import { getServiceClient } from '@/lib/db/client'
+import type { AiClient, LearnCheckItemResult } from '@/lib/ai/types'
 
 /**
  * เส้นทางเรียนก่อนเข้าภารกิจ (ดู / อ่าน / ลงมือทำ) — สเปกเต็มอยู่ที่ docs/learn-path-spec.md
@@ -171,19 +172,30 @@ export function normalizeAnswer(text: string): string {
   return text.toLowerCase().replace(/\s+/g, '')
 }
 
+/** ใครตรวจข้อนี้ — โมเดลช่วยตรวจ หรือคำสำคัญล้วน */
+export type AnswerSource = 'typhoon' | 'gemini' | 'rule'
+
 export interface QuestionScore {
   id: string
   score: number
   feedback: string
   /** concept ที่ยังขาด ใช้บอกเฉพาะจุดว่าควรเติมเรื่องอะไร (ไม่ใช่เฉลย) */
   missing: string[]
+  /** 'rule' = ตรวจด้วยคำสำคัญล้วน · ชื่อผู้ให้บริการ = AI ช่วยตรวจข้อนี้ */
+  source: AnswerSource
+  /** คะแนนจากคำสำคัญ = พื้นขั้นต่ำเสมอ */
+  keywordScore: number
+  /** คะแนนตามแนวคิดที่ AI ว่าครอบคลุม null = ไม่ได้ใช้ AI กับข้อนี้ */
+  aiScore: number | null
 }
 
-export function scoreOpenAnswer(
-  rubric: z.infer<typeof RubricSchema>,
-  id: string,
-  text: string,
-): QuestionScore {
+type Rubric = z.infer<typeof RubricSchema>
+
+function clampScore(n: number): number {
+  return Math.max(0, Math.min(100, n))
+}
+
+export function scoreOpenAnswer(rubric: Rubric, id: string, text: string): QuestionScore {
   const norm = normalizeAnswer(text)
   let score = 0
   const missing: string[] = []
@@ -195,22 +207,96 @@ export function scoreOpenAnswer(
     if (hit) score += c.points
     else missing.push(c.label)
   }
-  score = Math.max(0, Math.min(100, score))
-  return { id, score, feedback: score > PASS_SCORE ? rubric.feedbackPass : rubric.feedbackRetry, missing }
+  score = clampScore(score)
+  return {
+    id,
+    score,
+    feedback: score > PASS_SCORE ? rubric.feedbackPass : rubric.feedbackRetry,
+    missing,
+    source: 'rule',
+    keywordScore: score,
+    aiScore: null,
+  }
+}
+
+/**
+ * รวมผลคำสำคัญกับผล AI ของข้อเดียว — **คะแนน = max(คำสำคัญ, AI)**
+ * AI จึงช่วยได้แค่คำตอบที่ใช้คำของตัวเอง ไม่มีวันทำให้เข้มกว่าเดิม
+ * คำแนะนำจาก AI ใช้เมื่อผลของ AI เป็นตัวที่ถูกเลือก และยังมีแนวคิดที่ขาด
+ */
+export function mergeAiCheck(
+  rubric: Rubric,
+  keyword: QuestionScore,
+  check: LearnCheckItemResult,
+  provider: Exclude<AnswerSource, 'rule'>,
+): QuestionScore {
+  const aiScore = clampScore(rubric.concepts.reduce((s, c, i) => s + (check.covered[i] ? c.points : 0), 0))
+  const base = { ...keyword, source: provider, aiScore }
+  if (aiScore <= keyword.keywordScore) return base
+
+  const missing = rubric.concepts.filter((_, i) => !check.covered[i]).map((c) => c.label)
+  const feedback =
+    missing.length > 0 && check.feedback
+      ? check.feedback
+      : aiScore > PASS_SCORE
+        ? rubric.feedbackPass
+        : rubric.feedbackRetry
+  return { ...base, score: aiScore, missing, feedback }
+}
+
+/** คำตอบสั้นกว่านี้ไม่ต้องส่งให้ AI (ไม่มีเนื้อหาให้ตีความ) */
+const AI_MIN_ANSWER_CHARS = 4
+
+export interface OpenAnswerOptions {
+  /** ตัวตรวจ AI (ปกติคือ ai จาก components/server/ai.ts) ไม่ส่ง = คำสำคัญล้วน */
+  checker?: Pick<AiClient, 'learnCheck'> | null
+  /** นับโควตา AI รายคน */
+  studentId?: string
 }
 
 export async function scoreOpenAnswers(
   path: LearnPath,
   mode: 'watch' | 'read',
   answers: Record<string, string>,
+  options: OpenAnswerOptions = {},
 ): Promise<{ score: number; passed: boolean; perQuestion: QuestionScore[] }> {
   const key = await loadAnswers(path.missionId)
   const questions = path[mode].questions
-  const perQuestion = questions.map((q) => {
+  const rubrics = questions.map((q) => {
     const rubric = key.rubrics[q.id]
     if (!rubric) throw new Error(`learn-paths-answers: ไม่มี rubric ของ ${q.id}`)
-    return scoreOpenAnswer(rubric, q.id, answers[q.id] ?? '')
+    return rubric
   })
+  let perQuestion = questions.map((q, i) => scoreOpenAnswer(rubrics[i]!, q.id, answers[q.id] ?? ''))
+
+  // ส่งให้ AI เฉพาะข้อที่คำสำคัญยังให้ไม่เต็มและมีเนื้อหาจริง ข้อเต็มแล้ว AI เพิ่มอะไรไม่ได้
+  const items = questions
+    .map((q, i) => ({ q, i, answer: (answers[q.id] ?? '').trim() }))
+    .filter(({ i, answer }) => perQuestion[i]!.keywordScore < 100 && answer.replace(/\s+/g, '').length >= AI_MIN_ANSWER_CHARS)
+    .map(({ q, i, answer }) => ({
+      id: q.id,
+      question: q.prompt,
+      concepts: rubrics[i]!.concepts.map((c) => c.label),
+      answer,
+    }))
+
+  if (options.checker && items.length > 0) {
+    try {
+      const check = await options.checker.learnCheck({ items, studentId: options.studentId, missionId: path.missionId })
+      if (check.source === 'ai' && check.provider !== 'rules') {
+        const provider = check.provider
+        const byId = new Map(check.items.map((item) => [item.id, item]))
+        perQuestion = perQuestion.map((q, i) => {
+          const item = byId.get(q.id)
+          return item ? mergeAiCheck(rubrics[i]!, q, item, provider) : q
+        })
+      }
+    } catch (err) {
+      // ชั้น AI ไม่ควร throw อยู่แล้ว กันไว้อีกชั้น — พังเมื่อไรใช้คำสำคัญล้วน
+      console.warn('[learn] AI ช่วยตรวจไม่สำเร็จ ใช้คำสำคัญแทน', err instanceof Error ? err.message : err)
+    }
+  }
+
   const score = Math.round(perQuestion.reduce((s, q) => s + q.score, 0) / Math.max(1, perQuestion.length))
   return { score, passed: score > PASS_SCORE, perQuestion }
 }

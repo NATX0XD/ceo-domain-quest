@@ -17,7 +17,14 @@ import {
   fallbackSimulateCustomer,
 } from './fallback'
 import { callGemini } from './gemini'
-import { gradeReasonPrompt, hintPrompt, simulateCustomerPrompt, storyPrompt } from './prompts'
+import { fallbackLearnCheck, parseLearnCheck } from './learn-check'
+import {
+  gradeReasonPrompt,
+  hintPrompt,
+  learnCheckPrompt,
+  simulateCustomerPrompt,
+  storyPrompt,
+} from './prompts'
 import {
   RUBRIC_DIMENSION_IDS,
   clampDimensionScore,
@@ -37,6 +44,8 @@ import type {
   GradeReasonResult,
   HintInput,
   HintResult,
+  LearnCheckInput,
+  LearnCheckResult,
   RubricDimensionScore,
   SimulateCustomerInput,
   SimulateCustomerResult,
@@ -70,6 +79,8 @@ export const TASK_TIMEOUT_MS: Record<AiTask, number> = {
   customer: DEFAULT_TIMEOUT_MS,
   grade: DEFAULT_TIMEOUT_MS,
   story: BACKGROUND_TIMEOUT_MS,
+  /** ตรวจคำตอบปลายเปิดของเส้นทางเรียน — ผู้เรียนรอผลอยู่หน้าจอ */
+  learnCheck: DEFAULT_TIMEOUT_MS,
 }
 
 /** เวลาที่กันไว้ให้คำขอจริงหลังรอคิว ถ้าเหลือน้อยกว่านี้ไม่ต้องเข้าคิวแล้ว ไปใช้ทางถัดไปเลย */
@@ -147,6 +158,7 @@ export function resolveProvider(
  * | คำใบ้ / ลูกค้าจำลอง | typhoon → gemini | typhoon → gemini |
  * | ตรวจคำตอบ | **gemini → typhoon** (typhoon 13.3 วิ ไม่ทัน) | typhoon → gemini |
  * | แต่งเรื่อง | **gemini → typhoon** | typhoon → gemini |
+ * | ตรวจคำตอบเส้นทางเรียน (learnCheck) | typhoon → gemini (typhoon ~3.2 วิ ทันงบ) | typhoon → gemini |
  *
  * มีคีย์เจ้าเดียวก็ได้ลูกโซ่ยาว 1 ตัว ไม่มีคีย์เลยได้อาร์เรย์ว่าง = ใช้กฎทันทีโดยไม่แตะเน็ต
  */
@@ -582,8 +594,27 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
 
       return value ?? fallbackSimulateCustomer(input, lastReason)
     },
+
+    /**
+     * ตรวจคำตอบปลายเปิดของเส้นทางเรียน — ผู้เรียนรอผลอยู่ งบ 5 วินาที นับโควตา 1 ครั้งต่อการส่ง
+     * ลำดับผู้ให้บริการตาม providerChain (Typhoon ก่อนเมื่อทำทันงบ แล้ว Gemini) ไม่ได้ผล = items ว่าง
+     */
+    async learnCheck(input: LearnCheckInput): Promise<LearnCheckResult> {
+      if (!input?.items?.length) return fallbackLearnCheck('not-requested')
+      const gated = gate(input.studentId, 'learnCheck')
+      if (typeof gated === 'string') return fallbackLearnCheck(gated)
+
+      const { value, lastReason } = await runChain(
+        gated,
+        'learnCheck',
+        () => learnCheckPrompt(input),
+        (raw, provider) => parseLearnCheck(raw, input, provider),
+      )
+      return value ?? fallbackLearnCheck(lastReason)
+    },
   }
 }
 
 export * from './types'
 export { fallbackGradeReason, fallbackHint, fallbackSimulateCustomer } from './fallback'
+export { fallbackLearnCheck } from './learn-check'

@@ -378,7 +378,12 @@ function LatestAnswer({ answer, prompts }: { answer: LatestLearnAnswer; prompts:
           <li key={a.id} className="rounded-xl bg-surface-raised p-3">
             <p className="text-note font-bold text-ink-muted">{prompts[a.id] ?? a.id}</p>
             <p className="mt-1 whitespace-pre-wrap break-words text-label text-ink">{a.text.trim() || '(ไม่ได้ตอบ)'}</p>
-            {a.score !== null ? <p className="mt-1 text-note text-ink-muted">ได้ {n(a.score)} คะแนน</p> : null}
+            {a.score !== null ? (
+              <p className="mt-1 text-note text-ink-muted">
+                ได้ {n(a.score)} คะแนน
+                {a.checkedBy ? ` · ${a.checkedBy === 'ai' ? 'AI ช่วยตรวจ' : 'ตรวจด้วยคำสำคัญ'}` : ''}
+              </p>
+            ) : null}
           </li>
         ))}
       </ol>

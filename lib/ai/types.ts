@@ -180,10 +180,47 @@ export interface StoryResult extends AiMeta {
   safety: { famousBrand: boolean; inappropriate: boolean }
 }
 
+/**
+ * ตรวจคำตอบปลายเปิดของเส้นทางเรียน (ดู / อ่าน) ว่าครอบคลุมแนวคิดสำคัญข้อไหนบ้าง
+ * ส่งหลายข้อในการเรียกครั้งเดียว ใช้โควตาแค่ 1 ครั้งต่อการส่งตรวจ
+ *
+ * ⚠️ แนวคิดสำคัญมาจากไฟล์เฉลยฝั่งเซิร์ฟเวอร์ ห้ามส่งผลดิบนี้ออกไปเบราว์เซอร์
+ * ⚠️ AI เป็นแค่ตัวช่วยจับคำตอบที่ใช้คำต่างจากคำสำคัญ คะแนนสุดท้ายไม่มีวันต่ำกว่าการตรวจด้วยคำสำคัญ
+ */
+export interface LearnCheckItemInput {
+  /** รหัสข้อ เช่น m1-wq1 */
+  id: string
+  question: string
+  /** แนวคิดที่คำตอบควรมี เรียงตามไฟล์เฉลย */
+  concepts: string[]
+  answer: string
+}
+
+export interface LearnCheckInput {
+  items: LearnCheckItemInput[]
+  studentId?: string
+  missionId?: string
+}
+
+export interface LearnCheckItemResult {
+  id: string
+  /** ครอบคลุมแนวคิดแต่ละข้อหรือไม่ ยาวเท่ากับ concepts ของข้อนั้นเสมอ */
+  covered: boolean[]
+  /** ประโยคแนะนำสั้น ๆ 1 ประโยค null = ถ้อยคำใช้ไม่ได้ ให้ใช้ข้อความจากไฟล์เฉลยแทน */
+  feedback: string | null
+}
+
+export interface LearnCheckResult extends AiMeta {
+  /** เฉพาะข้อที่โมเดลตอบมาครบถ้วน ข้อที่ไม่มีในนี้ใช้ผลจากคำสำคัญล้วน */
+  items: LearnCheckItemResult[]
+}
+
 export interface AiClient {
   hintFor(input: HintInput): Promise<HintResult>
   gradeReason(input: GradeReasonInput): Promise<GradeReasonResult>
   simulateCustomer(input: SimulateCustomerInput): Promise<SimulateCustomerResult>
   /** E-07 สร้างเรื่องราวเฉพาะคนครบ 10 เรื่องในการเรียกครั้งเดียว */
   storyFor(input: StoryInput): Promise<StoryResult>
+  /** ตรวจคำตอบปลายเปิดของเส้นทางเรียน — ไม่ได้ผล = items ว่าง ไม่ throw */
+  learnCheck(input: LearnCheckInput): Promise<LearnCheckResult>
 }

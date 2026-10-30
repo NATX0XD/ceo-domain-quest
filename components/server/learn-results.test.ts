@@ -73,14 +73,25 @@ describe('summarizeStudentLearn latestAnswer', () => {
         mode: 'read',
         score: 80,
         passed: true,
-        perQuestion: [{ id: 'q1', score: 80 }],
-        answers: { q1: 'x'.repeat(ANSWER_TEXT_MAX + 50), q2: '' },
+        perQuestion: [
+          { id: 'q1', score: 80, source: 'typhoon' },
+          { id: 'q2', score: 0, source: 'rule' },
+          { id: 'q3', score: 50 },
+        ],
+        answers: { q1: 'x'.repeat(ANSWER_TEXT_MAX + 50), q2: '', q3: 'เก่า' },
       }),
       ev(2, 'learn-do', { missionId: 'm1', kind: 'game', score: 100 }),
     ])
     expect(m1?.latestAnswer).toMatchObject({ mode: 'read', score: 80, passed: true, at: at(1) })
-    expect(m1?.latestAnswer?.answers[0]).toEqual({ id: 'q1', text: 'x'.repeat(ANSWER_TEXT_MAX), score: 80 })
-    expect(m1?.latestAnswer?.answers[1]).toEqual({ id: 'q2', text: '', score: null })
+    expect(m1?.latestAnswer?.answers[0]).toEqual({
+      id: 'q1',
+      text: 'x'.repeat(ANSWER_TEXT_MAX),
+      score: 80,
+      checkedBy: 'ai',
+    })
+    expect(m1?.latestAnswer?.answers[1]).toEqual({ id: 'q2', text: '', score: 0, checkedBy: 'keyword' })
+    // event เก่าก่อนมี AI ช่วยตรวจ ไม่มี source = ไม่ติดป้าย
+    expect(m1?.latestAnswer?.answers[2]).toEqual({ id: 'q3', text: 'เก่า', score: 50, checkedBy: null })
   })
 
   it('ไม่มีคำตอบ = null', () => {
