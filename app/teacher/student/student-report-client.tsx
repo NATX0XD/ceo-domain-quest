@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { AlertIcon, Card, EmptyState, UsersIcon, cn } from '../../../components/ui'
+import { LearnResultsPanel } from '../report/learn-results-panel'
 
 /**
  * T-10 รายงานรายคน — ครูใช้ให้คะแนนจริงหลังคาบ
@@ -16,7 +17,7 @@ interface StudentReport {
   student: { id: string; nickname: string; classroomId: string; joinedAt: string }
   profile: Record<string, unknown> | null
   tests: { pre: number | null; post: number | null; gain: number | null }
-  stars: { earned: number | null; goalStars: number | null; goalLevel: number | null }
+  stars: { earned: number | null; goalStars: number | null; goalLevel: number | null } | null
   missions: {
     missionId: string
     channelUsed: string | null
@@ -37,6 +38,21 @@ interface StudentReport {
   peerFeedback: { given: number; received: number }
   buddy: { helpedOthers: number; askedForHelp: number; passedAfterHelp: number }
   confidence: Record<string, number> | null
+}
+
+/** RPC student_report คืน null ในส่วนที่ผู้เรียนยังไม่มีข้อมูล เติมค่าว่างกันหน้าพัง */
+function normalizeReport(r: StudentReport): StudentReport {
+  return {
+    ...r,
+    tests: r.tests ?? { pre: null, post: null, gain: null },
+    missions: r.missions ?? [],
+    skips: r.skips ?? [],
+    routeChanges: r.routeChanges ?? { count: 0, items: [] },
+    boss: r.boss ?? [],
+    reflections: r.reflections ?? [],
+    peerFeedback: r.peerFeedback ?? { given: 0, received: 0 },
+    buddy: r.buddy ?? { helpedOthers: 0, askedForHelp: 0, passedAfterHelp: 0 },
+  }
 }
 
 interface BoardStudent {
@@ -147,7 +163,7 @@ export function StudentReportClient({
       }
       setError(null)
       const data = (await res.json()) as { report: StudentReport }
-      setReport(data.report)
+      setReport(normalizeReport(data.report))
     } catch {
       setError('เชื่อมต่อไม่ได้ ลองอีกครั้ง')
     }
@@ -236,10 +252,10 @@ export function StudentReportClient({
             </p>
 
             <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Fact label="ดาวที่ได้" value={`${report.stars.earned ?? 0} ดวง`} />
+              <Fact label="ดาวที่ได้" value={`${report.stars?.earned ?? 0} ดวง`} />
               <Fact
                 label="เป้าหมายที่ตั้งเอง"
-                value={report.stars.goalStars === null ? 'ยังไม่ตั้งเป้า' : `${report.stars.goalStars} ดวง`}
+                value={report.stars?.goalStars == null ? 'ยังไม่ตั้งเป้า' : `${report.stars.goalStars} ดวง`}
               />
               <Fact label="ก่อนเรียน" value={report.tests.pre === null ? 'ยังไม่ทำ' : `${report.tests.pre}`} />
               <Fact label="หลังเรียน" value={report.tests.post === null ? 'ยังไม่ทำ' : `${report.tests.post}`} />
@@ -429,6 +445,8 @@ export function StudentReportClient({
               </ul>
             </Card>
           ) : null}
+
+          <LearnResultsPanel classroomId={classroomId} studentId={report.student.id} />
         </>
       ) : !error ? (
         <p className="mt-4 text-body text-ink-muted">เลือกชื่อนักเรียนด้านบนเพื่อดูรายงาน</p>

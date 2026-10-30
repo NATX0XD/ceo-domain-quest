@@ -317,6 +317,9 @@ const CODE_MEANING: Record<string, string> = {
   'confirm-mismatch': '`roomCode` ที่ส่งมายืนยันไม่ตรงกับรหัสห้องจริง — **ไม่ลบอะไรเลย**',
   'not-demo': 'ห้องนี้ไม่ได้ติดป้าย `is_demo` ฐานข้อมูลปฏิเสธการล้าง',
   'queue-unavailable': 'อ่านสถานะคิวไม่ได้',
+  'bad-name': 'ชื่อโดเมนใช้ได้เฉพาะ a-z ตัวเลข และขีดกลาง ยาว 1-63 ตัว ไม่ขึ้นต้นหรือลงท้ายด้วยขีด',
+  'rate-limited': 'ค้นถี่เกินโควตาต่อนักเรียน — มี `resetAt` บอกว่าลองใหม่ได้เมื่อไร',
+  'learn-unavailable': 'ระบบตรวจหรืออ่านผลเส้นทางเรียนยังไม่พร้อม ลองใหม่ได้',
 }
 
 const STATUS_LABEL: Record<number, string> = {

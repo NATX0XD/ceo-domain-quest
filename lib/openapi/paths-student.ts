@@ -23,6 +23,7 @@ import {
   op,
   opaque,
   pathParam,
+  query,
   str,
 } from './builders'
 import type { PathItemObject } from './types'
@@ -682,6 +683,48 @@ route จึงไม่แตะคอลัมน์ \`channel\`/\`learning_ro
     }),
   },
 
+  '/api/domain/rdap': {
+    get: op({
+      id: 'domainRdap',
+      summary: 'ค้นชื่อโดเมนจริงจากระบบทะเบียน (RDAP) ของเกมลงมือทำ',
+      tags: [PLAY],
+      security: STUDENT_ONLY,
+      description: `
+ตรวจ 4 นามสกุลชุดเดียว: \`.com\` \`.shop\` \`.in.th\` \`.co.th\` — แยกจาก \`POST /api/domain/check\` (ตัวนั้นตรวจในโลกของเกม)
+
+- \`registered\` = ถูกจดแล้ว (มี \`registeredAt\` / \`expiresAt\` ถ้ามี)
+- \`not-found\` = "ไม่พบการจด" ⚠️ **ไม่ใช่ "ว่าง"** เพราะบางชื่อถูกสงวนไว้
+- \`unknown\` = ตรวจไม่ได้ (เกิน 4 วินาทีหรือ registry ตอบผิดปกติ) → \`source: "sample"\` ให้หน้าจอแสดงป้ายข้อมูลตัวอย่าง
+
+⚠️ **ส่งออกไปแค่ชื่อโดเมน** ไม่ส่งข้อมูลนักเรียน และไม่คืนข้อมูลส่วนตัวของเจ้าของโดเมนจริง
+⚠️ แคชผลต่อชื่อ 10 นาที · จำกัด 20 ครั้ง/นักเรียน/10 นาที
+`,
+      parameters: [
+        query('name', 'ชื่อโดเมนส่วนหน้า (a-z ตัวเลข ขีดกลาง ยาว 1-63) — **บังคับ**', {
+          required: true,
+          schema: { type: 'string' },
+          example: 'minthkanom',
+        }),
+      ],
+      responses: {
+        ...ok(
+          'ผลรายนามสกุล',
+          obj({
+            ok: bool('ตรวจสำเร็จ'),
+            name: str('ชื่อที่ตรวจ'),
+            results: arr(opaque('1 แถว = 1 นามสกุล: `tld` `domain` `status` `label` `source`'), 'ผลครบ 4 นามสกุล'),
+            sample: bool('มีผลที่เป็นข้อมูลตัวอย่างอย่างน้อย 1 รายการ'),
+          }),
+        ),
+        ...failures(
+          [400, ['bad-name']],
+          [401, ['unauthorized']],
+          [429, ['rate-limited'], 'มี `resetAt` บอกว่าลองใหม่ได้เมื่อไร'],
+        ),
+      },
+    }),
+  },
+
   '/api/story': {
     post: op({
       id: 'storyEnqueue',
@@ -868,6 +911,58 @@ route จึงไม่แตะคอลัมน์ \`channel\`/\`learning_ro
           [401, ['unauthorized']],
           [404, ['mission-not-found']],
           [503, ['game-key-unavailable']],
+        ),
+      },
+    }),
+  },
+
+  '/api/mission/{id}/learn': {
+    post: op({
+      id: 'missionLearn',
+      summary: 'เส้นทางเรียนก่อนเข้าภารกิจ (วอร์มอัป / เลือกวิธีเรียน / ตอบ / ลงมือทำ)',
+      tags: [PLAY],
+      security: STUDENT_ONLY,
+      description: `
+ส่ง \`action\` ตัวใดตัวหนึ่ง (\`warmup\` \`choose\` \`answer\` \`do\` \`step\`) — สเปก \`docs/learn-path-spec.md\`
+
+- \`warmup\` ส่ง \`answers\` 3 ตัว (เลขตัวเลือก \`-1\` ถึง \`3\`) → คืนคะแนนกับวิธีเรียนที่แนะนำ
+- \`choose\` ส่ง \`mode\` (\`watch\` \`read\` \`do\` …) → สลับเส้นทางเรียนและบันทึกว่าตามคำแนะนำไหม
+- \`answer\` ส่ง \`mode\` (\`watch\` | \`read\`) กับ \`answers\` เป็นคู่ รหัสข้อ → ข้อความ (ไม่เกิน 10 ข้อ) → คืนคะแนนรายข้อ
+- \`do\` ส่ง \`payload\` ของเกมลงมือทำ (รูปแบบขึ้นกับด่าน) → คืน \`score\` \`passed\` \`detail\`
+- \`step\` ตรวจทีละจังหวะระหว่างเล่น (เฉพาะด่านที่มีเกมนับทีละคน/ทะเบียน)
+
+⚠️ **ทุกวิธีเรียนเลือกได้เสมอ** ระบบแค่แนะนำ แล้วบันทึกทั้งค่าที่แนะนำกับค่าที่เลือกจริง
+⚠️ **ตรวจทุกอย่างที่เซิร์ฟเวอร์ เฉลยไม่ออกไปเบราว์เซอร์** · \`studentId\` มาจากคุกกี้เท่านั้น
+`,
+      parameters: [missionParam],
+      requestBody: jsonBody(
+        obj(
+          {
+            action: str('`warmup` | `choose` | `answer` | `do` | `step`'),
+            answers: opaque('ใช้กับ `warmup` (อาร์เรย์เลข 3 ตัว) และ `answer` (คู่ รหัสข้อ → ข้อความ)'),
+            mode: str('ใช้กับ `choose` / `answer`'),
+            payload: opaque('ใช้กับ `do` / `step` — รูปแบบขึ้นกับด่าน'),
+          },
+          { required: ['action'] },
+        ),
+        { action: 'warmup', answers: [1, 3, 0] },
+      ),
+      responses: {
+        ...ok(
+          'ผลของ action ที่ส่งมา (รูปแบบขึ้นกับ action)',
+          obj({
+            ok: bool('ใช้กับ `choose`'),
+            score: int('คะแนน'),
+            passed: bool('ผ่านเกณฑ์ไหม'),
+            recommended: str('วิธีเรียนที่ระบบแนะนำ (`warmup`)'),
+            detail: opaque('รายละเอียดผล (`do`)'),
+          }),
+        ),
+        ...failures(
+          [400, ['bad-request']],
+          [401, ['unauthorized']],
+          [404, ['mission-not-found']],
+          [503, ['learn-unavailable']],
         ),
       },
     }),

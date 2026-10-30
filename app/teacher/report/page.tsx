@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ClassReportClient } from './class-report-client'
+import { LearnResultsPanel } from './learn-results-panel'
 import { TeacherSignedOut, TeacherSubPage, loadTeacherPage, type SearchParams } from '../_lib/teacher-page'
 
 /**
@@ -40,6 +41,7 @@ export default async function TeacherClassReportPage({
       }
     >
       <ClassReportClient classroomId={data.selectedId} roomCode={data.selectedRoomCode} />
+      <LearnResultsPanel classroomId={data.selectedId} />
     </TeacherSubPage>
   )
 }

@@ -412,9 +412,13 @@ export function ClassReportClient({
         <p className="mt-1 text-display font-extrabold text-brand-700">{report.efficiency.label}</p>
         <p className="mt-1 text-body font-semibold text-ink">
           เกณฑ์ {report.efficiency.standardLabel} ·{' '}
-          <span className={report.efficiency.meetsStandard ? 'text-quest-700' : 'text-danger-700'}>
-            {report.efficiency.meetsStandard ? 'ผ่านเกณฑ์' : 'ยังไม่ผ่านเกณฑ์'}
-          </span>
+          {(report.tests.post.n ?? 0) === 0 ? (
+            <span className="text-ink-muted">ยังไม่มีข้อมูล</span>
+          ) : (
+            <span className={report.efficiency.meetsStandard ? 'text-quest-700' : 'text-danger-700'}>
+              {report.efficiency.meetsStandard ? 'ผ่านเกณฑ์' : 'ยังไม่ผ่านเกณฑ์'}
+            </span>
+          )}
         </p>
         <p className="mt-2 text-body text-ink-muted">{report.efficiency.summary}</p>
         {/* flow-1 ข้อ 18: ครูเห็นคำว่า "ยังไม่ผ่านเกณฑ์" แล้วไม่รู้ว่าแปลว่าอะไรและต้องทำอะไรต่อ */}

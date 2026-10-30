@@ -254,6 +254,46 @@ access token ของ Supabase **ไม่ถูกส่งกลับไป�
     }),
   },
 
+  '/api/teacher/learn': {
+    get: op({
+      id: 'teacherLearn',
+      summary: 'ผลเส้นทางเรียน (ดู / อ่าน / ลงมือทำ) ของห้อง หรือรายคน',
+      tags: [TEACHER],
+      security: TEACHER_ONLY,
+      description: `
+ไม่ส่ง \`studentId\` = ทั้งห้อง (\`students[]\` + สรุปรายภารกิจใน \`missions\`) · ส่ง \`studentId\` = คนเดียว (\`student\`)
+
+มี \`missionTitles\` และ \`questionPrompts[missionId][qid]\` ให้ครูอ่านคำตอบปลายเปิดล่าสุด (\`latestAnswer\`) คู่กับโจทย์
+
+⚠️ **ตรวจเจ้าของห้องในคิวรีเดียวกับที่อ่านข้อมูล** ไม่ใช่เจ้าของห้อง = \`404\` ไม่ใช่ \`403\`
+`,
+      parameters: [
+        classroomQuery,
+        query('studentId', 'ดูเฉพาะนักเรียนคนนี้ (uuid) — ไม่ส่งก็ได้', {
+          schema: { type: 'string', format: 'uuid' },
+        }),
+      ],
+      responses: {
+        ...ok(
+          'ผลเส้นทางเรียน',
+          obj({
+            students: arr(opaque('ผลรายคน'), 'ทั้งห้อง (ไม่มีเมื่อส่ง `studentId`)'),
+            student: opaque('ผลของคนเดียว (มีเมื่อส่ง `studentId`)'),
+            missions: arr(opaque('สรุปรายภารกิจ'), 'สรุปทั้งห้อง (ไม่มีเมื่อส่ง `studentId`)'),
+            missionTitles: map(str('ชื่อภารกิจ'), 'รหัสภารกิจ → ชื่อ'),
+            questionPrompts: opaque('รหัสภารกิจ → รหัสข้อ → โจทย์'),
+          }),
+        ),
+        ...failures(
+          [400, ['bad-request']],
+          [401, ['unauthorized']],
+          [404, ['not-found']],
+          [503, ['learn-unavailable']],
+        ),
+      },
+    }),
+  },
+
   '/api/teacher/screen': {
     get: op({
       id: 'teacherScreen',

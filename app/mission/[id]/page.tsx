@@ -16,6 +16,10 @@ import { passedAnswerLabel } from '@/components/server/mission-answer-recall'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
 import { studentNextStep } from '@/components/server/next-step'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
+import { LearnPathClient } from '@/components/learn/learn-path-client'
+import { PASS_SCORE, findLearnPath, loadLearnState, type LearnState } from '@/components/server/learn-path'
+import { publicCounterData } from '@/components/server/learn-counter'
+import { publicRegistrarData } from '@/components/server/learn-registrar'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +33,11 @@ export async function generateMetadata({
   return { title: mission ? `${mission.title} — CEO Domain Quest` : 'ไม่พบภารกิจ' }
 }
 
-export default async function MissionPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MissionPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = await params
   const mission = findMission(id)
   if (!mission) notFound()
@@ -37,6 +45,36 @@ export default async function MissionPage({ params }: { params: Promise<{ id: st
   const session = await readStudentSession()
   if (!session) {
     return <SignInGate message="ใส่รหัสห้องกับรหัส 4 หลักที่ครูให้ก่อน แล้วค่อยเริ่มภารกิจ" />
+  }
+
+  /**
+   * เส้นทางเรียนก่อนภารกิจ (docs/learn-path-spec.md) — ยังไม่จบ = แสดงจอเรียนแทนจอภารกิจ
+   * ไม่มีทางข้าม: ต้องเช็กพื้นฐานแล้วเรียนตามวิธีที่เลือกจนครบเกณฑ์ก่อน · อ่านสถานะไม่ได้ = ปล่อยเข้าภารกิจเดิม ไม่ปิดทางเรียน
+   */
+  const learnPath = findLearnPath(mission.id)
+  if (learnPath) {
+    let learnState: LearnState | null = null
+    try {
+      learnState = await loadLearnState(session.studentId, mission.id)
+    } catch (err) {
+      console.error('[mission] loadLearnState', err)
+    }
+    if (learnState && !learnState.done) {
+      const kind = learnPath.do.kind
+      return (
+        <LearnPathClient
+          missionId={mission.id}
+          studentId={session.studentId}
+          missionTitle={mission.title}
+          path={learnPath}
+          state={learnState}
+          passScore={PASS_SCORE}
+          gameData={kind === 'game' ? buildGameData(mission) : null}
+          counterData={kind === 'counter' ? publicCounterData() : null}
+          registrarData={kind === 'registrar' ? publicRegistrarData() : null}
+        />
+      )
+    }
   }
 
   const [row, self, summary, progress, advice, story, standing] = await Promise.all([

@@ -1,0 +1,37 @@
+{
+  "_comment": "เฉลยเกมลงมือทำ ด่าน 3 อ่านเฉพาะฝั่งเซิร์ฟเวอร์ (components/server/learn-counter.ts) ห้ามส่งไฟล์นี้ให้เบราว์เซอร์ caseId และชื่อโดเมนต้องตรงกับ learn-counter.json ค่าหมวดตรงกับ category ใน content/tlds.json",
+  "cases": [
+    {
+      "caseId": "c1",
+      "tags": { "tonkla.co.th": "ccTLD ไทย", "tonkla.net": "gTLD ทั่วไป" },
+      "stamp": "approve",
+      "acceptedExtensions": [],
+      "keyQuestions": ["q1", "q2"],
+      "explanation": "พี่ต้นจดทะเบียนบริษัทแล้วและมีหนังสือรับรองบริษัท จึงจด .co.th ได้ตามที่ขอ ส่วน .net อยู่หมวด gTLD ทั่วไปที่ใครก็จดได้"
+    },
+    {
+      "caseId": "c2",
+      "tags": { "mindcase.go.th": "หมวดเฉพาะที่สงวน", "mindcase.shop": "gTLD ทั่วไป" },
+      "stamp": "suggest",
+      "acceptedExtensions": [".shop", ".com", ".in.th"],
+      "keyQuestions": ["q3"],
+      "explanation": ".go.th สงวนไว้ให้หน่วยงานราชการเท่านั้น น้องมายด์เป็นร้านค้าออนไลน์ส่วนตัว จึงควรเสนอ .shop หรือ .com ที่ใครก็จดได้ หรือ .in.th ที่ใช้บัตรประชาชนจดได้"
+    },
+    {
+      "caseId": "c3",
+      "tags": { "ลุงชัย.ไทย": "ccTLD ไทย", "lungchai.in.th": "ccTLD ไทย" },
+      "stamp": "first-step",
+      "acceptedExtensions": [".in.th"],
+      "keyQuestions": ["q4"],
+      "explanation": ".ไทย จดเดี่ยวไม่ได้ ต้องมีชื่อ .th ก่อน ลุงชัยเป็นบุคคลทั่วไปมีบัตรประชาชน จึงจด .in.th ก่อน แล้วค่อยจดพ่วง ลุงชัย.ไทย ซึ่งเป็นหมวดคู่กัน"
+    },
+    {
+      "caseId": "c4",
+      "tags": { "myshop.co.th": "ccTLD ไทย", "myshop.or.th": "หมวดเฉพาะที่สงวน" },
+      "stamp": "suggest",
+      "acceptedExtensions": [".in.th", ".shop", ".com"],
+      "keyQuestions": ["q1", "q5"],
+      "explanation": "ร้านยังไม่ได้จดบริษัท ไม่มีเครื่องหมายการค้าหรือ VAT จึงจด .co.th ไม่ได้ และ .or.th สงวนไว้ให้องค์กรไม่แสวงหากำไร ควรเสนอ .in.th ที่ใช้บัตรประชาชนจดได้ หรือ .shop .com ที่ใครก็จดได้"
+    }
+  ]
+}

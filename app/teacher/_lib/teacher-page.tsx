@@ -23,6 +23,8 @@ export interface TeacherPageData {
   selectedRoomCode: string | null
   /** E-16 ห้องที่เลือกอยู่เป็นห้องสาธิต — ทุกหน้าต้องติดป้ายว่าไม่ใช่ข้อมูลเด็กจริง */
   selectedIsDemo: boolean
+  /** ครูขอห้องที่ไม่อยู่ในบัญชีตัวเอง — หน้าแสดงห้องของตัวเองแทนและแจ้งให้รู้ */
+  roomNotFound?: boolean
 }
 
 export type SearchParams = Record<string, string | string[] | undefined>
@@ -47,6 +49,7 @@ export async function loadTeacherPage(params: SearchParams): Promise<TeacherPage
     selectedId: selected?.id ?? null,
     selectedRoomCode: selected?.room_code ?? null,
     selectedIsDemo: selected?.is_demo ?? false,
+    roomNotFound: Boolean(asked) && selected !== null && selected.id !== asked,
   }
 }
 
@@ -91,6 +94,12 @@ export function TeacherSubPage({ data, title, subtitle, action, children }: Teac
   return (
     <PageBody>
       <PageHead title={title} subtitle={subtitle} action={action} />
+
+      {data.roomNotFound ? (
+        <p role="status" className="mt-3 rounded-xl bg-spark-50 p-3 text-label font-semibold text-ink ring-1 ring-spark-200">
+          ไม่พบห้องที่ขอในบัญชีของคุณ จึงแสดงห้อง {data.selectedRoomCode ?? 'ล่าสุดของคุณ'} แทน
+        </p>
+      ) : null}
 
       {/* E-16 ป้ายโหมดสาธิต — ขึ้นก่อนเนื้อหาเสมอ กรรมการจะได้ไม่เข้าใจว่าเป็นข้อมูลเด็กจริง */}
       <DemoModeBanner

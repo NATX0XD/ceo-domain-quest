@@ -25,6 +25,12 @@ import introCardsJson from '../content/intro-cards.json' with { type: 'json' }
 import messagesJson from '../content/messages.json' with { type: 'json' }
 import missionTasksAnswersJson from '../content/mission-tasks-answers.json' with { type: 'json' }
 import missionTasksJson from '../content/mission-tasks.json' with { type: 'json' }
+import learnCounterJson from '../content/learn-counter.json' with { type: 'json' }
+import learnCounterAnswersJson from '../content/learn-counter-answers.json' with { type: 'json' }
+import learnPathsJson from '../content/learn-paths.json' with { type: 'json' }
+import learnPathsAnswersJson from '../content/learn-paths-answers.json' with { type: 'json' }
+import learnRegistrarJson from '../content/learn-registrar.json' with { type: 'json' }
+import learnRegistrarAnswersJson from '../content/learn-registrar-answers.json' with { type: 'json' }
 import missionsAnswersJson from '../content/missions-answers.json' with { type: 'json' }
 import missionsJson from '../content/missions.json' with { type: 'json' }
 import quizAnswersJson from '../content/quiz-answers.json' with { type: 'json' }
@@ -532,7 +538,16 @@ describe('คลังเนื้อหาต้องไม่ติดตั�
    * ข้อความนี้ไม่เคยถูกแสดงให้ผู้เรียนเห็น และไม่เคยถูกเอาไปตรวจด้วยตัวกรอง
    * ยกเว้นแบบระบุตำแหน่งชัด เพื่อให้ข้อความใหม่ที่ติดตัวกรองยังทำให้เทสต์พัง
    */
-  const ALLOWED_PATHS = new Set(['story-seeds.json.promptRules[5]'])
+  const ALLOWED_PATHS = new Set([
+    'story-seeds.json.promptRules[5]',
+    // ผลบวกลวง: "กู้คืน" (ชื่อโดเมนที่หมดอายุ) มีพยางค์ "กู" ซ้อนอยู่ ตัวกรองจึงเห็นเป็นคำไม่สุภาพระดับ 1
+    // เป็นศัพท์จริงของระบบทะเบียน (redemption) เนื้อหาเดิมจึงไม่แก้ ยกเว้นแบบระบุตำแหน่งเท่านั้น
+    'learn-paths-answers.json.paths[3].rubrics.m4-wq2.modelAnswer',
+    'learn-paths-answers.json.paths[3].rubrics.m4-wq2.concepts[1].any[11]',
+    'learn-paths.json.paths[3].watch.scenes[5].line',
+    'learn-registrar-answers.json.eventExplanations.ev-expire',
+    'learn-registrar.json.events[3].choices[2]',
+  ])
 
   const files = readdirSync(CONTENT_DIR).filter((f) => f.endsWith('.json') && !SKIP_FILES.has(f))
 
@@ -721,5 +736,28 @@ describe('บทเรียนของภารกิจต้องไม่�
     for (const d of key.distractors ?? []) expect(ids.has(d)).toBe(true)
     // ชิ้นที่ถูก 3 + ชิ้นหลอก 3 = กอง 6 ชิ้นพอดี ไม่มีชิ้นไหนกำพร้าอยู่บนจอแบบไม่มีใครตัดสิน
     expect((key.placements?.length ?? 0) + (key.distractors?.length ?? 0)).toBe(items.filter((i) => i.type === 'piece').length)
+  })
+})
+
+describe('เนื้อหาเส้นทางเรียน (learn-*) ต้องครบและตรงกับไฟล์เฉลย', () => {
+  it('เส้นทางเรียน 4 ด่าน มีเฉลยครบทุกด่านและรหัสตรงกัน', () => {
+    expect(learnPathsJson.paths).toHaveLength(4)
+    expect(learnPathsAnswersJson.paths.map((p) => p.missionId)).toEqual(
+      learnPathsJson.paths.map((p) => (p as { missionId: string }).missionId),
+    )
+  })
+
+  it('เกมเคาน์เตอร์ด่าน 3 มี 4 เคส และเฉลยมี 4 เคสรหัสตรงกัน', () => {
+    expect(learnCounterJson.cases).toHaveLength(4)
+    expect(learnCounterAnswersJson.cases.map((c) => c.caseId)).toEqual(
+      learnCounterJson.cases.map((c) => c.id),
+    )
+  })
+
+  it('เกมทะเบียนด่าน 4 มี 10 ขั้น และเฉลยลำดับครบ 10 ขั้นไม่ซ้ำ', () => {
+    expect(learnRegistrarJson.steps).toHaveLength(10)
+    expect(learnRegistrarAnswersJson.order).toHaveLength(10)
+    expect(new Set(learnRegistrarAnswersJson.order).size).toBe(10)
+    expect(learnRegistrarJson.events).toHaveLength(4)
   })
 })

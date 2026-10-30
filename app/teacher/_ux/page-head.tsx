@@ -28,5 +28,5 @@ export function PageHead({
 
 /** กรอบเนื้อหาของหน้า — ระยะขอบเท่ากันทุกหน้าในแดชบอร์ด */
 export function PageBody({ children }: { children: ReactNode }) {
-  return <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 sm:py-5">{children}</div>
+  return <div className="mx-auto w-full max-w-[1440px] px-4 py-4 sm:px-6 sm:py-6 xl:px-8">{children}</div>
 }

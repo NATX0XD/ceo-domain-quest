@@ -1,13 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { TeacherGradeQueueClient } from '../../../components/teacher-grade-queue-client'
 import {
   AlertIcon,
   CheckIcon,
+  ChevronRightIcon,
   ClockIcon,
+  CloseIcon,
   CrownIcon,
   GlobeIcon,
   ProfileIcon,
@@ -65,9 +67,14 @@ interface NavItem {
   badge?: number
   /** true = ตัวเลขนี้คือ "ต้องเข้าไปดูเดี๋ยวนี้" ให้ขึ้นสีแดง */
   urgent?: boolean
-  /** ลิงก์ออกไปนอกแดชบอร์ด (เปิดแท็บใหม่) */
-  external?: boolean
 }
+
+interface NavGroup {
+  title: string
+  items: NavItem[]
+}
+
+const ICON = { width: 20, height: 20, 'aria-hidden': true } as const
 
 export function TeacherShell({
   teacherEmail,
@@ -89,6 +96,10 @@ export function TeacherShell({
   const [phaseLabel, setPhaseLabel] = useState<string | null>(null)
   const [seconds, setSeconds] = useState<number | null>(null)
   const [signingOut, setSigningOut] = useState(false)
+  const [drawer, setDrawer] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
     if (!classroomId) return
@@ -146,6 +157,32 @@ export function TeacherShell({
     return () => clearInterval(id)
   }, [seconds === null])
 
+  // เปลี่ยนหน้า = ปิดลิ้นชักเมนูบนมือถือ
+  useEffect(() => {
+    setDrawer(false)
+    setMenuOpen(false)
+    setQuery('')
+  }, [pathname])
+
+  useEffect(() => {
+    if (!menuOpen && !drawer) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenuOpen(false)
+        setDrawer(false)
+      }
+    }
+    const onDown = (e: MouseEvent) => {
+      if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('mousedown', onDown)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('mousedown', onDown)
+    }
+  }, [menuOpen, drawer])
+
   async function signOut() {
     setSigningOut(true)
     try {
@@ -158,208 +195,279 @@ export function TeacherShell({
   }
 
   const q = classroomId ? `?classroomId=${classroomId}` : ''
-  const items: NavItem[] = [
+  const groups: NavGroup[] = [
     {
-      href: `/teacher${q}`,
-      label: 'คุมคาบสด',
-      icon: <QuestIcon width={20} height={20} aria-hidden />,
-      badge: badges.needAttention,
-      urgent: true,
+      title: 'ภาพรวม',
+      items: [
+        { href: `/teacher${q}`, label: 'คุมคาบสด', icon: <QuestIcon {...ICON} />, badge: badges.needAttention, urgent: true },
+        { href: `/teacher/board${q}`, label: 'ห้องเรียน', icon: <UsersIcon {...ICON} /> },
+      ],
     },
     {
-      href: `/teacher/review${q}`,
-      label: 'งานรอตรวจ',
-      icon: <CheckIcon width={20} height={20} aria-hidden />,
-      badge: badges.review,
+      title: 'นักเรียน',
+      items: [
+        { href: `/teacher/student${q}`, label: 'นักเรียนรายคน', icon: <ProfileIcon {...ICON} /> },
+        { href: `/teacher/review${q}`, label: 'งานรอตรวจ', icon: <CheckIcon {...ICON} />, badge: badges.review },
+        { href: `/teacher/requests${q}`, label: 'คำขอจากนักเรียน', icon: <AlertIcon {...ICON} />, badge: badges.requests },
+      ],
     },
     {
-      href: `/teacher/requests${q}`,
-      label: 'คำขอจากนักเรียน',
-      icon: <AlertIcon width={20} height={20} aria-hidden />,
-      badge: badges.requests,
+      title: 'รายงาน',
+      items: [
+        { href: `/teacher/report${q}`, label: 'รายงานผลการเรียน', icon: <RewardIcon {...ICON} /> },
+        { href: `/teacher/showcase${q}`, label: 'ผลงานเด่น', icon: <GlobeIcon {...ICON} /> },
+      ],
     },
     {
-      href: `/teacher/student${q}`,
-      label: 'นักเรียนรายคน',
-      icon: <UsersIcon width={20} height={20} aria-hidden />,
-    },
-    {
-      href: `/teacher/report${q}`,
-      label: 'รายงานและสถิติ',
-      icon: <RewardIcon width={20} height={20} aria-hidden />,
-    },
-    {
-      href: `/teacher/showcase${q}`,
-      label: 'ผลงานและจอหน้าห้อง',
-      icon: <GlobeIcon width={20} height={20} aria-hidden />,
-    },
-    {
-      href: `/teacher/settings${q}`,
-      label: 'ตั้งค่าและปิดคาบ',
-      icon: <CrownIcon width={20} height={20} aria-hidden />,
-    },
-    {
-      href: `/teacher/demo${q}`,
-      label: 'โหมดสาธิต',
-      icon: <StarIcon width={20} height={20} aria-hidden />,
+      title: 'ระบบ',
+      items: [
+        { href: `/teacher/settings${q}`, label: 'ตั้งค่า', icon: <CrownIcon {...ICON} /> },
+        { href: `/teacher/demo${q}`, label: 'โหมดสาธิต', icon: <StarIcon {...ICON} /> },
+      ],
     },
   ]
+  const flat = groups.flatMap((g) => g.items)
 
   const isActive = (href: string) => {
     const path = href.split('?')[0] ?? href
     if (path === '/teacher') return pathname === '/teacher'
     return pathname === path || pathname.startsWith(`${path}/`)
   }
+  const current = flat.find((i) => isActive(i.href))
+  const found = useMemo(() => {
+    const t = query.trim().toLowerCase()
+    return t ? flat.filter((i) => i.label.toLowerCase().includes(t)) : []
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- flat สร้างใหม่ทุกครั้งแต่ขึ้นกับ q กับ badges เท่านั้น
+  }, [query, q])
+
+  const nav = (collapsedOnTablet: boolean) => (
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto py-3">
+      {groups.map((g) => (
+        <div key={g.title} className="mb-2">
+          <p
+            className={`px-4 pb-1 text-note font-bold tracking-wide text-ink-muted ${
+              collapsedOnTablet ? 'hidden xl:block' : ''
+            }`}
+          >
+            {g.title}
+          </p>
+          <ul className="flex flex-col gap-0.5 px-2">
+            {g.items.map((item) => (
+              <li key={item.href}>
+                <SideLink item={item} active={isActive(item.href)} collapsible={collapsedOnTablet} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+
+  const logo = (collapsedOnTablet: boolean) => (
+    <Link
+      href={`/teacher${q}`}
+      className="flex h-14 shrink-0 items-center gap-2.5 border-b border-line px-4 focus-ring"
+      aria-label="CEO Domain Quest แผงครู"
+    >
+      <span
+        aria-hidden
+        className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-700 to-brand-500 text-ink-onbrand"
+      >
+        <QuestIcon width={20} height={20} />
+      </span>
+      <span className={`min-w-0 leading-tight ${collapsedOnTablet ? 'hidden xl:block' : ''}`}>
+        <span className="block truncate text-label font-extrabold text-ink">CEO Domain Quest</span>
+        <span className="block text-note text-ink-muted">แผงครู</span>
+      </span>
+    </Link>
+  )
 
   return (
-    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-surface">
-      {/* ───────── แถบบน — อยู่กับที่เสมอ ไม่เลื่อน */}
-      <header className="z-20 flex h-14 shrink-0 items-center gap-3 border-b border-line bg-surface-raised px-3 shadow-soft-1 sm:px-4">
-        <Link
-          href={`/teacher${q}`}
-          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg px-1 py-1 focus-ring sm:justify-start"
-        >
-          <span
-            aria-hidden
-            className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-brand-700 to-brand-500 text-ink-onbrand"
-          >
-            <QuestIcon width={18} height={18} />
-          </span>
-          <span className="hidden text-label font-extrabold text-ink sm:inline">
-            แผงครู · CEO Domain Quest
-          </span>
-        </Link>
-
-        {/* ห้องที่กำลังเปิด — สลับห้องได้จากทุกหน้า */}
-        {classrooms.length > 0 ? (
-          <nav aria-label="เลือกห้องเรียน" className="min-w-0 flex-1">
-            <ul className="flex min-w-0 gap-2 overflow-x-auto">
-              {classrooms.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={`${pathname}?classroomId=${c.id}`}
-                    aria-current={c.id === classroomId ? 'page' : undefined}
-                    className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3 text-label font-bold transition-colors duration-200 focus-ring ${
-                      c.id === classroomId
-                        ? 'bg-brand-600 text-ink-onbrand'
-                        : 'bg-surface-sunken text-ink-muted hover:bg-brand-50'
-                    }`}
-                  >
-                    {c.id === classroomId ? (
-                      <CheckIcon width={16} height={16} aria-hidden className="shrink-0" />
-                    ) : null}
-                    ห้อง {c.roomCode}
-                    {c.isDemo ? (
-                      <span className="rounded-full bg-danger-600 px-1.5 text-note font-bold text-ink-onbrand">
-                        สาธิต
-                      </span>
-                    ) : null}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        ) : (
-          <span className="min-w-0 flex-1 text-label text-ink-muted">ยังไม่มีห้องเรียน</span>
-        )}
-
-        {/* สถานะคาบ — เห็นได้ทุกหน้าตามที่สั่ง */}
-        {phaseLabel ? (
-          <p className="hidden shrink-0 items-center gap-2 rounded-full bg-surface-sunken px-3 py-1.5 text-label font-bold text-ink lg:flex">
-            <ClockIcon width={18} height={18} aria-hidden className="text-brand-700" />
-            <span className="truncate">{phaseLabel}</span>
-            <span className="tabular-nums text-brand-700">{mmss(seconds)}</span>
+    <div className="flex h-dvh max-h-dvh overflow-hidden bg-surface-sunken">
+      {/* ───────── เมนูข้าง (แท็บเล็ต = ไอคอน · จอกว้าง = เต็ม) */}
+      <aside
+        aria-label="เมนูของครู"
+        className="z-10 hidden w-[68px] shrink-0 flex-col border-r border-line bg-surface-raised md:flex xl:w-[248px]"
+      >
+        {logo(true)}
+        {nav(true)}
+        <div className="border-t border-line p-2 xl:p-3">
+          <p className="hidden items-center gap-1.5 text-note text-ink-muted xl:flex">
+            <ProfileIcon width={16} height={16} aria-hidden className="shrink-0" />
+            <span className="truncate">{teacherEmail}</span>
           </p>
-        ) : null}
-
-        {/* บัญชีครู + ออกจากระบบ (จอกว้าง) */}
-        <div className="hidden shrink-0 items-center gap-2 lg:flex">
-          <span className="flex items-center gap-1.5 text-note text-ink-muted">
-            <ProfileIcon width={18} height={18} aria-hidden />
-            <span className="max-w-[12rem] truncate">{teacherEmail}</span>
-          </span>
           <button
             type="button"
             onClick={signOut}
             disabled={signingOut}
-            className="btn-base min-h-11 touch-manipulation bg-surface-raised px-3 text-label text-ink ring-1 ring-line-contrast ring-inset hover:bg-danger-100 hover:text-danger-700 disabled:opacity-60"
+            title="ออกจากระบบ"
+            className="btn-base mt-0 w-full touch-manipulation bg-surface-raised px-0 text-label text-ink-muted ring-1 ring-line ring-inset hover:bg-danger-100 hover:text-danger-700 disabled:opacity-60 xl:mt-2"
           >
-            {signingOut ? 'กำลังออก…' : 'ออกจากระบบ'}
+            <span className="xl:hidden">ออก</span>
+            <span className="hidden xl:inline">{signingOut ? 'กำลังออกจากระบบ…' : 'ออกจากระบบ'}</span>
           </button>
         </div>
-      </header>
+      </aside>
 
-      <div className="relative flex min-h-0 flex-1">
-        {/* ───────── เมนูข้าง — อยู่กับที่ ไม่เลื่อน (จอแคบยุบเป็นแถบแนวนอน) */}
-        <nav
-          aria-label="เมนูของครู"
-          className="z-10 hidden w-[236px] shrink-0 flex-col border-r border-line bg-surface-raised lg:flex"
-        >
-          <p className="px-4 pt-4 pb-1 text-note font-bold tracking-wide text-ink-muted">
-            งานในคาบ
-          </p>
-          <ul className="flex flex-col gap-0.5 px-2">
-            {items.map((item) => (
-              <li key={item.href}>
-                <SideLink item={item} active={isActive(item.href)} />
-              </li>
-            ))}
-          </ul>
+      {/* ───────── มือถือ: ลิ้นชักเมนู */}
+      {drawer ? (
+        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="เมนูของครู">
+          <button
+            type="button"
+            aria-label="ปิดเมนู"
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setDrawer(false)}
+          />
+          <div className="absolute inset-y-0 left-0 flex w-[280px] max-w-[85vw] flex-col bg-surface-raised shadow-soft-3">
+            <div className="flex items-center justify-between border-b border-line pr-2">
+              <div className="flex-1">{logo(false)}</div>
+              <button
+                type="button"
+                onClick={() => setDrawer(false)}
+                aria-label="ปิด"
+                className="grid size-11 place-items-center rounded-lg text-ink-muted focus-ring"
+              >
+                <CloseIcon width={22} height={22} aria-hidden />
+              </button>
+            </div>
+            {nav(false)}
+            <div className="border-t border-line p-3">
+              <p className="truncate text-note text-ink-muted">{teacherEmail}</p>
+              <button
+                type="button"
+                onClick={signOut}
+                disabled={signingOut}
+                className="btn-base mt-2 w-full bg-surface-raised text-label text-ink-muted ring-1 ring-line ring-inset hover:bg-danger-100 hover:text-danger-700 disabled:opacity-60"
+              >
+                {signingOut ? 'กำลังออกจากระบบ…' : 'ออกจากระบบ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
-          {/* ล่างสุด = ของประจำตัวครู แยกจากเมนูหลักด้วยเส้นและที่ว่าง */}
-          <div className="mt-auto border-t border-line p-3">
-            <p className="flex items-center gap-1.5 text-note text-ink-muted">
-              <ProfileIcon width={16} height={16} aria-hidden className="shrink-0" />
-              <span className="truncate">{teacherEmail}</span>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        {/* ───────── แถบบน */}
+        <header className="z-20 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-surface-raised px-3 sm:gap-3 sm:px-5">
+          <button
+            type="button"
+            onClick={() => setDrawer(true)}
+            aria-label="เปิดเมนู"
+            aria-haspopup="dialog"
+            className="grid size-11 shrink-0 place-items-center rounded-lg text-ink hover:bg-surface-sunken focus-ring md:hidden"
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          </button>
+
+          <div className="min-w-0 flex-1">
+            <nav aria-label="เส้นทางหน้า" className="hidden items-center gap-1 text-note text-ink-muted sm:flex">
+              <span>แผงครู</span>
+              <ChevronRightIcon width={14} height={14} aria-hidden />
+              <span>{current?.label ? groups.find((g) => g.items.includes(current))?.title : 'หน้า'}</span>
+            </nav>
+            <p className="line-clamp-2 text-label leading-tight font-extrabold text-ink sm:truncate sm:text-body">{current?.label ?? 'แผงครู'}</p>
+          </div>
+
+          {/* ค้นหาเมนู/หน้า */}
+          <div className="relative hidden w-56 shrink-0 lg:block xl:w-72">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="ค้นหาหน้า เช่น รายงาน"
+              aria-label="ค้นหาหน้า"
+              className="h-10 w-full rounded-lg bg-surface-sunken px-3 text-label text-ink ring-1 ring-line outline-none placeholder:text-ink-subtle focus:ring-2 focus:ring-brand-500"
+            />
+            {found.length > 0 ? (
+              <ul className="absolute top-11 right-0 left-0 z-30 overflow-hidden rounded-lg bg-surface-raised shadow-soft-3 ring-1 ring-line">
+                {found.map((i) => (
+                  <li key={i.href}>
+                    <Link href={i.href} className="flex min-h-11 items-center gap-2 px-3 text-label text-ink hover:bg-surface-sunken">
+                      {i.icon}
+                      {i.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+
+          {phaseLabel ? (
+            <p className="hidden shrink-0 items-center gap-2 rounded-full bg-surface-sunken px-3 py-1.5 text-label font-bold text-ink xl:flex">
+              <ClockIcon width={18} height={18} aria-hidden className="text-brand-700" />
+              <span className="max-w-[10rem] truncate">{phaseLabel}</span>
+              <span className="tabular-nums text-brand-700">{mmss(seconds)}</span>
             </p>
+          ) : null}
+
+          {/* สลับห้อง */}
+          {classrooms.length > 0 ? (
+            <label className="flex shrink-0 items-center gap-1.5">
+              <span className="sr-only">เลือกห้องเรียน</span>
+              <select
+                value={classroomId ?? ''}
+                onChange={(e) => router.push(`${pathname}?classroomId=${e.target.value}`)}
+                className="h-10 w-[8.5rem] max-w-[9rem] rounded-lg bg-surface-raised px-1.5 text-ellipsis sm:w-auto sm:max-w-[12rem] sm:px-2 text-label font-bold text-ink ring-1 ring-line-contrast focus-ring"
+              >
+                {classrooms.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    ห้อง {c.roomCode}
+                    {c.isDemo ? ' (สาธิต)' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <span className="shrink-0 text-label text-ink-muted">ยังไม่มีห้องเรียน</span>
+          )}
+
+          {/* เมนูครู */}
+          <div ref={menuRef} className="relative shrink-0">
             <button
               type="button"
-              onClick={signOut}
-              disabled={signingOut}
-              className="btn-base mt-2 w-full touch-manipulation bg-surface-raised text-label text-ink-muted ring-1 ring-line ring-inset hover:bg-danger-100 hover:text-danger-700 disabled:opacity-60"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-label="เมนูบัญชีครู"
+              className="grid size-10 place-items-center rounded-full bg-brand-100 text-brand-700 focus-ring"
             >
-              {signingOut ? 'กำลังออกจากระบบ…' : 'ออกจากระบบ'}
+              <ProfileIcon width={20} height={20} aria-hidden />
             </button>
-          </div>
-        </nav>
-
-        {/* จอแคบ: เมนูเป็นแถบแนวนอนใต้แถบบน เลื่อนแนวนอนได้ แต่ไม่เลื่อนแนวตั้ง */}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <nav
-            aria-label="เมนูของครู (จอแคบ)"
-            className="shrink-0 overflow-x-auto border-b border-line bg-surface-raised px-2 py-1.5 lg:hidden"
-          >
-            <ul className="flex gap-1">
-              {items.map((item) => (
-                <li key={item.href} className="shrink-0">
-                  <SideLink item={item} active={isActive(item.href)} compact />
-                </li>
-              ))}
-              <li className="shrink-0">
+            {menuOpen ? (
+              <div role="menu" className="absolute top-12 right-0 z-30 w-60 rounded-xl bg-surface-raised p-2 shadow-soft-3 ring-1 ring-line">
+                <p className="truncate px-3 py-2 text-note text-ink-muted">{teacherEmail}</p>
+                <Link
+                  role="menuitem"
+                  href={`/teacher/settings${q}`}
+                  className="flex min-h-11 items-center rounded-lg px-3 text-label text-ink hover:bg-surface-sunken"
+                >
+                  ตั้งค่า
+                </Link>
                 <button
                   type="button"
+                  role="menuitem"
                   onClick={signOut}
                   disabled={signingOut}
-                  className="inline-flex min-h-11 items-center rounded-lg px-3 text-label font-bold text-ink-muted hover:bg-danger-100 hover:text-danger-700 focus-ring"
+                  className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-label text-danger-700 hover:bg-danger-100 disabled:opacity-60"
                 >
-                  ออกจากระบบ
+                  {signingOut ? 'กำลังออก…' : 'ออกจากระบบ'}
                 </button>
-              </li>
-            </ul>
-          </nav>
-
-          {/* ───────── เนื้อหา — ชั้นเดียวที่เลื่อนได้ */}
-          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
-
-          {/**
-           * ตัวปลุกคิวตรวจงาน AI — ระบบไม่มี cron ถ้าไม่มีหน้าครูเปิดค้างไว้ คิวจะไม่เดินเลย (bus T77)
-           * ย้ายมาอยู่ที่โครงแดชบอร์ด **คิวจึงเดินทุกหน้าที่ครูเปิด** ไม่ใช่เฉพาะหน้าคุมคาบสด
-           * เก็บไว้นอกสายตาเพราะการ์ดของมันสูงเกินและแก้ไม่ได้ (อยู่ใน components/)
-           * — ตัวเลขคิวที่ครูเห็นจริงวาดเองจาก /api/jobs/drain เส้นเดียวกัน
-           */}
-          <div aria-hidden className="pointer-events-none absolute size-0 overflow-hidden opacity-0">
-            <TeacherGradeQueueClient />
+              </div>
+            ) : null}
           </div>
+        </header>
+
+        {/* ───────── เนื้อหา — ชั้นเดียวที่เลื่อนได้ */}
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
+
+        {/**
+         * ตัวปลุกคิวตรวจงาน AI — ระบบไม่มี cron ถ้าไม่มีหน้าครูเปิดค้างไว้ คิวจะไม่เดินเลย (bus T77)
+         * อยู่ที่โครงนี้ คิวจึงเดินทุกหน้าที่ครูเปิด เก็บไว้นอกสายตาเพราะการ์ดของมันสูงเกินและแก้ไม่ได้
+         */}
+        <div aria-hidden className="pointer-events-none absolute size-0 overflow-hidden opacity-0">
+          <TeacherGradeQueueClient />
         </div>
       </div>
     </div>
@@ -369,34 +477,43 @@ export function TeacherShell({
 function SideLink({
   item,
   active,
-  compact = false,
+  collapsible,
 }: {
   item: NavItem
   active: boolean
-  compact?: boolean
+  /** true = ที่แท็บเล็ตซ่อนป้าย เหลือไอคอน (ยังมี title กับ sr-only ให้อ่าน) */
+  collapsible: boolean
 }) {
   const badge = item.badge ?? 0
   return (
     <Link
       href={item.href}
       aria-current={active ? 'page' : undefined}
-      className={`relative flex min-h-11 items-center gap-2 rounded-lg px-3 text-label transition-colors duration-200 focus-ring ${
-        active
-          ? 'bg-brand-50 font-extrabold text-brand-700'
-          : 'font-semibold text-ink hover:bg-surface-sunken'
-      } ${compact ? 'whitespace-nowrap' : ''}`}
+      title={item.label}
+      className={`group relative flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-label transition-colors duration-200 focus-ring ${
+        collapsible ? 'justify-center xl:justify-start' : ''
+      } ${active ? 'bg-brand-100 font-extrabold text-brand-700 ring-1 ring-brand-200' : 'font-semibold text-ink hover:bg-surface-sunken'}`}
     >
-      {/* ขีดซ้ายของหน้าปัจจุบัน — คู่กับตัวหนาและ aria-current ไม่ได้ใช้สีอย่างเดียว */}
-      {active && !compact ? (
-        <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] rounded-r bg-brand-600" />
-      ) : null}
-      <span className={active ? 'text-brand-700' : 'text-ink-muted'}>{item.icon}</span>
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      {active ? <span aria-hidden className="absolute inset-y-1 left-0 w-1 rounded-r bg-brand-600" /> : null}
+      <span className={`relative ${active ? 'text-brand-700' : 'text-ink-muted'}`}>
+        {item.icon}
+        {collapsible && badge > 0 ? (
+          <span
+            aria-hidden
+            className={`absolute -top-2 -right-2.5 grid min-w-4 place-items-center rounded-full px-1 text-[10px] leading-4 font-bold tabular-nums ring-2 ring-surface-raised xl:hidden ${
+              item.urgent ? 'bg-danger-600 text-ink-onbrand' : 'bg-brand-600 text-ink-onbrand'
+            }`}
+          >
+            {badge > 9 ? '9+' : badge}
+          </span>
+        ) : null}
+      </span>
+      <span className={`min-w-0 flex-1 truncate ${collapsible ? 'sr-only xl:not-sr-only' : ''}`}>{item.label}</span>
       {badge > 0 ? (
         <span
           className={`shrink-0 rounded-full px-2 py-0.5 text-note font-bold tabular-nums ${
-            item.urgent ? 'bg-danger-600 text-ink-onbrand' : 'bg-surface-sunken text-ink'
-          }`}
+            collapsible ? 'hidden xl:inline' : ''
+          } ${item.urgent ? 'bg-danger-600 text-ink-onbrand' : 'bg-surface-sunken text-ink'}`}
         >
           {badge}
         </span>
