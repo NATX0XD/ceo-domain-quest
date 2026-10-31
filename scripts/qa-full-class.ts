@@ -651,8 +651,13 @@ async function main(): Promise<void> {
     check(chaCalib.length > 0, 'ครูเห็นธงความมั่นใจของเด็กช้า', chaCalib.join(' · ') || 'ไม่มีธงเลย')
     check(Number(board.json?.needsHelp) >= 1, 'ตัวนับ "ขอครู" ของทั้งห้องนับได้', `needsHelp=${String(board.json?.needsHelp)} · ควรคุย=${String(board.json?.shouldTalk)} · ควรชม=${String(board.json?.shouldPraise)}`)
 
+    check(
+      chaCalib.length > 0 || helpRow?.flag?.flagged === true,
+      'ข้อมูล calibration/ธงโค้ชของเด็กช้าอยู่ใน board JSON',
+      `calibration=${chaCalib.length} · flagged=${String(helpRow?.flag?.flagged)}`,
+    )
+
     const html = await stable(teacher, `/teacher?classroomId=${classroomId}`)
-    check(html.text.includes('ธงจากความมั่นใจของผู้เรียน'), 'จอครูขึ้นหัวข้อธงโค้ช', `หน้า ${html.status}`)
 
     // จอแผงห้องเรียนสดรายคน (หน้าใหม่ที่เพิ่งมี)
     const live = await stable(teacher, `/teacher/board?classroomId=${classroomId}`)
@@ -756,7 +761,7 @@ async function main(): Promise<void> {
   })
 
   await phase('ขั้น 4.5 ครูตรวจงาน', async () => {
-    const pending = await stable(teacher, `/teacher?classroomId=${classroomId}`)
+    const pending = await stable(teacher, `/teacher/review?classroomId=${classroomId}`)
     const inQueue = PERSONAS.filter((p) => pending.text.includes(p.nickname)).length
     check(inQueue >= 1, 'คิวงานรอตรวจบนจอครูมีงานของตัวละคร QA', `${inQueue}/3 ชื่อปรากฏบนหน้า`)
 

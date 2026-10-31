@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Digital Biz Quest — Manual QA Checklist</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236b4eff'/%3E%3C/svg%3E">
+  <style>
+    :root{--ink:#29231d;--muted:#756b62;--paper:#fffaf2;--line:#e7d9c9;--accent:#6b4eff;--ok:#dff5e7;--warn:#fff0c2;--bad:#ffe0e0}
+    *{box-sizing:border-box} body{margin:0;background:#f4eee6;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Noto Sans Thai",sans-serif}
+    header{background:#29231d;color:white;padding:28px max(20px,calc((100% - 1180px)/2)) 24px} h1{margin:0 0 5px;font-size:clamp(25px,4vw,40px)} h2{margin:0 0 8px;font-size:22px} h3{margin:0 0 6px;font-size:18px} p{margin:5px 0 12px}.sub{color:#d8cdc1}
+    main{max-width:1180px;margin:22px auto;padding:0 16px}.toolbar{position:sticky;top:0;z-index:2;background:#fffdf9;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;gap:9px;flex-wrap:wrap;align-items:center;box-shadow:0 4px 18px #4b38200e}.toolbar button{border:0;border-radius:9px;padding:9px 13px;background:var(--accent);color:white;font-weight:700;cursor:pointer}.toolbar button.secondary{background:#eadfce;color:var(--ink)}.meter{margin-left:auto;color:var(--muted);font-weight:700}
+    .notice,.section{background:var(--paper);border:1px solid var(--line);border-radius:16px;margin:16px 0;padding:18px}.notice{background:#fff5d8}.notice strong{color:#8c4d00}.section>p{color:var(--muted)}
+    .case{background:white;border:1px solid var(--line);border-radius:13px;margin:12px 0;padding:14px}.case.done{background:var(--ok);border-color:#9bcdaa}.case-head{display:flex;gap:10px;align-items:flex-start}.case-head input{width:22px;height:22px;accent-color:#208746;flex:none;margin-top:3px}.case-title{font-weight:800}.meta{color:var(--muted);font-size:13px;margin-top:2px}.expected{margin:10px 0 9px;padding:10px 12px;background:#faf5ee;border-left:4px solid var(--accent);border-radius:7px}.expected b{color:#4a35b7}.fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}.fields label{font-size:13px;color:var(--muted);font-weight:700}.fields textarea,.fields input[type=text]{display:block;width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:3px;background:#fffefc;color:var(--ink);font:inherit}.fields textarea{min-height:58px;resize:vertical}.attachments{grid-column:1/-1}.attachments input{width:100%;margin-top:5px}.previews{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}.previews img{width:88px;height:64px;object-fit:cover;border-radius:7px;border:1px solid var(--line)}
+    .legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px}.legend span{padding:3px 8px;border-radius:6px}.pass{background:var(--ok)}.pending{background:var(--warn)}.fail{background:var(--bad)}.small{font-size:13px;color:var(--muted)}
+    @media(max-width:650px){main{padding:0 9px}.section,.notice{padding:13px}.fields{grid-template-columns:1fr}.attachments{grid-column:auto}.meter{width:100%;margin-left:0}}
+    @media print{.toolbar{display:none}body{background:white}.section,.notice{break-inside:avoid}.case{break-inside:avoid}.case:not(.done) .fields{display:none}}
+  </style>
+</head>
+<body>
+<header><h1>Manual QA — Digital Biz Quest</h1><div class="sub">Checklist สำหรับทดสอบเครื่องจริงทุกบทบาท · ติ๊กเมื่อผ่าน · เขียนผลจริง · แนบภาพหลักฐานได้</div></header>
+<main>
+  <div class="toolbar">
+    <button id="export">ส่งออกผล QA (.json)</button><button id="print" class="secondary">พิมพ์ / Save PDF</button><button id="reset" class="secondary">ล้างข้อมูลฟอร์ม</button><span class="meter" id="meter">0/0 ผ่าน</span>
+  </div>
+  <div class="notice"><strong>วิธีใช้ก่อนเริ่ม</strong><p>รันระบบตาม <code>docs/try-it.md</code> และใช้ห้อง UAT ของตัวเอง ห้ามใช้ <code>db:reset</code> ถ้ามีคนอื่นทดสอบอยู่ ถ้าผ่านให้ติ๊กและเขียนค่าที่เห็นจริง ถ้าไม่ผ่านให้เขียนขั้นตอนที่ทำซ้ำได้แล้วแนบภาพ/วิดีโอจอ ทุกข้อที่ระบุว่า “คาดหวัง” ต้องตรงก่อนถือว่าผ่าน</p><div class="legend"><span class="pass">สีเขียว = ผ่าน</span><span class="pending">สีเหลือง = ยังไม่ตรวจ</span><span class="fail">สีแดง = ทำเครื่องหมายในหมายเหตุเมื่อพบปัญหา</span></div></div>
+  <div id="content"></div>
+</main>
+<script>
+const sections = [
+{title:'0 · เตรียมระบบและการเริ่มต้น',intro:'ตรวจว่าสภาพแวดล้อมพร้อมและไม่ทำลายข้อมูลก่อนทดสอบ',items:[
+['SET-01','ทุกบทบาท','เปิด local app ตามคู่มือ และเข้า route หลักได้','หน้าเว็บตอบสนอง ไม่จอขาว ไม่ขึ้น 500 และไม่มี error overlay'],
+['SET-02','ผู้ดูแล','รัน automated gate: npm test, typecheck, build, check:authz, check:leaks, check:wired','คำสั่งที่ใช้ในโปรเจกต์ผ่านทั้งหมด หรือมี failure ที่บันทึกสาเหตุชัดเจน'],
+['SET-03','ผู้ดูแล','รัน smoke:uat และ qa:class กับห้องทดสอบของตัวเอง','เดิน API flow ครบและ cleanup เฉพาะข้อมูลที่สคริปต์สร้างเอง ไม่แตะข้อมูลคนอื่น'],
+['SET-04','ทุกบทบาท','เปิดหน้าหลักที่ 390x844 และ 360x844','ไม่มี horizontal scroll, ปุ่มไม่ล้น, ตัวอักษรอ่านได้, ไม่มีข้อความทับภาพ'],
+['SET-05','ทุกบทบาท','รีเฟรชหน้า/เปิดลิงก์ตรงทุก route ที่คู่มือระบุ','หน้าโหลดกลับได้หรือ redirect ไปจุดที่ถูกต้อง ไม่สูญเสีย session โดยไม่แจ้งเหตุ'],
+]},
+{title:'1 · ผู้ใช้ที่ยังไม่ล็อกอิน / การเข้าห้อง',intro:'บทบาทนักเรียนไม่มีบัญชีอีเมล ใช้รหัสห้อง ชื่อเล่น และ PIN 4 หลัก',items:[
+['JOIN-01','ผู้ชมทั่วไป','เปิด /join โดยไม่ใส่ code','เห็นฟอร์มรหัสห้อง ชื่อเล่น และ PIN 4 หลักครบในจอมือถือโดยไม่ต้องเลื่อนแนวนอน'],
+['JOIN-02','นักเรียน','เปิด /join?code=UAT777','รหัสห้องถูกเติมให้แล้วและยังแก้ไขได้ หาก code ไม่ถูกต้องมีข้อความอธิบาย'],
+['JOIN-03','นักเรียน','กรอกรหัสห้องผิด/ชื่อว่าง/PIN ไม่ครบหรือไม่ใช่ตัวเลข แล้วส่ง','ไม่สร้าง session; ชี้ช่องที่ผิดด้วยข้อความภาษาไทยที่เข้าใจได้'],
+['JOIN-04','นักเรียน','เข้าห้องด้วยชื่อเล่นใหม่และ PIN 4 หลัก','เข้า /home สำเร็จ เห็นชื่อเล่น/ห้องถูกต้อง และมี session cookie ที่ใช้งานต่อได้'],
+['JOIN-05','นักเรียน','ลองใช้ชื่อเล่นซ้ำในห้องเดียวกัน','ระบบปฏิเสธหรือบังคับชื่อใหม่อย่างชัดเจน ไม่เขียนทับข้อมูลคนเดิม'],
+['JOIN-06','นักเรียน','กดรีเฟรช/ปิดเปิดแท็บหลังเข้าห้อง','ยังเป็นผู้เรียนคนเดิม ความคืบหน้าไม่หาย'],
+['JOIN-07','นักเรียน','ใช้ /join/resume ด้วยชื่อเล่น+PIN บนเบราว์เซอร์/เครื่องใหม่','กลับเข้าบัญชีเดิมได้เฉพาะเมื่อข้อมูลถูกต้อง; PIN ผิดไม่เปิดข้อมูลเพื่อน'],
+['JOIN-08','นักเรียน','พยายามเปิด /teacher, /teacher/board, /teacher/report โดยไม่มีครู session','ถูกปฏิเสธหรือ redirect ไป login ไม่เห็นข้อมูลห้อง/รายงาน'],
+['JOIN-09','ผู้ชมทั่วไป','เปิด API นักเรียนโดยไม่มี cookie เช่น /api/me และส่ง studentId ปลอม','ได้ 401/403 หรือข้อมูลว่าง; ไม่สามารถอ่านหรือแก้ข้อมูลคนอื่น'],
+]},
+{title:'2 · นักเรียน: onboarding และข้อมูลร้าน',intro:'ทดสอบ flow ตั้งแต่เข้าห้องจนพร้อมเรียน',items:[
+['STU-01','นักเรียน','เดินหน้า /intro, /profile, /setup ตามลำดับ','หน้าแต่ละขั้นอธิบายชัด ปุ่มถัดไปทำงาน และข้อมูลร้านถูกเก็บเมื่อบันทึก'],
+['STU-02','นักเรียน','กรอกชื่อร้าน ประเภทธุรกิจ ลูกค้า และความชอบ แล้วรีโหลด','ค่าที่บันทึกกลับมาเดิม ไม่ถูกแทนด้วยข้อมูลคนอื่น'],
+['STU-03','นักเรียน','กรอกข้อมูลว่าง/ยาวเกิน/อักขระแปลก แล้วบันทึก','ระบบ validate อย่างสุภาพ ไม่พัง และไม่แสดง HTML/script เป็นโค้ดที่รันได้'],
+['STU-04','นักเรียน','เปิด /dome และคุยกับ Dome ตามตัวเลือกที่มี','ตอบกลับเหมาะกับบริบท มี loading/error state และใช้ mascot monster ตามแบบใหม่'],
+['STU-05','นักเรียน','เปิด /knowledge และค้นคำที่มี/ไม่มีผลลัพธ์','ผลค้นหาตรงเนื้อหา; กรณีไม่พบมี empty state ไม่ใช่จอว่าง'],
+['STU-06','นักเรียน','เปิด /home, /map, /rewards, /result, /my-site, /showcase','ทุกหน้ามีข้อมูลหรือ empty state ที่ถูกต้อง ลิงก์เมนูไม่วนผิด route'],
+]},
+{title:'3 · นักเรียน: แบบทดสอบก่อนเรียนและเส้นทางเรียน',intro:'ตรวจ gate, การบันทึกคำตอบ และการปรับตามผู้เรียน',items:[
+['PRE-01','นักเรียน','เปิด /pretest ในช่วงที่ครูเปิดแบบทดสอบ','เห็นคำถามครบ ตอบกลับไปมาได้ และปุ่มส่งแสดงสถานะชัด'],
+['PRE-02','นักเรียน','ส่งแบบทดสอบโดยเว้นคำตอบ/ตอบครบ แล้วรีโหลด','เว้นคำตอบถูกแจ้ง; ส่งสำเร็จครั้งเดียวและคะแนน/คำตอบไม่หายเมื่อรีโหลด'],
+['PRE-03','นักเรียน','ลองเปิดภารกิจก่อนผ่าน gate หรือช่วงที่ครูล็อก','ระบบพาไปหน้ารอ/แจ้งว่าต้องรอ ไม่ให้ข้ามสิทธิ์ด้วยการพิมพ์ URL'],
+['PATH-01','นักเรียน','เข้าหน้า /map หลัง pretest','เห็นแผนที่ ภารกิจที่ปลดล็อก/ล็อก และคำอธิบายสถานะตรงกับครู'],
+['PATH-02','นักเรียน 2 คน','เข้าด่าน M2 ด้วย student คนละคน','ตัวอย่างโดเมน/ลำดับชิ้นส่วนสุ่มแบบ deterministic ต่างกันได้ แต่เฉลยและ ID การตรวจยังถูกต้อง'],
+['PATH-03','นักเรียน','เลือกสลับ learn/game ตามที่ระบบเสนอ','ระบบบันทึก route ที่เลือกและกลับเข้ามาแล้วอยู่ route เดิม'],
+['PATH-04','นักเรียน','กดคำใบ้และกดขอความช่วยเหลือ','คำใบ้ไม่เปิดเฉลยเกินขอบเขต; คำขอปรากฏบนแผงครูพร้อมชื่อ/ภารกิจ'],
+]},
+{title:'4 · นักเรียน: ภารกิจ M1–M4 และด่านเสริม',intro:'ต้องตรวจทั้งเส้นทางเรียน, เกม, ผิด/ถูก, บันทึกความคืบหน้า และมือถือ',items:[
+['M1-01','นักเรียน','เปิด M1 watch แล้วกดเล่นวิดีโอเอง','วิดีโอไม่ autoplay โดยไม่ตั้งใจ เสียง/ปุ่มเล่นทำงาน และคำบรรยายไทยเปิดอ่านได้'],
+['M1-02','นักเรียน','ฟังวิดีโอ M1 พร้อมอ่าน caption แล้วหยุด/เล่นต่อ','ข้อความและเวลา caption สอดคล้องเสียงจริง ไม่บังปุ่มหรือภาพสำคัญ'],
+['M1-03','นักเรียน','ตอบคำถาม M1 แบบถูกและผิด','ระบบให้ feedback เหมาะสม บันทึก attempts/hints และไม่ให้คำตอบผิดผ่าน'],
+['M2-01','นักเรียน','ทำ M2 แบบ Read/Chat ตามชิ้นส่วนที่สุ่ม','เนื้อหา 3 ส่วน Visual/Text/Simulator ครบ ชื่อ/ตัวอย่างปรับตามผู้เรียน และลำดับสุ่มไม่ทำให้ตรวจผิด'],
+['M2-02','นักเรียน','ทำ M2 แบบ Do/DragDrop ลากทุกชิ้นถูก/ผิด','ลากหรือแตะบนมือถือได้ ช่องถูกต้องแสดงผล และผลรวมตรงกับชิ้นที่วาง'],
+['M3-01','นักเรียน','เปิดและทำ M3 ทุกช่วง tutorial/เลือก/ตอบ/ผลลัพธ์','ทุกสถานีไปต่อได้ มี retry/feedback และไม่เกิด state ค้างเมื่อรีโหลด'],
+['M4-01','นักเรียน','เปิดและทำ M4 ทุกช่วงเกม/กระดาน/ส่งผล','กติกา ตัวนับ เวลา และผลผ่าน/ลองใหม่ตรงกับเนื้อหา; ไม่ส่งซ้ำจนข้อมูลซ้ำ'],
+['BONUS-01','นักเรียน','เปิดภารกิจเสริม/bonus และทำทั้งข้อถูก/ผิด','ปลดล็อกตามเงื่อนไข บันทึก progress แยกจากภารกิจหลัก และไม่ทำให้เส้นทางหลักพัง'],
+['MISSION-01','นักเรียน','ตอบผิดหลายครั้งแล้วลองใหม่','สถานะยังอยู่ในภารกิจเดิม จำนวนครั้ง/คำใบ้ถูกบันทึก และ feedback ช่วยให้แก้ได้'],
+['MISSION-02','นักเรียน','กดข้ามภารกิจเมื่อระบบอนุญาต','มีเหตุผล/คำเตือนชัด ความคืบหน้าระบุว่าข้าม ไม่แอบนับเป็นผ่าน และครูเห็นร่องรอย'],
+['MISSION-03','นักเรียน','ทำภารกิจจนผ่านครบแล้วออกเข้าใหม่','ดาว/สถานะผ่าน/หน้าถัดไปยังถูกต้อง ไม่ต้องทำซ้ำโดยไม่จำเป็น'],
+]},
+{title:'5 · นักเรียน: boss, ส่งงาน, ครูตรวจ, แก้ไขใหม่',intro:'ตรวจวงจรคะแนนที่ครูเป็นผู้ตัดสินสุดท้าย',items:[
+['BOSS-01','นักเรียน','เข้าหน้า /ceo เมื่อผ่านเงื่อนไข','เห็นโจทย์ boss ที่ปรับตามร้าน/ผู้เรียนและแบบฟอร์มครบ'],
+['BOSS-02','นักเรียน','ส่งคำตอบ boss ที่กรอกไม่ครบ/ครบ','ไม่ให้ส่งข้อมูลไม่ครบ; เมื่อส่งสำเร็จเห็นสถานะรอครู ไม่ประกาศว่าผ่านเอง'],
+['BOSS-03','นักเรียน','ลอง voice input/ส่งเสียง (ถ้ามี) และกรณี permission denied','ถ้าอนุญาตใช้งานได้; ถ้าปฏิเสธมีวิธีกรอกข้อความแทนและไม่ทำให้หน้าเสีย'],
+['REVIEW-01','ครู+นักเรียน','ครูเปิดรายการงานและยืนยันคะแนน','คะแนนที่ครูยืนยันเป็นค่าที่ใช้ตัดสินดาว/ผลลัพธ์ พร้อมแยกค่าที่ AI เสนอ'],
+['REVIEW-02','ครู+นักเรียน','ครูขอแก้ไขงานพร้อมมิติ/หมายเหตุ','เด็กเห็นว่าต้องแก้ด้านใด เห็นคำแนะนำ และปุ่มส่งใหม่กลับมาใช้งานได้'],
+['REVIEW-03','นักเรียน','ส่งงานแก้ไขหลังถูกตีกลับ','เกิด submission รอบใหม่ ไม่ลบประวัติเดิม และครูเห็นรายการล่าสุดชัดเจน'],
+['CERT-01','นักเรียน','เปิด /result และ /rewards ก่อน/หลังครูยืนยัน','ก่อนยืนยันไม่แสดงผลสำเร็จเกินจริง; หลังยืนยันแสดงดาว/ใบประกาศตามเงื่อนไข'],
+]},
+{title:'6 · นักเรียน: สะท้อนผล แบบทดสอบหลังเรียน แบบสอบถาม และผลงาน',intro:'ตรวจการปิดวงจรการเรียนและข้อมูลที่ครูนำไปใช้',items:[
+['REF-01','นักเรียน','เปิด /reflect และส่งคำตอบสั้น/ยาว','ความยาวขั้นต่ำถูกตรวจ; ข้อความไทยถูกบันทึก; ส่งซ้ำไม่สร้างข้อมูลซ้ำผิดปกติ'],
+['POST-01','นักเรียน','ทำ /posttest หลังครูเปิดช่วง post','คำถาม/การบันทึก/คะแนนทำงาน และไม่เปิดก่อนเวลาหรือโดยไม่มีสิทธิ์'],
+['SURV-01','นักเรียน','ทำ /survey เมื่อครูเปิด และลองเมื่อปิด','เมื่อเปิดส่งได้; เมื่อปิดระบบแจ้งสถานะ ไม่หลอกว่าบันทึกสำเร็จ'],
+['SHOW-01','นักเรียน','เปิด /showcase, กด feedback/ดูผลงาน','ผลงานที่เผยแพร่แสดงถูกคน กด feedback ได้ตามสิทธิ์ และไม่เห็นข้อมูลส่วนตัวเกินจำเป็น'],
+['PROFILE-01','นักเรียน','เปิด /profile ตั้งค่าความชอบ/เป้าหมาย แล้วรีโหลด','ค่าถูกบันทึกและมีผลกับคำแนะนำ/ระดับตัวช่วยในรอบถัดไป'],
+]},
+{title:'7 · ครู: login, ห้องเรียน, ตั้งค่าคาบ และการควบคุม',intro:'ใช้บัญชีครู UAT หรือบัญชีจริงของเจ้าของ ห้ามใส่รหัสจริงลงในไฟล์ QA',items:[
+['T-LOGIN','ครู','เปิด /teacher แล้ว login/logout/login ใหม่','login สำเร็จเฉพาะบัญชีถูกต้อง; logout ตัดสิทธิ์ทุกหน้า; error ไม่เผยความลับ'],
+['T-ROOM-01','ครู','สร้าง/เปิดห้องใหม่ ดูรหัส 6 ตัวและ QR','ห้องมีเจ้าของถูกคน รหัสไม่ซ้ำ และ QR พาไป /join พร้อม code'],
+['T-ROOM-02','ครู','เปิด/ปิดคาบและลองเข้าด้วยนักเรียนหลังปิด','ปิดคาบยืนยันสองขั้น; นักเรียนใหม่เข้าไม่ได้ตามกติกา และข้อมูลเดิมยังดูรายงานได้'],
+['T-SET-01','ครู','เปิด/ปิด pretest, posttest, survey','สวิตช์สะท้อนสถานะจริงและมีผลกับสิทธิ์นักเรียนทันที/หลังรีเฟรช'],
+['T-SET-02','ครู','เปลี่ยน phase และ timer','phase/timer แสดงตรงบน board และฝั่งนักเรียน ไม่ติดลบ/ไม่รีเซ็ตโดยไม่ตั้งใจ'],
+['T-SET-03','ครู','ปลดล็อกสถานี/ขยายเวลา/ส่ง broadcast','นักเรียนเห็นการเปลี่ยนแปลงตามสิทธิ์ และข้อความประกาศไม่หายหรือซ้ำทุก refresh'],
+['T-ROOM-03','ครู','เตะนักเรียนที่ไม่ควรอยู่ในห้อง','นักเรียนคนนั้นถูกตัด session/เข้าใช้งานต่อไม่ได้ และคนอื่นไม่ถูกกระทบ'],
+]},
+{title:'8 · ครู: live board, จอหน้าห้อง และคำขอช่วยเหลือ',intro:'ตรวจการมองเห็นแบบสดและการตัดสินใจของครู',items:[
+['TB-01','ครู','เปิด /teacher/board มีนักเรียนหลายสถานะ','เห็นรายชื่อ/สถานะ/ความคืบหน้าเรียงคนที่ต้องช่วยก่อน และ refresh/live update ถูกต้อง'],
+['TB-02','ครู','ให้นักเรียนกดขอความช่วยเหลือ','ธง/ตัวนับ needs help เพิ่มบน board พร้อมภารกิจและเวลาที่เหมาะสม'],
+['TB-03','ครู','ตอบ plan request หรือเปลี่ยนระดับตัวช่วย','คำขอเปลี่ยนสถานะเป็นตอบแล้ว นักเรียนเห็นแผนใหม่ และมี audit trail'],
+['TB-04','ครู','เปิด /board ในหน้าฉาย','จอมีรหัสห้อง QR timer และสรุปที่เหมาะกับการฉาย ไม่มีข้อมูลลับของเด็กเกินจำเป็น'],
+['TB-05','ครู','เปิด /teacher/screen หรือหน้าจอที่ลิงก์จากแผง','หน้าจออัปเดตจำนวนคน/ผ่าน/ส่งงานและไม่จอขาวเมื่อยังไม่มีข้อมูล'],
+['TB-06','ครู','ทดสอบนักเรียน offline/รีเฟรชแล้วกลับมา','board แสดง last seen/สถานะอย่างซื่อสัตย์ ไม่ลบความคืบหน้าหรือสร้างนักเรียนซ้ำ'],
+]},
+{title:'9 · ครู: รายงาน ตรวจงาน รายบุคคล และ showcase',intro:'ตรวจข้อมูลปลายทางที่ครูใช้ตัดสินใจ',items:[
+['TR-01','ครู','เปิด /teacher/report','ตัวเลขก่อน/หลังเรียน ความคืบหน้า และกลุ่มที่ต้องช่วยตรงกับข้อมูลนักเรียน'],
+['TR-02','ครู','เปิด /teacher/student แล้วเลือกเด็กแต่ละสถานะ','ข้อมูลรายคนตรงกับหน้าของเด็ก มี history/flags/ดาว/mission status ที่ตรวจสอบย้อนกลับได้'],
+['TR-03','ครู','เปิดคิวงาน /teacher/review และยืนยัน/แก้คะแนน','คิวลดเมื่อจัดการแล้ว คะแนน/หมายเหตุ/ผู้ตัดสินถูกบันทึก'],
+['TR-04','ครู','เปิด /teacher/requests แล้วตอบคำขอ','รายการ pending/ตอบแล้วแยกชัด และเด็กได้รับผลตอบกลับ'],
+['TR-05','ครู','เปิด /teacher/showcase และจัดการผลงาน','เลือกผลงานขึ้นจอได้; ซ่อน/เอาออกแล้วไม่แสดงต่อผู้ชม'],
+['TR-06','ครู','ดาวน์โหลด export class/report/items','ไฟล์เปิดได้ ข้อมูลครบ แถว/คอลัมน์ตรง และไม่มี service key/PIN/ข้อมูลลับหลุด'],
+['TR-07','ครู','เปิดหน้า report ด้วย classroomId ของครูคนอื่น/แก้ URL','ได้ 403/404 ไม่เห็นข้อมูลห้องอื่น'],
+]},
+{title:'10 · ความปลอดภัย สิทธิ์ ความถูกต้อง และการกู้คืน',intro:'ข้อเหล่านี้ต้องถือเป็น blocker หากไม่ผ่าน',items:[
+['SEC-01','ผู้ทดสอบ','เปิดทุก API สำคัญโดยไม่มี cookie','ตอบ 401/403 ตามสิทธิ์ ไม่ส่งข้อมูลนักเรียน/ครูออกมา'],
+['SEC-02','นักเรียน A','เปลี่ยน studentId/classroomId ใน request ของตัวเองเป็นของ B','เซิร์ฟเวอร์ยังอ้าง session cookie; อ่าน/เขียนของ B ไม่ได้'],
+['SEC-03','นักเรียน','ดู page source/network/localStorage','ไม่มี Supabase service role key, PIN แบบ plaintext หรือเฉลยที่ไม่ควรอยู่ client'],
+['SEC-04','ผู้ชมทั่วไป','ยิง input ด้วย HTML/script/ข้อความยาว','ระบบ escape/sanitize ไม่เกิด XSS และไม่พัง layout'],
+['SEC-05','นักเรียน','ลอง PIN ผิดหลายครั้ง/ชื่อซ้ำ/room code สุ่มเดา','มี rate limit/ข้อความปฏิเสธ และไม่ทำให้ข้อมูลคนอื่นรั่ว'],
+['SEC-06','ทุกบทบาท','เปิดหน้าไม่มีสิทธิ์ด้วย direct URL และกด back/forward','guard ยังทำงาน ไม่อาศัยแค่การซ่อนปุ่ม'],
+['REC-01','นักเรียน','ตัดเน็ตระหว่างส่งคำตอบ/ส่งงาน แล้วต่อกลับ','เห็น error ที่เข้าใจได้ ไม่แสดงสำเร็จปลอม และ retry ไม่สร้างรายการซ้ำ'],
+['REC-02','ครู','refresh ระหว่างเปลี่ยน phase/ยืนยันคะแนน','สถานะสุดท้ายเป็นค่าที่ server ยืนยัน ไม่ค้างครึ่งทาง'],
+['REC-03','ทุกบทบาท','เปิดใช้งานหลายแท็บ/หลายขนาดจอ','ไม่มี session สลับผิดคนหรือข้อมูลของแท็บหนึ่งทับอีกแท็บโดยไม่แจ้ง'],
+]},
+{title:'11 · Visual, accessibility และอุปกรณ์จริง',intro:'ทำอย่างน้อยบน Chrome/Safari มือถือที่ใช้จริง และ desktop ที่ครูใช้',items:[
+['UX-01','ทุกบทบาท','ตรวจ 360x844, 390x844, 768x1024, desktop','ไม่มี overflow/ตัดหัวข้อ/ปุ่มชิดขอบจนกดยาก และภาพ mascot ไม่ทับข้อความ'],
+['UX-02','ทุกบทบาท','ใช้ keyboard Tab/Enter/Escape ในฟอร์ม เมนู modal และเกมที่ทำได้','focus มองเห็น ลำดับสมเหตุผล และทุก action สำคัญทำได้โดยไม่ต้องใช้เมาส์อย่างเดียว'],
+['UX-03','ทุกบทบาท','เปิด screen reader หรือดู accessible name ของปุ่ม/input','ปุ่มมีชื่อภาษาไทย รูปมี alt ตามความหมาย decorative ไม่ถูกอ่านซ้ำ'],
+['UX-04','ทุกบทบาท','ลด motion/ปิดเสียง/ปรับ volume','ยังใช้งานได้ ไม่บังคับ autoplay เสียง และ feedback ไม่พึ่งสีอย่างเดียว'],
+['UX-05','ทุกบทบาท','ตรวจข้อความไทย ฟอนต์ Mitr/ฟอนต์เนื้อหา และ contrast','ไม่มีคำผิดที่ทำให้เข้าใจผิด ตัวเล็กไม่จางจนอ่านไม่ได้ และข้อความไม่ทับภาพ'],
+['UX-06','นักเรียน','กดเร็วซ้ำ/แตะปุ่มตอน loading','ปุ่มกัน double submit มี loading state และไม่สร้างคำตอบ/งานซ้ำ'],
+]},
+{title:'12 · ปิดรอบ QA และหลักฐาน',intro:'เกณฑ์ก่อนส่งให้เจ้าของทดลองจริง',items:[
+['CLOSE-01','ผู้ทดสอบ','ตรวจว่าทุกข้อสีเขียวมีหมายเหตุ/ภาพหลักฐานที่จำเป็น','แต่ละข้อมีผลจริงและหลักฐานเปิดดูได้ ไม่ติ๊กผ่านลอย ๆ'],
+['CLOSE-02','ผู้ทดสอบ','ส่งออก JSON และเก็บภาพที่แนบทั้งหมดในโฟลเดอร์ QA','ไฟล์ผลสรุปมี timestamp, browser, viewport, commit และรายการ fail'],
+['CLOSE-03','ผู้ดูแล','เปิดหน้า checklist ใน browser อื่น/เครื่องอื่น','ข้อมูลต้นฉบับยังอยู่ใน HTML และปุ่ม export/print ใช้ได้'],
+['CLOSE-04','ผู้ดูแล','ถ้าพบ blocker ให้หยุดการรับรอง release และบันทึก reproduction','มี URL, account role, ขั้นตอน, expected/actual, console error และ screenshot ครบ'],
+]}
+];
+const key='digital-biz-quest-manual-qa-v1';
+const saved=JSON.parse(localStorage.getItem(key)||'{}');
+const root=document.querySelector('#content');
+let total=0;
+function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function update(){const boxes=[...document.querySelectorAll('[data-check]')];const n=boxes.filter(x=>x.checked).length;document.querySelector('#meter').textContent=`${n}/${total} ผ่าน · ${Math.round(n/total*100)||0}%`;boxes.forEach(x=>x.closest('.case').classList.toggle('done',x.checked));localStorage.setItem(key,JSON.stringify([...document.querySelectorAll('.case')].reduce((o,c)=>{const id=c.dataset.id;o[id]={checked:c.querySelector('[data-check]').checked,note:c.querySelector('[data-note]').value,actual:c.querySelector('[data-actual]').value};return o},{})))}
+sections.forEach(sec=>{total+=sec.items.length;const el=document.createElement('section');el.className='section';el.innerHTML=`<h2>${esc(sec.title)}</h2><p>${esc(sec.intro)}</p>`;sec.items.forEach(([id,role,action,expected])=>{const s=saved[id]||{};const c=document.createElement('article');c.className='case';c.dataset.id=id;c.innerHTML=`<div class="case-head"><input data-check type="checkbox" ${s.checked?'checked':''} aria-label="ผ่าน ${id}"><div><div class="case-title">${id} · ${esc(action)}</div><div class="meta">บทบาท: ${esc(role)}</div></div></div><div class="expected"><b>ความคาดหวัง:</b> ${esc(expected)}</div><div class="fields"><label>สิ่งที่เห็นจริง<textarea data-actual placeholder="เช่น Chrome 131 / 390x844 / ผลที่เกิดขึ้น...">${esc(s.actual||'')}</textarea></label><label>หมายเหตุ / bug / ขั้นตอนทำซ้ำ<textarea data-note placeholder="ถ้าพบปัญหา เขียน actual เทียบ expected และ URL ที่เกิดปัญหา">${esc(s.note||'')}</textarea></label><label class="attachments">แนบรูปหลักฐาน (เก็บในเครื่องนี้และ export รายการชื่อไฟล์)<input type="file" accept="image/*" multiple><div class="previews"></div></label></div>`;el.appendChild(c)});root.appendChild(el)});
+document.addEventListener('input',update);document.addEventListener('change',e=>{if(e.target.matches('input[type=file]')){const card=e.target.closest('.case');card.dataset.files=[...e.target.files].map(f=>f.name).join('|');const box=e.target.closest('.attachments').querySelector('.previews');box.innerHTML='';[...e.target.files].forEach(f=>{const img=document.createElement('img');img.alt=f.name;img.src=URL.createObjectURL(f);box.appendChild(img)})}update()});update();
+document.querySelector('#print').onclick=()=>window.print();document.querySelector('#reset').onclick=()=>{if(confirm('ล้างผลที่กรอกทั้งหมดหรือไม่')){localStorage.removeItem(key);location.reload()}};document.querySelector('#export').onclick=()=>{const payload={app:'digital-biz-quest',checkedAt:new Date().toISOString(),commit:'12cf36e',items:[...document.querySelectorAll('.case')].map(c=>({id:c.dataset.id,passed:c.querySelector('[data-check]').checked,actual:c.querySelector('[data-actual]').value,note:c.querySelector('[data-note]').value,attachments:(c.dataset.files||'').split('|').filter(Boolean)}))};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));a.download=`digital-biz-quest-qa-${new Date().toISOString().slice(0,10)}.json`;a.click()};
+</script>
+</body>
+</html>
