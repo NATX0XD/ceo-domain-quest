@@ -15,8 +15,14 @@ import { GameButton, HudPill, SceneBg, buzz, useGameMotion } from "./index";
 
 export const BG_FALLBACK =
   "bg-gradient-to-b from-[#1b0f36] via-[#2a1748] to-[#0e0720]";
-export const INPUT =
-  "min-h-12 w-full rounded-xl border-2 border-[#6d4bd1] bg-[#0e0720] px-3 text-body font-semibold text-[#efe6ff] placeholder:text-[#8f7cc4] focus-visible:outline-3 focus-visible:outline-focus disabled:opacity-70";
+/** cn ไม่ merge คลาสที่ชนกัน จึงแยกชุดสีเข้ม/สว่างไว้คนละค่า ห้ามต่อสีทับกัน */
+const INPUT_BASE =
+  "min-h-12 w-full rounded-xl border-2 px-3 text-body font-semibold focus-visible:outline-3 focus-visible:outline-focus disabled:opacity-70";
+export const INPUT = `${INPUT_BASE} border-[#6d4bd1] bg-[#0e0720] text-[#efe6ff] placeholder:text-[#a998d9]`;
+export const INPUT_LIGHT = `${INPUT_BASE} border-[#7a5a3a] bg-white text-[#3a2a18] placeholder:text-[#8a7a63]`;
+/** ข้อความที่ต้องลอยบนฉาก: วางบนพื้นทึบเสมอ ห้ามวางบนภาพพื้นหลังตรง ๆ */
+export const SCENE_NOTE =
+  "rounded-xl border-2 border-[#6d4bd1] bg-[#1b0f36]/95 px-3 py-2 text-label font-bold text-pretty";
 
 export function BossShell({
   children,
@@ -30,8 +36,9 @@ export function BossShell({
   dim?: number;
 }) {
   return (
-    <div className="relative flex h-full min-h-[max(32rem,calc(100dvh-7.5rem))] w-full flex-1 flex-col overflow-hidden rounded-3xl bg-[#1b0f36] text-[#efe6ff]">
+    <div className="relative flex h-full min-h-[max(32rem,calc(100dvh-7.5rem))] w-full flex-1 flex-col overflow-clip rounded-3xl bg-[#1b0f36] text-[#efe6ff]">
       <SceneBg src={src} fallback={BG_FALLBACK} blur={blur} dim={dim} />
+      {/* overflow-clip (ไม่ใช่ hidden) เพื่อไม่ให้กรอบนี้เป็นตัวเลื่อน ถาดการ์ดแบบ sticky จึงติดล่างจอได้ */}
       {/* flex-1 ให้กล่องนี้สูงเต็มกรอบ แผ่นอีเมล (absolute inset-0) จึงไม่ถูกตัดตามความสูงเนื้อหา */}
       <div className="relative flex min-h-0 flex-1 flex-col">{children}</div>
     </div>
@@ -56,32 +63,33 @@ export function BossHud({
 }) {
   const { reduce } = useGameMotion();
   return (
-    <div className="shrink-0 p-3 pb-2">
-      <div className="flex items-center gap-1.5">
+    <div className="shrink-0 px-2 pt-3 pb-2">
+      <div className="flex items-center gap-1">
         <HudPill
           tone="dark"
-          className="shrink-0 whitespace-nowrap px-2 py-1.5 text-[0.8125rem] leading-tight"
+          className="shrink-0 whitespace-nowrap px-2 py-1 leading-tight max-[359px]:px-1.5"
         >
           <CrownIcon
             width={16}
             height={16}
             aria-hidden
-            className="text-[#ffcf4a]"
+            className="shrink-0 text-[#ffcf4a] max-[359px]:hidden"
           />
           {stage}
         </HudPill>
         <HudPill
           tone="dark"
-          label="ขั้น"
-          className="shrink-0 whitespace-nowrap px-2 py-1.5 text-[0.8125rem] leading-tight"
+          className="shrink-0 whitespace-nowrap px-2 py-1 leading-tight max-[359px]:px-1.5 tabular-nums"
         >
+          {/* จอแคบ 360px: ป้าย "ขั้น" เหลือไว้ให้โปรแกรมอ่านจอ ตัวเลขยังใหญ่ 15px */}
+          <span className="sr-only">ขั้น </span>
           {Math.min(step, total)}/{total}
         </HudPill>
         <div className="flex-1" />
         {timer ? (
           <HudPill
             tone="dark"
-            className="shrink-0 whitespace-nowrap px-2 py-1.5 text-[0.8125rem] leading-tight tabular-nums"
+            className="shrink-0 whitespace-nowrap px-2 py-1 leading-tight max-[359px]:px-1.5 tabular-nums"
           >
             <span className="sr-only">เวลา</span>
             {timer}
@@ -89,11 +97,11 @@ export function BossHud({
         ) : null}
         <HudPill
           tone="gold"
-          className="shrink-0 whitespace-nowrap px-2 py-1.5 text-[0.8125rem] leading-tight tabular-nums"
+          className="shrink-0 whitespace-nowrap px-2 py-1 leading-tight max-[359px]:px-1.5 tabular-nums"
         >
           <span
             aria-hidden="true"
-            className="size-4 rounded-full border-2 border-[#b8860b] bg-[#ffe27a]"
+            className="size-4 shrink-0 rounded-full border-2 border-[#b8860b] bg-[#ffe27a] max-[359px]:hidden"
           />
           <span aria-label={`เหรียญ ${coins}`}>{coinNode}</span>
         </HudPill>
@@ -244,6 +252,11 @@ export function QuizSheet({
   }
 
   const sheetRef = useRef<HTMLDivElement>(null)
+  const fbRef = useRef<HTMLDivElement>(null)
+  // ผลตรวจอยู่ใต้ตัวเลือก เลื่อนให้เห็นทันทีไม่ต้องเลื่อนหาเอง
+  useEffect(() => {
+    if (fb) fbRef.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' })
+  }, [fb, reduce])
   useEffect(() => {
     sheetRef.current?.scrollIntoView({ block: 'end', behavior: reduce ? 'auto' : 'smooth' })
   }, [reduce])
@@ -268,13 +281,13 @@ export function QuizSheet({
             : { type: "spring", stiffness: 300, damping: 30 }
         }
         ref={sheetRef}
-        className="flex max-h-[min(92%,calc(100dvh-1.5rem))] w-full flex-col overflow-hidden rounded-t-3xl border-[3px] border-b-0 border-[#7a5a3a] bg-[#fff8e6] text-[#3a2a18]"
+        className="flex max-h-[min(96%,calc(100dvh-4.75rem))] w-full flex-col overflow-hidden rounded-t-3xl border-[3px] border-b-0 border-[#7a5a3a] bg-[#fff8e6] text-[#3a2a18]"
       >
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 pb-2">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pt-3 pb-2">
           <div className="flex items-center gap-2">
             <span
               aria-hidden="true"
-              className="grid size-10 place-items-center rounded-lg bg-[#7c4dff] text-white"
+              className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#7c4dff] text-white"
             >
               <svg
                 width="22"
@@ -290,18 +303,18 @@ export function QuizSheet({
               </svg>
             </span>
             <div className="min-w-0">
-              <p className="text-label font-bold text-[#8a6a3c]">{kicker}</p>
+              <p className="text-label font-bold text-[#7a5a2c]">{kicker}</p>
               <p className="text-body font-extrabold text-balance">{title}</p>
             </div>
           </div>
-          <p className="rounded-xl bg-[#f1e6c8] p-3 text-body text-pretty">
+          <p className="rounded-xl bg-[#f1e6c8] px-3 py-2 text-body leading-snug text-pretty">
             {story}
           </p>
           <p className="text-body font-extrabold">{question}</p>
           <div
             role="radiogroup"
             aria-label={question}
-            className="flex flex-col gap-2"
+            className="flex flex-col gap-1.5"
           >
             {choices.map((c, i) => {
               const on = picked === i;
@@ -318,7 +331,7 @@ export function QuizSheet({
                     setPicked(i);
                   }}
                   className={cn(
-                    "flex min-h-12 items-center gap-3 rounded-xl border-2 px-3 py-2 text-left text-body font-semibold focus-visible:outline-3 focus-visible:outline-focus",
+                    "flex min-h-11 items-center gap-2.5 rounded-xl border-2 px-2.5 py-1.5 text-left text-body leading-snug font-semibold focus-visible:outline-3 focus-visible:outline-focus",
                     on
                       ? "border-[#3b1d8f] bg-[#ece4ff] shadow-[0_3px_0_#3b1d8f]"
                       : "border-[#c9b68c] bg-white",
@@ -327,7 +340,7 @@ export function QuizSheet({
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "grid size-8 shrink-0 place-items-center rounded-lg text-label font-extrabold",
+                      "grid size-7 shrink-0 place-items-center rounded-lg text-label font-extrabold",
                       on ? "bg-[#7c4dff] text-white" : "bg-[#f1e6c8]",
                     )}
                   >
@@ -349,6 +362,7 @@ export function QuizSheet({
           {fb ? (
             <motion.div
               role="status"
+              ref={fbRef}
               initial={reduce ? false : { y: 16, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               className={cn(
@@ -371,11 +385,11 @@ export function QuizSheet({
                 )}
                 {fb.correct ? "รับมือถูกแล้ว" : "ยังไม่ใช่ ดูเหตุผลก่อนไปต่อ"}
               </p>
-              <p className="mt-1 text-label text-pretty">{fb.explanation}</p>
+              <p className="mt-1 text-body text-pretty">{fb.explanation}</p>
             </motion.div>
           ) : null}
         </div>
-        <div className="shrink-0 border-t-2 border-[#d9c7a0] bg-[#fff8e6] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="shrink-0 border-t-2 border-[#d9c7a0] bg-[#fff8e6] px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {fb && retry && !fb.correct && !retried ? (
             <GameButton
               variant="primary"

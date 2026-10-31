@@ -25,11 +25,11 @@ export function ChatFrame({
 }) {
   return (
     <div className="mx-auto flex min-h-full w-full max-w-md flex-col overflow-hidden rounded-[24px] bg-[#f4f0fb] shadow-soft-2 ring-1 ring-brand-100">
-      <div className="flex items-center gap-3 bg-gradient-to-r from-brand-700 to-brand-500 px-4 py-3 text-ink-onbrand">
+      <div className="flex items-center gap-3 bg-gradient-to-r from-brand-700 to-brand-600 px-4 py-3 text-ink-onbrand">
         <DomeAvatar mood="greet" size={40} decorative />
         <div className="min-w-0">
           <p className="truncate text-body font-bold">{title}</p>
-          <p className="flex items-center gap-1.5 text-label opacity-90">
+          <p className="flex items-center gap-1.5 text-label">
             <span className="size-2 rounded-full bg-quest-300" aria-hidden />
             {subtitle}
           </p>
@@ -215,8 +215,7 @@ export function ChatReader({
               <thead className="sr-only">
                 <tr>
                   <th>ลำดับ</th>
-                  <th>ส่วน</th>
-                  <th>ตัวอย่าง</th>
+                  <th>ส่วน ความหมาย และตัวอย่าง</th>
                 </tr>
               </thead>
               <tbody>
@@ -231,11 +230,13 @@ export function ChatReader({
                         {n}
                       </span>
                     </td>
-                    <td className="py-3 pr-2">
-                      <span className="block text-label font-extrabold">{k}</span>
-                      <span className="block text-label text-ink">{v}</span>
+                    <td className="py-3 pr-4">
+                      <span className="flex flex-wrap items-baseline justify-between gap-x-3">
+                        <span className="text-body font-extrabold">{k}</span>
+                        <span className="text-body font-bold whitespace-nowrap text-ink">{ex}</span>
+                      </span>
+                      <span className="block text-label text-pretty text-ink">{v}</span>
                     </td>
-                    <td className="py-3 pr-4 text-right text-label font-bold text-ink">{ex}</td>
                   </tr>
                 ))}
               </tbody>
@@ -311,7 +312,7 @@ export function QuickChip({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'min-h-11 rounded-full px-5 text-label font-bold ring-2 transition-transform active:scale-95 disabled:opacity-50 focus-ring',
+        'min-h-12 rounded-full px-5 py-1.5 text-body font-bold ring-2 transition-transform active:scale-95 disabled:opacity-50 focus-ring',
         tone === 'ok'
           ? 'bg-quest-100 text-quest-700 ring-quest-500'
           : tone === 'no'

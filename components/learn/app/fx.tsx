@@ -85,8 +85,9 @@ export function Float({ children, className }: { children: ReactNode; className?
   return (
     <motion.div
       className={className}
-      animate={reduce ? undefined : { y: [0, -6, 0] }}
-      transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+      // ส่ง animate เสมอ (ค่า y คงที่เมื่อลดการเคลื่อนไหว) ให้ style ฝั่งเซิร์ฟเวอร์กับเบราว์เซอร์ตรงกัน ไม่ขึ้นเตือน hydration
+      animate={{ y: reduce ? 0 : [0, -6, 0] }}
+      transition={reduce ? { duration: 0 } : { duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
     >
       {children}
     </motion.div>

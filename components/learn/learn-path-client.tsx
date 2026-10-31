@@ -23,6 +23,7 @@ import {
   ChevronRightIcon,
   ChoiceCard,
   DomeAvatar,
+  HomeIcon,
   DomeSays,
   KnowledgeIcon,
   PauseIcon,
@@ -680,6 +681,13 @@ export function LearnPathClient({
           },
         ]
       : []),
+    {
+      key: 'home',
+      label: 'กลับหน้าหลัก',
+      hint: 'กลับมาเปิดภารกิจนี้ แล้วทำต่อจากจุดเดิมได้',
+      icon: <HomeIcon width={22} height={22} aria-hidden />,
+      onSelect: () => router.push('/home'),
+    },
   ]
 
   const slide = {
@@ -867,7 +875,9 @@ export function LearnPathClient({
 
           {step === 'watch' && !brief ? (
             <section className="flex flex-col gap-3" aria-label={path.watch.title}>
-              <h2 className={cn('text-title font-extrabold', ink)}>{path.watch.title}</h2>
+              <GlassCard dark={dark} className="px-4 py-3">
+                <h2 className={cn('text-title-sm font-extrabold text-pretty', ink)}>{path.watch.title}</h2>
+              </GlassCard>
               {reviewing ? (
                 <p className="rounded-2xl bg-reward-100 px-4 py-2 text-label font-bold text-ink" role="status">
                   โดมชี้ให้ย้อนดูฉากที่ {reviewing.from}
@@ -886,7 +896,7 @@ export function LearnPathClient({
                 <button
                   type="button"
                   onClick={() => setPreferStills((v) => !v)}
-                  className="flex min-h-11 items-center self-start rounded-full bg-white/80 px-4 text-label font-bold text-brand-700 shadow-soft-1 transition-transform active:scale-95 focus-ring"
+                  className="flex min-h-11 items-center self-start rounded-full bg-white px-4 text-label font-bold whitespace-nowrap text-brand-700 shadow-soft-1 transition-transform active:scale-95 focus-ring"
                 >
                   {preferStills ? 'กลับไปดูคลิป' : 'ดูแบบภาพนิ่งแทน (เน็ตช้า)'}
                 </button>
@@ -906,7 +916,7 @@ export function LearnPathClient({
                 />
               ) : (
                 <>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 rounded-[20px] bg-white px-4 py-3 shadow-soft-1">
                     <div className="min-w-0 flex-1">
                       <ProgressBar
                         value={sceneIdx + 1}
@@ -922,7 +932,7 @@ export function LearnPathClient({
                         type="button"
                         onClick={() => setSceneIdx((i) => Math.max(0, i - 1))}
                         aria-label="ย้อนฉากก่อนหน้า"
-                        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/85 text-brand-700 shadow-soft-1 transition-transform active:scale-90 focus-ring"
+                        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-200 transition-transform active:scale-90 focus-ring"
                       >
                         <ArrowLeftIcon width={22} height={22} aria-hidden />
                       </button>
@@ -977,7 +987,7 @@ export function LearnPathClient({
                 onNext={() => setChatShown((n) => Math.min(chat.length, n + 1))}
                 onAll={() => setChatShown(chat.length)}
               />
-              <p className={cn('text-center text-label', inkMuted)}>
+              <p className="self-center rounded-full bg-white px-4 py-1 text-label font-bold text-ink shadow-soft-1">
                 ข้อความ {chatShown} จาก {chat.length}
               </p>
             </section>
@@ -1186,14 +1196,16 @@ function WarmupScreen({
   const reduce = useReducedMotion()
   return (
     <section className="flex flex-col gap-3" aria-label="เช็กพื้นฐาน">
-      <ProgressBar
-        value={idx + 1}
-        max={path.warmup.length}
-        label={`ข้อ ${idx + 1} จาก ${path.warmup.length}`}
-        showValue
-        tone="brand"
-        size="sm"
-      />
+      <div className="rounded-[20px] bg-white px-4 py-3 shadow-soft-1">
+        <ProgressBar
+          value={idx + 1}
+          max={path.warmup.length}
+          label={`ข้อ ${idx + 1} จาก ${path.warmup.length}`}
+          showValue
+          tone="brand"
+          size="sm"
+        />
+      </div>
       <GlassCard dark={dark}>
         <h2 className={cn('text-title-sm font-bold', dark ? 'text-white' : 'text-ink')}>{q.question}</h2>
       </GlassCard>
@@ -1214,7 +1226,7 @@ function WarmupScreen({
         type="button"
         onClick={() => onPick(-1)}
         disabled={disabled}
-        className="flex min-h-11 items-center self-center rounded-full bg-white/80 px-5 text-label font-bold text-ink-muted shadow-soft-1 transition-transform active:scale-95 disabled:opacity-50 focus-ring"
+        className="flex min-h-11 items-center self-center rounded-full bg-white px-5 text-label font-bold whitespace-nowrap text-ink shadow-soft-1 transition-transform active:scale-95 disabled:opacity-50 focus-ring"
       >
         {answers[idx] === -1 ? 'เลือกแล้ว: ยังไม่แน่ใจ' : 'ยังไม่แน่ใจ'}
       </button>

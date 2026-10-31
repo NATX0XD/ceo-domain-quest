@@ -118,7 +118,7 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
         }
       >
         <div className="flex min-h-full flex-col justify-center gap-6 px-4 py-8">
-          <DomeSays mood="cheer" speakerName="โดม" avatarSize={96}>
+          <DomeSays mood="cheer" speakerName="โดม" avatarSize={96} className="[&_.text-note]:text-[0.875rem]">
           มีเพื่อนใช้ชื่อนี้ไปแล้วครับ ผมเลยเติมเลขท้ายให้ ชื่อของคุณในห้องนี้คือ{' '}
           <strong className="font-extrabold text-brand-700">{renamedTo}</strong> จำชื่อนี้ไว้นะครับ
           ถ้าต้องย้ายเครื่องต้องใช้ชื่อนี้กับรหัส 4 หลักเดิม
@@ -178,7 +178,7 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
       ) : null}
 
       <div className="px-4 pt-3 pb-2">
-      <DomeSays mood="greet" speakerName="โดม" avatarSize={56} className="mb-3">
+      <DomeSays mood="greet" speakerName="โดม" avatarSize={56} className="mb-3 [&_.text-note]:text-[0.875rem]">
         {mode === 'join'
           ? 'สวัสดีครับ ใส่รหัสห้องที่ครูฉายบนจอ แล้วตั้งชื่อเล่นกับรหัส 4 หลักของตัวเองได้เลย'
           : 'เคยเข้ามาแล้วใช่ไหมครับ ใส่รหัสห้อง ชื่อเล่นเดิม และรหัส 4 หลักที่เคยตั้งไว้'}

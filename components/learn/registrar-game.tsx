@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { DomeAvatar } from '@/components/ui'
 import { CountUp, GameButton, PixelPanel, useGameMotion } from './game-ui'
-import { BossHud, BossShell, BossSign, Say } from './game-ui/registrar-ui'
+import { BossHud, BossShell, BossSign, SCENE_NOTE, Say } from './game-ui/registrar-ui'
 import {
   DnsScreen,
   DocsPanel,
@@ -210,7 +210,7 @@ export function RegistrarGame({ data, onSubmit, onStep, card }: Props) {
               </p>
             </div>
             <PixelPanel variant="paper" initial={reduce ? false : { y: 30, rotate: -2, opacity: 0 }} animate={{ y: 0, rotate: 0, opacity: 1 }} transition={spring} className="w-full p-3 text-left">
-              <p className="text-label font-extrabold tracking-wide text-[#8a6a3c]">บัตรนามสกุลของฉัน</p>
+              <p className="text-label font-extrabold tracking-wide text-[#7a5a2c]">บัตรนามสกุลของฉัน</p>
               <p className="text-body font-extrabold">
                 {myCard.shop} · {myCard.ownerType === 'company' ? 'นิติบุคคล' : 'บุคคลทั่วไป'} · {myCard.tld}
               </p>
@@ -232,7 +232,7 @@ export function RegistrarGame({ data, onSubmit, onStep, card }: Props) {
       <div className="relative flex min-h-0 flex-1 flex-col">
         <BossHud stage={stageName} step={stepNow} total={total} coins={coins} coinNode={<CountUp to={coins} />} timer={clock} />
         {stepError ? (
-          <p role="alert" className="px-3 pb-1 text-label font-bold text-[#ffb870]">
+          <p role="alert" className={`${SCENE_NOTE} mx-3 mb-2 text-[#ffb870]`}>
             {stepError}
           </p>
         ) : null}
@@ -360,7 +360,7 @@ export function RegistrarGame({ data, onSubmit, onStep, card }: Props) {
                 <ExplainScreen data={data} check={check} eventsCorrect={eventsCorrect} eventsTotal={data.events.length} onProceed={(ex) => void finish(ex)} onRepair={repair} />
                 {submitError ? (
                   <div className="px-3 pb-3">
-                    <p role="alert" className="mb-2 text-label font-bold text-[#ffb870]">
+                    <p role="alert" className={`${SCENE_NOTE} mb-2 text-[#ffb870]`}>
                       {submitError}
                     </p>
                     <GameButton variant="gold" className="w-full" loading={submitting} onClick={() => explainDone && void finish(explainDone)}>

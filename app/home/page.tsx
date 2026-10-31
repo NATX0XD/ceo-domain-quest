@@ -122,7 +122,7 @@ export default async function HomePage() {
             <DomeAvatar mood="greet" size={44} decorative />
             <div className="min-w-0 flex-1">
               <p className="truncate text-title-sm font-extrabold text-ink">{nickname}</p>
-              <p className="truncate text-note text-ink-muted">ปวช.1 · CEO Domain Quest</p>
+              <p className="truncate text-[0.875rem] text-ink-muted">ปวช.1 · CEO Domain Quest</p>
             </div>
             <p className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-reward-100 px-3 py-1.5 text-body font-extrabold text-reward-700 tabular-nums">
               <StarIcon width={20} height={20} aria-hidden />
@@ -146,7 +146,7 @@ export default async function HomePage() {
               />
             ))}
           </div>
-          <p className="mt-1 text-note font-bold text-ink-muted tabular-nums">
+          <p className="mt-1 text-[0.875rem] font-bold text-ink-muted tabular-nums">
             <span className="text-brand-700">{`ขั้นที่ ${stepNow} จาก ${stepTotal}`}</span>
             {stepsLeft > 0 ? ` · เหลืออีก ${stepsLeft} ขั้น` : ' · ครบทุกขั้นแล้ว'}
           </p>
@@ -186,7 +186,7 @@ export default async function HomePage() {
               tone="quest"
             />
           </div>
-          <p className="mt-1 text-note text-ink-muted">{summary.shopStageLabel}</p>
+          <p className="mt-1 text-[0.875rem] text-ink-muted">{summary.shopStageLabel}</p>
         </div>
 
         {/* โดมพูดสั้น ๆ หนึ่งประโยค — ประโยคยาวทำให้จอนี้ล้น */}

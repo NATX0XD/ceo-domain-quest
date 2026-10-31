@@ -164,7 +164,7 @@ export function CardSortGame({
 
   if (phase === 'intro') {
     return (
-      <div className="flex flex-col gap-4 rounded-[24px] bg-white/85 p-5 text-center shadow-soft-2 ring-1 ring-white/70 backdrop-blur-xl">
+      <div className="flex flex-col gap-4 rounded-[24px] bg-white/95 p-5 text-center shadow-soft-2 ring-1 ring-white/70 backdrop-blur-xl">
         <Float className="self-center">
           <DomeAvatar mood="cheer" size={96} decorative />
         </Float>
@@ -214,7 +214,7 @@ export function CardSortGame({
               <p className="rounded-2xl bg-white px-4 py-3 text-body text-ink shadow-soft-1">{detail.feedback}</p>
             </div>
             {passed ? (
-              <ul className="flex flex-col gap-1 rounded-2xl bg-white/80 px-4 py-3 text-label text-ink">
+              <ul className="flex flex-col gap-1 rounded-2xl bg-white px-4 py-3 text-label text-ink">
                 <li>โดเมนเนม = ชื่อที่ใช้ระบุ/เข้าเว็บไซต์</li>
                 <li>DNS = ระบบช่วยค้นหาที่อยู่ IP จากชื่อโดเมน</li>
               </ul>
@@ -260,7 +260,7 @@ export function CardSortGame({
                 <button
                   type="button"
                   onClick={() => setShowReview((v) => !v)}
-                  className="min-h-11 self-start rounded-full bg-white/85 px-4 text-label font-bold text-brand-700 transition-transform active:scale-95 focus-ring"
+                  className="min-h-11 self-start rounded-full bg-white px-4 text-label font-bold text-brand-700 transition-transform active:scale-95 focus-ring"
                 >
                   {showReview ? 'ซ่อนการจับคู่' : 'ดูการจับคู่และคำแนะนำ'}
                 </button>
@@ -326,13 +326,15 @@ export function CardSortGame({
 
   return (
     <div className="flex flex-col gap-3" data-mission={mission}>
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-title-sm font-extrabold text-ink">จับคู่ความหมายให้ถูกต้อง</h3>
-        <span className="rounded-full bg-white/85 px-3 py-1 text-label font-extrabold text-brand-700 shadow-soft-1">
-          จัดแล้ว {count}/{total} ใบ
-        </span>
+      <div className="rounded-[22px] bg-white px-4 py-3 shadow-soft-1">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+          <h3 className="text-title-sm font-extrabold text-ink">จับคู่ความหมายให้ถูกต้อง</h3>
+          <span className="shrink-0 rounded-full bg-brand-50 px-3 py-1 text-label font-extrabold whitespace-nowrap text-brand-700 tabular-nums">
+            จัดแล้ว {count}/{total} ใบ
+          </span>
+        </div>
+        <p className="mt-1 text-label text-ink-muted">ลากการ์ดหรือแตะการ์ดแล้วเลือกกลุ่ม</p>
       </div>
-      <p className="text-label text-ink-muted">ลากการ์ดหรือแตะการ์ดแล้วเลือกกลุ่ม</p>
 
       {data.zones.map((z) => {
         const inside = data.cards.filter((c) => placed[c.id] === z.id)
@@ -347,15 +349,17 @@ export function CardSortGame({
             aria-label={z.title}
             onClick={() => selected && put(selected, z.id)}
             className={cn(
-              'flex min-h-28 flex-col gap-2 rounded-[22px] bg-white/80 p-3 ring-2 ring-dashed backdrop-blur-xl transition-colors',
+              'flex min-h-28 flex-col gap-2 rounded-[22px] bg-white/95 p-3 ring-2 ring-dashed backdrop-blur-xl transition-colors',
               selected ? 'ring-brand-500' : 'ring-brand-200',
             )}
           >
-            <p className="flex items-center justify-between text-body font-extrabold text-brand-700">
-              {z.title}
-              <span className="text-label text-ink-muted">{inside.length} ใบ</span>
+            <p className="flex items-center justify-between gap-2 text-body font-extrabold text-brand-700">
+              <span className="min-w-0 text-pretty">{z.title}</span>
+              <span className="shrink-0 rounded-full bg-brand-50 px-2.5 py-0.5 text-label whitespace-nowrap text-ink tabular-nums">
+                {inside.length} ใบ
+              </span>
             </p>
-            {inside.length === 0 ? <p className="py-2 text-center text-label text-ink-subtle">วางการ์ดที่นี่</p> : null}
+            {inside.length === 0 ? <p className="py-2 text-center text-label text-ink-muted">วางการ์ดที่นี่</p> : null}
             {inside.map((c) => (
               <CardChip
                 key={c.id}
@@ -372,9 +376,9 @@ export function CardSortGame({
         )
       })}
 
-      <div className="flex flex-col gap-2 rounded-[22px] bg-white/60 p-3 backdrop-blur-xl">
-        <p className="text-label font-bold text-ink-muted">การ์ดรอจัด</p>
-        {tray.length === 0 ? <p className="py-2 text-center text-label text-ink-subtle">จัดครบทุกใบแล้ว</p> : null}
+      <div className="flex flex-col gap-2 rounded-[22px] bg-white/95 p-3 shadow-soft-1 backdrop-blur-xl">
+        <p className="text-label font-bold text-ink">การ์ดรอจัด</p>
+        {tray.length === 0 ? <p className="py-2 text-center text-label text-ink-muted">จัดครบทุกใบแล้ว</p> : null}
         {tray.map((c) => (
           <CardChip
             key={c.id}
@@ -386,9 +390,16 @@ export function CardSortGame({
           />
         ))}
         {selected ? (
-          <div className="flex gap-2 pt-1" role="group" aria-label="เลือกกลุ่มให้การ์ด">
+          <div className="flex flex-col gap-2 pt-1" role="group" aria-label="เลือกกลุ่มให้การ์ด">
             {data.zones.map((z) => (
-              <Button key={z.id} variant="secondary" size="md" className="flex-1" onClick={() => put(selected, z.id)}>
+              <Button
+                key={z.id}
+                variant="secondary"
+                size="md"
+                fullWidth
+                className="whitespace-nowrap"
+                onClick={() => put(selected, z.id)}
+              >
                 {z.title}
               </Button>
             ))}
@@ -403,7 +414,7 @@ export function CardSortGame({
         </p>
       ) : null}
       <div className="flex gap-2">
-        <Button variant="ghost" size="lg" onClick={reset} disabled={count === 0 || busy}>
+        <Button variant="ghost" size="lg" className="bg-white shadow-soft-1" onClick={reset} disabled={count === 0 || busy}>
           เริ่มใหม่
         </Button>
         <Button

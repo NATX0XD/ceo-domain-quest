@@ -51,9 +51,9 @@ export function ConveyorDrill({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 p-3">
       <div className="flex items-center gap-2">
-        <HudPill tone="dark">{title}</HudPill>
+        <HudPill tone="dark" className="whitespace-nowrap">{title}</HudPill>
         <div className="flex min-w-0 flex-1 gap-1" aria-hidden="true">
           {items.map((_, i) => (
             <span
@@ -62,12 +62,12 @@ export function ConveyorDrill({
             />
           ))}
         </div>
-        <HudPill tone="gold">
+        <HudPill tone="gold" className="whitespace-nowrap tabular-nums">
           {Math.min(idx + 1, items.length)}/{items.length}
         </HudPill>
       </div>
 
-      <p className="rounded-xl bg-black/35 px-3 py-2 text-label font-bold text-white" aria-live="polite">
+      <p className="rounded-xl border-2 border-[#6d4bd1] bg-[#1d1038] px-3 py-2 text-label font-bold text-pretty text-[#efe6ff]" aria-live="polite">
         {done
           ? 'คัดครบแล้ว'
           : missed
@@ -76,7 +76,7 @@ export function ConveyorDrill({
       </p>
 
       {/* สายพาน */}
-      <div className="relative flex min-h-0 flex-1 items-center overflow-hidden rounded-2xl border-[3px] border-[#3a2a63] bg-[#150b2b]">
+      <div className="relative flex min-h-48 flex-1 items-end overflow-hidden rounded-2xl pb-[4.25rem] border-[3px] border-[#3a2a63] bg-[#150b2b]">
         <div
           aria-hidden="true"
           className={cn(

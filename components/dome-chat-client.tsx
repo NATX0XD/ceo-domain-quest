@@ -119,7 +119,7 @@ export function DomeChatClient({
           <DomeAvatar mood="greet" size={48} decorative />
           <div className="min-w-0">
             <h1 className="text-title-sm font-extrabold text-ink">เลขาโดม</h1>
-            <p className="text-note text-ink-muted">ผู้ช่วยส่วนตัวของ CEO ตัวน้อย</p>
+            <p className="text-[0.875rem] text-ink-muted">ผู้ช่วยส่วนตัวของ CEO ตัวน้อย</p>
           </div>
         </AppHeader>
       }
@@ -174,7 +174,7 @@ export function DomeChatClient({
                   speaker="dome"
                   tail="left"
                   speakerName={index === 0 ? 'โดม' : undefined}
-                  className="min-w-0 flex-1"
+                  className="min-w-0 flex-1 [&>p]:text-[0.875rem]"
                 >
                   {turn.text}
                   {turn.action ? (

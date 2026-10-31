@@ -71,7 +71,7 @@ const BG_FALLBACK = 'bg-gradient-to-b from-[#6a4fb3] via-[#8b6fcf] to-[#d9a766]'
 const STAMP_TONE: Record<CounterStampId, string> = {
   approve: 'border-quest-700 text-quest-700',
   suggest: 'border-brand-700 text-brand-700',
-  'first-step': 'border-spark-700 text-spark-700',
+  'first-step': 'border-spark-700 text-spark-800',
   reject: 'border-[#8a3b3b] text-[#8a3b3b]',
 }
 
@@ -205,9 +205,10 @@ export function CounterGame({
 
   if (stage === 'drill') {
     return (
-      <div className={frame}>
+      <div className={cn(frame, 'flex flex-col')}>
         <SceneBg src="/learn/m3/bg-pixel-office.webp" fallback={BG_FALLBACK} blur={8} dim={0.5} />
-        <div className="relative h-full">
+        {/* flex-1 แทน h-full: พ่อมีแค่ min-h ทำให้ h-full ยุบ สายพานเลยแบนจนมองไม่เห็นชิ้นงาน */}
+        <div className="relative flex min-h-0 flex-1 flex-col">
           <ConveyorDrill
             items={drillItems}
             bins={data.categories.map((c) => ({ id: c.id, label: c.label }))}
@@ -221,9 +222,9 @@ export function CounterGame({
 
   if (stage === 'ready') {
     return (
-      <div className={frame}>
+      <div className={cn(frame, 'flex flex-col')}>
         <SceneBg src="/learn/m3/bg-pixel-office.webp" fallback={BG_FALLBACK} blur={8} dim={0.5} />
-        <div className="relative flex h-full flex-col items-center justify-center gap-4 p-5 text-center">
+        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-5 text-center">
           <DomeAvatar mood="cheer" size={110} decorative sparkle />
           <PixelPanel>
             <p className="text-title-sm font-extrabold">ซ้อมเสร็จแล้ว</p>
@@ -320,6 +321,18 @@ function Shift({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const stampTimer = useRef<number | null>(null)
+  const chatRef = useRef<HTMLDivElement | null>(null)
+
+  // ถามเพิ่มแล้วเลื่อนบทสนทนาลงล่างสุด (รอคำตอบพิมพ์เสร็จด้วย)
+  useEffect(() => {
+    const el = chatRef.current
+    if (!el || asked.length === 0) return
+    el.scrollTop = el.scrollHeight
+    const id = window.setTimeout(() => {
+      el.scrollTop = el.scrollHeight
+    }, 750)
+    return () => window.clearTimeout(id)
+  }, [asked.length])
 
   const current = cases[caseIndex]
   const total = cases.length
@@ -542,7 +555,7 @@ function Shift({
                   transition={{ duration: 0.15 }}
                   className="absolute inset-0 text-[#3a2a18]"
                 >
-                  <div className="absolute top-[49.5%] left-[19%] flex h-[14%] w-[29%] flex-col gap-1 overflow-hidden">
+                  <div className="absolute top-[49.5%] left-[19%] flex max-h-[15%] w-[29%] flex-col gap-1 overflow-hidden rounded-lg bg-[#fff8e6]/95 p-1">
                     <span
                       className="self-start rounded px-1.5 text-[15px] leading-tight font-extrabold text-white"
                       style={{ backgroundColor: ['#7c4dff', '#5b3bb0', '#e8742a'][hbSpread?.cat ?? 0] }}
@@ -551,14 +564,18 @@ function Shift({
                     </span>
                     <div className="flex flex-wrap gap-1">
                       {hbSpread?.suffixes.map((sfx) => (
-                        <span key={sfx} dir="auto" className="rounded border border-[#c9b68c] bg-white px-1 text-[15px] leading-snug font-extrabold">
+                        <span key={sfx} dir="auto" className="rounded border border-[#c9b68c] bg-white px-1 text-[16px] leading-snug font-extrabold">
                           {sfx}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <p className="absolute top-[49.5%] left-[55%] h-[14%] w-[26%] overflow-hidden text-[15px] leading-tight font-bold text-[#6b5a43]">
-                    {hbSpread?.floor}
+                  <p className="absolute top-[49.5%] left-[54%] flex max-h-[15%] w-[28%] flex-col overflow-hidden rounded-lg bg-[#fff8e6]/95 p-1 text-[15px] leading-snug font-bold text-[#4a3a26]">
+                    {splitFloor(hbSpread?.floor).map((part) => (
+                      <span key={part} className="whitespace-nowrap">
+                        {part}
+                      </span>
+                    ))}
                   </p>
                 </motion.div>
               </AnimatePresence>
@@ -567,7 +584,7 @@ function Shift({
           <div
             role="timer"
             aria-label={`เปิดคู่มือได้อีก ${handbookLeft} วินาที`}
-            className="relative shrink-0 overflow-hidden rounded-xl border-[3px] border-[#7a3a00] bg-[#ff8a3d] px-3 py-2 text-center text-body font-extrabold text-white shadow-[0_4px_0_#7a3a00]"
+            className="relative shrink-0 overflow-hidden rounded-xl border-[3px] border-[#7a3a00] bg-[#ff8a3d] px-3 py-2 text-center text-body font-extrabold text-[#2e1500] shadow-[0_4px_0_#7a3a00]"
           >
             <span
               aria-hidden="true"
@@ -587,7 +604,7 @@ function Shift({
               <GameButton variant="paper" ariaLabel="หน้าก่อนหน้า" disabled={hbPage === 0} onClick={() => setHbPage((i) => Math.max(0, i - 1))}>
                 <span aria-hidden="true">◀</span>
               </GameButton>
-              <span className="rounded-lg bg-black/55 px-2.5 py-1 text-[13px] font-bold text-white">
+              <span className="rounded-lg border-2 border-[#6d4bd1] bg-[#241446] px-3 py-1 text-label font-extrabold whitespace-nowrap text-[#efe6ff] tabular-nums">
                 หน้า {hbPage + 1} / {hbSpreads.length}
               </span>
               <GameButton variant="paper" ariaLabel="หน้าถัดไป" disabled={hbPage >= hbSpreads.length - 1} onClick={() => setHbPage((i) => Math.min(hbSpreads.length - 1, i + 1))}>
@@ -677,8 +694,8 @@ function Shift({
                 ) : null}
 
                 {!feedback && page === 'interview' ? (
-                  <div className="absolute inset-y-2 right-3 left-[44%] flex flex-col justify-end gap-1.5">
-                    <div className="mb-auto flex items-center justify-end gap-2">
+                  <div className="absolute inset-y-2 right-3 left-[40%] flex flex-col gap-1.5">
+                    <div className="flex shrink-0 items-center justify-end gap-2">
                       <span className="flex gap-1.5" aria-label={`ถามไปแล้ว ${asked.length} จาก ${data.maxQuestions}`}>
                         {Array.from({ length: data.maxQuestions }, (_, i) => (
                           <span
@@ -691,20 +708,23 @@ function Shift({
                           />
                         ))}
                       </span>
-                      <span className="rounded-lg bg-black/50 px-2 py-1 text-[13px] font-bold text-white">
+                      <span className="rounded-lg border-2 border-[#6d4bd1] bg-[#241446] px-2.5 py-0.5 text-label font-extrabold whitespace-nowrap text-[#efe6ff]">
                         ถามได้อีก {data.maxQuestions - asked.length}
                       </span>
                     </div>
-                    <ul className="flex flex-col gap-1.5" aria-live="polite">
+                    {/* บทสนทนายาวเกินฉาก = เลื่อนดูได้ และเลื่อนลงข้อความล่าสุดเอง */}
+                    <div ref={chatRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+                    <ul className="mt-auto flex flex-col gap-1.5" aria-live="polite">
                       {exchanges.map((q) => (
                         <li key={q.id} className="flex flex-col gap-1">
-                          <p className="self-end rounded-xl rounded-br-sm bg-brand-600 px-2.5 py-1 text-[12px] leading-snug font-semibold text-white">
+                          <p className="self-end rounded-xl rounded-br-sm bg-brand-700 px-2.5 py-1 text-label leading-snug font-semibold text-pretty text-white">
                             {q.text}
                           </p>
                           <Reply text={q.reply} />
                         </li>
                       ))}
                     </ul>
+                    </div>
                   </div>
                 ) : null}
 
@@ -723,8 +743,9 @@ function Shift({
 
                 {!feedback && page === 'tag' ? (
                   <div className="absolute inset-x-3 top-2 pl-12">
-                    <p className="rounded-xl bg-black/50 px-3 py-1.5 text-label font-bold text-white">
-                      โดเมนแต่ละชื่ออยู่หมวดไหน แตะป้ายให้ครบ
+                    <p className="rounded-xl border-2 border-[#6d4bd1] bg-[#1d1038] px-3 py-1.5 text-label font-bold text-pretty text-[#efe6ff]">
+                      <span className="whitespace-nowrap">โดเมนแต่ละชื่ออยู่หมวดไหน</span>{' '}
+                      <span className="whitespace-nowrap">แตะป้ายให้ครบ</span>
                     </p>
                   </div>
                 ) : null}
@@ -788,13 +809,13 @@ function Shift({
               ) : null}
 
               {!feedback && page === 'queue' && data.intro ? (
-                <p className="rounded-xl bg-black/45 px-3 py-2 text-label font-semibold text-white">{data.intro}</p>
+                <p className="rounded-xl border-2 border-[#6d4bd1] bg-[#1d1038] px-3 text-pretty text-[#efe6ff] py-2 text-label font-semibold">{data.intro}</p>
               ) : null}
 
               {!feedback && page === 'card' ? (
                 <div className="flex flex-col gap-2">
                   <RequestPaper c={current} tags={tags} spring={spring} reduce={reduce} />
-                  <p className="rounded-xl bg-black/45 px-3 py-1.5 text-label font-semibold text-white">
+                  <p className="rounded-xl border-2 border-[#6d4bd1] bg-[#1d1038] px-3 text-pretty text-[#efe6ff] py-1.5 text-label font-semibold">
                     อ่านใบคำขอให้ครบ แล้วกดเริ่มสัมภาษณ์
                   </p>
                 </div>
@@ -814,13 +835,13 @@ function Shift({
                             buzz()
                             setAsked((a) => (a.length < data.maxQuestions ? [...a, q.id] : a))
                           }}
-                          className="min-h-11 rounded-xl border-2 border-[#6d4bd1] bg-[#fff6dc] px-3 py-1.5 text-left text-[13px] leading-snug font-bold text-[#3a2a18] shadow-[0_3px_0_#3b1d8f] focus-visible:outline-3 focus-visible:outline-focus"
+                          className="min-h-11 rounded-xl border-2 border-[#6d4bd1] bg-[#fff6dc] px-3 py-1.5 text-left text-label leading-snug font-bold text-pretty text-[#3a2a18] shadow-[0_3px_0_#3b1d8f] focus-visible:outline-3 focus-visible:outline-focus"
                         >
                           {q.text}
                         </motion.button>
                       ))
                   ) : (
-                    <p className="rounded-xl bg-black/45 px-3 py-2 text-label font-bold text-white">
+                    <p className="rounded-xl border-2 border-[#6d4bd1] bg-[#1d1038] px-3 text-pretty text-[#efe6ff] py-2 text-label font-bold">
                       ถามครบแล้ว กดไปติดป้ายได้เลย
                     </p>
                   )}
@@ -835,11 +856,11 @@ function Shift({
                       role="group"
                       aria-label={d.label}
                       className={cn(
-                        'rounded-2xl border-2 bg-[#fff6dc] p-2 text-[#3a2a18]',
+                        'rounded-2xl border-2 bg-[#fff6dc] p-3 text-[#3a2a18]',
                         retryTags.includes(d.name) ? 'border-spark-600' : 'border-[#7a5a3a]',
                       )}
                     >
-                      <p dir="auto" className="mb-1.5 px-1 text-body font-extrabold">
+                      <p dir="auto" className="mb-2 px-1 text-[18px] leading-snug font-extrabold break-words text-[#2a1a0a]">
                         {d.label}
                       </p>
                       <div className="grid grid-cols-3 gap-1.5">
@@ -858,7 +879,7 @@ function Shift({
                                 setTags((t) => ({ ...t, [d.name]: c.id }))
                               }}
                               className={cn(
-                                'min-h-12 rounded-lg border-2 px-1 text-[13px] leading-tight font-extrabold focus-visible:outline-3 focus-visible:outline-focus',
+                                'min-h-12 rounded-lg border-2 px-1 text-label leading-tight font-extrabold whitespace-nowrap focus-visible:outline-3 focus-visible:outline-focus',
                                 on
                                   ? 'border-[#3b1d8f] bg-[#7c4dff] text-white shadow-[0_3px_0_#3b1d8f]'
                                   : 'border-[#c9b68c] bg-white text-[#3a2a18]',
@@ -901,14 +922,14 @@ function Shift({
                           )}
                         >
                           <span className="text-label font-extrabold">{s.label}</span>
-                          <span className="text-[12px] leading-tight font-semibold text-[#5c4a33]">{s.hint}</span>
+                          <span className="text-[14px] leading-snug font-semibold text-pretty text-[#4a3a26]">{s.hint}</span>
                         </motion.button>
                       )
                     })}
                   </div>
                   {needsExt ? (
                     <div className="rounded-xl border-2 border-[#7a5a3a] bg-[#fff6dc] p-2 text-[#3a2a18]">
-                      <p className="text-[13px] font-extrabold">
+                      <p className="text-label font-extrabold">
                         {stamp === 'first-step' ? 'ให้จดนามสกุลไหนก่อน' : 'เสนอนามสกุลไหน'}
                       </p>
                       <div className="mt-1 flex flex-wrap gap-1.5">
@@ -926,8 +947,8 @@ function Shift({
                                 setExtension(ext)
                               }}
                               className={cn(
-                                'min-h-11 rounded-lg border-2 px-2.5 text-[13px] font-extrabold focus-visible:outline-3 focus-visible:outline-focus',
-                                on ? 'border-[#1f6b3a] bg-[#2f9e5a] text-white' : 'border-[#c9b68c] bg-white',
+                                'min-h-11 rounded-lg border-2 px-3 text-label font-extrabold whitespace-nowrap focus-visible:outline-3 focus-visible:outline-focus',
+                                on ? 'border-[#14522b] bg-[#1f7a43] text-white' : 'border-[#c9b68c] bg-white',
                               )}
                             >
                               {ext}
@@ -951,12 +972,18 @@ function Shift({
           {/* ด็อกล่าง: หันซ้าย | ปุ่มหลัก | หันขวา (ซ่อนตอนแสดงผลลัพธ์) */}
           {!feedback ? (
             <div className="flex shrink-0 items-stretch gap-2 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-              <GameButton variant="paper" className="w-[5.5rem] shrink-0 px-2 whitespace-nowrap" onClick={openHandbook} disabled={locked} ariaLabel="หันซ้าย เปิดคู่มือ">
-                <span aria-hidden="true">◀</span> คู่มือ
+              <GameButton
+                variant="paper"
+                className="min-w-[4.5rem] shrink-0 gap-1 px-2.5 text-label whitespace-nowrap max-[379px]:px-2"
+                onClick={openHandbook}
+                disabled={locked}
+                ariaLabel="หันซ้าย เปิดคู่มือ"
+              >
+                <span aria-hidden="true" className="text-[14px] max-[379px]:hidden">◀</span>คู่มือ
               </GameButton>
               <GameButton
                 variant={primary.variant}
-                className="min-w-0 flex-1 px-2"
+                className="min-w-0 flex-1 px-1.5 whitespace-nowrap max-[419px]:text-label"
                 onClick={primary.onClick}
                 disabled={primary.disabled || locked}
                 loading={busy && page === 'stamp'}
@@ -965,12 +992,19 @@ function Shift({
               </GameButton>
               <GameButton
                 variant="dark"
-                className="w-[7.5rem] shrink-0 px-2 whitespace-nowrap"
+                className="shrink-0 gap-1 px-2.5 text-label whitespace-nowrap max-[379px]:px-2"
                 onClick={() => setView('right')}
                 disabled={finished || locked}
                 ariaLabel={`หันขวา ถามโดม เหลือ ${hintsLeft} ครั้ง`}
               >
-                ถามโดม {hintsLeft} <span aria-hidden="true">▶</span>
+                ถามโดม
+                <span
+                  aria-hidden="true"
+                  className="grid size-6 place-items-center rounded-full bg-[#ffcf4a] text-label leading-none font-extrabold text-[#4a3000] tabular-nums"
+                >
+                  {hintsLeft}
+                </span>
+                <span aria-hidden="true" className="text-[14px] max-[379px]:hidden">▶</span>
               </GameButton>
             </div>
           ) : (
@@ -1040,6 +1074,13 @@ function customerSrcs(index: number, mood: Mood): string[] {
   return mood === 'neutral' ? [`${base}.png`] : [`${base}-${mood}.png`, `${base}.png`]
 }
 
+/** "ชั้น 1 ประตูเปิดกว้าง" → ["ชั้น 1", "ประตูเปิดกว้าง"] ตัดบรรทัดที่รอยต่อวลี ไม่ตัดกลางคำ */
+function splitFloor(floor?: string): string[] {
+  if (!floor) return []
+  const m = floor.match(/^(\S+\s+\d+)\s+(.+)$/)
+  return m ? [m[1]!, m[2]!] : [floor]
+}
+
 function pad2(n: number) {
   return String(n).padStart(2, '0')
 }
@@ -1064,25 +1105,20 @@ function ShiftHud({
   const mins = 9 * 60 + 12 + Math.floor(sec / 20)
   return (
     <div className="flex shrink-0 items-center gap-1.5 px-2.5 pt-2.5">
-      <HudPill className="min-w-0 flex-[1.4] justify-center px-2 text-[13px]">
-        <span aria-hidden="true" className="size-3.5 shrink-0 rounded-full bg-[#ffb02e] ring-2 ring-[#ff8a3d]" />
+      <HudPill className="min-w-0 flex-[1.3] justify-center px-2 whitespace-nowrap">
+        <span aria-hidden="true" className="size-3.5 shrink-0 rounded-full bg-[#ffb02e] ring-2 ring-[#ff8a3d] max-[379px]:hidden" />
         <span className="whitespace-nowrap">{practice ? 'ซ้อม' : 'กะเช้า'} {pad2(Math.floor(mins / 60))}:{pad2(mins % 60)}</span>
       </HudPill>
-      <HudPill className="flex-1 justify-center px-2 text-[13px]" tone="paper">
-        <span className="flex gap-0.5" aria-hidden="true">
-          {Array.from({ length: total }, (_, i) => (
-            <span key={i} className={cn('size-2.5 rounded-sm', i < queue ? 'bg-brand-600' : 'bg-[#cdbfa0]')} />
-          ))}
-        </span>
-        <span className="whitespace-nowrap">
+      <HudPill className="flex-1 justify-center px-2" tone="paper">
+        <span className="whitespace-nowrap tabular-nums">
           คิว {queue}/{total}
         </span>
       </HudPill>
-      <HudPill tone="gold" className="justify-center px-2 text-[13px]">
-        <span aria-hidden="true" className="size-3.5 rounded-full border-2 border-[#b8860b] bg-[#ffe27a]" />
+      <HudPill tone="gold" className="justify-center px-2">
+        <span aria-hidden="true" className="size-3.5 shrink-0 rounded-full border-2 border-[#b8860b] bg-[#ffe27a]" />
         <CountUp to={coins} duration={0.6} />
       </HudPill>
-      <HudPill tone="dark" className="justify-center px-2 text-[13px]">
+      <HudPill tone="dark" className="justify-center px-2">
         <span className="tabular-nums" aria-label="เวลาที่ใช้ในกะ">
           {pad2(Math.floor(sec / 60))}:{pad2(sec % 60)}
         </span>
@@ -1115,7 +1151,7 @@ function RequestPaper({
       transition={spring}
     >
       <PixelPanel className="p-2.5">
-        <p className="text-[12px] font-extrabold tracking-wide text-[#8a6a3c]">ใบคำขอจดโดเมน</p>
+        <p className="text-label font-extrabold tracking-wide text-[#6b4f28]">ใบคำขอจดโดเมน</p>
         {!compact ? <p className="text-body font-extrabold">{c.business}</p> : null}
         <ul className="mt-1 flex flex-col gap-1">
           {c.domains.map((d) => (
@@ -1123,9 +1159,9 @@ function RequestPaper({
               <span dir="auto" className="text-body font-extrabold">
                 {d.label}
               </span>
-              <span className="text-[12px] text-[#6b5a43]">{d.role}</span>
+              {!compact ? <span className="text-label font-semibold text-[#5c4a33]">{d.role}</span> : null}
               {tags[d.name] ? (
-                <span className="ml-auto rounded-md bg-brand-600 px-2 py-0.5 text-[12px] font-bold text-white">
+                <span className="ml-auto rounded-md bg-brand-700 px-2 py-0.5 text-label font-bold whitespace-nowrap text-white">
                   {tags[d.name] === 'หมวดเฉพาะที่สงวน' ? 'หมวดสงวน' : tags[d.name]}
                 </span>
               ) : null}
@@ -1146,7 +1182,7 @@ function RequestPaper({
                   {ink.label}
                 </motion.span>
               ) : (
-                <span key="ph" className="text-[12px] font-semibold text-[#a8967a]">
+                <span key="ph" className="text-label font-semibold text-[#6b5a43]">
                   ช่องประทับตรา
                 </span>
               )}
@@ -1232,10 +1268,10 @@ function ResultView({
       <SceneBg src="/learn/m3/bg-pixel-office.webp" fallback={BG_FALLBACK} blur={0} dim={0.12} />
       <div className="absolute inset-0 flex flex-col">
         <div className="flex shrink-0 items-center gap-1.5 px-2.5 pt-2.5">
-          <HudPill tone="dark" className="flex-1 justify-center text-[13px]">
+          <HudPill tone="dark" className="flex-1 justify-center">
             รายงานปิดกะ
           </HudPill>
-          <HudPill tone="gold" className="justify-center text-[13px]">
+          <HudPill tone="gold" className="justify-center whitespace-nowrap">
             <CountUp to={result.score} /> คะแนน
           </HudPill>
         </div>
@@ -1305,15 +1341,15 @@ function ResultView({
                   </ul>
                   {detail ? (
                     <>
-                      <p className="mt-1.5 text-[13px] font-bold text-[#6b5a43]">
+                      <p className="mt-1.5 text-label font-bold text-[#5c4a33]">
                         ติดป้ายถูก {Math.round(detail.tagAccuracy * 100)}% · แต้มตรา <CountUp to={detail.stampPoints} />/{detail.stampMax}
                       </p>
                       <ul className="mt-1.5 flex flex-col gap-1 text-left" aria-label="ผลแยกตามกลุ่ม">
                         {detail.groups.map((g) => {
                           const frac = g.total > 0 ? g.correct / g.total : 0
                           return (
-                            <li key={g.category} className="flex items-center gap-2 text-[13px] font-bold">
-                              <span className="w-[6.2rem] shrink-0 leading-tight">{groupLabel(g.category)}</span>
+                            <li key={g.category} className="flex items-center gap-2 text-label font-bold">
+                              <span className="w-[6.8rem] shrink-0 leading-tight">{groupLabel(g.category)}</span>
                               <span className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-sm bg-[#e4d5b0]" aria-hidden="true">
                                 <motion.span
                                   className={cn('block h-full', frac >= 0.8 ? 'bg-quest-600' : 'bg-spark-600')}
@@ -1322,7 +1358,7 @@ function ResultView({
                                   transition={reduce ? { duration: 0 } : { duration: 0.8, delay: 0.4 }}
                                 />
                               </span>
-                              <span className="w-9 shrink-0 text-right">
+                              <span className="w-10 shrink-0 text-right tabular-nums">
                                 {g.correct}/{g.total}
                               </span>
                             </li>

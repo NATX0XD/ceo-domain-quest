@@ -68,7 +68,7 @@ export function AppScreen({
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <header
-          className={cn('flex h-14 shrink-0 items-center gap-1 px-2 backdrop-blur-md', theme.barText)}
+          className={cn('relative flex h-14 shrink-0 items-center gap-1.5 px-2 backdrop-blur-md', theme.barText)}
           style={{ background: theme.bar }}
         >
           {onBack ? (
@@ -83,25 +83,28 @@ export function AppScreen({
           ) : (
             <span className="w-3" />
           )}
-          <h1 className="min-w-0 flex-1 text-[15px] leading-tight font-bold [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">{title}</h1>
+          <h1 className="min-w-0 flex-1 overflow-hidden text-base leading-[1.2] font-bold text-balance [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
+            {title}
+          </h1>
           <SessionClock variant="pill" />
           <div
-            className="flex items-center gap-2"
+            className="flex shrink-0 items-center"
             aria-label={`ขั้นที่ ${stage + 1} จาก ${stageCount}${score ? ` ได้ ${score} คะแนน` : ''}`}
           >
-            <span className="flex items-center gap-1" aria-hidden>
+            {/* แถบขั้นย้ายไปเป็นเส้นบางที่ขอบล่างของแถบบน ให้ชื่อด่านมีที่พอไม่ตัดกลางคำ */}
+            <span className="pointer-events-none absolute inset-x-0 bottom-0 flex h-1 gap-0.5" aria-hidden>
               {Array.from({ length: stageCount }, (_, i) => (
                 <span
                   key={i}
                   className={cn(
-                    'h-2 rounded-full transition-all duration-300',
-                    i === stage ? 'w-5 bg-brand-500' : i < stage ? 'w-2 bg-quest-500' : 'w-2 bg-current opacity-25',
+                    'h-full flex-1 transition-colors duration-300',
+                    i === stage ? 'bg-brand-500' : i < stage ? 'bg-quest-500' : 'bg-current opacity-20',
                   )}
                 />
               ))}
             </span>
             {score ? (
-              <span className="flex items-center gap-1 rounded-full bg-reward-100 px-2 py-0.5 text-label font-extrabold text-reward-700">
+              <span className="flex items-center gap-1 rounded-full bg-reward-100 px-2 py-0.5 text-label font-extrabold whitespace-nowrap text-reward-700 tabular-nums">
                 <StarIcon width={16} height={16} aria-hidden />
                 <CountUp value={score} />
               </span>
@@ -135,7 +138,7 @@ export function AppScreen({
           <footer
             className="shrink-0 border-t border-white/40 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl"
             style={{
-              background: theme.dark ? 'rgba(18, 12, 36, 0.82)' : 'rgba(255, 255, 255, 0.82)',
+              background: theme.dark ? 'rgba(18, 12, 36, 0.95)' : 'rgba(255, 255, 255, 0.95)',
             }}
           >
             <div className="mx-auto w-full max-w-md">{dock}</div>
@@ -172,7 +175,7 @@ export function GlassCard({ className, dark, children }: { className?: string; d
     <div
       className={cn(
         'rounded-[24px] p-5 shadow-soft-2 ring-1 backdrop-blur-xl',
-        dark ? 'bg-[#1b1236]/75 text-white ring-white/15' : 'bg-white/80 text-ink ring-white/70',
+        dark ? 'bg-[#1b1236]/95 text-white ring-white/15' : 'bg-white/95 text-ink ring-white/70',
         className,
       )}
     >

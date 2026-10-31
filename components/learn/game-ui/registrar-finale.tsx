@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { AlertIcon, CheckIcon, cn } from '@/components/ui'
 import { CountUp, GameButton, PixelPanel, Stars, buzz, useGameMotion } from './index'
-import { PIXEL_BOX, QuizSheet, Say, Sheets } from './registrar-ui'
+import { PIXEL_BOX, QuizSheet, SCENE_NOTE, Say, Sheets } from './registrar-ui'
 import { eventQuiz, type Check } from './registrar-screens'
 import type { ExplainPayload, RegistrarData, RegistrarDetail, RegistrarEvent, RegistrarResult, RubricRow } from '../registrar-types'
 
@@ -83,7 +83,7 @@ export function TimeScreen({
               </div>
             </div>
           </div>
-          <p className="text-title-sm font-extrabold text-[#ffcf4a]">ผ่านไป 1 ปี</p>
+          <p className={cn(SCENE_NOTE, 'px-4 text-title-sm font-extrabold text-[#ffcf4a]')}>ผ่านไป 1 ปี</p>
         </div>
       </div>
     )
@@ -94,13 +94,13 @@ export function TimeScreen({
       {view === 'choose' ? (
         <>
           <PixelPanel variant="paper" className="flex flex-col gap-2 rounded-md border-4 border-[#0e0720] shadow-[0_0_0_2px_#7a5a3a,0_6px_0_2px_#0e0720]" initial={reduce ? false : { y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring}>
-            <p className="text-label font-bold text-[#8a6a3c]">แจ้งเตือนจากผู้ให้บริการ</p>
+            <p className="text-label font-bold text-[#7a5a2c]">แจ้งเตือนจากผู้ให้บริการ</p>
             <p className="text-title-sm font-extrabold text-balance">ชื่อเว็บจะหมดอายุในอีก 30 วัน</p>
             <p className="text-body text-pretty">{expireEvent?.story}</p>
             <p className="text-body font-bold">{expireEvent?.question}</p>
           </PixelPanel>
           {err ? (
-            <p role="alert" className="text-label font-bold text-[#ffb870]">
+            <p role="alert" className={cn(SCENE_NOTE, 'text-[#ffb870]')}>
               {err}
             </p>
           ) : null}
@@ -110,7 +110,7 @@ export function TimeScreen({
           <GameButton variant="dark" disabled={busy} onClick={() => void decide(1)}>
             ปล่อยไว้ก่อน
           </GameButton>
-          {coins < fee ? <p className="text-label text-[#ffb870]">เหรียญไม่พอต่ออายุ ต้องเลือกปล่อยไว้</p> : null}
+          {coins < fee ? <p className={cn(SCENE_NOTE, 'text-[#ffb870]')}>เหรียญไม่พอต่ออายุ ต้องเลือกปล่อยไว้</p> : null}
         </>
       ) : null}
 
@@ -130,17 +130,18 @@ export function TimeScreen({
 
       {view === 'lapsed' || view === 'restored' ? (
         <>
-          <motion.div initial={reduce ? false : { scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring} className="overflow-hidden rounded-2xl border-[3px] border-[#d97a6a] bg-[#0e0720]">
-            <div className="flex items-center gap-2 bg-[#3a1620] px-3 py-1.5 text-label font-bold">
-              <span aria-hidden="true" className="size-2.5 rounded-full bg-[#ff8a7a]" />
+          <motion.div initial={reduce ? false : { scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring} className={cn('overflow-hidden rounded-2xl border-[3px] bg-[#0e0720]', view === 'lapsed' ? 'border-[#d97a6a]' : 'border-[#8cf0b0]')}>
+            <div className={cn('flex items-center gap-2 px-3 py-1.5 text-label font-bold', view === 'lapsed' ? 'bg-[#3a1620]' : 'bg-[#123326]')}>
+              <span aria-hidden="true" className={cn('size-2.5 shrink-0 rounded-full', view === 'lapsed' ? 'bg-[#ff8a7a]' : 'bg-[#8cf0b0]')} />
               {view === 'lapsed' ? 'หน้าเว็บของร้าน: ถูกระงับ' : 'หน้าเว็บของร้าน: กลับมาแล้ว'}
             </div>
             <p className="p-3 text-body font-bold text-pretty">
               {view === 'lapsed' ? 'ชื่อนี้หมดอายุและถูกระงับ เปิดเว็บไม่ได้ และอาจมีคนอื่นมาจดต่อ' : 'กู้คืนชื่อสำเร็จ เว็บเปิดได้อีกครั้ง'}
             </p>
           </motion.div>
-          <PixelPanel variant="paper">
+          <PixelPanel variant="paper" className="flex flex-col gap-2">
             <p className="text-body text-pretty">{note}</p>
+            <p className="border-t-2 border-dashed border-[#d9c7a0] pt-2 text-label text-[#6b5a43]">การปล่อยหมดอายุบันทึกไว้ว่าพลาด แต่ไม่ตัดคะแนนหนัก</p>
           </PixelPanel>
           {view === 'lapsed' ? (
             <GameButton
@@ -163,7 +164,6 @@ export function TimeScreen({
               เหรียญไม่พอกู้คืน ไปอธิบายให้บอสฟัง
             </GameButton>
           ) : null}
-          <p className="text-label text-[#a998d9]">การปล่อยหมดอายุบันทึกไว้ว่าพลาด แต่ไม่ตัดคะแนนหนัก</p>
         </>
       ) : null}
     </div>
@@ -225,9 +225,13 @@ export function ExplainScreen({
       {res ? (
         <>
           <PixelPanel variant="paper" className="flex flex-col gap-2.5 rounded-md border-4 border-[#0e0720] shadow-[0_0_0_2px_#7a5a3a,0_6px_0_2px_#0e0720]" initial={reduce ? false : { scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring}>
-            <p className="text-body font-extrabold">
-              คะแนนคำอธิบาย <CountUp to={res.total} /> จาก 10 (ต้องได้อย่างน้อย 7)
-            </p>
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-body font-extrabold">คะแนนคำอธิบาย</p>
+              <p className="shrink-0 whitespace-nowrap text-title-sm font-extrabold text-[#3b1d8f]">
+                <CountUp to={res.total} /> <span className="text-body">/ 10</span>
+              </p>
+            </div>
+            <p className="-mt-2 text-label text-[#6b5a43]">ต้องได้อย่างน้อย 7</p>
             <ul className="flex flex-col gap-2">
               {res.rubric.map((r) => (
                 <li key={r.id} className="flex items-start gap-2">
@@ -235,16 +239,22 @@ export function ExplainScreen({
                     {r.got >= r.max ? <CheckIcon width={20} height={20} className="text-quest-700" /> : <AlertIcon width={20} height={20} className="text-spark-700" />}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-body font-bold">
-                      {r.label} {r.got}/{r.max}
+                    <span className="flex items-start justify-between gap-2">
+                      <span className="min-w-0 text-body font-bold text-pretty">{r.label}</span>
+                      <span className="shrink-0 whitespace-nowrap rounded-md bg-[#ece4ff] px-1.5 text-label font-extrabold text-[#3b1d8f]">
+                        {r.got}/{r.max}
+                      </span>
                     </span>
                     <span className="block text-label text-pretty text-[#6b5a43]">{r.note}</span>
                   </span>
                 </li>
               ))}
             </ul>
-            <p className="text-label font-bold text-[#6b5a43]">
-              รับมือเหตุการณ์ถูก {eventsCorrect} จาก {eventsTotal} (ต้องอย่างน้อย 3)
+            <p className="flex items-start justify-between gap-2 border-t-2 border-dashed border-[#d9c7a0] pt-2">
+              <span className="min-w-0 text-label font-bold text-pretty text-[#3a2a18]">รับมือเหตุการณ์ถูก (ต้องอย่างน้อย 3)</span>
+              <span className="shrink-0 whitespace-nowrap rounded-md bg-[#ece4ff] px-1.5 text-label font-extrabold text-[#3b1d8f]">
+                {eventsCorrect}/{eventsTotal}
+              </span>
             </p>
           </PixelPanel>
           {res.followUp.question ? (
@@ -465,10 +475,10 @@ export function ClearScreen({ result, shop, domain }: { result: RegistrarResult;
     <div className={SCROLL}>
       <Say who="boss">{result.passed ? 'ยินดีด้วย ร้านของเธอมีชื่อเว็บเป็นของตัวเองแล้ว' : 'ยังไม่ถึงเกณฑ์ ลองกลับไปอธิบายอีกรอบได้เลย'}</Say>
       <PixelPanel variant="paper" className="flex flex-col items-center gap-2 text-center" initial={reduce ? false : { scale: 0.85, y: 40, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} transition={spring}>
-        <p className="text-label font-extrabold tracking-widest text-[#8a6a3c]">ใบรับรอง</p>
+        <p className="text-label font-extrabold tracking-widest text-[#7a5a2c]">ใบรับรอง</p>
         <p className="text-title font-extrabold text-balance text-[#3b1d8f]">จดชื่อเว็บสำเร็จ</p>
         <p className="text-body">
-          {shop} ใช้ชื่อ <span className="font-extrabold break-all">{domain}</span>
+          {shop} ใช้ชื่อ <span className="font-extrabold [overflow-wrap:anywhere]">{domain}</span>
         </p>
         <Stars count={stars} />
         {why ? <p className="text-label font-bold text-pretty text-[#3a2a18]">{why}</p> : null}
@@ -476,7 +486,7 @@ export function ClearScreen({ result, shop, domain }: { result: RegistrarResult;
           <CountUp to={result.score} /> <span className="text-label font-bold text-[#6b5a43]">จาก 100</span>
         </p>
         {d?.order && d.events && d.explanation ? (
-          <ul className="w-full text-left text-label text-[#6b5a43]">
+          <ul className="flex w-full flex-col gap-0.5 border-t-2 border-dashed border-[#d9c7a0] pt-2 text-left text-body text-[#4a3a26]">
             <li>วางการ์ดถูกครั้งแรก {d.order.points}/20</li>
             <li>รับมือเหตุการณ์ {d.events.correct}/{d.events.total} ได้ {d.events.points}/30</li>
             <li>อธิบายให้บอส {d.explanation.points}/10 ได้ {Math.round(d.explanation.points * 5)}/50</li>

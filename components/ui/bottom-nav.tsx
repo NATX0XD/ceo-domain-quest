@@ -55,7 +55,7 @@ export function BottomNav({
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   'relative flex min-h-14 cursor-pointer flex-col items-center justify-center gap-0.5',
-                  'rounded-xl px-1 py-1.5 text-center text-note font-semibold',
+                  'rounded-xl px-1 py-1.5 text-center text-[0.875rem] leading-snug font-semibold whitespace-nowrap',
                   'transition-colors duration-200 ease-[var(--ease-soft)]',
                   'focus-visible:outline-3 focus-visible:outline-offset-[-2px] focus-visible:outline-focus',
                   active
