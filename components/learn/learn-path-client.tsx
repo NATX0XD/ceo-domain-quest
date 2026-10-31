@@ -992,9 +992,11 @@ export function LearnPathClient({
                 onNext={() => setChatShown((n) => Math.min(chat.length, n + 1))}
                 onAll={() => setChatShown(chat.length)}
               />
-              <p className="self-center rounded-full bg-white px-4 py-1 text-label font-bold text-ink shadow-soft-1">
-                ข้อความ {chatShown} จาก {chat.length}
-              </p>
+              {chatShown < chat.length ? (
+                <p className="self-center rounded-full bg-white px-4 py-1 text-label font-bold text-ink shadow-soft-1">
+                  ข้อความ {chatShown} จาก {chat.length}
+                </p>
+              ) : null}
             </section>
           ) : null}
 
