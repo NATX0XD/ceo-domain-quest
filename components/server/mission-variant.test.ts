@@ -17,8 +17,9 @@ describe('รูปแบบ M2 ต่อผู้เรียน', () => {
     const game = personalized.channels.game
     const pieces = game.items.filter((item) => (item as { type?: string }).type === 'piece') as { text: string }[]
 
-    expect(pieces.map((piece) => piece.text).join(' ')).toContain(variant.suffix)
-    expect(personalized.channels.clip.script).toContain(variant.suffix)
+    expect(pieces.map((piece) => piece.text).join(' ')).toContain(`${variant.slug} ${variant.suffix}`)
+    expect(personalized.channels.clip.script).toContain('www.coffeethai.com')
+    expect(personalized.channels.clip.script).toContain('จุด com')
     expect(personalized.channels.clip.script).not.toContain('kanomwan')
   })
 

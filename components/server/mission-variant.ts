@@ -28,15 +28,16 @@ export function m2VariantFor(studentId: string, preferredSlug?: string): M2Varia
 }
 
 function personalizeText(text: string, variant: M2Variant): string {
-  return text
+  const personalized = text
     .replaceAll('kanombanyai.com', `${variant.slug}${variant.suffix}`)
     .replaceAll('www.kanombanyai', `www.${variant.slug}`)
     .replaceAll('kanombanyai', variant.slug)
     .replaceAll('kanomwan.com', `${variant.slug}${variant.suffix}`)
     .replaceAll('www.kanomwan', `www.${variant.slug}`)
     .replaceAll('kanomwan', variant.slug)
-    .replaceAll('.com', variant.suffix)
-    .replace(/(^|\s)com(?=\s|$)/g, `$1${variant.suffix.slice(1)}`)
+  // The standalone game piece is the only generic `.com` token that belongs
+  // to the student's target domain. Keep `.com` in teaching examples intact.
+  return personalized === '.com' ? variant.suffix : personalized
 }
 
 function mapStrings(value: unknown, variant: M2Variant): unknown {
