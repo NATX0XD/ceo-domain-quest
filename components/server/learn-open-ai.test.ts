@@ -10,14 +10,14 @@ import { findLearnPath, scoreOpenAnswers } from './learn-path'
 
 /**
  * AI ช่วยตรวจคำตอบปลายเปิด — ใช้ createAiClient ตัวจริงกับ fetch ปลอม ไม่ยิงเน็ตจริง
- * m1 โหมดดู: m1-wq1 (แนวคิด 70 + 30) · m1-wq2 (45 + 35 + 20)
+ * m1 โหมดดู: m1-wq1 (แนวคิด 70 + 30) · m1-wq2 (40 + 40 + 20)
  */
 const path = findLearnPath('m1')!
 
 /** คำตอบที่ใช้คำของตัวเอง คำสำคัญจับไม่ได้เลย */
 const PARAPHRASE = 'เหมือนป้ายบอกบ้านบนอินเทอร์เน็ต พิมพ์แล้วไปเจอร้านเลย'
 /** คำตอบที่คำสำคัญจับได้ครบ */
-const KEYWORD_FULL = 'ชื่อเว็บที่จำง่ายกว่าตัวเลข ip'
+const KEYWORD_FULL = 'ชื่อเว็บร้าน ระบบช่วยค้นหาที่อยู่ให้'
 
 function typhoonPayload(obj: unknown) {
   return { choices: [{ message: { content: typeof obj === 'string' ? obj : JSON.stringify(obj) } }] }
@@ -72,7 +72,7 @@ describe('scoreOpenAnswers + AI ช่วยตรวจ', () => {
     const [q1, q2] = r.perQuestion
     expect(q1).toMatchObject({ source: 'typhoon', keywordScore: 0, aiScore: 70, score: 70 })
     expect(q1!.feedback).toBe('ลองเล่าเพิ่มว่าช่วยให้คนจำง่ายขึ้นอย่างไรนะ')
-    expect(q1!.missing).toEqual(['บอกว่าช่วยให้จำง่ายหรือสะดวกกว่าหมายเลข IP'])
+    expect(q1!.missing).toEqual(['บอกว่าใส่ชื่อเว็บแล้วระบบช่วยค้นหาที่อยู่'])
     expect(q2).toMatchObject({ source: 'typhoon', aiScore: 100, score: 100, missing: [] })
     expect(q2!.keywordScore).toBeLessThan(100)
     expect(r.score).toBe(85)
@@ -84,7 +84,7 @@ describe('scoreOpenAnswers + AI ช่วยตรวจ', () => {
     const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': PARAPHRASE, 'm1-wq2': '' }, { checker })
     expect(fetchImpl).toHaveBeenCalledTimes(1)
     expect(r.perQuestion[0]).toMatchObject({ source: 'rule', score: 0, aiScore: null })
-    expect(r.perQuestion[0]!.feedback).toContain('ลองอีกนิด')
+    expect(r.perQuestion[0]!.feedback).toContain('ลองย้อนดู')
   })
 
   it('AI ให้ต่ำกว่าคำสำคัญ = คำสำคัญชนะ (AI ไม่เคยทำให้เข้มขึ้น)', async () => {
