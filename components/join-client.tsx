@@ -189,7 +189,7 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
       <section className="join-frame-stage" aria-label="แบบฟอร์มเข้าห้องเรียน">
         <img src="/ui/join/frame.webp" alt="กรอบไม้ประดับตัวละครสำหรับแบบฟอร์มเข้าห้องเรียน" aria-hidden="true" className="join-frame-art" />
         <div className="join-title-plaque">
-          <h1 className="text-title font-extrabold text-balance">
+          <h1 id="join-form-title" className="text-title font-extrabold text-balance">
             {mode === 'join' ? 'เข้าห้องเรียน' : 'ย้ายเครื่อง เข้าห้องเดิม'}
           </h1>
         </div>
@@ -197,6 +197,7 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
 
       <form
         id={FORM_ID}
+        aria-labelledby="join-form-title"
         onSubmit={(e) => {
           e.preventDefault()
           void submit()
