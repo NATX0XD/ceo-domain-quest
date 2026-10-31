@@ -16,6 +16,12 @@ const MOOD_ALT: Record<DomeMood, string> = {
   happy: 'โดมชูสองมือดีใจ',
 }
 
+const DOME_ASSET: Record<DomeMood, string> = {
+  greet: '/dome/mascot/dome-greet.webp',
+  cheer: '/dome/mascot/dome-cheer.webp',
+  happy: '/dome/mascot/dome-happy.webp',
+}
+
 export type DomeAvatarProps = {
   mood?: DomeMood
   size?: number
@@ -47,14 +53,14 @@ export function DomeAvatar({
   className,
 }: DomeAvatarProps) {
   const img = (
-    // eslint-disable-next-line @next/next/no-img-element -- ไฟล์ SVG สถิตในโฟลเดอร์ public ไม่ต้องผ่านตัวปรับขนาดภาพ
+    // eslint-disable-next-line @next/next/no-img-element -- mascot เป็นไฟล์สถิตในโฟลเดอร์ public ไม่ต้องผ่านตัวปรับขนาดภาพ
     <img
-      src={`/dome/dome-${mood}.svg`}
+      src={DOME_ASSET[mood]}
       alt={decorative ? '' : MOOD_ALT[mood]}
       aria-hidden={decorative || undefined}
       width={size}
       height={size}
-      className={cn('shrink-0 select-none', sparkle ? 'relative block' : className)}
+      className={cn('shrink-0 select-none object-contain', sparkle ? 'relative block' : className)}
       draggable={false}
     />
   )

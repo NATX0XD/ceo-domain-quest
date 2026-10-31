@@ -1289,14 +1289,7 @@ function ResultView({
             <div className="relative min-h-0 flex-1 overflow-hidden">
               {pageIdx < 0 ? (
                 <div className="absolute inset-x-0 bottom-0 flex h-full max-h-40 justify-center pt-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- ไฟล์ SVG สถิตใน public */}
-                  <img
-                    src={`/dome/dome-${result.passed ? 'happy' : 'cheer'}.svg`}
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                    className="h-full w-auto select-none"
-                  />
+                  <DomeAvatar mood={result.passed ? 'happy' : 'cheer'} size={160} decorative />
                 </div>
               ) : (
                 <div className="absolute inset-x-0 bottom-0 flex justify-center" style={{ height: '82%' }}>

@@ -6,9 +6,9 @@ import {
 } from '@/components/ui'
 
 /**
- * "โดม" เลขาส่วนตัวหุ่นยนต์สีม่วง
+ * "โดม" เลขาส่วนตัวมอนสเตอร์สีม่วงของทีม
  *
- * ภาพตัวละครย้ายไปอยู่ที่ `public/dome/dome-{greet,cheer,happy}.svg` แล้ว
+ * ภาพตัวละครอยู่ที่ `public/dome/mascot/dome-{greet,cheer,happy}.webp`
  * ไฟล์นี้เหลือหน้าที่แค่รักษา API เดิม (`DomeAvatar` / `DomeBubble`) ให้หน้าที่เรียกอยู่แล้วไม่พัง
  * โค้ดใหม่ควรเรียก `DomeSays` / `SpeechBubble` จาก `@/components/ui` ตรง ๆ
  * เพราะเลือกอารมณ์ของโดมได้ และผูกกล่องคำพูดกับรูปให้เอง

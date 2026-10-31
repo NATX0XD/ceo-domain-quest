@@ -357,9 +357,9 @@ className เดียวกันเลย มันเกิดจากลู
 
 | ไฟล์ | ใช้ที่ไหน |
 |---|---|
-| `dome/dome-greet.svg` | โดมยกมือทักทาย — หน้าแรก หน้าคุยกับโดม |
-| `dome/dome-cheer.svg` | โดมชูกำปั้นให้กำลังใจ — ตอนนักเรียนติดหรือตอบผิด |
-| `dome/dome-happy.svg` | โดมชูสองมือดีใจ — ตอนผ่านภารกิจ |
+| `dome/mascot/dome-greet.webp` | โดมมอนสเตอร์ยกมือทักทาย — หน้าแรก หน้าคุยกับโดม |
+| `dome/mascot/dome-cheer.webp` | โดมมอนสเตอร์ชูกำปั้นให้กำลังใจ — ตอนนักเรียนติดหรือตอบผิด |
+| `dome/mascot/dome-happy.webp` | โดมมอนสเตอร์ชูสองมือดีใจ — ตอนผ่านภารกิจ |
 | `shop/shop-stage-1..4.svg` | ร้าน isometric 4 สเตจ: ที่ดินเปล่า → ลงเสา → ผนัง+หลังคา → เปิดร้านพร้อมป้ายเว็บ |
 | `icons/nav-{home,quest,knowledge,reward,profile}.svg` | ไอคอน 5 ปุ่มเมนูล่าง |
 | `icons/star-full.svg` · `star-empty.svg` | ดาวเต็ม / ดาวว่าง |
