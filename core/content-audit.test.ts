@@ -799,6 +799,14 @@ describe('เนื้อหาเส้นทางเรียน (learn-*) �
     )
   })
 
+  it('m1-wq1 ย้อนดูหลักฐานตั้งแต่การกรอกชื่อเว็บถึงการค้นหาที่อยู่', () => {
+    const m1 = learnPathsJson.paths.find((path) => path.missionId === 'm1')!
+    const question = m1.watch.questions.find((item) => item.id === 'm1-wq1') as unknown as {
+      review: { from: number; to: number }
+    }
+    expect(question.review).toEqual({ from: 3, to: 4 })
+  })
+
   it('เกมเคาน์เตอร์ด่าน 3 มี 4 เคส และเฉลยมี 4 เคสรหัสตรงกัน', () => {
     expect(learnCounterJson.cases).toHaveLength(4)
     expect(learnCounterAnswersJson.cases.map((c) => c.caseId)).toEqual(
