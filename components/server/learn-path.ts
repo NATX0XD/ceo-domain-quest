@@ -46,6 +46,8 @@ const PathSchema = z.object({
     title: z.string().min(1),
     /** คลิปจริงจากทีมผลิต เช่น /videos/m1-watch.mp4 (อยู่ใน public/) ไม่มี = ใช้ฉากภาพนิ่งแทน */
     video: z.string().startsWith('/videos/').optional(),
+    poster: z.string().startsWith('/ui/').optional(),
+    captions: z.string().startsWith('/captions/').optional(),
     /** หน้ารับภารกิจก่อนดู */
     brief: z.object({ title: z.string().min(1), situation: z.string().min(1), tip: z.string().optional() }).optional(),
     scenes: z

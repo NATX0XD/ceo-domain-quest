@@ -37,6 +37,9 @@
       ],
       "watch": {
         "title": "ทำไมลูกค้าเข้าเว็บร้านขนมบ้านยายไม่ได้",
+        "video": "/videos/m1-watch.mp4",
+        "poster": "/ui/m1/watch-poster.webp",
+        "captions": "/captions/m1-watch.th.vtt",
         "scenes": [
           {
             "id": "s1",

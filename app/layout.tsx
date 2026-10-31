@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Noto_Sans_Thai } from 'next/font/google'
+import { Mitr, Noto_Sans_Thai } from 'next/font/google'
 import './globals.css'
 import { PRODUCT_NAME_FULL } from '@/components/product'
 
@@ -8,6 +8,13 @@ const notoSansThai = Noto_Sans_Thai({
   weight: ['400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-noto-sans-thai',
+})
+
+const mitr = Mitr({
+  subsets: ['thai', 'latin'],
+  weight: ['500', '600', '700'],
+  display: 'swap',
+  variable: '--font-display-thai',
 })
 
 export const metadata: Metadata = {
@@ -37,7 +44,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="th" className={notoSansThai.variable}>
+    <html lang="th" className={`${notoSansThai.variable} ${mitr.variable}`}>
       <body className="font-sans">{children}</body>
     </html>
   )

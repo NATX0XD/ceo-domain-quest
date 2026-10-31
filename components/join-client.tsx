@@ -9,6 +9,7 @@ import {
   CheckIcon,
   DomeSays,
   PinInput,
+  SpeechBubble,
   TextField,
   Toast,
   ToastViewport,
@@ -137,6 +138,7 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
 
   return (
     <AppShell
+      className="media-shell student-display"
       footer={
         <AppFooter className="flex flex-col gap-2">
           {/* ปุ่มหลักอยู่นอก <form> แต่ยังเป็นปุ่ม submit ของฟอร์มนั้นผ่าน attribute form=
@@ -177,16 +179,21 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
         </ToastViewport>
       ) : null}
 
-      <div className="px-4 pt-3 pb-2">
-      <DomeSays mood="greet" speakerName="โดม" avatarSize={56} className="mb-3 [&_.text-note]:text-[0.875rem]">
+      <div className="media-join-main relative min-h-full px-3 pt-3 pb-4">
+      <SpeechBubble speaker="dome" speakerName="โดม" tail="none" className="relative z-10 mx-auto mb-3 max-w-[25rem] [&_.text-note]:text-[0.875rem]">
         {mode === 'join'
-          ? 'สวัสดีครับ ใส่รหัสห้องที่ครูฉายบนจอ แล้วตั้งชื่อเล่นกับรหัส 4 หลักของตัวเองได้เลย'
-          : 'เคยเข้ามาแล้วใช่ไหมครับ ใส่รหัสห้อง ชื่อเล่นเดิม และรหัส 4 หลักที่เคยตั้งไว้'}
-      </DomeSays>
+          ? 'ใส่รหัสห้อง ชื่อเล่น และตั้ง PIN 4 หลักได้เลยครับ'
+          : 'ใส่รหัสห้อง ชื่อเล่นเดิม และ PIN 4 หลักที่เคยตั้งไว้ครับ'}
+      </SpeechBubble>
 
-      <h1 className="text-title font-extrabold text-balance text-ink">
-        {mode === 'join' ? 'เข้าห้องเรียน' : 'ย้ายเครื่อง เข้าห้องเดิม'}
-      </h1>
+      <section className="join-frame-stage" aria-label="แบบฟอร์มเข้าห้องเรียน">
+        <img src="/ui/join/frame.webp" alt="กรอบไม้ประดับตัวละครสำหรับแบบฟอร์มเข้าห้องเรียน" aria-hidden="true" className="join-frame-art" />
+        <div className="join-title-plaque">
+          <h1 className="text-title font-extrabold text-balance">
+            {mode === 'join' ? 'เข้าห้องเรียน' : 'ย้ายเครื่อง เข้าห้องเดิม'}
+          </h1>
+        </div>
+        <div className="join-frame-panel">
 
       <form
         id={FORM_ID}
@@ -208,7 +215,7 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
           placeholder="QUEST9"
           center
           valid={codeOk}
-          hint="ตัวอักษรกับตัวเลขรวมกัน 6 ตัว ครูฉายไว้บนจอหน้าห้อง"
+          hint="ตัวอักษร/ตัวเลขรวม 6 ตัว ครูฉายไว้บนจอ"
           inputClassName="text-title font-extrabold tracking-[0.3em] uppercase"
         />
 
@@ -223,7 +230,7 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
           valid={nameOk}
           hint={
             mode === 'join'
-              ? 'ต้องไม่ซ้ำกับเพื่อนในห้อง ถ้าซ้ำระบบจะบอกให้เปลี่ยน'
+              ? 'ชื่อไม่ซ้ำกับเพื่อน ถ้าซ้ำระบบจะเติมเลขให้'
               : 'ต้องเป็นชื่อเดิมที่เคยใช้ในห้องนี้'
           }
         />
@@ -250,6 +257,8 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
       >
         กลับหน้าแรก
       </Link>
+        </div>
+      </section>
       </div>
     </AppShell>
   )

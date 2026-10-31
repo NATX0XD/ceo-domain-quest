@@ -1,7 +1,6 @@
 import { AppFooter, AppShell } from '@/components/app-shell'
 import { QuestLinkButton } from '@/components/quest-link-button'
-import { DomeAvatar, SceneDecor, SpeechBubble } from '@/components/ui'
-import { ShopStages } from '@/components/shop-stages'
+import { SpeechBubble } from '@/components/ui'
 import { PRODUCT_NAME_EN, PRODUCT_NAME_TH } from '@/components/product'
 
 /**
@@ -17,6 +16,7 @@ export default function LandingPage() {
   return (
     <AppShell
       fit
+      className="media-shell student-display"
       footer={
         <AppFooter className="flex flex-col gap-2 pb-2">
           <QuestLinkButton
@@ -33,25 +33,18 @@ export default function LandingPage() {
         </AppFooter>
       }
     >
-      <div className="relative isolate flex h-full min-h-0 flex-col items-center gap-2 scene-sky px-4 pt-3 pb-1 text-center">
-        <SceneDecor density="full" />
-        <span className="shrink-0 rounded-full bg-brand-100 px-4 py-1 text-note font-bold text-brand-700">
+      <div className="media-landing-main relative isolate flex h-full min-h-0 flex-col items-center gap-2 overflow-hidden px-4 pt-3 pb-1 text-center">
+        <span className="relative z-10 shrink-0 rounded-full bg-[#FFF1D6] px-4 py-1 text-label font-bold text-[#1555C8] shadow-[0_4px_0_#6B2D12]">
           21910-2002 อินเทอร์เน็ตในงานธุรกิจดิจิทัล
         </span>
-        {/* ชื่อหลักเป็นอังกฤษ ไทยเป็นชื่อรองใต้ลงมา (มติ T40) */}
-        <h1 className="shrink-0 text-title font-black text-balance text-ink">{PRODUCT_NAME_EN}</h1>
-        <p className="shrink-0 text-body font-bold text-balance text-brand-700">{PRODUCT_NAME_TH}</p>
-
-        <div className="min-h-0 w-full flex-1">
-          <ShopStages level={5} kind="bakery" decorative className="h-full" />
+        <img src="/ui/welcome/logo.webp" alt={`${PRODUCT_NAME_EN} — โลโก้`} className="relative z-10 -mb-3 w-[min(82vw,20rem)] object-contain" />
+        <p className="relative z-10 shrink-0 rounded-full bg-[#FFF1D6] px-4 py-1 text-body font-bold text-[#1555C8] shadow-[0_4px_0_#6B2D12]">{PRODUCT_NAME_TH}</p>
+        <div className="relative z-10 min-h-0 w-full flex-1">
+          <img src="/ui/welcome/dome.webp" alt="โดม ตัวละครผู้ช่วย" className="media-landing-art mx-auto h-full w-full object-contain object-bottom" />
         </div>
-
-        <div className="flex w-full shrink-0 items-center gap-2 text-left">
-          <DomeAvatar mood="greet" size={52} decorative sparkle />
-          <SpeechBubble speaker="dome" tail="left" className="min-w-0 flex-1 px-3 py-2">
-            <span className="line-clamp-2 text-label font-bold text-ink">
-              ขอรหัสห้อง 6 ตัวกับ PIN จากครูก่อน แล้วกดปุ่มด้านล่างได้เลยครับ
-            </span>
+        <div className="relative z-10 flex w-full shrink-0 items-center gap-2 text-left">
+          <SpeechBubble speaker="dome" tail="left" className="media-panel min-w-0 flex-1 px-3 py-2">
+            <span className="line-clamp-2 text-label font-bold text-[#6B2D12]">ขอรหัสห้อง 6 ตัวกับ PIN จากครูก่อน แล้วกดปุ่มด้านล่างได้เลยครับ</span>
           </SpeechBubble>
         </div>
       </div>

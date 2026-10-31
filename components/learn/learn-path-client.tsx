@@ -742,12 +742,14 @@ export function LearnPathClient({
 
           {step === 'intro' ? (
             <>
-              <div className="flex flex-col items-center pt-2">
+              {missionId === 'm1' ? <div className="m1-intro-art" aria-hidden="true" /> : null}
+              {missionId === 'm1' ? <div className="m1-map-art" aria-hidden="true" /> : null}
+              <div className="relative z-10 flex flex-col items-center pt-2">
                 <Float>
                   <DomeAvatar mood="greet" size={132} decorative />
                 </Float>
               </div>
-              <GlassCard dark={dark}>
+              <GlassCard dark={dark} className={missionId === 'm1' ? 'm1-intro-copy media-panel' : undefined}>
                 <p className={cn('text-label font-bold', dark ? 'text-brand-200' : 'text-brand-700')}>
                   เตรียมตัวก่อนภารกิจ
                 </p>
@@ -905,6 +907,7 @@ export function LearnPathClient({
                 <video
                   key={video}
                   src={video}
+                  poster={path.watch.poster}
                   controls
                   playsInline
                   preload="metadata"
@@ -912,8 +915,10 @@ export function LearnPathClient({
                   aria-label={path.watch.title}
                   onEnded={() => setVideoEnded(true)}
                   onError={() => setVideoFailed(true)}
-                  className="aspect-video w-full rounded-[24px] bg-ink shadow-soft-2"
-                />
+                  className="media-video aspect-video w-full rounded-[24px]"
+                >
+                  {path.watch.captions ? <track kind="captions" srcLang="th" label="คำบรรยายภาษาไทย (ฉบับร่าง)" src={path.watch.captions} default /> : null}
+                </video>
               ) : (
                 <>
                   <div className="flex items-center gap-3 rounded-[20px] bg-white px-4 py-3 shadow-soft-1">

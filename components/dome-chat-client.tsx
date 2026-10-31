@@ -116,6 +116,7 @@ export function DomeChatClient({
 
   return (
     <AppShell
+      className="media-shell media-dome-shell student-display"
       header={
         <AppHeader className="flex items-center gap-3">
           <DomeAvatar mood="greet" size={48} decorative />
