@@ -1,21 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getProfile, getStudent } from '@/lib/db/repo'
+import { getStudent } from '@/lib/db/repo'
 import { ShopStages, businessKindFrom, shopStageFromCleared } from '@/components/shop-stages'
 import { SignInGate } from '@/components/student-shell'
 import { SessionClock } from '@/components/session-clock'
 import { BottomNav } from '@/components/bottom-nav'
 import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
-import {
-  ChevronRightIcon,
-  DomeAvatar,
-  KnowledgeIcon,
-  ProgressBar,
-  QuestIcon,
-  SendIcon,
-  SpeechBubble,
-  StarIcon,
-} from '@/components/ui'
+import { ChevronRightIcon, DomeAvatar, ProgressBar, SpeechBubble, StarIcon } from '@/components/ui'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
 import { loadShopProfile } from '@/components/server/game-state'
@@ -49,18 +40,14 @@ export default async function HomePage() {
   const session = await readStudentSession()
   if (!session) return <SignInGate />
 
-  const [student, profile, summary, profileRow, standing] = await Promise.all([
+  const [student, profile, summary, standing] = await Promise.all([
     getStudent(session.studentId),
     loadShopProfile(session.studentId),
     lessonSummary(session.studentId),
-    getProfile(session.studentId),
     certificateEligibility(session.studentId),
   ])
 
   const nextMission = summary.missions.find((m) => !m.passed)
-  const readiness = (profileRow?.readiness ?? {}) as Record<string, unknown>
-  const checkDone = typeof (readiness.check as { score?: number } | undefined)?.score === 'number'
-
   /**
    * ปุ่มหลักในแถบท้าย — พาไปตาม **สถานะจริงของคนนี้** ไม่ใช่ปลายทางตายตัว
    * สถานะมาจาก `certificateEligibility()` ตัวเดียวกับที่หน้า /result ใช้ จะได้ไม่มีกติกาสองชุด
@@ -102,16 +89,6 @@ export default async function HomePage() {
   const kind = businessKindFrom(profile?.businessTypeId)
   const nickname = student?.nickname ?? 'นักเรียน'
 
-  /** ชิปปุ่มรอง — เรียงเป็นแถวเดียว มีไอคอนสีประจำหน้าที่ แทนกล่องใหญ่ซ้อนกัน */
-  const chips = [
-    { href: '/map', label: 'แผนภารกิจ', icon: <QuestIcon width={18} height={18} aria-hidden />, tone: 'bg-brand-100 text-brand-700' },
-    { href: '/dome', label: 'คุยกับโดม', icon: <SendIcon width={18} height={18} aria-hidden />, tone: 'bg-quest-100 text-quest-700' },
-    { href: '/knowledge', label: 'คลังความรู้', icon: <KnowledgeIcon width={18} height={18} aria-hidden />, tone: 'bg-spark-100 text-spark-700' },
-    ...(checkDone
-      ? []
-      : [{ href: '/check', label: 'เช็กความเข้าใจ', icon: <StarIcon width={18} height={18} aria-hidden />, tone: 'bg-reward-100 text-reward-700' }]),
-  ]
-
   return (
     <AppShell
       fit
@@ -122,7 +99,6 @@ export default async function HomePage() {
             <DomeAvatar mood="greet" size={44} decorative />
             <div className="min-w-0 flex-1">
               <p className="truncate text-title-sm font-extrabold text-ink">{nickname}</p>
-              <p className="truncate text-[0.875rem] text-ink-muted">ปวช.1 · CEO Domain Quest</p>
             </div>
             <p className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-reward-100 px-3 py-1.5 text-body font-extrabold text-reward-700 tabular-nums">
               <StarIcon width={20} height={20} aria-hidden />
@@ -197,19 +173,6 @@ export default async function HomePage() {
           </SpeechBubble>
         </div>
 
-        {/* แถวชิปปุ่มรอง — สูงคงที่ ไม่ตัดขึ้นบรรทัดใหม่ */}
-        <nav aria-label="ทางลัด" className="chip-row shrink-0 justify-center">
-          {chips.map((c) => (
-            <Link
-              key={c.href}
-              href={c.href}
-              className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-label font-bold ${c.tone} focus-ring`}
-            >
-              {c.icon}
-              {c.label}
-            </Link>
-          ))}
-        </nav>
       </div>
     </AppShell>
   )
