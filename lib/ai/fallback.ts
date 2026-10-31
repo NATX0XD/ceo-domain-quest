@@ -334,7 +334,7 @@ export function fallbackGradeReason(
 export function buildGradeResult(
   dimensions: RubricDimensionScore[],
   emphasisDimensionId: string | null,
-  meta: { source: 'ai' | 'fallback'; provider: 'typhoon' | 'gemini' | 'rules'; fallbackReason: FallbackReason | null },
+  meta: { source: 'ai' | 'fallback'; provider: 'typhoon' | 'gemini' | 'cloudflare' | 'rules'; fallbackReason: FallbackReason | null },
 ): GradeReasonResult {
   const scores: Record<string, number> = {}
   for (const d of dimensions) scores[d.id] = d.score

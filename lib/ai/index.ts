@@ -17,6 +17,7 @@ import {
   fallbackSimulateCustomer,
 } from './fallback'
 import { callGemini } from './gemini'
+import { callCloudflare } from './cloudflare'
 import { fallbackLearnCheck, parseLearnCheck } from './learn-check'
 import {
   gradeReasonPrompt,
@@ -36,6 +37,7 @@ import { expectedLatencyMs, fitsBudget, type AiTaskId } from './latency'
 import { ProviderRateLimiter, limitsFromEnv } from './rate-limiter'
 import { buildStoryResult, fallbackStorySet } from './story'
 import { callTyphoon } from './typhoon'
+import { containsTopicViolation, guardAiText, topicKeywords } from './topic-lock'
 import type {
   AiClient,
   AiProvider,
@@ -108,6 +110,7 @@ export interface AiClientDeps {
  * ต้องเป็นตัวเดียวทั้ง process ไม่งั้นนักเรียน 30 คนจะได้คิวคนละใบแล้วยิงพรวดเหมือนเดิม
  */
 let sharedLimiter: ProviderRateLimiter | null = null
+const providerBreakers = new Map<string, number>()
 
 function getSharedLimiter(env: EnvLike): ProviderRateLimiter {
   if (!sharedLimiter) sharedLimiter = new ProviderRateLimiter(limitsFromEnv(env))
@@ -117,12 +120,29 @@ function getSharedLimiter(env: EnvLike): ProviderRateLimiter {
 /** ล้างคิว ใช้ตอนเริ่มคาบใหม่และในเทสต์ */
 export function resetAiRateLimiter(): void {
   sharedLimiter = null
+  providerBreakers.clear()
 }
 
 interface ResolvedProvider {
   provider: Exclude<AiProvider, 'rules'>
   apiKey: string
+  accountId?: string
 }
+
+export interface ProviderRegistryEntry {
+  provider: Exclude<AiProvider, 'rules'>
+  adultOnly: boolean
+  configured: (env: EnvLike) => boolean
+}
+
+export const PROVIDER_REGISTRY: readonly ProviderRegistryEntry[] = [
+  { provider: 'typhoon', adultOnly: false, configured: (env) => Boolean(env.TYPHOON_API_KEY?.trim()) },
+  { provider: 'gemini', adultOnly: true, configured: (env) => Boolean(env.GEMINI_API_KEY?.trim()) },
+  { provider: 'cloudflare', adultOnly: false, configured: (env) => Boolean(env.CF_ACCOUNT_ID?.trim() && env.CF_AI_TOKEN?.trim()) },
+]
+
+/** ผู้ให้บริการที่ policy ห้ามใช้กับผู้เยาว์จนกว่าจะตรวจเงื่อนไขล่าสุดและเปิดโหมดที่เหมาะสม */
+export const ADULT_ONLY_PROVIDERS = ['gemini', 'groq'] as const
 
 /** ชนิดงานที่เรียกโมเดล ใช้เลือกผู้ให้บริการที่เหมาะกับงานนั้น */
 export type AiTask = AiTaskId
@@ -171,7 +191,12 @@ export function providerChain(
   const typhoon = env?.TYPHOON_API_KEY?.trim()
   const gemini = env?.GEMINI_API_KEY?.trim()
   if (typhoon) chain.push({ provider: 'typhoon', apiKey: typhoon })
-  if (gemini) chain.push({ provider: 'gemini', apiKey: gemini })
+  if (gemini && env?.AI_MINORS_MODE !== '1') chain.push({ provider: 'gemini', apiKey: gemini })
+  const cloudflareToken = env?.CF_AI_TOKEN?.trim()
+  const cloudflareAccount = env?.CF_ACCOUNT_ID?.trim()
+  if (cloudflareToken && cloudflareAccount) {
+    chain.push({ provider: 'cloudflare', apiKey: cloudflareToken, accountId: cloudflareAccount })
+  }
   if (chain.length < 2) return chain
 
   const limits = limitsFromEnv(env)
@@ -309,6 +334,14 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
 
     for (let i = 0; i < chain.length; i++) {
       const resolved = chain[i]!
+      const breakerUntil = providerBreakers.get(resolved.provider) ?? 0
+      if (breakerUntil > Date.now()) {
+        const skipped: ProviderAttempt = { provider: resolved.provider, ok: false, ms: 0, reason: 'request-failed', detail: 'provider circuit breaker ยังทำงานอยู่' }
+        attempts.push(skipped)
+        deps.onAttempt?.(skipped)
+        lastReason = 'request-failed'
+        continue
+      }
       const elapsed = Date.now() - startedAt
       const remaining = timeoutMs - elapsed
       if (remaining <= 0) {
@@ -418,11 +451,19 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
             model:
               resolved.provider === 'gemini'
                 ? env?.GEMINI_MODEL?.trim() || undefined
-                : env?.TYPHOON_MODEL?.trim() || undefined,
+                : resolved.provider === 'typhoon'
+                  ? env?.TYPHOON_MODEL?.trim() || undefined
+                  : env?.CF_AI_MODEL?.trim() || undefined,
+            baseUrl:
+              resolved.provider === 'cloudflare'
+                ? env?.CF_AI_BASE_URL?.trim() || undefined
+                : undefined,
           }
-          return resolved.provider === 'gemini'
-            ? callGemini(buildPrompt(), options)
-            : callTyphoon(buildPrompt(), options)
+          if (resolved.provider === 'gemini') return callGemini(buildPrompt(), options)
+          if (resolved.provider === 'cloudflare') {
+            return callCloudflare(buildPrompt(), { ...options, accountId: resolved.accountId! })
+          }
+          return callTyphoon(buildPrompt(), options)
         })
         const value = parse(raw, resolved.provider)
         const okAttempt: ProviderAttempt = {
@@ -434,13 +475,15 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
         deps.onAttempt?.(okAttempt)
         return { value, attempts, lastReason }
       } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error)
+        if (/สถานะ (429|5\d\d)\b/.test(detail)) providerBreakers.set(resolved.provider, Date.now() + 60_000)
         lastReason = toFallbackReason(error)
         const failed: ProviderAttempt = {
           provider: resolved.provider,
           ok: false,
           ms: Date.now() - attemptStart,
           reason: lastReason,
-          detail: error instanceof Error ? error.message : String(error),
+          detail,
         }
         attempts.push(failed)
         deps.onAttempt?.(failed)
@@ -466,8 +509,10 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
           if (typeof hintText !== 'string' || hintText.trim().length === 0) {
             throw new Error('โมเดลไม่ได้ตอบกลับเป็น JSON ที่ใช้ได้')
           }
+          const safeText = guardAiText(hintText, topicKeywords(`${input.missionId} ${input.draftName ?? ''} ${(input.keywords ?? []).join(' ')}`), fallbackHint(input, 'bad-response').text)
+          if (safeText === fallbackHint(input, 'bad-response').text && hintText.trim() !== safeText) throw new Error('คำตอบหลุดหัวข้อหรือไม่ปลอดภัย')
           return {
-            text: hintText.trim(),
+            text: safeText,
             level: Math.max(1, Math.floor(input?.hintLevel ?? 1)),
             source: 'ai',
             provider,
@@ -518,6 +563,10 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
               emphasized: id === emphasisDimensionId,
             }
           })
+
+          if (containsTopicViolation(dimensions.flatMap((d) => [d.evidence, d.suggestion]), topicKeywords(`${input.tldId} ${input.domainName ?? ''} ${input.businessTypeId ?? ''} ${input.reasonText}`))) {
+            throw new Error('คำตอบหลุดหัวข้อหรือไม่ปลอดภัย')
+          }
 
           // คะแนนถ่วงน้ำหนักและดาวคำนวณฝั่งเราเสมอ ไม่เชื่อเลขคณิตของโมเดล
           return buildGradeResult(dimensions, emphasisDimensionId, {
@@ -579,12 +628,14 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
           if (typeof data?.typed !== 'string' || typeof data?.comment !== 'string') {
             throw new Error('โมเดลไม่ได้ตอบกลับเป็น JSON ที่ใช้ได้')
           }
+          const safeComment = guardAiText(data.comment, topicKeywords(input.domainName), fallbackSimulateCustomer(input, 'bad-response').comment)
+          if (safeComment === fallbackSimulateCustomer(input, 'bad-response').comment && data.comment.trim() !== safeComment) throw new Error('คำตอบหลุดหัวข้อหรือไม่ปลอดภัย')
           const expected = (input?.domainName ?? '').trim().toLowerCase()
           const typed = data.typed.trim().toLowerCase()
           return {
             typed,
             correct: typed === expected,
-            comment: data.comment,
+            comment: safeComment,
             source: 'ai',
             provider,
             fallbackReason: null,

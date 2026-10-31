@@ -197,6 +197,12 @@ Vercel → Project → **Settings → Environment Variables** (ใส่ให�
 
 ### ลูกโซ่สำรองของผู้ช่วย AI + โควตาที่ต้องเผื่อ
 
+#### โหมดผู้เยาว์และตัวเลือกผู้ให้บริการ
+
+ตอนทดสอบกับผู้ใหญ่ที่สวมบทบาทเป็นนักเรียน ใช้ Gemini ได้ตามปกติ แต่ก่อนให้นักเรียนอายุต่ำกว่า 18 ปีใช้จริง ต้องตั้ง `AI_MINORS_MODE=1` เสมอ ระบบจะตัด Gemini ออกจากลูกโซ่ (ผู้ให้บริการที่มีข้อจำกัดอายุจะถูกปิด) ตรวจเงื่อนไขล่าสุดของ Google ได้ที่ https://ai.google.dev/gemini-api/terms
+
+Cloudflare Workers AI ปิดไว้เป็นค่าเริ่มต้น หากต้องการเปิดให้ตั้ง `CF_ACCOUNT_ID`, `CF_AI_TOKEN`, `CF_AI_MODEL` และตั้งลิมิต `CF_RPS`, `CF_RPM`, `CF_RPD`; ไม่มี token จะไม่ยิงเครือข่าย ค่าลิมิตของ Typhoon/Gemini ตั้งทับได้ด้วย `TYPHOON_RPS/RPM/RPD` และ `GEMINI_RPS/RPM/RPD` ระบบเก็บหน้าต่างเลื่อนแยกต่อ provider และหยุด provider ที่ตอบ 429/5xx ประมาณ 60 วินาที
+
 ลำดับเดียวกันทุกชนิดงาน (`lib/ai/index.ts` → `providerChain`): **Typhoon → Gemini → กฎในโค้ด** งบเวลารวมทั้งลูกโซ่ 5 วินาที
 
 ```

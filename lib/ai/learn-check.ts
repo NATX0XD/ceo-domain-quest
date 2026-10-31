@@ -6,6 +6,7 @@
  */
 import { z } from 'zod'
 import { sanitizeStudentAnswer } from './prompts'
+import { guardAiText, topicKeywords } from './topic-lock'
 import type {
   AiProvider,
   FallbackReason,
@@ -84,10 +85,11 @@ export function parseLearnCheck(
     const covered = verifiedCovered(item.data.concepts, asked.answer)
     // หลักฐานไม่จริงสักแนวคิด = คำแนะนำของโมเดลอาจชมเกินจริง ใช้ข้อความจากไฟล์เฉลยแทน
     const downgraded = covered.some((hit, i) => hit !== item.data.concepts[i]!.covered)
+    const feedback = safeLearnFeedback(item.data.feedback)
     items.push({
       id: item.data.id,
       covered,
-      feedback: downgraded ? null : safeLearnFeedback(item.data.feedback),
+      feedback: downgraded || !feedback ? null : guardAiText(feedback, topicKeywords(`${asked.question} ${asked.concepts.join(' ')}`), ''),
     })
   }
   if (items.length === 0) throw new Error('โมเดลไม่ได้ตอบกลับเป็น JSON ที่ใช้ได้')

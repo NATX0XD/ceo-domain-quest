@@ -11,6 +11,7 @@
  */
 import storySeedsJson from '../../content/story-seeds.json' with { type: 'json' }
 import { gateAiText } from '../../core/content-filter'
+import { guardAiText, topicKeywords } from './topic-lock'
 import type { AiSource, FallbackReason, StoryInput, StoryItem, StoryResult } from './types'
 
 const meta = storySeedsJson.meta as {
@@ -217,6 +218,10 @@ export function checkStoryText(text: unknown, input: StoryInput): StoryCheck {
 
   if (looksLikeDomain(value)) {
     return { ok: false, reason: 'มีข้อความที่หน้าตาเหมือนชื่อเว็บหรือนามสกุลเว็บ' }
+  }
+
+  if (!guardAiText(value, topicKeywords(`${input.brandName} ${input.description ?? ''} ${input.businessTypeId ?? ''}`), '')) {
+    return { ok: false, reason: 'หลุดหัวข้อหรือไม่ปลอดภัย' }
   }
 
   const gate = gateAiText(value)

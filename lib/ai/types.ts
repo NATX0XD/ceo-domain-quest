@@ -11,7 +11,7 @@
 /** มาจากไหน — 'ai' คือโมเดลตอบ, 'fallback' คือกฎในโค้ดตอบ */
 export type AiSource = 'ai' | 'fallback'
 
-export type AiProvider = 'typhoon' | 'gemini' | 'rules'
+export type AiProvider = 'typhoon' | 'gemini' | 'cloudflare' | 'rules'
 
 /** เหตุผลที่ตกมาใช้ทางสำรอง เก็บไว้ให้ครูและ log อ่านได้ */
 export type FallbackReason =

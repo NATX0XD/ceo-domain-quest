@@ -18,6 +18,8 @@ export interface RateLimit {
   rps: number
   /** คำขอต่อนาที */
   rpm: number
+  /** คำขอต่อวัน */
+  rpd?: number
 }
 
 export interface LimiterOptions {
@@ -56,15 +58,19 @@ export class ProviderRateLimiter {
     const limit = this.limits.get(provider)
     if (!limit) return 0
 
-    const stamps = (this.history.get(provider) ?? []).filter((t) => at - t < 60_000)
+    const stamps = (this.history.get(provider) ?? []).filter((t) => at - t < 86_400_000)
     this.history.set(provider, stamps)
 
-    const rpsIndex = limit.rps > 0 ? stamps.length - limit.rps : -1
-    const rpmIndex = limit.rpm > 0 ? stamps.length - limit.rpm : -1
-    const earliestByRps = rpsIndex >= 0 ? stamps[rpsIndex]! + 1000 : at
-    const earliestByRpm = rpmIndex >= 0 ? stamps[rpmIndex]! + 60_000 : at
+    const secondStamps = stamps.filter((t) => at - t < 1_000)
+    const rpsIndex = limit.rps > 0 ? secondStamps.length - limit.rps : -1
+    const minuteStamps = stamps.filter((t) => at - t < 60_000)
+    const rpmIndex = limit.rpm > 0 ? minuteStamps.length - limit.rpm : -1
+    const earliestByRps = rpsIndex >= 0 ? secondStamps[rpsIndex]! + 1000 : at
+    const earliestByRpm = rpmIndex >= 0 ? minuteStamps[rpmIndex]! + 60_000 : at
+    const rpdIndex = (limit.rpd ?? 0) > 0 ? stamps.length - (limit.rpd ?? 0) : -1
+    const earliestByRpd = rpdIndex >= 0 ? stamps[rpdIndex]! + 86_400_000 : at
 
-    return Math.max(0, earliestByRps - at, earliestByRpm - at)
+    return Math.max(0, earliestByRps - at, earliestByRpm - at, earliestByRpd - at)
   }
 
   /**
@@ -106,6 +112,10 @@ export class ProviderRateLimiter {
   usedInLastMinute(provider: string, at: number = this.now()): number {
     return (this.history.get(provider) ?? []).filter((t) => at - t < 60_000).length
   }
+
+  usedInLastDay(provider: string, at: number = this.now()): number {
+    return (this.history.get(provider) ?? []).filter((t) => at - t < 86_400_000).length
+  }
 }
 
 function readNumber(value: string | undefined, fallback: number): number {
@@ -120,8 +130,9 @@ function readNumber(value: string | undefined, fallback: number): number {
 export function limitsFromEnv(env: Record<string, string | undefined> = {}): Record<string, RateLimit> {
   return {
     typhoon: {
-      rps: readNumber(env.TYPHOON_RPS, 4), // ลิมิตจริง 5 RPS
-      rpm: readNumber(env.TYPHOON_RPM, 180), // ลิมิตจริง 200 RPM
+      rps: readNumber(env.TYPHOON_RPS, 5), // ลิมิตจริง 5 RPS
+      rpm: readNumber(env.TYPHOON_RPM, 200), // ลิมิตจริง 200 RPM
+      rpd: readNumber(env.TYPHOON_RPD, 10_000),
     },
     gemini: {
       /**
@@ -131,7 +142,13 @@ export function limitsFromEnv(env: Record<string, string | undefined> = {}): Rec
        * ตั้ง 3 จึงรับชุดที่กดพร้อมกันได้จริงโดยยังไม่ทะลุเพดานรายนาที
        */
       rps: readNumber(env.GEMINI_RPS, 3),
-      rpm: readNumber(env.GEMINI_RPM, 12), // free tier สาย Flash Lite = 15 RPM
+      rpm: readNumber(env.GEMINI_RPM, 15), // free tier Flash + Flash-Lite ประมาณ 15 RPM
+      rpd: readNumber(env.GEMINI_RPD, 500),
+    },
+    cloudflare: {
+      rps: readNumber(env.CF_RPS, 1),
+      rpm: readNumber(env.CF_RPM, 60),
+      rpd: readNumber(env.CF_RPD, 1000),
     },
   }
 }

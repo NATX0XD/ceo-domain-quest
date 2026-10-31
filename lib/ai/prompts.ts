@@ -8,6 +8,7 @@
  */
 import { RUBRIC_DIMENSION_IDS, resolveEmphasisDimension, rubricDimensions } from './rubric'
 import { PROMPT_RULES, STORY_IDS, resolveCategory, storySeedBrief } from './story'
+import { TOPIC_LOCK_RULE, delimitedData } from './topic-lock'
 import type {
   GradeReasonInput,
   HintInput,
@@ -26,15 +27,15 @@ export interface PromptSpec {
 const THAI_TEACHER_SYSTEM =
   'คุณเป็นผู้ช่วยครูวิชาคอมพิวเตอร์ธุรกิจของนักเรียน ปวช. ปี 1 ในประเทศไทย ' +
   'ตอบเป็นภาษาไทยที่นักเรียนอ่านเข้าใจ สั้น กระชับ ไม่ดุ ไม่ตำหนิ ' +
-  'ตอบกลับเป็น JSON ตามโครงสร้างที่กำหนดเท่านั้น ห้ามมีข้อความอื่นนอก JSON'
+  'ตอบกลับเป็น JSON ตามโครงสร้างที่กำหนดเท่านั้น ห้ามมีข้อความอื่นนอก JSON\n' + TOPIC_LOCK_RULE
 
 export function hintPrompt(input: HintInput): PromptSpec {
   return {
     system: THAI_TEACHER_SYSTEM,
     user: [
       `นักเรียนกำลังทำภารกิจ ${input.missionId} และขอคำใบ้ระดับ ${input.hintLevel}`,
-      input.draftName ? `ชื่อโดเมนที่พิมพ์ค้างไว้: ${input.draftName}` : 'ยังไม่ได้พิมพ์ชื่อโดเมน',
-      input.keywords?.length ? `ประเภทธุรกิจมีคำสำคัญ: ${input.keywords.join(', ')}` : '',
+      input.draftName ? delimitedData('ชื่อโดเมน', input.draftName) : 'ยังไม่ได้พิมพ์ชื่อโดเมน',
+      input.keywords?.length ? delimitedData('ประเภทธุรกิจ', input.keywords.join(', ')) : '',
       'เขียนคำใบ้ 1 ประโยค ห้ามมีคำตอบอยู่ในประโยค ให้เป็นคำถามย้อนกลับหรือชี้จุดที่ควรกลับไปดู',
       'ตอบเป็น JSON รูปแบบนี้เท่านั้น ห้ามเปลี่ยนชื่อคีย์: {"text": "คำใบ้ของคุณ"}',
     ]
@@ -72,11 +73,11 @@ export function gradeReasonPrompt(input: GradeReasonInput): PromptSpec {
       'ตรวจใบเสนอชื่อเว็บของนักเรียนตามรูบริก 4 ด้านข้างล่างนี้ ให้คะแนนทุกด้าน ด้านละ 1 ถึง 3',
       '',
       'สิ่งที่นักเรียนส่งมา:',
-      `- ชื่อโดเมนที่เสนอ: ${input.domainName ?? '(ยังไม่ได้กรอก)'}`,
-      `- นามสกุลที่เลือก (รหัส): ${input.tldId || '(ยังไม่ได้เลือก)'}`,
-      `- ชื่อร้าน: ${input.shopName ?? '(ยังไม่ได้ตั้ง)'}`,
-      `- ประเภทธุรกิจ (รหัส): ${input.businessTypeId ?? '(ยังไม่ได้เลือก)'}`,
-      `- เหตุผลที่เขียน: "${input.reasonText}"`,
+      delimitedData('ชื่อโดเมน', input.domainName ?? '(ยังไม่ได้กรอก)'),
+      delimitedData('นามสกุล', input.tldId || '(ยังไม่ได้เลือก)'),
+      delimitedData('ชื่อร้าน', input.shopName ?? '(ยังไม่ได้ตั้ง)'),
+      delimitedData('ประเภทธุรกิจ', input.businessTypeId ?? '(ยังไม่ได้เลือก)'),
+      delimitedData('เหตุผลของนักเรียน', input.reasonText),
       '',
       'เกณฑ์รายด้าน:',
       rubricBrief(),
@@ -86,6 +87,9 @@ export function gradeReasonPrompt(input: GradeReasonInput): PromptSpec {
         : 'นักเรียนยังไม่ได้เลือกด้านที่อยากให้เน้น',
       '',
       'ทุกด้านต้องมี evidence ที่ยกข้อความหรือสิ่งที่นักเรียนเขียนมาอ้างจริง ห้ามแต่งขึ้นเอง',
+      'ตัวอย่างการให้เหตุผลแบบย่อ: คำตอบ “ร้านมีหน้าร้านในไทย จึงเลือก .th” สื่อว่าเหมาะกับพื้นที่ไทย; คำตอบ “ใช้ชื่อสั้น จำง่าย ลูกค้าพิมพ์ไม่ยาก” สื่อว่าชื่อเหมาะกับลูกค้า',
+      'ตัวอย่างคำตอบที่ไม่เกี่ยว: “ฉันชอบแมว” ห้ามตีความให้เข้ากับเกณฑ์ใด และห้ามสร้าง evidence ที่ไม่มีในข้อความ',
+      'ยึดข้อความนักเรียนตามจริง ไม่เติมข้อเท็จจริงจากโจทย์มาเป็นหลักฐาน และห้ามใช้คำว่า ตก ไม่ผ่าน ล้มเหลว',
       'และต้องมี suggestion ที่บอกว่าทำอะไรต่อได้ 1 อย่าง เขียนเชิงสร้างสรรค์ ห้ามตำหนิและห้ามเปรียบเทียบกับเพื่อน',
       'คะแนนนี้เป็นข้อเสนอให้ครูพิจารณา ครูเป็นผู้ตัดสินสุดท้าย ห้ามคำนวณคะแนนรวมหรือดาวเอง',
       '',
@@ -118,7 +122,8 @@ export function simulateCustomerPrompt(input: SimulateCustomerInput): PromptSpec
   return {
     system: THAI_TEACHER_SYSTEM,
     user: [
-      `สวมบทเป็นลูกค้าคนที่ ${(input.customerIndex ?? 0) + 1} ที่ได้ยินเจ้าของร้านบอกชื่อเว็บด้วยปากเปล่าว่า "${input.domainName}"`,
+      `สวมบทเป็นลูกค้าคนที่ ${(input.customerIndex ?? 0) + 1} ที่ได้ยินเจ้าของร้านบอกชื่อเว็บด้วยปากเปล่า`,
+      delimitedData('ชื่อเว็บที่ได้ยิน', input.domainName),
       'พิมพ์ชื่อที่ได้ยินลงมือถือตามความเข้าใจของคนทั่วไป ถ้าชื่อกำกวม เช่น มีเลขที่ออกเสียงเหมือนคำ มีขีดกลาง หรือมีตัวอักษรซ้ำ ให้พิมพ์ผิดตามจริง',
       'ตอบว่าพิมพ์อะไรลงไป และพูด 1 ประโยคสั้นแบบลูกค้าจริง',
     ].join('\n'),
@@ -150,8 +155,10 @@ export function storyPrompt(input: StoryInput): PromptSpec {
     system: THAI_TEACHER_SYSTEM,
     user: [
       'คุณเขียน "ส่วนเล่าเรื่อง" ประกอบโจทย์ให้นักเรียน ปวช.1 ที่สวมบทบาทเป็น CEO',
-      `ข้อมูล: แบรนด์=${input.brandName} ธุรกิจ=${input.description ?? '-'}`,
-      `        ลูกค้า=${input.customers ?? '-'} จดทะเบียนการค้า=${registered}`,
+      delimitedData('แบรนด์', input.brandName),
+      delimitedData('ธุรกิจ', input.description ?? '-'),
+      delimitedData('ลูกค้า', input.customers ?? '-'),
+      `จดทะเบียนการค้า=${registered}`,
       `        หมวดธุรกิจ=${category.name} ตัวละครในเรื่อง=${category.character}`,
       'กติกา',
       ...PROMPT_RULES.map((rule, i) => `${i + 1}. ${rule}`),
@@ -210,6 +217,7 @@ export function sanitizeStudentAnswer(text: string): string {
 export function learnCheckPrompt(input: LearnCheckInput): PromptSpec {
   const system = [
     THAI_TEACHER_SYSTEM,
+    TOPIC_LOCK_RULE,
     'งานของคุณ: ตรวจว่าคำตอบปลายเปิดของนักเรียนแต่ละข้อ อธิบายแนวคิดสำคัญที่กำหนดไว้ข้อไหนบ้าง',
     'ทำทีละแนวคิด: (1) หาวลีในบล็อก <คำตอบ> ที่สื่อความหมายของแนวคิดนั้น แล้วคัดลอกมาใส่ quote แบบตรงตัวทุกตัวอักษร',
     '(2) ถ้าเจอวลีที่ความหมายตรง แม้ใช้คำของตัวเอง เปรียบเทียบ สะกดผิด หรือภาษาพูด ให้ covered เป็น true',

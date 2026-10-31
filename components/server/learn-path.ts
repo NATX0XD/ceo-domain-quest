@@ -173,7 +173,7 @@ export function normalizeAnswer(text: string): string {
 }
 
 /** ใครตรวจข้อนี้ — โมเดลช่วยตรวจ หรือคำสำคัญล้วน */
-export type AnswerSource = 'typhoon' | 'gemini' | 'rule'
+export type AnswerSource = 'typhoon' | 'gemini' | 'cloudflare' | 'rule'
 
 export interface QuestionScore {
   id: string
