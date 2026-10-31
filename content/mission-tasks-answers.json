@@ -43,14 +43,13 @@
       "slotKey": [
         { "slot": "www", "labelId": "m2-b1-l4", "labelText": "ส่วนนำหน้า" },
         { "slot": "{slug}", "labelId": "m2-b1-l3", "labelText": "ชื่อธุรกิจ" },
-        { "slot": "{sldPart}", "labelId": "m2-b1-l2", "labelText": "ประเภทผู้จด", "labelIdWhenRegistered": "m2-b1-l2r" },
-        { "slot": "th", "labelId": "m2-b1-l1", "labelText": "ประเทศไทย" }
+        { "slot": "com", "labelId": "m2-b1-l1", "labelText": "นามสกุลโดเมน" }
       ],
-      "explanation": "อ่านจากขวาไปซ้าย .th คือประเทศไทย นามสกุลระดับรองคือประเภทผู้จด {slug} คือชื่อร้าน และ www คือส่วนนำหน้า",
+      "explanation": "อ่านจากขวาไปซ้าย .com คือนามสกุลโดเมน {slug} คือชื่อธุรกิจ และ www คือส่วนนำหน้า",
       "wrongPlacementFeedback": [
-        { "labelId": "m2-b1-l1", "text": "ส่วนที่บอกประเทศอยู่ขวาสุดนะ" },
+        { "labelId": "m2-b1-l1", "text": ".com คือนามสกุลโดเมนที่อยู่ขวาสุดนะ" },
         { "labelId": "m2-b1-l3", "onSlot": "www", "text": "www มีเกือบทุกเว็บ จึงไม่ใช่ชื่อร้าน" },
-        { "labelId": "m2-b1-l2", "onSlot": "th", "text": ".th บอกประเทศ ส่วนประเภทอยู่ถัดเข้ามาทางซ้าย" }
+        { "labelId": "m2-b1-l2", "text": "https:// และเส้นทางอย่าง /menu ไม่ใช่ส่วนของชื่อเว็บ" }
       ]
     },
     {
@@ -58,9 +57,8 @@
       "gradedBy": "slot-map",
       "slotKey": [
         { "slot": "www", "labelId": "m2-b1-alt-l4", "labelText": "ส่วนนำหน้า" },
-        { "slot": "moe", "labelId": "m2-b1-alt-l3", "labelText": "ชื่อหน่วยงาน" },
-        { "slot": "go", "labelId": "m2-b1-alt-l2", "labelText": "ประเภทผู้จด: หน่วยงานราชการ" },
-        { "slot": "th", "labelId": "m2-b1-alt-l1", "labelText": "ประเทศไทย" }
+        { "slot": "padlet", "labelId": "m2-b1-alt-l3", "labelText": "ชื่อธุรกิจ" },
+        { "slot": "com", "labelId": "m2-b1-alt-l1", "labelText": "นามสกุลโดเมน" }
       ],
       "explanation": null
     },
@@ -68,8 +66,8 @@
       "id": "m2-b2",
       "gradedBy": "accepted-selection",
       "acceptedSelections": [
-        ["www.", "{slug}.", "{sldPart}.", "th"],
-        ["{slug}.", "{sldPart}.", "th"]
+        ["www.", "{slug}.", "com"],
+        ["{slug}.", "com"]
       ],
       "correctFeedback": [
         { "when": "เลือกแบบมี www", "text": "ถูกต้อง! ชื่อโดเมนไม่รวม https:// และ /menu" },
@@ -85,7 +83,7 @@
     {
       "id": "m2-c1",
       "gradedBy": "accepted-text",
-      "acceptedAnswers": ["shop.{slug}{tld}", "{slug}{tld}"],
+      "acceptedAnswers": ["shop.{slug}.com", "{slug}.com"],
       "normalizeNote": "เทียบหลังปรับเป็นตัวพิมพ์เล็กและตัดช่องว่างแล้ว",
       "wrongFeedback": [
         { "when": "มี https:// หรือ /promo", "text": "เกือบแล้ว! ตัดส่วนวิธีเชื่อมต่อและหน้าในเว็บออกให้หมดนะ" },
@@ -96,7 +94,7 @@
       "id": "m2-c2",
       "gradedBy": "rules",
       "passRule": "ส่วนนำหน้าผ่านกฎ E-06 · ไม่ใช่ www · สองชื่อไม่ซ้ำกัน · ช่องใช้ทำอะไรยาวอย่างน้อย 5 ตัวอักษร",
-      "sampleAnswer": "menu.bankhanomyai.in.th ใช้ทำหน้าเมนูขนม · order.bankhanomyai.in.th ใช้ทำหน้าสั่งขนม"
+      "sampleAnswer": "menu.bankhanomyai.com ใช้ทำหน้าเมนูขนม · order.bankhanomyai.com ใช้ทำหน้าสั่งขนม"
     },
     {
       "id": "m3-b1",

@@ -98,6 +98,43 @@ describe('จำนวนตรงกับสเปกหัวข้อ 11 แ
   })
 })
 
+describe('สัญญาเนื้อหา M2 สำหรับโมเดลชื่อเว็บสามส่วน .com', () => {
+  it('คลังโจทย์ที่ใช้งานอยู่ไม่พึ่ง {sldPart}/{tld}/th และใช้ com เป็นส่วนท้าย', () => {
+    const m2Tasks = missionTasks.filter((task) => task.id.startsWith('m2-') && !task.id.endsWith('-alt'))
+    const m2RawTasks = missionTasksJson.missions.find((mission) => mission.id === 'm2')!.tasks as Array<{
+      id: string
+      target?: string
+      slots?: string[]
+      parts?: string[]
+    }>
+    expect(m2Tasks).toHaveLength(4)
+    expect(JSON.stringify(m2RawTasks)).not.toContain('sldPart')
+    expect(JSON.stringify(m2RawTasks)).not.toContain('{tld}')
+    expect(JSON.stringify(m2RawTasks)).not.toMatch(/\.th|"th"/)
+    expect(m2RawTasks.find((task) => task.id === 'm2-b1')!.target).toBe('www.{slug}.com')
+    expect(m2RawTasks.find((task) => task.id === 'm2-b1')!.slots).toEqual(['www', '{slug}', 'com'])
+    expect(m2RawTasks.find((task) => task.id === 'm2-b2')!.parts).toEqual([
+      'https://',
+      'www.',
+      '{slug}.',
+      'com',
+      '/menu',
+    ])
+  })
+
+  it('เฉลยโจทย์ M2 ที่ใช้งานอยู่ใช้ชื่อโดเมน .com แบบเดียวกัน', () => {
+    const m2Answers = taskAnswers.filter((answer) => /^m2-(b1|b2|c1|c2)$/.test(answer.id))
+    expect(m2Answers).toHaveLength(4)
+    expect(JSON.stringify(m2Answers)).not.toContain('sldPart')
+    expect(JSON.stringify(m2Answers)).not.toContain('{tld}')
+    expect(JSON.stringify(m2Answers)).not.toMatch(/\.th|"th"/)
+    expect((findTaskAnswer('m2-c1') as typeof m2Answers[number] & { acceptedAnswers: string[] }).acceptedAnswers).toEqual([
+      'shop.{slug}.com',
+      '{slug}.com',
+    ])
+  })
+})
+
 describe('11.13 การเทียบรายชื่อที่สงวนไว้', () => {
   it('กลุ่มที่เทียบตรงทั้งคำ ต้องไม่กันชื่อสุจริตที่มีคำสงวนอยู่ข้างใน', () => {
     // bank อยู่ในรายการคำสงวน แต่ bankhanomyai เป็นชื่อร้านจริงของผู้เรียน

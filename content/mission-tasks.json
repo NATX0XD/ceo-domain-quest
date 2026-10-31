@@ -138,13 +138,13 @@
           "level": "basic",
           "format": "drag-label",
           "instruction": "ลากป้ายไปวางให้ถูกส่วน อธิบายให้{ตัวละคร}ฟังหน่อย",
-          "target": "www.{slug}{tld}",
-          "slots": ["www", "{slug}", "{sldPart}", "th"],
-          "slotNote": "{sldPart} คือส่วนกลางของนามสกุล เช่น in หรือ co แยกออกมาจาก {tld} ตอนแสดงผล",
+          "target": "www.{slug}.com",
+          "slots": ["www", "{slug}", "com"],
+          "slotNote": "ชื่อเว็บตัวอย่างนี้มี 3 ส่วน: www, ชื่อธุรกิจ และ .com",
           "labels": [
-            { "id": "m2-b1-l1", "text": "ประเทศไทย" },
-            { "id": "m2-b1-l2", "text": "ประเภทผู้จด: บุคคลทั่วไป", "showWhen": "registered = no" },
-            { "id": "m2-b1-l2r", "text": "ประเภทผู้จด: ธุรกิจที่จดทะเบียน", "showWhen": "registered = yes" },
+            { "id": "m2-b1-l1", "text": "นามสกุลโดเมน" },
+            { "id": "m2-b1-l2", "text": "https:// (ไม่ใช่ส่วนของชื่อเว็บ)" },
+            { "id": "m2-b1-l2r", "text": "/menu (ไม่ใช่ส่วนของชื่อเว็บ)" },
             { "id": "m2-b1-l3", "text": "ชื่อธุรกิจ" },
             { "id": "m2-b1-l4", "text": "ส่วนนำหน้า" }
           ],
@@ -156,13 +156,13 @@
           "altItem": {
             "id": "m2-b1-alt",
             "format": "drag-label",
-            "instruction": "ลากป้ายไปวางให้ถูกส่วนแบบเดียวกัน กับชื่อ www.moe.go.th",
-            "target": "www.moe.go.th",
-            "slots": ["www", "moe", "go", "th"],
+            "instruction": "ลากป้ายไปวางให้ถูกส่วนแบบเดียวกัน กับชื่อ www.padlet.com",
+            "target": "www.padlet.com",
+            "slots": ["www", "padlet", "com"],
             "labels": [
-              { "id": "m2-b1-alt-l1", "text": "ประเทศไทย" },
-              { "id": "m2-b1-alt-l2", "text": "ประเภทผู้จด: หน่วยงานราชการ" },
-              { "id": "m2-b1-alt-l3", "text": "ชื่อหน่วยงาน" },
+              { "id": "m2-b1-alt-l1", "text": "นามสกุลโดเมน" },
+              { "id": "m2-b1-alt-l2", "text": "https:// (ไม่ใช่ส่วนของชื่อเว็บ)" },
+              { "id": "m2-b1-alt-l3", "text": "ชื่อธุรกิจ" },
               { "id": "m2-b1-alt-l4", "text": "ส่วนนำหน้า" }
             ]
           }
@@ -172,7 +172,7 @@
           "level": "basic",
           "format": "tap-parts",
           "instruction": "ลูกค้าส่งลิงก์นี้มา แตะเลือกเฉพาะส่วนที่เป็นชื่อโดเมน",
-          "parts": ["https://", "www.", "{slug}.", "{sldPart}.", "th", "/menu"],
+          "parts": ["https://", "www.", "{slug}.", "com", "/menu"],
           "passRule": "แตะเลือกให้ได้เฉพาะส่วนที่เป็นชื่อโดเมน จะเลือกรวมส่วนนำหน้าหรือไม่รวมก็ได้",
           "hints": [
             "ชื่อโดเมนไม่รวมส่วนที่บอกวิธีเชื่อมต่อ และส่วนที่บอกหน้าในเว็บ",
@@ -181,15 +181,15 @@
           "altItem": {
             "id": "m2-b2-alt",
             "format": "choose-one",
-            "instruction": "ในลิงก์ https://www.vec.go.th/news ส่วนใดคือชื่อโดเมน",
-            "choices": ["https://www.vec.go.th", "www.vec.go.th", "/news"]
+            "instruction": "ในลิงก์ https://www.padlet.com/news ส่วนใดคือชื่อโดเมน",
+            "choices": ["https://www.padlet.com", "www.padlet.com", "/news"]
           }
         },
         {
           "id": "m2-c1",
           "level": "challenge",
           "format": "write-short",
-          "instruction": "โปรโมชันของ{แบรนด์}ถูกส่งต่อด้วยลิงก์ยาวนี้ https://shop.{slug}{tld}/promo?code=A1 พิมพ์เฉพาะชื่อโดเมนของลิงก์นี้",
+          "instruction": "โปรโมชันของ{แบรนด์}ถูกส่งต่อด้วยลิงก์ยาวนี้ https://shop.{slug}.com/promo?code=A1 พิมพ์เฉพาะชื่อโดเมนของลิงก์นี้",
           "normalizeNote": "ตรวจหลังปรับเป็นตัวพิมพ์เล็กและตัดช่องว่างแล้ว",
           "hints": [
             "ส่วนไหนเป็นวิธีเชื่อมต่อ ส่วนไหนเป็นหน้าในเว็บ ตัดออกให้หมด",
@@ -208,8 +208,8 @@
           "level": "challenge",
           "format": "design-prefix",
           "instruction": "{ตัวละคร}อยากแยกหน้าเว็บ 2 หน้า ออกแบบส่วนนำหน้า 2 ชื่อแทน www พร้อมบอกว่าแต่ละชื่อใช้ทำอะไร",
-          "answerShape": "[ ____ ].{slug}{tld} ใช้ทำ [ ____ ] จำนวน 2 ชุด",
-          "example": "menu.bankhanomyai.in.th ใช้ทำหน้าเมนูขนม · order.bankhanomyai.in.th ใช้ทำหน้าสั่งขนม",
+          "answerShape": "[ ____ ].{slug}.com ใช้ทำ [ ____ ] จำนวน 2 ชุด",
+          "example": "menu.bankhanomyai.com ใช้ทำหน้าเมนูขนม · order.bankhanomyai.com ใช้ทำหน้าสั่งขนม",
           "hints": [
             "ส่วนนำหน้าควรสั้น และบอกว่าหน้านั้นคืออะไร",
             "ใช้ได้เฉพาะ a-z 0-9 และขีด เช่น menu หรือ order"

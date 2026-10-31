@@ -47,6 +47,17 @@ import tldsJson from '../content/tlds.json' with { type: 'json' }
 
 const CONTENT_DIR = join(import.meta.dirname, '..', 'content')
 
+const ACTIVE_M2_TASK_IDS = ['m2-b1', 'm2-b2', 'm2-c1', 'm2-c2'] as const
+type ActiveM2TaskShape = { id: string; target?: string; slots?: string[]; parts?: string[] }
+
+function activeM2Task(id: (typeof ACTIVE_M2_TASK_IDS)[number]) {
+  return missionTasksJson.missions.find((mission) => mission.id === 'm2')!.tasks.find((task) => task.id === id)! as ActiveM2TaskShape
+}
+
+function activeM2Answer(id: (typeof ACTIVE_M2_TASK_IDS)[number]) {
+  return missionTasksAnswersJson.tasks.find((answer) => answer.id === id)!
+}
+
 describe('จำนวนในคลังเนื้อหาตรงกับสเปกหัวข้อ 11', () => {
   it('11.1 บทพูดโดม 15 จังหวะ ประโยคตอบรับสำรอง 5 ชื่อส่วนของร้าน 5 ขั้น', () => {
     expect(domeLinesJson.lines.length).toBe(15)
@@ -162,6 +173,47 @@ describe('จำนวนในคลังเนื้อหาตรงกั�
     expect(selfProfileJson.starBudget.maxStars).toBe(15)
     expect(selfProfileJson.starBudget.missionStarsTotal).toBe(12)
     expect(selfProfileJson.starBudget.bigMissionMax).toBe(3)
+  })
+})
+
+describe('โมเดลชื่อเว็บของ M2 ใช้โดเมน .com สามส่วนแบบเดียวกัน', () => {
+  it('โจทย์ M2 ที่ใช้งานอยู่ยึด www.{slug}.com และไม่ต้องมี sldPart/th', () => {
+    expect(activeM2Task('m2-b1').target).toBe('www.{slug}.com')
+    expect(activeM2Task('m2-b1').slots).toEqual(['www', '{slug}', 'com'])
+    expect(activeM2Task('m2-b2').parts).toEqual([
+      'https://',
+      'www.',
+      '{slug}.',
+      'com',
+      '/menu',
+    ])
+
+    const serialized = JSON.stringify(ACTIVE_M2_TASK_IDS.map(activeM2Task))
+    expect(serialized).not.toContain('sldPart')
+    expect(serialized).not.toContain('{tld}')
+    expect(serialized).not.toMatch(/\.th|"th"/)
+  })
+
+  it('เฉลย M2 ใช้ com เป็นส่วนที่สาม และไม่ต้องมี sldPart/th', () => {
+    expect((activeM2Answer('m2-b1') as { slotKey: Array<{ slot: string }> }).slotKey.map((entry) => entry.slot)).toEqual([
+      'www',
+      '{slug}',
+      'com',
+    ])
+    expect((activeM2Answer('m2-b2') as { acceptedSelections: string[][] }).acceptedSelections).toEqual([
+      ['www.', '{slug}.', 'com'],
+      ['{slug}.', 'com'],
+    ])
+    expect((activeM2Answer('m2-c1') as { acceptedAnswers: string[] }).acceptedAnswers).toEqual([
+      'shop.{slug}.com',
+      '{slug}.com',
+    ])
+    expect((activeM2Answer('m2-c2') as { sampleAnswer: string }).sampleAnswer).toContain('.com')
+
+    const serialized = JSON.stringify(ACTIVE_M2_TASK_IDS.map(activeM2Answer))
+    expect(serialized).not.toContain('sldPart')
+    expect(serialized).not.toContain('{tld}')
+    expect(serialized).not.toMatch(/\.th|"th"/)
   })
 })
 
