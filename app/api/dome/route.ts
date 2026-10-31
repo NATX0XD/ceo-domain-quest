@@ -24,6 +24,7 @@ export const dynamic = 'force-dynamic'
 const RequestSchema = z.object({
   message: z.string().max(500).default(''),
   quickReplyId: z.string().max(40).nullable().optional(),
+  missionId: z.string().regex(/^m[1-5]$/).optional(),
 })
 
 export async function POST(request: Request) {
@@ -49,6 +50,8 @@ export async function POST(request: Request) {
     message: parsed.data.message,
     quickReplyId: parsed.data.quickReplyId ?? null,
     shopName: profile?.shopName ?? null,
+    missionId: parsed.data.missionId ?? 'm1',
+    role: 'dome',
   })
 
   // เก็บบทสนทนาไว้เป็นหลักฐานให้ครูดูย้อนหลังได้ (source บอกว่ามาจากสคริปต์หรือ AI)

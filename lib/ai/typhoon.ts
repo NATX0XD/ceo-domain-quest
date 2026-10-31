@@ -25,6 +25,28 @@ export interface ProviderCallOptions {
   baseUrl?: string
 }
 
+/** HTTP failure metadata safe to expose in diagnostics; never includes request headers. */
+export class ProviderHttpError extends Error {
+  constructor(
+    readonly httpStatus: number,
+    readonly errorStatus?: string,
+  ) {
+    super(`HTTP status=${httpStatus}${errorStatus ? ` error.status=${errorStatus}` : ''}`)
+    this.name = 'ProviderHttpError'
+  }
+}
+
+async function httpError(response: Response): Promise<ProviderHttpError> {
+  let errorStatus: string | undefined
+  try {
+    const body = (await response.clone().json()) as { error?: { status?: unknown } }
+    if (typeof body.error?.status === 'string') errorStatus = body.error.status
+  } catch {
+    // Some upstream failures return an empty/non-JSON body; status is still useful.
+  }
+  return new ProviderHttpError(response.status, errorStatus)
+}
+
 /** ดึงเฉพาะก้อน JSON ออกจากข้อความ เผื่อโมเดลห่อด้วย ```json */
 export function extractJson(raw: string): unknown {
   const text = (raw ?? '').trim()
@@ -69,7 +91,7 @@ export async function callTyphoon(
   })
 
   if (!response.ok) {
-    throw new Error(`Typhoon ตอบกลับมาเป็นสถานะ ${response.status}`)
+    throw await httpError(response)
   }
 
   const payload = (await response.json()) as {

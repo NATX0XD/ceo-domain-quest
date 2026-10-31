@@ -119,6 +119,8 @@ export async function askDome(input: {
   message: string
   quickReplyId?: string | null
   shopName: string | null
+  missionId?: string
+  role?: 'dome'
 }): Promise<DomeReply> {
   // จุดเสียบ AI จริง — ดูหัวไฟล์
   const text = input.message.trim()

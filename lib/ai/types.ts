@@ -33,6 +33,7 @@ export interface AiMeta {
 
 export interface HintInput {
   missionId: string
+  role?: import('./topic-lock').AiRoleId
   /** ระดับคำใบ้ที่ขอ เริ่มที่ 1 */
   hintLevel: number
   /** ชื่อโดเมนที่นักเรียนพิมพ์ค้างไว้ ใช้ทำคำใบ้ให้ตรงกับสิ่งที่เขาทำอยู่ */
@@ -66,6 +67,7 @@ export interface GradeReasonInput {
   emphasisCriterion?: string | null
   studentId?: string
   missionId?: string
+  role?: import('./topic-lock').AiRoleId
 }
 
 export interface RubricDimensionScore {
@@ -108,6 +110,8 @@ export interface SimulateCustomerInput {
   /** ลูกค้าคนที่เท่าไหร่ ใช้ให้ผลต่างกันแบบคงที่ ไม่ต้องสุ่ม */
   customerIndex?: number
   studentId?: string
+  missionId?: string
+  role?: import('./topic-lock').AiRoleId
 }
 
 export interface SimulateCustomerResult extends AiMeta {
@@ -125,6 +129,8 @@ export interface SimulateCustomerResult extends AiMeta {
  */
 export interface StoryInput {
   studentId?: string
+  missionId?: string
+  role?: import('./topic-lock').AiRoleId
   /** ชื่อเล่นของนักเรียน ใช้เติม {ชื่อ} ฝั่งเรา ไม่เคยอยู่ใน prompt */
   nickname: string
   /** ชื่อแบรนด์ที่นักเรียนตั้ง */
@@ -200,6 +206,7 @@ export interface LearnCheckInput {
   items: LearnCheckItemInput[]
   studentId?: string
   missionId?: string
+  role?: import('./topic-lock').AiRoleId
 }
 
 export interface LearnCheckItemResult {

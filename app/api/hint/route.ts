@@ -94,6 +94,7 @@ export async function POST(request: Request) {
   const businessType = profile ? findBusinessType(profile.businessTypeId) : undefined
   const hintInput = {
     missionId: mission.id,
+    role: 'dome' as const,
     hintLevel: after.hintsUsed,
     studentId: session.studentId,
     draftName: profile?.domainName,

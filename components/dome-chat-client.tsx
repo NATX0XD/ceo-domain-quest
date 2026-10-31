@@ -40,10 +40,12 @@ export function DomeChatClient({
   greeting,
   quickReplies,
   greetingAction,
+  currentMissionId,
 }: {
   greeting: string
   quickReplies: { id: string; label: string }[]
   greetingAction: { href: string; label: string } | null
+  currentMissionId: string
 }) {
   const [turns, setTurns] = useState<Turn[]>([
     { id: 0, who: 'dome', text: greeting, action: greetingAction, source: 'fallback' },
@@ -69,7 +71,7 @@ export function DomeChatClient({
       const res = await fetch('/api/dome', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ message, quickReplyId }),
+        body: JSON.stringify({ message, quickReplyId, missionId: currentMissionId }),
       })
       const data = (await res.json().catch(() => null)) as
         | {

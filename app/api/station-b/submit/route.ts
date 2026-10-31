@@ -68,6 +68,7 @@ export async function POST(request: Request) {
     audience: profile.audience,
     studentId: session.studentId,
     missionId: 'station-b',
+    role: 'boss' as const,
   }
   /** ครูกดปิด AI ทั้งห้อง = ใช้กฎในโค้ดตรวจเหตุผลทันที ไม่เรียกโมเดล (REVIEW-8 H-3) */
   const graded = await withAiSwitch(

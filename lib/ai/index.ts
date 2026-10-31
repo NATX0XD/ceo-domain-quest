@@ -37,7 +37,7 @@ import { expectedLatencyMs, fitsBudget, type AiTaskId } from './latency'
 import { ProviderRateLimiter, limitsFromEnv } from './rate-limiter'
 import { buildStoryResult, fallbackStorySet } from './story'
 import { callTyphoon } from './typhoon'
-import { containsTopicViolation, guardAiText, topicKeywords } from './topic-lock'
+import { guardMissionScopedText, topicKeywords } from './topic-lock'
 import type {
   AiClient,
   AiProvider,
@@ -476,7 +476,9 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
         return { value, attempts, lastReason }
       } catch (error) {
         const detail = error instanceof Error ? error.message : String(error)
-        if (/สถานะ (429|5\d\d)\b/.test(detail)) providerBreakers.set(resolved.provider, Date.now() + 60_000)
+        if (/HTTP status=(429|5\d\d)\b/.test(detail) || /สถานะ (429|5\d\d)\b/.test(detail)) {
+          providerBreakers.set(resolved.provider, Date.now() + 60_000)
+        }
         lastReason = toFallbackReason(error)
         const failed: ProviderAttempt = {
           provider: resolved.provider,
@@ -509,7 +511,7 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
           if (typeof hintText !== 'string' || hintText.trim().length === 0) {
             throw new Error('โมเดลไม่ได้ตอบกลับเป็น JSON ที่ใช้ได้')
           }
-          const safeText = guardAiText(hintText, topicKeywords(`${input.missionId} ${input.draftName ?? ''} ${(input.keywords ?? []).join(' ')}`), fallbackHint(input, 'bad-response').text)
+          const safeText = guardMissionScopedText(hintText, { missionId: input.missionId, role: input.role, keywords: topicKeywords(`${input.draftName ?? ''} ${(input.keywords ?? []).join(' ')}`), fallback: fallbackHint(input, 'bad-response').text })
           if (safeText === fallbackHint(input, 'bad-response').text && hintText.trim() !== safeText) throw new Error('คำตอบหลุดหัวข้อหรือไม่ปลอดภัย')
           return {
             text: safeText,
@@ -564,7 +566,7 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
             }
           })
 
-          if (containsTopicViolation(dimensions.flatMap((d) => [d.evidence, d.suggestion]), topicKeywords(`${input.tldId} ${input.domainName ?? ''} ${input.businessTypeId ?? ''} ${input.reasonText}`))) {
+          if (dimensions.some((d) => guardMissionScopedText(`${d.evidence} ${d.suggestion}`, { missionId: input.missionId ?? 'm5', role: input.role, keywords: topicKeywords(`${input.tldId} ${input.domainName ?? ''} ${input.businessTypeId ?? ''} ${input.reasonText}`), fallback: '' }) === '')) {
             throw new Error('คำตอบหลุดหัวข้อหรือไม่ปลอดภัย')
           }
 
@@ -628,7 +630,7 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
           if (typeof data?.typed !== 'string' || typeof data?.comment !== 'string') {
             throw new Error('โมเดลไม่ได้ตอบกลับเป็น JSON ที่ใช้ได้')
           }
-          const safeComment = guardAiText(data.comment, topicKeywords(input.domainName), fallbackSimulateCustomer(input, 'bad-response').comment)
+          const safeComment = guardMissionScopedText(data.comment, { missionId: input.missionId ?? 'm3', role: input.role ?? 'customer', keywords: topicKeywords(input.domainName), fallback: fallbackSimulateCustomer(input, 'bad-response').comment })
           if (safeComment === fallbackSimulateCustomer(input, 'bad-response').comment && data.comment.trim() !== safeComment) throw new Error('คำตอบหลุดหัวข้อหรือไม่ปลอดภัย')
           const expected = (input?.domainName ?? '').trim().toLowerCase()
           const typed = data.typed.trim().toLowerCase()
@@ -659,7 +661,15 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
         gated,
         'learnCheck',
         () => learnCheckPrompt(input),
-        (raw, provider) => parseLearnCheck(raw, input, provider),
+        (raw, provider) => {
+          const parsed = parseLearnCheck(raw, input, provider)
+          const fallback = guardMissionScopedText('', { missionId: input.missionId, role: input.role })
+          parsed.items = parsed.items.map((item) => {
+            const safe = guardMissionScopedText(item.feedback ?? '', { missionId: input.missionId, role: input.role, fallback })
+            return safe === fallback && item.feedback ? { ...item, covered: item.covered.map(() => false), feedback: safe } : { ...item, feedback: safe }
+          })
+          return parsed
+        },
       )
       return value ?? fallbackLearnCheck(lastReason)
     },

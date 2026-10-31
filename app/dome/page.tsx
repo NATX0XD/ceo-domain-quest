@@ -3,6 +3,7 @@ import { DomeChatClient } from '@/components/dome-chat-client'
 import { SignInGate } from '@/components/student-shell'
 import { domeGreeting, domeQuickReplies } from '@/components/server/dome-brain'
 import { loadShopProfile } from '@/components/server/game-state'
+import { lessonSummary } from '@/components/server/lesson-progress'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 
 export const metadata: Metadata = { title: 'คุยกับเลขาโดม — CEO Domain Quest' }
@@ -16,7 +17,8 @@ export default async function DomePage() {
 
 
 
-  const profile = await loadShopProfile(session.studentId)
+  const [profile, summary] = await Promise.all([loadShopProfile(session.studentId), lessonSummary(session.studentId)])
+  const currentMissionId = summary.missions.find((mission) => !mission.passed)?.id ?? 'm5'
   const greeting = domeGreeting(profile?.shopName ?? null)
 
   return (
@@ -24,6 +26,7 @@ export default async function DomePage() {
       greeting={greeting.reply}
       greetingAction={greeting.action}
       quickReplies={domeQuickReplies()}
+      currentMissionId={currentMissionId}
     />
   )
 }

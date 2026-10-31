@@ -6,7 +6,7 @@
  */
 import { z } from 'zod'
 import { sanitizeStudentAnswer } from './prompts'
-import { guardAiText, topicKeywords } from './topic-lock'
+import { answerIsFutureScope, guardAiText, topicKeywords } from './topic-lock'
 import type {
   AiProvider,
   FallbackReason,
@@ -82,7 +82,9 @@ export function parseLearnCheck(
     const asked = wanted.get(item.data.id)
     if (!asked || item.data.concepts.length !== asked.concepts.length) continue
     if (items.some((done) => done.id === item.data.id)) continue
-    const covered = verifiedCovered(item.data.concepts, asked.answer)
+    const covered = answerIsFutureScope(input.missionId, asked.answer)
+      ? item.data.concepts.map(() => false)
+      : verifiedCovered(item.data.concepts, asked.answer)
     // หลักฐานไม่จริงสักแนวคิด = คำแนะนำของโมเดลอาจชมเกินจริง ใช้ข้อความจากไฟล์เฉลยแทน
     const downgraded = covered.some((hit, i) => hit !== item.data.concepts[i]!.covered)
     const feedback = safeLearnFeedback(item.data.feedback)

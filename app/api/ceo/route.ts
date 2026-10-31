@@ -297,6 +297,7 @@ export async function POST(request: Request) {
     emphasisCriterion: toRubricDimensionId(focusRubricId) ?? focusRubricId,
     studentId: session.studentId,
     missionId: 'big-ceo',
+    role: 'boss' as const,
   }
   /**
    * ให้คะแนนด้วยกฎทันที แล้วฝากงานเข้าคิวให้ AI ตรวจทีหลัง

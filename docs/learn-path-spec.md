@@ -75,6 +75,17 @@
 กติกาแนะนำ: คะแนนเช็กพื้นฐาน 0-1 = ดู, 2 = อ่าน, 3 = ลงมือทำ เป็นข้อเสนอเท่านั้น ทุกวิธีกดได้
 
 ## Scorer ฝั่งเซิร์ฟเวอร์ของเกมลงมือทำ
+
+## ขอบเขต AI ตามภารกิจและบทบาท
+
+AI ทุกจุดที่ผู้เรียนเห็นต้องได้รับ `missionId` และ `role` ผ่านชั้น `lib/ai` เดียวกัน โดยใช้ลำดับ m1 → m2 → m3 → m4 → m5 (m5 คือด่าน CEO)
+
+- ภารกิจปัจจุบันตอบได้ในหัวข้อนั้น แต่คำใบ้และการตรวจงานต้องชวนคิด ไม่เฉลยข้อ graded
+- ภารกิจก่อนหน้าใช้ได้เฉพาะการทบทวนแบบถามกลับหรือเตือนสั้น ๆ ไม่ส่งคำตอบเต็ม
+- ภารกิจถัดไปไม่สอนหรือสปอยล์ บอกว่าจะได้เรียนภายหลังแล้วชวนกลับมาภารกิจปัจจุบัน
+- เรื่องนอกวิชา/นอกธุรกิจร้านปฏิเสธอย่างสุภาพและพากลับเข้าบทเรียน
+- registry ใน `lib/ai/topic-lock.ts` แยกเสียงและสิ่งที่เปิดเผยได้ของโดม เพื่อน ลูกค้า เจ้านาย เพื่อนคู่หู และผู้เล่าเรื่อง ลูกค้าพูดได้เฉพาะความต้องการของตน ไม่ทำตัวเป็นครู
+- guard ตรวจคำตอบหลัง provider อีกชั้นหนึ่ง หากพบคำสั่งแทรก เฉลย ระบบ หรือ keyword ของภารกิจถัดไป (เมื่อไม่มี keyword ปัจจุบัน) จะใช้ fallback ตามบทบาททันที
 - m1, m2: ใช้ `MissionGame` เดิม (`/api/mission/[id]/game`) เมื่อ `onSolved` ถูกเรียก client ส่ง `action:'do'` payload `{ game:'solved' }` เซิร์ฟเวอร์ยืนยันจาก event `mission-game-checked` ล่าสุดที่ `allCorrect`
 - m3: `components/server/learn-counter.ts` export `scoreCounter(payload: unknown): { score:number; passed:boolean; detail: unknown }`
 - m4: `components/server/learn-registrar.ts` export `scoreRegistrar(payload: unknown): { score:number; passed:boolean; detail: unknown }`

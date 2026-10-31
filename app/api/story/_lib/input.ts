@@ -19,6 +19,8 @@ export async function buildStoryInput(studentId: string): Promise<StoryInput | n
 
   return {
     studentId,
+    missionId: 'm1',
+    role: 'storyteller',
     nickname: student?.nickname ?? '',
     brandName,
     businessTypeId: shop.businessTypeId || undefined,

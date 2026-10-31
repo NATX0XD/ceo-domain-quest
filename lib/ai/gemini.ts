@@ -7,7 +7,7 @@
  * เหมือน typhoon.ts คือพังแล้วโยน error ออกไป ไม่ตัดสินใจเรื่องทางสำรองเอง
  */
 import type { PromptSpec } from './prompts'
-import { type ProviderCallOptions, extractJson } from './typhoon'
+import { ProviderHttpError, type ProviderCallOptions, extractJson } from './typhoon'
 
 export const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta'
 /**
@@ -54,7 +54,14 @@ export async function callGemini(
   })
 
   if (!response.ok) {
-    throw new Error(`Gemini ตอบกลับมาเป็นสถานะ ${response.status}`)
+    let errorStatus: string | undefined
+    try {
+      const body = (await response.clone().json()) as { error?: { status?: unknown } }
+      if (typeof body.error?.status === 'string') errorStatus = body.error.status
+    } catch {
+      // Keep diagnostics limited to HTTP metadata when the body is not JSON.
+    }
+    throw new ProviderHttpError(response.status, errorStatus)
   }
 
   const payload = (await response.json()) as {

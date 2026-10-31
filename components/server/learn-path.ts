@@ -282,7 +282,7 @@ export async function scoreOpenAnswers(
 
   if (options.checker && items.length > 0) {
     try {
-      const check = await options.checker.learnCheck({ items, studentId: options.studentId, missionId: path.missionId })
+      const check = await options.checker.learnCheck({ items, studentId: options.studentId, missionId: path.missionId, role: 'dome' })
       if (check.source === 'ai' && check.provider !== 'rules') {
         const provider = check.provider
         const byId = new Map(check.items.map((item) => [item.id, item]))
