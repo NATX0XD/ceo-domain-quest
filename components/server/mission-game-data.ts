@@ -1,5 +1,6 @@
 import type { GameData, GameKind } from '@/components/mission-game'
 import type { Mission } from '@/components/missions'
+import { shuffleForStudent } from './mission-variant'
 
 /**
  * แปลง items ของมินิเกมใน content/missions.json ให้เป็นรูปที่หน้าจอใช้ได้
@@ -17,7 +18,7 @@ function str(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null
 }
 
-export function buildGameData(mission: Mission): GameData | null {
+export function buildGameData(mission: Mission, studentId?: string): GameData | null {
   const game = mission.channels.game
   const kind = game.kind as GameKind
   const items = game.items.map(asRecord)
@@ -41,7 +42,7 @@ export function buildGameData(mission: Mission): GameData | null {
       targets: items
         .filter((i) => i.type === 'slot')
         .map((i) => ({ id: str(i.id) ?? '', label: str(i.label) ?? '' })),
-      chips: items
+      chips: (studentId ? shuffleForStudent(items, studentId) : items)
         .filter((i) => i.type === 'piece')
         .map((i) => ({ id: str(i.id) ?? '', text: str(i.text) ?? '' })),
       manyPerTarget: false,

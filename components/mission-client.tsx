@@ -82,6 +82,7 @@ export interface MissionProgressRow {
 }
 
 export function MissionClient({
+  studentId,
   mission,
   hintsTotal,
   revealedHints,
@@ -102,6 +103,7 @@ export function MissionClient({
   passedAnswer = null,
   stationSection = null,
 }: {
+  studentId: string
   mission: MissionWithoutHints
   hintsTotal: number
   revealedHints: string[]
@@ -172,7 +174,7 @@ export function MissionClient({
    * ข้อนี้เล่นแบบประกอบชิ้นส่วนหรือแบบตัวเลือก — ตัดสินจากรูปร่างของเนื้อหาสาธารณะเท่านั้น
    * (`components/server/mission-check-mode.ts` import แบบ type-only จึงไม่ลากไฟล์เฉลยเข้าบันเดิล)
    */
-  const assemble = useMemo(() => assemblePlanOf(mission as Mission), [mission])
+  const assemble = useMemo(() => assemblePlanOf(mission as Mission, studentId), [mission, studentId])
   const usedPieceIds = useMemo(() => new Set(Object.values(placed)), [placed])
   const allSlotsFilled = assemble ? assemble.slots.every((s) => placed[s.id] !== undefined) : false
   const answerReady = assemble ? allSlotsFilled : choiceIndex !== null

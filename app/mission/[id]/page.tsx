@@ -7,7 +7,8 @@ import { findMission } from '@/components/missions'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { confidenceScaleForClient } from '@/components/server/lesson-content'
 import { listProgress } from '@/lib/db/repo'
-import { loadMissionRow, loadSelfProfileDb } from '@/components/server/game-state'
+import { loadMissionRow, loadSelfProfileDb, loadShopProfile } from '@/components/server/game-state'
+import { m2VariantFor, personalizeM2LearnPath, personalizeM2Mission } from '@/components/server/mission-variant'
 import { suggestChannel } from '@/components/server/channel-advice'
 import { missionStoryFor } from '@/components/server/mission-story'
 import { buildGameData } from '@/components/server/mission-game-data'
@@ -47,12 +48,17 @@ export default async function MissionPage({
     return <SignInGate message="ใส่รหัสห้องกับรหัส 4 หลักที่ครูให้ก่อน แล้วค่อยเริ่มภารกิจ" />
   }
 
+  const shopProfile = mission.id === 'm2' ? await loadShopProfile(session.studentId) : null
+  const m2Variant = mission.id === 'm2' ? m2VariantFor(session.studentId, shopProfile?.domainName) : null
+  const studentMission = m2Variant ? personalizeM2Mission(mission, m2Variant) : mission
+
   /**
    * เส้นทางเรียนก่อนภารกิจ (docs/learn-path-spec.md) — ยังไม่จบ = แสดงจอเรียนแทนจอภารกิจ
    * ไม่มีทางข้าม: ต้องเช็กพื้นฐานแล้วเรียนตามวิธีที่เลือกจนครบเกณฑ์ก่อน · อ่านสถานะไม่ได้ = ปล่อยเข้าภารกิจเดิม ไม่ปิดทางเรียน
    */
   const learnPath = findLearnPath(mission.id)
   if (learnPath) {
+    const studentLearnPath = m2Variant ? personalizeM2LearnPath(learnPath, m2Variant) : learnPath
     let learnState: LearnState | null = null
     try {
       learnState = await loadLearnState(session.studentId, mission.id)
@@ -60,16 +66,16 @@ export default async function MissionPage({
       console.error('[mission] loadLearnState', err)
     }
     if (learnState && !learnState.done) {
-      const kind = learnPath.do.kind
+      const kind = studentLearnPath.do.kind
       return (
         <LearnPathClient
           missionId={mission.id}
           studentId={session.studentId}
           missionTitle={mission.title}
-          path={learnPath}
+          path={studentLearnPath}
           state={learnState}
           passScore={PASS_SCORE}
-          gameData={kind === 'game' ? buildGameData(mission) : null}
+          gameData={kind === 'game' ? buildGameData(studentMission, session.studentId) : null}
           counterData={kind === 'counter' ? publicCounterData() : null}
           registrarData={kind === 'registrar' ? publicRegistrarData() : null}
         />
@@ -128,10 +134,11 @@ export default async function MissionPage({
 
   // ⚠️ ส่งไปให้เบราว์เซอร์เฉพาะคำใบ้ที่ปลดล็อกแล้ว ใบที่เหลืออยู่ฝั่งเซิร์ฟเวอร์
   const revealedHints = mission.hints.slice(0, row.hintsUsed)
-  const { hints: _hints, ...missionWithoutHints } = mission
+  const { hints: _hints, ...missionWithoutHints } = studentMission
 
   return (
     <MissionClient
+      studentId={session.studentId}
       mission={missionWithoutHints}
       hintsTotal={mission.hints.length}
       revealedHints={revealedHints}
@@ -151,7 +158,7 @@ export default async function MissionPage({
       }))}
       totalStars={summary.totalStars}
       goalStars={summary.goalStars}
-      gameData={buildGameData(mission)}
+      gameData={buildGameData(studentMission, session.studentId)}
       confidence={confidenceScaleForClient()}
       helpRequested={helpRequested}
       nextStep={nextStep}

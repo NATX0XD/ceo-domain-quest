@@ -1,4 +1,5 @@
 import type { Mission } from '../missions'
+import { shuffleForStudent } from './mission-variant'
 
 /**
  * UX-2 — ข้อตรวจท้ายภารกิจเล่นแบบไหน
@@ -66,7 +67,7 @@ export function checkModeOf(mission: Mission): CheckMode {
  * เอาช่องกับชิ้นส่วนจากมินิเกมแบบต่อชิ้นส่วนที่มีอยู่แล้วในไฟล์เนื้อหา **ไม่ต้องเพิ่มคีย์เนื้อหาใหม่**
  * ชิ้นหลอกก็มาจากไฟล์เนื้อหาเช่นกัน ลำดับตามไฟล์ ไม่สุ่ม (รีเฟรชแล้วชิ้นส่วนอยู่ที่เดิม)
  */
-export function assemblePlanOf(mission: Mission): AssemblePlan | null {
+export function assemblePlanOf(mission: Mission, studentId?: string): AssemblePlan | null {
   if (checkModeOf(mission) !== 'assemble-build') return null
 
   const items = mission.channels.game.items.map(asRecord)
@@ -75,7 +76,7 @@ export function assemblePlanOf(mission: Mission): AssemblePlan | null {
     slots: items
       .filter((i) => i.type === 'slot')
       .map((i) => ({ id: str(i.id) ?? '', label: str(i.label) ?? '' })),
-    pieces: items
+    pieces: (studentId ? shuffleForStudent(items, studentId) : items)
       .filter((i) => i.type === 'piece')
       .map((i) => ({ id: str(i.id) ?? '', text: str(i.text) ?? '' })),
   }
