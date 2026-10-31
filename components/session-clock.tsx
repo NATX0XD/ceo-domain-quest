@@ -34,7 +34,12 @@ function mmss(total: number): string {
   return `${mm}:${ss}`
 }
 
-export function SessionClock() {
+/**
+ * - `bar` แถบเต็มกว้างบนหน้านักเรียนทั่วไป
+ * - `pill` ป้ายเวลาเล็กในแถบบนของจอแบบแอป (เส้นทางเรียน)
+ * ทั้งสองแบบขึ้นเฉพาะตอนครูเปิดจับเวลา ช่วงรอเริ่มหรือไม่จับเวลา = ไม่มีแถบ
+ */
+export function SessionClock({ variant = 'bar' }: { variant?: 'bar' | 'pill' } = {}) {
   const [state, setState] = useState<SessionState | null>(null)
   /** นับถอยหลังในเครื่องระหว่างรอบ poll เพื่อให้ตัวเลขเดินลื่น ค่าจริงยังมาจากเซิร์ฟเวอร์ทุก 3 วินาที */
   const [seconds, setSeconds] = useState<number | null>(null)
@@ -80,35 +85,48 @@ export function SessionClock() {
   if (!state?.active) return <PresenceHeartbeat />
 
   const showRest = state.restMode === true && !dismissedRest
+  const showTime = state.showClock === true && seconds !== null
 
   return (
     <>
       {/* E-04 บอกเซิร์ฟเวอร์ว่ายังนั่งอยู่ — ตัวนี้อยู่ที่เดียวแต่ครบทุกหน้าของนักเรียน
           เพราะ SessionClock ถูกเรนเดอร์ในชั้น header ของ StudentShell ทุกหน้า */}
       <PresenceHeartbeat />
-      {/* แถบช่วงและนาฬิกา อยู่บนสุดของทุกหน้า (สเปกข้อ 5.1 ตารางส่วนประกอบหน้าจอ)
-          ไม่ต้อง sticky แล้ว — อยู่ในชั้น header ของ AppShell ซึ่งอยู่กับที่โดยตัวมันเอง */}
-      <div
-        aria-live="polite"
-        className="flex flex-wrap items-center justify-between gap-2 bg-brand-50 px-4 py-2 text-label ring-1 ring-brand-100 ring-inset"
-      >
-        <p className="flex min-w-0 items-center gap-1.5 font-bold text-brand-700">
-          <ClockIcon width={16} height={16} aria-hidden className="shrink-0" />
-          {state.phaseLabel ?? 'ช่วงของคาบ'}
-        </p>
-        {state.showClock && seconds !== null ? (
+      {/* แถบช่วงและนาฬิกา ขึ้นเฉพาะตอนครูจับเวลา (ช่วงรอเริ่มไม่มีอะไรให้ดู แถบซ้อนแถบบนทำให้จอดูไม่เป็นแอป) */}
+      {showTime && variant === 'pill' ? (
+        <span
+          aria-live="polite"
+          aria-label={`${state.phaseLabel ?? 'ช่วงของคาบ'} ${state.paused ? 'หยุดเวลาไว้' : 'เหลือ'} ${mmss(seconds!)}`}
+          className="flex shrink-0 items-center gap-1 rounded-full bg-black/15 px-2 py-0.5 text-label font-bold tabular-nums"
+        >
+          <ClockIcon width={14} height={14} aria-hidden className="shrink-0" />
+          {mmss(seconds!)}
+        </span>
+      ) : null}
+      {showTime && variant === 'bar' ? (
+        <div
+          aria-live="polite"
+          className="flex flex-wrap items-center justify-between gap-2 bg-brand-50 px-4 py-2 text-label ring-1 ring-brand-100 ring-inset"
+        >
+          <p className="flex min-w-0 items-center gap-1.5 font-bold text-brand-700">
+            <ClockIcon width={16} height={16} aria-hidden className="shrink-0" />
+            {state.phaseLabel ?? 'ช่วงของคาบ'}
+          </p>
           <p className="shrink-0 font-bold tabular-nums text-ink">
             {state.paused ? 'หยุดเวลาไว้ ' : 'เหลือ '}
-            {mmss(seconds)}
+            {mmss(seconds!)}
           </p>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {/* เหลือ 2 นาที บอกเบา ๆ และย้ำว่าระบบบันทึกให้แล้ว (S-11 ข้อ 2) */}
       {state.warn && !showRest ? (
         <p
           role="status"
-          className="mx-4 mt-2 mb-1 flex items-start gap-2 rounded-xl bg-spark-50 p-3 text-label text-ink ring-1 ring-spark-100 ring-inset"
+          className={cn(
+            'flex items-start gap-2 rounded-xl bg-spark-50 p-3 text-label text-ink ring-1 ring-spark-100 ring-inset',
+            variant === 'pill' ? 'fixed inset-x-4 top-16 z-40 shadow-lg' : 'mx-4 mt-2 mb-1',
+          )}
         >
           <InfoIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0 text-spark-700" />
           <span>อีก 2 นาทีจะไปช่วงถัดไป ระบบบันทึกงานให้แล้ว</span>

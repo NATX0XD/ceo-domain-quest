@@ -67,7 +67,6 @@ export function AppScreen({
       <div className="absolute inset-0" style={{ background: theme.veil }} aria-hidden />
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-        <SessionClock />
         <header
           className={cn('flex h-14 shrink-0 items-center gap-1 px-2 backdrop-blur-md', theme.barText)}
           style={{ background: theme.bar }}
@@ -85,6 +84,7 @@ export function AppScreen({
             <span className="w-3" />
           )}
           <h1 className="min-w-0 flex-1 text-[15px] leading-tight font-bold [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">{title}</h1>
+          <SessionClock variant="pill" />
           <div
             className="flex items-center gap-2"
             aria-label={`ขั้นที่ ${stage + 1} จาก ${stageCount}${score ? ` ได้ ${score} คะแนน` : ''}`}
