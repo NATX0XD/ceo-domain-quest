@@ -68,44 +68,77 @@ export function MissionsSection() {
 }
 
 const FLOW = [
-  { icon: 'door', title: 'เข้าห้อง', note: 'ใส่รหัสจากครู' },
-  { icon: 'brain', title: 'เช็กพื้นฐาน', note: '3 ข้อสั้น ๆ' },
-  { icon: 'eyes', title: 'เลือกวิธีเรียน', note: 'เลือกแบบที่ชอบ', chips: [['television', 'ดู'], ['books', 'อ่าน'], ['gear', 'ลงมือทำ']] },
-  { icon: 'bullseye', title: 'ผ่านภารกิจ 1-4', note: 'เก็บดาวทีละเกาะ' },
-  { icon: 'crown', title: 'สู้บอส CEO', note: 'ปิดเกมให้สวย' },
+  { icon: 'door', title: 'เข้าห้อง', note: 'ใส่รหัสจากครู แล้วตั้งชื่อเล่น', shot: 'join', anchor: 'step-1' },
+  { icon: 'brain', title: 'เช็กพื้นฐาน', note: 'ตอบ 3 ข้อสั้น ๆ ก่อนออกเดินทาง', shot: 'home', anchor: 'step-6' },
+  { icon: 'eyes', title: 'เลือกวิธีเรียน', note: 'เลือกแบบที่ถนัดได้เลย', shot: 'choose', anchor: 'step-6', chips: [['television', 'ดู'], ['books', 'อ่าน'], ['gear', 'ลงมือทำ']] },
+  { icon: 'bullseye', title: 'ผ่านภารกิจ 1-4', note: 'เก็บดาวทีละเกาะบนแผนที่', shot: 'map', anchor: 'step-7' },
+  { icon: 'crown', title: 'สู้บอส CEO', note: 'ใช้ความรู้ทั้งหมด ปิดเกมให้สวย', shot: 'play', anchor: 'step-10' },
 ] as const
+
+const PATH_D = 'M0 34 C 100 34, 100 66, 200 66 S 300 34, 400 34 S 500 66, 600 66 S 700 34, 800 34 S 900 66, 1000 66'
 
 export function HowSection() {
   return (
-    <section className="ld-sec ld-sec--sand" id="how" aria-label="นักเรียนเล่นยังไง">
+    <section className="ld-sec ld-hw" id="how" aria-label="นักเรียนเล่นยังไง">
+      <span className="ld-hw-sea" aria-hidden />
+      <span className="ld-hw-spark ld-hw-spark--a" aria-hidden>{icon('sparkles', 44)}</span>
+      <span className="ld-hw-spark ld-hw-spark--b" aria-hidden>{icon('glowing-star', 36)}</span>
       <div className="ld-wrap">
-        <Head title="เล่นยังไง" sub="ใช้มือถือเครื่องเดียว ไม่ต้องติดตั้งอะไร" />
-        <ol className="ld-steps">
-          {FLOW.map((s, i) => (
-            <Reveal as="li" key={s.title} delay={i * 0.1} className="ld-step">
-              <a className="ld-step-link" href={`/landing/manual#step-${i + 1}`} aria-label={`เปิดคู่มือ: ${s.title}`}>
-                <span className="ld-step-ico">
-                  {icon(s.icon, 42)}
-                  <span className="ld-step-no">{i + 1}</span>
-                </span>
-                <span className="ld-step-copy">
-                  <h3>{s.title}</h3>
-                  <p>{s.note}</p>
-                  {'chips' in s && (
-                    <span className="ld-chips">
-                      {s.chips.map(([ic, label]) => (
-                        <span className="ld-chip" key={label}>
-                          {icon(ic, 20)}
-                          {label}
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                </span>
-              </a>
-            </Reveal>
-          ))}
-        </ol>
+        <div className="ld-hw-head">
+          <Reveal className="ld-hw-dome">
+            <Pic src="/dome/mascot/dome-greet.webp" alt="โดมมาสคอต" width={220} height={220} sizes="160px" />
+            <span className="ld-hw-bubble">ตามโดมมา!</span>
+          </Reveal>
+          <Head title="เล่นยังไง" sub="ใช้มือถือเครื่องเดียว ไม่ต้องติดตั้งอะไร" />
+        </div>
+        <div className="ld-hw-track">
+          <svg className="ld-hw-path" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden>
+            <path className="ld-hw-path-base" d={PATH_D} vectorEffect="non-scaling-stroke" />
+            <motion.path
+              className="ld-hw-path-draw"
+              d={PATH_D}
+              vectorEffect="non-scaling-stroke"
+              initial={{ pathLength: 0 }}
+              whileInView={{ pathLength: 1 }}
+              viewport={{ once: true, margin: '0px 0px -25% 0px' }}
+              transition={{ duration: 1.6, ease: 'easeInOut' }}
+            />
+          </svg>
+          <ol className="ld-hw-steps">
+            {FLOW.map((s, i) => (
+              <motion.li
+                key={s.title}
+                className="ld-hw-step"
+                initial={{ opacity: 0, y: 36, scale: 0.92 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: '0px 0px -10% 0px' }}
+                transition={{ type: 'spring', stiffness: 150, damping: 15, delay: i * 0.12 }}
+              >
+                <a className="ld-hw-card" href={`/landing/manual#${s.anchor}`} aria-label={`เปิดคู่มือ: ${s.title}`}>
+                  <span className="ld-hw-no">{i + 1}</span>
+                  <span className="ld-hw-shot">
+                    <Pic src={`/landing/shot-${s.shot}.webp`} alt="" width={390} height={844} sizes="220px" />
+                  </span>
+                  <span className="ld-hw-ico">{icon(s.icon, 64)}</span>
+                  <span className="ld-hw-copy">
+                    <h3>{s.title}</h3>
+                    <p>{s.note}</p>
+                    {'chips' in s && (
+                      <span className="ld-chips">
+                        {s.chips.map(([ic, label]) => (
+                          <span className="ld-chip" key={label}>
+                            {icon(ic, 20)}
+                            {label}
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </span>
+                </a>
+              </motion.li>
+            ))}
+          </ol>
+        </div>
         <a className="ld-how-cta" href="/landing/manual">ดูคู่มือฉบับเต็ม <span aria-hidden>↗</span></a>
       </div>
     </section>
