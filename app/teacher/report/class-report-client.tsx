@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { AlertIcon, Card, EmptyState, UsersIcon, cn } from '../../../components/ui'
 
 /**
@@ -283,11 +284,13 @@ export function toPlainText(r: ClassReport, ia: ItemAnalysisReport | null = null
 export function ClassReportClient({
   classroomId,
   roomCode,
+  csvHref,
   initialReport = null,
   initialItemAnalysis = null,
 }: {
   classroomId: string | null
   roomCode: string | null
+  csvHref?: string
   /** ใส่ค่าเริ่มต้นได้เพื่อให้เทสต์เรนเดอร์ตรวจตัวเลขได้โดยไม่ต้องยิงเครือข่าย */
   initialReport?: ClassReport | null
   initialItemAnalysis?: ItemAnalysisReport | null
@@ -378,7 +381,7 @@ export function ClassReportClient({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap gap-2 print:hidden">
+      <div className="flex flex-wrap items-center gap-2 print:hidden">
         <button
           type="button"
           onClick={() => window.print()}
@@ -386,13 +389,25 @@ export function ClassReportClient({
         >
           พิมพ์ / บันทึกเป็น PDF
         </button>
-        <button
-          type="button"
-          onClick={() => void copyNumbers()}
-          className="btn-base bg-surface-raised px-5 text-brand-700 ring-2 ring-brand-100 ring-inset hover:bg-brand-50"
-        >
-          {copied ? 'คัดลอกแล้ว ✓' : 'คัดลอกตัวเลขทั้งชุด'}
-        </button>
+        <details className="relative">
+          <summary className="btn-base cursor-pointer list-none bg-surface-raised px-4 text-brand-700 ring-2 ring-brand-100 ring-inset hover:bg-brand-50">
+            ส่งออก
+          </summary>
+          <div className="absolute left-0 top-[calc(100%+0.5rem)] z-10 grid min-w-52 gap-1 rounded-xl bg-surface-raised p-2 shadow-soft-3 ring-1 ring-line print:hidden">
+            <button
+              type="button"
+              onClick={() => void copyNumbers()}
+              className="min-h-11 rounded-lg px-3 text-left text-label font-bold text-brand-700 hover:bg-brand-50"
+            >
+              {copied ? 'คัดลอกแล้ว ✓' : 'คัดลอกตัวเลขทั้งชุด'}
+            </button>
+            {csvHref ? (
+              <Link href={csvHref} className="min-h-11 rounded-lg px-3 py-2 text-label font-bold text-brand-700 hover:bg-brand-50">
+                ดาวน์โหลด CSV
+              </Link>
+            ) : null}
+          </div>
+        </details>
         <button
           type="button"
           onClick={() => void load()}

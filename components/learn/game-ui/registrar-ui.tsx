@@ -26,9 +26,9 @@ export const SCENE_NOTE =
 
 export function BossShell({
   children,
-  blur = 3,
-  src = "",
-  dim = 0.08,
+  blur = 0,
+  src = "/learn/m4/bg-boss-office.webp",
+  dim = 0.02,
 }: {
   children: ReactNode;
   blur?: number;
@@ -111,7 +111,7 @@ export function BossHud({
           <motion.span
             key={i}
             className="h-1.5 flex-1 rounded-sm"
-            animate={{ backgroundColor: i < step ? "#ffcf4a" : "#3a2a63" }}
+            animate={{ backgroundColor: i < step ? "#ffcf4a" : "#9a7045" }}
             transition={reduce ? { duration: 0 } : { duration: 0.35 }}
           />
         ))}
@@ -188,7 +188,7 @@ export function Say({
   return (
     <div
       className={cn(
-        "flex items-center gap-2.5 rounded-2xl border-2 border-[#6d4bd1] bg-[#2a1748]/95 p-2 pr-3",
+        "flex items-center gap-2.5 rounded-2xl border-2 border-[#7a5a3a] bg-[#fff8e6]/95 p-2 pr-3 shadow-[0_4px_0_#5c4228]",
         className,
       )}
     >
@@ -197,7 +197,7 @@ export function Say({
       ) : (
         <DomeAvatar mood={mood} size={52} decorative />
       )}
-      <div className="min-w-0 flex-1 text-label font-semibold text-pretty text-[#efe6ff]">
+      <div className="min-w-0 flex-1 text-label font-semibold text-pretty text-[#3a2a18]">
         {children}
       </div>
     </div>

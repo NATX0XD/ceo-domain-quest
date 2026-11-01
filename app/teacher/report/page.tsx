@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { ClassReportClient } from './class-report-client'
 import { LearnResultsPanel } from './learn-results-panel'
 import { TeacherSignedOut, TeacherSubPage, loadTeacherPage, type SearchParams } from '../_lib/teacher-page'
@@ -29,18 +28,16 @@ export default async function TeacherClassReportPage({
           : 'ยังไม่มีห้องเรียน'
       }
       basePath="/teacher/report"
-      action={
-        data.selectedId ? (
-          <Link
-            href={`/api/teacher/export?classroomId=${data.selectedId}&type=scores&pseudonymize=1`}
-            className="btn-base bg-surface-raised px-4 text-brand-700 ring-2 ring-brand-100 ring-inset"
-          >
-            ดาวน์โหลด CSV
-          </Link>
-        ) : null
-      }
     >
-      <ClassReportClient classroomId={data.selectedId} roomCode={data.selectedRoomCode} />
+      <ClassReportClient
+        classroomId={data.selectedId}
+        roomCode={data.selectedRoomCode}
+        csvHref={
+          data.selectedId
+            ? `/api/teacher/export?classroomId=${data.selectedId}&type=scores&pseudonymize=1`
+            : undefined
+        }
+      />
       <LearnResultsPanel classroomId={data.selectedId} />
     </TeacherSubPage>
   )

@@ -378,7 +378,7 @@ export function RouteBoard({
             const id = placed[i]
             const isNext = i === placed.length
             return (
-              <li key={i} ref={isNext ? nextRef : undefined} className={cn('flex items-center gap-2', !id && !isNext ? 'w-[calc(50%-0.1875rem)]' : 'w-full', isNext && 'scroll-mt-24 scroll-mb-[12rem]')} aria-current={isNext ? 'step' : undefined}>
+              <li key={i} ref={isNext ? nextRef : undefined} className={cn('flex items-center gap-2', !id && !isNext ? 'w-[calc(50%-0.1875rem)]' : 'w-full', isNext && 'scroll-mt-24 scroll-mb-6')} aria-current={isNext ? 'step' : undefined}>
                 <span
                   aria-hidden="true"
                   className={cn(
@@ -424,8 +424,8 @@ export function RouteBoard({
         </Say>
       ) : null}
 
-      {/* ถาดติดล่างจอเสมอ (sticky) เป็นแถวเลื่อนซ้ายขวาแถวเดียว จึงเตี้ยและไม่บังแผง การ์ดไม่ถูกตัดครึ่ง */}
-      <div className={cn(PIXEL_BOX, "sticky bottom-2 z-20 shrink-0 p-2.5")}>
+      {/* ถาดอยู่ใน flow ของแผงเสมอ จึงกันพื้นที่ไว้จริงและไม่บังแถวความคืบหน้าบนมือถือ */}
+      <div className={cn(PIXEL_BOX, "relative shrink-0 p-2.5")}>
         <p className="flex items-baseline justify-between gap-2 px-0.5">
           <span className="text-label font-extrabold text-[#ffcf4a]">แตะการ์ดขั้นถัดไป</span>
           <span className="whitespace-nowrap text-label text-[#d8c9ff]">เหลือ {tray.length} ใบ เลื่อนดู</span>

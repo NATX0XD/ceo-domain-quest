@@ -14,7 +14,7 @@
 
   /* สเกลตัวอักษรไทย — ใหญ่กว่าสเกลอังกฤษหนึ่งขั้น เพราะสระบน/ล่างของไทย
      (ไ ำ ิ ี ุ ู ่ ้) จะตันเมื่อฟอนต์เล็กกว่า 15px และ line-height ต่ำกว่า 1.6 */
-  --text-note: 0.8125rem;              /* 13px — ข้อความประกอบที่ไม่สำคัญเท่านั้น */
+  --text-note: 0.875rem;               /* 14px — ขั้นต่ำบนมือถือสำหรับ metadata/help */
   --text-note--line-height: 1.6;
   --text-label: 0.9375rem;             /* 15px — ป้ายกำกับ ชิป แท็บ */
   --text-label--line-height: 1.6;
@@ -272,18 +272,26 @@ body {
   color: #3a2a18;
 }
 
-[data-theme-id='m4'] > img {
-  display: none;
-}
-
 [data-theme-id='m3'] main,
 [data-theme-id='m4'] main {
-  background: linear-gradient(180deg, rgb(255 248 230 / 0.3), rgb(241 226 195 / 0.46));
+  background: linear-gradient(180deg, rgb(255 248 230 / 0.08), rgb(241 226 195 / 0.18));
 }
 
 .counter-game-shell,
 .registrar-game-shell {
   color: #3a2a18;
+  border: 4px solid #5c4228;
+  box-shadow: 0 7px 0 #3d2817, 0 18px 32px rgb(61 40 23 / 0.22);
+}
+
+.registrar-game-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 2px solid rgb(255 248 230 / 0.72);
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 5px rgb(122 90 58 / 0.16);
 }
 
 .counter-game-shell [class*='text-[#d8c9ff]'],
