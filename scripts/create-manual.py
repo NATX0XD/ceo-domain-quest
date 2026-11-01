@@ -3,6 +3,7 @@
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 from tempfile import TemporaryDirectory
+import docx
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
@@ -86,6 +87,36 @@ def add_page_field(paragraph):
     r.append(t)
     fld.append(r)
     paragraph._p.append(fld)
+
+def add_hyperlink(paragraph, url, text):
+    part = paragraph.part
+    r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), r_id)
+    new_run = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
+    u = OxmlElement('w:u')
+    u.set(qn('w:val'), 'single')
+    rPr.append(u)
+    c = OxmlElement('w:color')
+    c.set(qn('w:val'), '000000')
+    rPr.append(c)
+    rf = OxmlElement('w:rFonts')
+    for a in ('ascii', 'hAnsi', 'eastAsia', 'cs'):
+        rf.set(qn(f'w:{a}'), FONT_NAME)
+    rPr.append(rf)
+    sz = OxmlElement('w:sz')
+    sz.set(qn('w:val'), '32') # 16 pt
+    rPr.append(sz)
+    sz_cs = OxmlElement('w:szCs')
+    sz_cs.set(qn('w:val'), '32')
+    rPr.append(sz_cs)
+    new_run.append(rPr)
+    t = OxmlElement('w:t')
+    t.text = text
+    new_run.append(t)
+    hyperlink.append(new_run)
+    paragraph._p.append(hyperlink)
 
 def add_picture(paragraph, image, width_cm):
     path = ROOT / 'public' / image.lstrip('/')
@@ -224,9 +255,18 @@ for row in rows_data:
         r = p.add_run(txt)
         set_font(r, 15, False)
 
+p_url = doc.add_paragraph()
+p_url.paragraph_format.first_line_indent = Cm(1.27)
+p_url.paragraph_format.space_before = Pt(8)
+r = p_url.add_run('เข้าใช้งานได้ที่ ')
+set_font(r, 16, False)
+add_hyperlink(p_url, 'https://ceo-domain-quest.vercel.app', 'https://ceo-domain-quest.vercel.app')
+r = p_url.add_run(' ใช้ลิงก์เดียวกันทั้งนักเรียนและครู เปิดได้ทั้งมือถือและคอมพิวเตอร์')
+set_font(r, 16, False)
+
 p_note = doc.add_paragraph()
 p_note.paragraph_format.first_line_indent = Cm(1.27)
-p_note.paragraph_format.space_before = Pt(8)
+p_note.paragraph_format.space_before = Pt(4)
 p_note.paragraph_format.space_after = Pt(12)
 r = p_note.add_run('ภาพในคู่มือนี้ถ่ายจากระบบจริง ฝั่งนักเรียนใช้มือถือ ฝั่งครูใช้คอมพิวเตอร์')
 set_font(r, 16, False)
