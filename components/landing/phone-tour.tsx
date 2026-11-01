@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useInView, useMotionValueEvent, useReducedMotion, useScroll } from 'motion/react'
 import { useRef, useState } from 'react'
 import { Pic } from './pic'
+import { useLandingScroll } from './reveal'
 
 const STEPS = [
   { src: '/landing/shot-join.webp', icon: 'door', title: 'เข้าห้อง', note: 'ใส่รหัสจากครู', say: 'ใส่รหัสห้องจากครูได้เลย!' },
@@ -16,9 +17,10 @@ const STEPS = [
 export function PhoneTour() {
   const [active, setActive] = useState(0)
   const box = useRef<HTMLDivElement>(null)
+  const scrollRef = useLandingScroll()
   const inView = useInView(box, { margin: '-20% 0px -20% 0px' })
   const reduce = useReducedMotion()
-  const { scrollYProgress } = useScroll({ target: box, offset: ['start start', 'end end'] })
+  const { scrollYProgress } = useScroll({ container: scrollRef, target: box, offset: ['start start', 'end end'] })
   useMotionValueEvent(scrollYProgress, 'change', (value) => {
     if (reduce || !inView) return
     setActive(Math.min(STEPS.length - 1, Math.floor(value * STEPS.length)))
@@ -74,9 +76,9 @@ export function PhoneTour() {
                 aria-current={i === active}
                 onClick={() => {
                   setActive(i)
-                  if (box.current && window.matchMedia('(min-width: 900px)').matches) {
-                    const top = box.current.getBoundingClientRect().top + window.scrollY + (box.current.offsetHeight - window.innerHeight) * (i / (STEPS.length - 1))
-                    window.scrollTo({ top, behavior: 'smooth' })
+                  if (box.current && scrollRef.current && window.matchMedia('(min-width: 900px)').matches) {
+                    const top = scrollRef.current.scrollTop + box.current.getBoundingClientRect().top - scrollRef.current.getBoundingClientRect().top + (box.current.offsetHeight - scrollRef.current.clientHeight) * (i / (STEPS.length - 1))
+                    scrollRef.current.scrollTo({ top, behavior: 'smooth' })
                   }
                 }}
                 onFocus={() => setActive(i)}

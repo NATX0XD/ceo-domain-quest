@@ -1,5 +1,6 @@
 import './landing.css'
 import { Hero } from './hero'
+import { DecoLayer } from './deco'
 import { MotionRoot } from './reveal'
 import { AiSection, FinalSection, HowSection, MissionsSection, TeacherSection, TourSection } from './sections'
 
@@ -25,8 +26,8 @@ export function Landing({ openAtEnv }: { openAtEnv?: string }) {
     <MotionRoot>
       <main className="ld">
         <Hero openAt={openAt} openLabel={label} />
-        <MissionsSection />
-        <HowSection />
+        <section className="ld-landscape ld-landscape--beach"><DecoLayer scene="sky" /><MissionsSection /></section>
+        <section className="ld-landscape ld-landscape--island"><DecoLayer scene="island" tone="purple" /><HowSection /></section>
         <TourSection />
         <TeacherSection />
         <AiSection />

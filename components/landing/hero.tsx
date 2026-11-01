@@ -4,6 +4,8 @@ import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useRef } from 'react'
 import { Countdown, useOpenState } from './countdown'
 import { Cloud, Pic } from './pic'
+import { DecoLayer } from './deco'
+import { useLandingScroll } from './reveal'
 
 const STARS: Array<{ top: string; left: string; size: number; delay: string }> = [
   { top: '2%', left: '-6%', size: 26, delay: '0s' },
@@ -22,8 +24,9 @@ function Star({ top, left, size, delay }: { top: string; left: string; size: num
 
 export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: string }) {
   const ref = useRef<HTMLElement>(null)
+  const scrollRef = useLandingScroll()
   const reduce = useReducedMotion()
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
+  const { scrollYProgress } = useScroll({ container: scrollRef, target: ref, offset: ['start start', 'end start'] })
   const bgY = useTransform(scrollYProgress, [0, 1], reduce ? ['0%', '0%'] : ['0%', '14%'])
   const cloudY = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [0, 90])
   const domeY = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [0, -36])
@@ -31,6 +34,7 @@ export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: 
 
   return (
     <header className="ld-hero" ref={ref}>
+      <DecoLayer scene="sky" />
       <motion.div className="ld-hero-bg" style={{ y: bgY }} aria-hidden>
         <Pic src="/landing/sea-bg.webp" alt="" width={720} height={1279} priority />
       </motion.div>

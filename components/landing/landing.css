@@ -339,8 +339,9 @@
 .ld-wave--2 { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 90' preserveAspectRatio='none'%3E%3Cpath d='M0 60 Q150 24 300 60 T600 60 T900 60 T1200 60 V90 H0Z' fill='%23fff6e0'/%3E%3C/svg%3E"); }
 
 /* globals.css ตรึง html/body ให้ไม่เลื่อน (โครงแบบแอป) — หน้า landing เป็นเอกสารยาว จึงคืนการเลื่อนปกติเฉพาะหน้าที่มี .ld */
-html:has(.ld) { height: auto; overflow-y: auto; scroll-behavior: smooth; }
-body:has(.ld) { height: auto; min-height: 100dvh; overflow: visible; overscroll-behavior: auto; }
+html:has(.ld) { height: 100%; overflow: hidden; scroll-behavior: smooth; }
+body:has(.ld) { height: 100%; min-height: 100dvh; overflow: hidden; overscroll-behavior: none; }
+.ld-viewport { height: 100dvh; overflow-y: auto; overflow-x: clip; overscroll-behavior: contain; scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html:has(.ld) { scroll-behavior: auto; } }
 
 /* ---------- Scroll stories v3 ---------- */
@@ -509,4 +510,37 @@ body:has(.ld) { height: auto; min-height: 100dvh; overflow: visible; overscroll-
 }
 @media (prefers-reduced-motion: reduce) {
   .ld-hw-path-draw { stroke-dasharray: none !important; stroke-dashoffset: 0 !important; }
+}
+
+/* ---------- v4 world dressing ---------- */
+.ld-landscape { position: relative; isolation: isolate; overflow: hidden; }
+.ld-landscape > .ld-sec { position: relative; z-index: 1; background: transparent; }
+.ld-deco { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.ld-deco-scene { position: absolute; inset: 0; background-position: center; background-size: cover; opacity: .98; transform: translateZ(0); }
+.ld-deco--sky .ld-deco-scene { background-image: linear-gradient(180deg, rgba(50,178,232,.04), rgba(255,240,202,.16)), url('/landing/deco/sky-beach.webp'); }
+.ld-deco--island .ld-deco-scene { background-image: linear-gradient(180deg, rgba(255,244,210,.32), rgba(244,221,255,.18)), url('/landing/deco/island.webp'); }
+.ld-deco--night .ld-deco-scene { background-image: linear-gradient(180deg, rgba(43,18,100,.16), rgba(49,22,98,.34)), url('/landing/deco/sunset-night.webp'); }
+.ld-hero .ld-deco-scene { opacity: .35; filter: saturate(.92); }
+.ld-deco-props { position: absolute; width: min(42vw, 420px); height: auto; opacity: .8; filter: drop-shadow(0 14px 12px rgba(45,25,70,.16)); }
+.ld-deco-props--one { left: -7%; bottom: 5%; transform: rotate(-5deg); }
+.ld-deco-props--two { right: -8%; top: 9%; width: min(36vw, 360px); transform: rotate(4deg); }
+.ld-deco-orb { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffe06b; box-shadow: 0 0 0 7px rgba(255,255,255,.32), 0 0 24px rgba(255,212,70,.8); }
+.ld-deco-orb--a { top: 18%; left: 12%; }
+.ld-deco-orb--b { right: 14%; bottom: 24%; width: 11px; height: 11px; background: #c9a5ff; box-shadow: 0 0 0 6px rgba(255,255,255,.3), 0 0 20px rgba(195,139,255,.85); }
+.ld-deco--purple .ld-deco-props { opacity: .66; }
+.ld-deco--purple .ld-deco-orb { background: #d9a5ff; }
+.ld-sec, .ld-hero, .ld-final { min-height: 560px; }
+.ld-sec > .ld-wrap, .ld-hero > .ld-wrap, .ld-final > .ld-wrap { position: relative; z-index: 2; }
+.ld-card, .ld-hw-card, .ld-step-btn, .ld-btn { will-change: transform; }
+.ld-hero .ld-deco-props--one { bottom: 8%; left: -12%; width: min(34vw, 330px); }
+.ld-hero .ld-deco-props--two { top: 22%; right: -10%; width: min(30vw, 300px); }
+.ld-final .ld-deco { opacity: .78; }
+@media (max-width: 899px) {
+  .ld-deco-props { width: 260px; opacity: .38; }
+  .ld-deco-props--one { left: -30%; bottom: 2%; }
+  .ld-deco-props--two { right: -28%; top: 5%; }
+  .ld-sec, .ld-hero, .ld-final { min-height: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-deco-props, .ld-deco-orb { transform: none !important; animation: none !important; }
 }

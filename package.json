@@ -38,6 +38,7 @@
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "@types/qrcode": "^1.5.6",
+    "animejs": "^4.5.0",
     "jose": "^6.2.12",
     "jspdf": "^4.2.1",
     "motion": "^13.4.5",
@@ -49,7 +50,9 @@
     "zod": "^4.6.5"
   },
   "//scarfSettings": "swagger-ui-dist ลาก @scarf/scarf มาด้วย ซึ่งยิงสถิติการติดตั้งออกเน็ตตอน postinstall — ปิดไว้ เพราะโปรเจกต์นี้ทำงานกับข้อมูลนักเรียน",
-  "scarfSettings": { "enabled": false },
+  "scarfSettings": {
+    "enabled": false
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.0.0",

@@ -3,9 +3,10 @@
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { Countdown, useOpenState } from './countdown'
+import { DecoLayer } from './deco'
 import { PhoneTour } from './phone-tour'
 import { Pic } from './pic'
-import { Reveal } from './reveal'
+import { Reveal, useLandingScroll } from './reveal'
 
 const icon = (name: string, size = 38) => <Pic src={`/icons/3d/${name}.webp`} alt="" width={size} height={size} />
 
@@ -148,6 +149,7 @@ export function HowSection() {
 export function TourSection() {
   return (
     <section className="ld-sec ld-sec--sea" id="tour" aria-label="ตัวอย่างหน้าจอ">
+      <DecoLayer scene="island" />
       <div className="ld-wrap">
         <Reveal>
           <PhoneTour />
@@ -169,8 +171,9 @@ export function TeacherSection() {
   const [isDesktop, setIsDesktop] = useState(false)
   const [sequenceDone, setSequenceDone] = useState(false)
   const teacherRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useLandingScroll()
   const reduce = useReducedMotion()
-  const { scrollYProgress } = useScroll({ target: teacherRef, offset: ['start start', 'end end'] })
+  const { scrollYProgress } = useScroll({ container: scrollRef, target: teacherRef, offset: ['start start', 'end end'] })
   const open = useTransform(scrollYProgress, [0, 0.28, 0.54], [-86, -86, 0])
   const closedOpacity = useTransform(open, [-86, -48, -16], [1, 0, 0])
 
@@ -189,13 +192,13 @@ export function TeacherSection() {
   useEffect(() => {
     const syncSequence = () => {
       if (!teacherRef.current) return
-      setSequenceDone(teacherRef.current.getBoundingClientRect().bottom <= window.innerHeight + 12)
+      setSequenceDone(teacherRef.current.getBoundingClientRect().bottom <= (scrollRef.current?.getBoundingClientRect().bottom ?? window.innerHeight) + 12)
     }
     syncSequence()
-    window.addEventListener('scroll', syncSequence, { passive: true })
+    scrollRef.current?.addEventListener('scroll', syncSequence, { passive: true })
     window.addEventListener('resize', syncSequence)
     return () => {
-      window.removeEventListener('scroll', syncSequence)
+      scrollRef.current?.removeEventListener('scroll', syncSequence)
       window.removeEventListener('resize', syncSequence)
     }
   }, [])
@@ -208,6 +211,7 @@ export function TeacherSection() {
 
   return (
     <section className="ld-sec ld-sec--cream" id="teacher" aria-label="สำหรับครู">
+      <DecoLayer scene="island" tone="purple" />
       <div className="ld-wrap ld-teacher-scroll" ref={teacherRef}>
         <Head title="สำหรับครู" sub="เปิดห้อง ฉายจอ ดูผลได้ในที่เดียว" />
         <div className="ld-teacher-sticky">
@@ -288,6 +292,7 @@ export function AiSection() {
   }, [seen])
   return (
     <section className="ld-sec ld-sec--sea" id="ai" aria-label="ผู้ช่วย AI">
+      <DecoLayer scene="night" tone="purple" />
       <div className="ld-wrap">
         <Head title="โดม ผู้ช่วย AI" sub="ตอบเฉพาะเรื่องที่กำลังเรียน" />
         <div className="ld-ai" ref={ref}>
@@ -332,6 +337,7 @@ export function FinalSection({ openAt, openLabel }: { openAt: string | null; ope
   const confetti = Array.from({ length: 14 }, (_, i) => i)
   return (
     <footer className="ld-final" ref={ref}>
+      <DecoLayer scene="night" tone="purple" />
       <div className="ld-final-bg" aria-hidden />
       <div className={`ld-confetti ${seen ? 'is-live' : ''}`} aria-hidden>{confetti.map((i) => <i key={i} style={{ ['--i' as string]: i }} />)}</div>
       <div className="ld-wrap ld-final-inner">

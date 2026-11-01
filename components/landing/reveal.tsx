@@ -1,11 +1,21 @@
 'use client'
 
 import { motion, MotionConfig } from 'motion/react'
+import { createContext, useContext, useRef } from 'react'
 import type { ReactNode } from 'react'
+
+const LandingScrollContext = createContext<React.RefObject<HTMLDivElement | null> | null>(null)
+
+export function useLandingScroll() {
+  const value = useContext(LandingScrollContext)
+  if (!value) throw new Error('useLandingScroll must be used inside MotionRoot')
+  return value
+}
 
 /** ครอบทั้งหน้า: ผู้ใช้ที่ตั้งลดการเคลื่อนไหวจะไม่เห็นแอนิเมชัน transform */
 export function MotionRoot({ children }: { children: ReactNode }) {
-  return <MotionConfig reducedMotion="user">{children}</MotionConfig>
+  const scrollRef = useRef<HTMLDivElement>(null)
+  return <MotionConfig reducedMotion="user"><LandingScrollContext.Provider value={scrollRef}><div className="ld-viewport" ref={scrollRef}>{children}</div></LandingScrollContext.Provider></MotionConfig>
 }
 
 /** เลื่อนถึงแล้วค่อยเด้งขึ้น (ครั้งเดียว) — ผู้ใช้ลดการเคลื่อนไหว: MotionConfig ตัด y/scale เหลือแค่ค่อย ๆ ปรากฏ (ห้ามแยกกิ่งด้วย useReducedMotion: SSR/ไคลเอนต์จะไม่ตรงกัน) */
