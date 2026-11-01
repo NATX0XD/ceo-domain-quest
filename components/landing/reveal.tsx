@@ -12,7 +12,6 @@ export function MotionRoot({ children }: { children: ReactNode }) {
 export function Reveal({
   children,
   delay = 0,
-  y = 28,
   className,
   as = 'div',
 }: {
@@ -26,7 +25,7 @@ export function Reveal({
   return (
     <M
       className={className}
-      initial={{ opacity: 0, y }}
+      initial={false}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '0px 0px -12% 0px' }}
       transition={{ type: 'spring', stiffness: 140, damping: 18, delay }}

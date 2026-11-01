@@ -1,7 +1,7 @@
 'use client'
 
-import { motion, useInView } from 'motion/react'
-import { useRef } from 'react'
+import { motion } from 'motion/react'
+import { useEffect, useRef, useState } from 'react'
 import { Countdown, useOpenState } from './countdown'
 import { PhoneTour } from './phone-tour'
 import { Cloud, Pic } from './pic'
@@ -26,6 +26,7 @@ const MISSIONS = [
 ]
 
 export function MissionsSection() {
+  const [selectedMission, setSelectedMission] = useState('1')
   return (
     <section className="ld-sec ld-sec--cream" id="learn" aria-labelledby="learn-h">
       <div className="ld-wrap">
@@ -33,12 +34,14 @@ export function MissionsSection() {
         <div className="ld-world">
           <Reveal>
             <motion.div className="ld-map-frame" whileHover={{ rotate: -1.5, scale: 1.02 }} transition={{ type: 'spring', stiffness: 200, damping: 14 }}>
-              <Pic src="/landing/island-map.webp" alt="แผนที่เกาะภารกิจ 4 เกาะ" width={720} height={1279} sizes="380px" />
+              <Pic src="/UI/m1/map.webp" alt="แผนที่เกาะภารกิจ 4 เกาะ" width={941} height={1672} sizes="380px" />
+              <span className={`ld-map-ring ld-map-ring--${selectedMission}`} aria-hidden />
             </motion.div>
           </Reveal>
           <ul className="ld-missions" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {MISSIONS.map((m, i) => (
-              <Reveal as="li" key={m.no} delay={i * 0.08} className="ld-card">
+              <Reveal as="li" key={m.no} delay={i * 0.08} className={`ld-card ld-card--mission-${m.no} ${selectedMission === m.no ? 'is-selected' : ''}`}>
+                <button className="ld-card-hit" type="button" aria-label={`ไฮไลต์เกาะภารกิจ ${m.no}`} onMouseEnter={() => setSelectedMission(m.no)} onFocus={() => setSelectedMission(m.no)} onClick={() => setSelectedMission(m.no)} />
                 <span className="ld-card-no">{m.no}</span>
                 <span className="ld-card-ico">{icon(m.icon)}</span>
                 <div>
@@ -76,6 +79,7 @@ export function HowSection() {
     <section className="ld-sec ld-sec--sand" id="how" aria-label="นักเรียนเล่นยังไง">
       <div className="ld-wrap">
         <Head title="เล่นยังไง" sub="ใช้มือถือเครื่องเดียว ไม่ต้องติดตั้งอะไร" />
+        <div className="ld-route-scene" aria-hidden="true"><span className="ld-route-bridge" /><span className="ld-route-flag">★</span></div>
         <ol className="ld-steps">
           {FLOW.map((s, i) => (
             <Reveal as="li" key={s.title} delay={i * 0.1} className="ld-step">
@@ -144,6 +148,7 @@ export function TeacherSection() {
               <div>
                 <h3>{t.title}</h3>
                 <p>{t.note}</p>
+                <span className="ld-mini-preview" aria-hidden><i /><i /><i /></span>
               </div>
             </Reveal>
           ))}
@@ -162,7 +167,23 @@ const CHAT = [
 
 export function AiSection() {
   const ref = useRef<HTMLDivElement>(null)
-  const seen = useInView(ref, { once: true, margin: '0px 0px -20% 0px' })
+  const [seen, setSeen] = useState(false)
+  const [typed, setTyped] = useState<number[]>([0])
+  useEffect(() => {
+    if (!ref.current) return
+    const observer = new IntersectionObserver(([entry]) => entry?.isIntersecting && setSeen(true), { rootMargin: '0px 0px -20% 0px' })
+    observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
+  useEffect(() => {
+    if (!seen) return
+    const timers: ReturnType<typeof setTimeout>[] = []
+    CHAT.slice(1).forEach((_, offset) => {
+      const i = offset + 1
+      timers.push(setTimeout(() => setTyped((current) => [...current, i]), 650 + offset * 1150))
+    })
+    return () => timers.forEach(clearTimeout)
+  }, [seen])
   return (
     <section className="ld-sec ld-sec--sea" id="ai" aria-label="ผู้ช่วย AI">
       <div className="ld-wrap">
@@ -177,7 +198,7 @@ export function AiSection() {
                 key={i}
                 className={`ld-msg ld-msg--${m.who}`}
                 initial={{ opacity: 0, y: 16, scale: 0.92 }}
-                animate={seen ? { opacity: 1, y: 0, scale: 1 } : {}}
+                animate={typed.includes(i) ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.92 }}
                 transition={{ type: 'spring', stiffness: 220, damping: 16, delay: 0.25 + i * 0.7 }}
               >
                 {m.who === 'dome' && <b>โดม</b>}
@@ -198,11 +219,25 @@ export function AiSection() {
 
 export function FinalSection({ openAt, openLabel }: { openAt: string | null; openLabel: string }) {
   const { open } = useOpenState(openAt)
+  const ref = useRef<HTMLElement>(null)
+  const [seen, setSeen] = useState(false)
+  useEffect(() => {
+    if (!ref.current) return
+    const observer = new IntersectionObserver(([entry]) => entry?.isIntersecting && setSeen(true), { rootMargin: '0px 0px -18% 0px' })
+    observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
+  const confetti = Array.from({ length: 14 }, (_, i) => i)
   return (
-    <footer className="ld-final">
+    <footer className="ld-final" ref={ref}>
       <Cloud className="ld-cloud ld-cloud--a" />
+      <Cloud className="ld-cloud ld-cloud--b" />
+      <div className="ld-final-islands" aria-hidden><span /><span /><span /></div>
+      <div className={`ld-confetti ${seen ? 'is-live' : ''}`} aria-hidden>{confetti.map((i) => <i key={i} style={{ ['--i' as string]: i }} />)}</div>
       <div className="ld-wrap ld-final-inner">
-        <Pic className="ld-final-dome ld-dome" src="/dome/mascot/dome-celebrate.webp" alt="" width={499} height={532} />
+        <motion.div animate={seen ? { y: [0, -24, 0], rotate: [0, -3, 3, 0] } : {}} transition={{ duration: 1.1, type: 'spring', bounce: .55 }}>
+          <Pic className="ld-final-dome ld-dome" src="/dome/mascot/dome-celebrate.webp" alt="" width={499} height={532} />
+        </motion.div>
         <h2 className="ld-sign">พร้อมออกผจญภัย</h2>
         <div className="ld-badge">
           <span className="ld-badge-dot" aria-hidden />

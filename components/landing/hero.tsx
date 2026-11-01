@@ -44,9 +44,7 @@ export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: 
         <div className="ld-hero-inner">
           <motion.div
             className="ld-badge"
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 16, delay: 0.1 }}
+            initial={false}
           >
             <span className="ld-badge-dot" aria-hidden />
             {open ? 'เปิดให้เล่นแล้ว!' : `เปิดให้เล่น ${openLabel}`}
@@ -54,9 +52,7 @@ export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: 
 
           <motion.h1
             className="ld-logo"
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 160, damping: 13, delay: 0.2 }}
+            initial={false}
           >
             <Pic src="/landing/logo.webp" alt="CEO Domain Quest" width={720} height={487} priority />
           </motion.h1>
@@ -67,16 +63,12 @@ export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: 
             ))}
             <motion.div
               className="ld-bubble"
-              initial={{ opacity: 0, scale: 0.4, rotate: -8 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 220, damping: 12, delay: 0.9 }}
+              initial={false}
             >
               สวัสดี! มาเล่นกัน
             </motion.div>
             <motion.div
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 120, damping: 14, delay: 0.5 }}
+              initial={false}
             >
               <Pic className="ld-dome" src="/landing/dome-wave.webp" alt="โดม มาสคอตผู้ช่วยของเกม" width={640} height={756} priority />
             </motion.div>
