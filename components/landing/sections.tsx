@@ -1,12 +1,12 @@
 'use client'
 
-import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from 'motion/react'
+import { motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { Countdown, useOpenState } from './countdown'
 import { DecoLayer } from './deco'
 import { PhoneTour } from './phone-tour'
 import { Pic } from './pic'
-import { Reveal, useLandingScroll } from './reveal'
+import { Reveal } from './reveal'
 
 const icon = (name: string, size = 38) => <Pic src={`/icons/3d/${name}.webp`} alt="" width={size} height={size} />
 
@@ -166,80 +166,37 @@ const TEACH = [
 ]
 
 export function TeacherSection() {
-  const [caption, setCaption] = useState(0)
-  const [captionReady, setCaptionReady] = useState(false)
-  const [isDesktop, setIsDesktop] = useState(false)
-  const [sequenceDone, setSequenceDone] = useState(false)
-  const teacherRef = useRef<HTMLDivElement>(null)
-  const scrollRef = useLandingScroll()
-  const reduce = useReducedMotion()
-  const { scrollYProgress } = useScroll({ container: scrollRef, target: teacherRef, offset: ['start start', 'end end'] })
-  const open = useTransform(scrollYProgress, [0, 0.28, 0.54], [-86, -86, 0])
-  const closedOpacity = useTransform(open, [-86, -48, -16], [1, 0, 0])
-
-  useEffect(() => {
-    const media = window.matchMedia('(min-width: 900px)')
-    const sync = () => setIsDesktop(media.matches)
-    sync()
-    media.addEventListener('change', sync)
-    return () => media.removeEventListener('change', sync)
-  }, [])
-
-  useEffect(() => {
-    if (reduce) setCaptionReady(true)
-  }, [reduce])
-
-  useEffect(() => {
-    const syncSequence = () => {
-      if (!teacherRef.current) return
-      setSequenceDone(teacherRef.current.getBoundingClientRect().bottom <= (scrollRef.current?.getBoundingClientRect().bottom ?? window.innerHeight) + 12)
-    }
-    syncSequence()
-    scrollRef.current?.addEventListener('scroll', syncSequence, { passive: true })
-    window.addEventListener('resize', syncSequence)
-    return () => {
-      scrollRef.current?.removeEventListener('scroll', syncSequence)
-      window.removeEventListener('resize', syncSequence)
-    }
-  }, [])
-
-  useMotionValueEvent(scrollYProgress, 'change', (value) => {
-    const ready = reduce || value >= 0.58
-    setCaptionReady(ready)
-    if (!reduce) setCaption(value < 0.72 ? 0 : value < 0.84 ? 1 : 2)
-  })
-
   return (
     <section className="ld-sec ld-sec--cream" id="teacher" aria-label="สำหรับครู">
-      <DecoLayer scene="island" tone="purple" />
-      <div className="ld-wrap ld-teacher-scroll" ref={teacherRef}>
+      <div className="ld-teacher-backdrop" aria-hidden />
+      <div className="ld-wrap ld-teacher-scroll">
         <Head title="สำหรับครู" sub="เปิดห้อง ฉายจอ ดูผลได้ในที่เดียว" />
         <div className="ld-teacher-sticky">
           <div className="ld-teacher-scene">
-            <Reveal>
-              <motion.div className="ld-laptop" style={!isDesktop || reduce ? undefined : { perspective: 1200 }}>
-                <motion.div className="ld-laptop-lid" style={!isDesktop || reduce ? undefined : { rotateX: open }}>
+            <motion.div className="ld-laptop">
+                <div className="ld-laptop-lid">
                   <div className="ld-laptop-screen">
                     <Pic src="/manual/teacher-captures/live.png" alt="หน้าคุมคาบสด แสดงรายชื่อนักเรียนและสถานะภารกิจ" width={1440} height={900} sizes="560px" />
+                    <span className="ld-screen-glow" aria-hidden />
                   </div>
-                </motion.div>
-                  <motion.div className="ld-laptop-closed" aria-hidden style={!isDesktop || reduce ? undefined : { opacity: closedOpacity }}><span>CEO<br />DOMAIN QUEST</span></motion.div>
-                <div className="ld-laptop-base" />
-              </motion.div>
-            </Reveal>
+                </div>
+                <div className="ld-laptop-closed" aria-hidden><span>CEO<br />DOMAIN QUEST</span></div>
+                <div className="ld-laptop-hinge" aria-hidden><i /><i /><i /></div>
+                <div className="ld-laptop-base" aria-hidden><span className="ld-laptop-keyboard" /><span className="ld-laptop-trackpad" /></div>
+            </motion.div>
             <div className="ld-teacher-caption" aria-live="polite">
               {TEACH.map((t, i) => (
-              <motion.div key={t.title} className={`ld-teacher-callout ld-teacher-callout--${i + 1}`} animate={{ opacity: (!isDesktop || captionReady) && i === caption ? 1 : 0, y: (!isDesktop || captionReady) && i === caption ? 0 : 8 }}>
+              <div key={t.title} className={`ld-teacher-callout ld-teacher-callout--${i + 1}`}>
                   <span className="ld-callout-line" aria-hidden />
                   <span className="ld-card-ico">{icon(t.icon, 30)}</span>
                   <span><b>{t.title}</b><small>{t.note}</small></span>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
-          <motion.div className="ld-feats" style={!isDesktop || reduce ? undefined : { opacity: sequenceDone ? 1 : 0, pointerEvents: sequenceDone ? 'auto' : 'none' }}>
+          <div className="ld-feats">
             {TEACH.map((t) => <div key={t.title} className="ld-card"><span className="ld-card-ico">{icon(t.icon)}</span><div><h3>{t.title}</h3><p>{t.note}</p><span className="ld-mini-preview" aria-hidden><i /><i /><i /></span></div></div>)}
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
@@ -247,49 +204,16 @@ export function TeacherSection() {
 }
 
 const CHAT = [
-  { who: 'me', text: 'โดเมนคืออะไร' },
-  { who: 'dome', text: 'เหมือนที่อยู่ของเว็บ ให้คนหาร้านเธอเจอครับ' },
-  { who: 'me', text: 'ช่วยทำการบ้านวิชาอื่นหน่อย' },
-  { who: 'dome', text: 'โดมช่วยเรื่องบทเรียนนี้นะครับ ลองถามเรื่องโดเมนดูไหม', lock: true },
+  { who: 'me', text: 'โดเมนคืออะไร', time: '10:41' },
+  { who: 'dome', text: 'เหมือนที่อยู่ของเว็บ ให้คนหาร้านเธอเจอครับ', time: '10:41' },
+  { who: 'me', text: 'ช่วยทำการบ้านวิชาอื่นหน่อย', time: '10:42' },
+  { who: 'dome', text: 'โดมช่วยเรื่องบทเรียนนี้นะครับ ลองถามเรื่องโดเมนดูไหม', time: '10:42', lock: true },
 ] as const
+
+const SUGGESTIONS = ['โดเมนคืออะไร', '.com กับ .th ต่างกันยังไง', 'DNS ทำงานยังไง']
 
 export function AiSection() {
   const ref = useRef<HTMLDivElement>(null)
-  const [seen, setSeen] = useState(false)
-  const [typed, setTyped] = useState<number[]>([0])
-  useEffect(() => {
-    if (!ref.current) return
-    if (!('IntersectionObserver' in window)) {
-      setSeen(true)
-      setTyped(CHAT.map((_, i) => i))
-      return
-    }
-    const fallback = window.setTimeout(() => {
-      setSeen(true)
-      setTyped(CHAT.map((_, i) => i))
-    }, 4200)
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry?.isIntersecting) return
-      setSeen(true)
-      observer.disconnect()
-      window.clearTimeout(fallback)
-    }, { rootMargin: '0px 0px -20% 0px' })
-    observer.observe(ref.current)
-    return () => {
-      observer.disconnect()
-      window.clearTimeout(fallback)
-    }
-  }, [])
-  useEffect(() => {
-    if (!seen) return
-    const timers: ReturnType<typeof setTimeout>[] = []
-    CHAT.slice(1).forEach((_, offset) => {
-      const i = offset + 1
-      timers.push(setTimeout(() => setTyped((current) => [...current, i]), 650 + offset * 1150))
-    })
-    timers.push(setTimeout(() => setTyped(CHAT.map((_, i) => i)), 3900))
-    return () => timers.forEach(clearTimeout)
-  }, [seen])
   return (
     <section className="ld-sec ld-sec--sea" id="ai" aria-label="ผู้ช่วย AI">
       <DecoLayer scene="night" tone="purple" />
@@ -299,24 +223,34 @@ export function AiSection() {
           <Reveal>
             <Pic className="ld-dome" src="/dome/mascot/dome-explain.webp" alt="โดมกำลังอธิบาย" width={482} height={532} sizes="300px" style={{ width: 240 }} />
           </Reveal>
-          <div className="ld-chat" aria-label="ตัวอย่างบทสนทนา">
+          <div className="ld-chat-window" aria-label="ตัวอย่างบทสนทนากับโดม">
+            <header className="ld-chat-header">
+              <div className="ld-chat-profile">
+                <span className="ld-chat-avatar ld-chat-avatar--dome"><Pic src="/dome/mascot/dome-greet.webp" alt="" width={56} height={56} /></span>
+                <span><b>น้องโดม</b><small><i aria-hidden />ออนไลน์</small></span>
+              </div>
+              <span className="ld-chat-lock">{icon('locked', 16)} ล็อกเฉพาะบทเรียน</span>
+            </header>
+            <div className="ld-chat-thread">
             {CHAT.map((m, i) => (
-              <motion.div
-                key={i}
-                className={`ld-msg ld-msg--${m.who}`}
-                initial={{ opacity: 0, y: 16, scale: 0.92 }}
-                animate={typed.includes(i) ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.92 }}
-                transition={{ type: 'spring', stiffness: 220, damping: 16, delay: 0.25 + i * 0.7 }}
-              >
-                {m.who === 'dome' && <b>โดม</b>}
-                {m.text}
-                {'lock' in m && (
-                  <span className="ld-lock">
-                    {icon('locked', 20)} ล็อกไว้เฉพาะบทเรียน
-                  </span>
-                )}
-              </motion.div>
+                <div key={i} data-chat-index={i} className={`ld-msg-row ld-msg-row--${m.who}`}>
+                  {m.who === 'dome' && <span className="ld-chat-avatar ld-chat-avatar--dome"><Pic src="/dome/mascot/dome-greet.webp" alt="" width={38} height={38} /></span>}
+                  <div className={`ld-msg ld-msg--${m.who}`}>
+                    <div className="ld-msg-meta"><b>{m.who === 'dome' ? 'น้องโดม' : 'คุณ'}</b><time>{m.time}</time></div>
+                    <p>{m.text}</p>
+                    {'lock' in m && <span className="ld-lock">{icon('locked', 17)} ล็อกไว้เฉพาะบทเรียน</span>}
+                  </div>
+                  {m.who === 'me' && <span className="ld-chat-avatar ld-chat-avatar--user"><Pic src="/icons/3d/bust-in-silhouette.webp" alt="" width={38} height={38} /></span>}
+                </div>
             ))}
+            <div className="ld-msg-row ld-msg-row--dome ld-typing-row ld-typing-row--one" aria-hidden><span className="ld-chat-avatar ld-chat-avatar--dome"><Pic src="/dome/mascot/dome-greet.webp" alt="" width={38} height={38} /></span><div className="ld-typing"><span><i /><i /><i /></span><small>น้องโดมกำลังพิมพ์</small></div></div>
+            <div className="ld-msg-row ld-msg-row--dome ld-typing-row ld-typing-row--two" aria-hidden><span className="ld-chat-avatar ld-chat-avatar--dome"><Pic src="/dome/mascot/dome-greet.webp" alt="" width={38} height={38} /></span><div className="ld-typing"><span><i /><i /><i /></span><small>น้องโดมกำลังพิมพ์</small></div></div>
+            </div>
+            <div className="ld-suggestions" aria-label="คำถามแนะนำ">{SUGGESTIONS.map((suggestion) => <button type="button" key={suggestion}>{suggestion}</button>)}</div>
+            <form className="ld-chat-input" onSubmit={(event) => event.preventDefault()}>
+              <input aria-label="ถามโดมเรื่องบทเรียน" placeholder="ถามโดมเรื่องบทเรียน…" />
+              <button type="submit" aria-label="ส่งข้อความ"><span aria-hidden>↗</span></button>
+            </form>
           </div>
         </div>
       </div>
