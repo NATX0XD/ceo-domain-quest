@@ -382,18 +382,18 @@ export function ClassReportClient({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2 print:hidden">
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="btn-base bg-brand-600 px-5 text-ink-onbrand shadow-soft-1"
-        >
-          พิมพ์ / บันทึกเป็น PDF
-        </button>
         <details className="relative">
           <summary className="btn-base cursor-pointer list-none bg-surface-raised px-4 text-brand-700 ring-2 ring-brand-100 ring-inset hover:bg-brand-50">
             ส่งออก
           </summary>
           <div className="absolute left-0 top-[calc(100%+0.5rem)] z-10 grid min-w-52 gap-1 rounded-xl bg-surface-raised p-2 shadow-soft-3 ring-1 ring-line print:hidden">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="min-h-11 rounded-lg px-3 text-left text-label font-bold text-brand-700 hover:bg-brand-50"
+            >
+              พิมพ์ / บันทึกเป็น PDF
+            </button>
             <button
               type="button"
               onClick={() => void copyNumbers()}

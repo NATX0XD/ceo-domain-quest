@@ -752,7 +752,6 @@ export function LearnPathClient({
 
           {step === 'intro' ? (
             <>
-              {missionId === 'm1' ? <div className="m1-intro-art" aria-hidden="true" /> : null}
               {missionId === 'm1' ? <div className="m1-map-art" aria-hidden="true" /> : null}
               <div className="relative z-10 flex flex-col items-center pt-2">
                 <Float>

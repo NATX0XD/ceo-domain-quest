@@ -1120,12 +1120,12 @@ select {
 .map-boss-locked .map-boss-kicker { color: #e7edf4; }
 .m1-intro-art { position: absolute; inset: 1rem 0 auto; height: 19rem; background: url('/ui/m1/intro-frame.webp') top center / contain no-repeat; opacity: .8; pointer-events: none; }
 .m1-map-art { position: absolute; inset: 16rem 0 0; background: url('/ui/m1/map.webp') center top / cover no-repeat; opacity: .16; pointer-events: none; }
-.m1-intro-copy { position: relative; z-index: 1; margin-top: 10rem; }
+.m1-intro-copy { position: relative; z-index: 1; margin-top: 0; }
 .media-video { border: 4px solid #6B2D12; box-shadow: 0 7px 0 #6B2D12; background: #1555C8; }
 @media (max-width: 420px) {
   .m1-intro-art { height: 15rem; }
   .m1-map-art { inset: 12rem 0 0; }
-  .m1-intro-copy { margin-top: 7rem; }
+  .m1-intro-copy { margin-top: 0; }
 }
 
 /* แถวชิปปุ่มรอง — แทนกล่องใหญ่ซ้อนกันหลายกล่อง กินที่น้อยกว่ามากและกวาดตาเจอเร็วกว่า */
