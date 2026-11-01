@@ -40,6 +40,13 @@ beforeEach(() => {
 })
 
 describe('scoreOpenAnswers + AI ช่วยตรวจ', () => {
+  it('คำตอบ DNS/IP/server แบบภาษานักเรียนผ่าน keyword rubric ได้', async () => {
+    const answer = 'บราวเซอร์ส่งคำขอไปที่เซิร์ฟเวอร์ตามไอพีจาก DNS แล้วเว็บแสดงขึ้นมา'
+    const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': 'ชื่อเว็บร้าน', 'm1-wq2': answer })
+    expect(r.perQuestion[1]).toMatchObject({ keywordScore: 100, score: 100 })
+    expect(r.passed).toBe(true)
+  })
+
   it('ไม่ส่งตัวตรวจ = คำสำคัญล้วน ติดป้าย rule', async () => {
     const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': PARAPHRASE, 'm1-wq2': '' })
     expect(r.perQuestion.map((q) => q.source)).toEqual(['rule', 'rule'])

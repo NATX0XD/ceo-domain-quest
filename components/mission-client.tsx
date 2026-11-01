@@ -206,9 +206,6 @@ export function MissionClient({
           ? `ข้อ ${CHOICE_MARKERS[choiceIndex] ?? choiceIndex + 1}`
           : null) ?? passedAnswer
 
-  /** ยังไม่เคยเปิดคำใบ้เลยจะเขียนว่า "อ่านซ้ำ" ไม่ได้ ไม่มีอะไรให้อ่านซ้ำ */
-  const hintLabel = passed && hints.length > 0 ? 'อ่านคำใบ้ซ้ำ' : 'ดูคำใบ้'
-
   const resultLine = passed
     ? 'ผ่านภารกิจแล้ว'
     : check.kind === 'wrong'
@@ -455,14 +452,6 @@ export function MissionClient({
                 <span className="min-w-0 truncate">{nextStep.primary.longLabel}</span>
                 <ChevronRightIcon width={22} height={22} aria-hidden className="shrink-0" />
               </Link>
-              {nextStep.secondary ? (
-                <Link
-                  href={nextStep.secondary.href}
-                  className="mt-1 flex min-h-11 items-center justify-center rounded-lg text-label font-bold text-brand-700 underline focus-ring"
-                >
-                  {nextStep.secondary.label}
-                </Link>
-              ) : null}
             </>
           ) : (
             /* ปุ่มลงมือหลักตาม mockup — แถบเขียวเต็มความกว้าง มีไอคอนติ๊ก */
@@ -567,18 +556,12 @@ export function MissionClient({
         *    ของเดิมยังโชว์ ก-ง พร้อมวงกลมเหมือนยังไม่ได้ตอบ เด็กกดแล้วไม่มีอะไรเกิดขึ้น นึกว่าจอค้าง
         *    และการ์ดยังเบียดกันจนตัวหนังสือทับกัน เพราะแถบเขียวกินความสูงไป
         */}
-      <div className="min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col">
         {passed ? (
         <div className="flex h-full flex-col justify-center gap-3 rounded-2xl bg-surface-raised p-4 ring-1 ring-line ring-inset">
             <DomeSays mood="celebrate" speakerName="โดม" avatarSize={56}>
               ผ่านแล้ว! เก็บได้ {myStars} จาก 3 ดาว
             </DomeSays>
-            <p className="text-center text-label font-semibold text-ink-muted">เลือกว่าจะทำอะไรต่อ</p>
-            <div className="grid grid-cols-3 gap-2">
-              <Link href="/knowledge" className="btn-base min-h-12 rounded-xl bg-brand-100 px-2 text-note font-bold text-brand-700">ทบทวน</Link>
-              <Link href={`/mission/${mission.id}`} className="btn-base min-h-12 rounded-xl bg-spark-100 px-2 text-note font-bold text-spark-700">ตอบเสริม</Link>
-              <Link href={nextStep.primary.href} className="btn-base min-h-12 rounded-xl bg-quest-100 px-2 text-note font-bold text-quest-700">ไปต่อ</Link>
-            </div>
           </div>
         ) : assemble ? (
           <div className="flex h-full flex-col gap-2">
@@ -640,9 +623,9 @@ export function MissionClient({
             </div>
           </div>
         ) : (
-          <ul className="flex h-full flex-col gap-1.5">
+          <ul className="grid min-h-0 flex-1 grid-rows-4 gap-2">
             {mission.check.choices.map((c, i) => (
-              <li key={c}>
+              <li key={c} className="min-h-0">
                 <ChoiceCard
                   label={c}
                   marker={CHOICE_MARKERS[i] ?? String(i + 1)}
@@ -700,57 +683,17 @@ export function MissionClient({
         </div>
       )}
 
-      {/* ตัวช่วย 4 ตัวเป็นชิปเล็กเรียง 2x2 แต่ละตัวมีไอคอนกับสีของตัวเอง (mockup) */}
-      <div className="grid shrink-0 grid-cols-2 gap-1.5">
+      {/* ตัวช่วยรวมเป็นเมนูเดียว เพื่อไม่ให้แถวปุ่มรองแย่งพื้นที่จากโจทย์ */}
+      <div className="shrink-0">
         <SheetChip
           tone="spark"
           icon={<LightbulbIcon width={18} height={18} />}
           onClick={() => setSheet('hints')}
-          badge={`${hints.length}/${hintsTotal} ใบ`}
-          /* "1/3" ลอย ๆ เด็กอ่านไม่ออกว่าหมายถึงอะไร (flow-1.md ข้อ 25) — อ่านเต็มไว้ให้เสียงอ่านหน้าจอ
-             ส่วนคำอธิบายเต็มว่าไม่หักดาว อยู่หัวแผ่นคำใบ้ที่เปิดขึ้นมา */
-          ariaLabel={`${hintLabel} เปิดไปแล้ว ${hints.length} จาก ${hintsTotal} ใบ ไม่เสียดาว`}
+          ariaLabel={`ตัวช่วย เปิดเมนูคำใบ้และการช่วยเหลือ เปิดไปแล้ว ${hints.length} จาก ${hintsTotal} ใบ`}
         >
-          {hintLabel}
+          ตัวช่วย
         </SheetChip>
-        <SheetChip
-          tone="brand"
-          icon={<KnowledgeIcon width={18} height={18} />}
-          onClick={() => setSheet('learn')}
-        >
-          เลือกวิธีเรียน
-        </SheetChip>
-        {/* ผ่านแล้วซ่อนสองปุ่มนี้ไปเลย ของเดิมเป็นสีปกติแต่กดไม่ได้และไม่บอกเหตุผล (FLOW-1 ข้อ 25) */}
-        {passed ? null : (
-          <>
-            <SheetChip
-              tone="quest"
-              icon={<RefreshIcon width={18} height={18} />}
-              onClick={restart}
-            >
-              เริ่มใหม่
-            </SheetChip>
-            <SheetChip
-              tone="danger"
-              icon={<SkipIcon width={18} height={18} />}
-              onClick={skipMission}
-              disabled={busy}
-            >
-              ข้ามภารกิจนี้
-            </SheetChip>
-          </>
-        )}
       </div>
-
-      {/* เรื่องที่ต้องคุยกับครู — ใช้นาน ๆ ครั้ง จึงเป็นชิปเดียวที่เปิดเมนูรอง ไม่กินที่เท่าปุ่มหลัก */}
-      <SheetChip
-        tone={helpOn ? 'danger' : 'plain'}
-        icon={<UsersIcon width={18} height={18} />}
-        onClick={() => setSheet('teacher')}
-        className="shrink-0"
-      >
-        {helpOn ? 'เรียกครูไว้แล้ว — แตะเพื่อจัดการ' : 'คุยกับครู'}
-      </SheetChip>
 
       {/* ───────── แผ่นเลื่อนขึ้น: ที่เก็บของที่ยาวเกินจอ ───────── */}
 
@@ -807,6 +750,16 @@ export function MissionClient({
         >
           {hintsExhausted ? `เปิดครบแล้ว ${hints.length} จาก ${hintsTotal} อัน` : 'ขอคำใบ้อีกหนึ่งอัน'}
         </Button>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <SheetChip tone="brand" icon={<KnowledgeIcon width={18} height={18} />} onClick={() => setSheet('learn')}>
+            เลือกวิธีเรียน
+          </SheetChip>
+          <SheetChip tone={helpOn ? 'danger' : 'plain'} icon={<UsersIcon width={18} height={18} />} onClick={() => setSheet('teacher')}>
+            คุยกับครู
+          </SheetChip>
+          {!passed ? <SheetChip tone="quest" icon={<RefreshIcon width={18} height={18} />} onClick={restart}>เริ่มใหม่</SheetChip> : null}
+          {!passed ? <SheetChip tone="danger" icon={<SkipIcon width={18} height={18} />} onClick={skipMission} disabled={busy}>ข้ามภารกิจ</SheetChip> : null}
+        </div>
       </Sheet>
 
       <Sheet

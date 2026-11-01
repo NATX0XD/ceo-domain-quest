@@ -102,7 +102,7 @@ export function ChoiceCard({
       <span className="min-w-0 flex-1">
         <span className="block text-body font-semibold text-pretty text-ink">{label}</span>
         {description ? (
-          <span className="mt-1 block text-label text-ink-muted">{description}</span>
+          <span className="choice-card-description mt-1 block text-label text-ink-muted">{description}</span>
         ) : null}
       </span>
 
