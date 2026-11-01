@@ -714,8 +714,8 @@ body:has(.ld) { height: 100%; min-height: 100dvh; overflow: hidden; overscroll-b
 .ld-cw-input button { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; color: #fff; font-size: 17px; cursor: pointer; background: linear-gradient(160deg, #946cf0, #6a40c6); box-shadow: 0 4px 0 var(--ld-purple-d); transition: transform .15s; }
 .ld-cw-input button:hover { transform: translateY(-2px) rotate(-8deg); }
 @media (min-width: 900px) {
-  .ld-ai2 { grid-template-columns: 300px 540px; justify-content: center; align-items: end; }
-  .ld-ai2-dome { width: 330px; height: 370px; margin: 0 -58px 30px 0; justify-self: end; }
+  .ld-ai2 { width: min(100%, 920px); grid-template-columns: 320px 540px; column-gap: 28px; justify-content: center; align-items: end; }
+  .ld-ai2-dome { width: 320px; height: 360px; margin: 0 0 30px 0; justify-self: end; }
   .ld-ai2-pose { inset: auto 0 0 0; }
   .ld-ai2-thought { top: 30px; right: 90px; }
   .ld-cw-thread { height: 380px; }
