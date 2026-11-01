@@ -46,8 +46,7 @@ export function classifyDomeMessage(message: string, missionId?: string | null):
   const idx = missionIndex(current)
   const keywordsOf = (ids: MissionId[]) => ids.flatMap((id) => missionKeywords(id))
   const currentHit = any(lower, missionKeywords(current))
-  // ด่านบอส (m5) คือบทรวบยอด เรื่องของภารกิจ 1–4 ถามทบทวนได้เสมอ
-  const earlierHit = any(lower, keywordsOf([...MISSION_ORDER_IDS].slice(0, idx)))
+  const earlierHit = current !== 'm5' && any(lower, keywordsOf([...MISSION_ORDER_IDS].slice(0, idx)))
   const laterHit = any(lower, keywordsOf([...MISSION_ORDER_IDS].slice(idx + 1)))
 
   if (currentHit) return 'current'
