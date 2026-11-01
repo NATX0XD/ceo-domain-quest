@@ -79,7 +79,7 @@ export function Dialog({
             type="button"
             onClick={onClose}
             aria-label="ปิดหน้าต่าง"
-            className="tap-target shrink-0 rounded-lg text-ink-muted ring-1 ring-line ring-inset hover:bg-surface-sunken focus-ring"
+            className="tap-target grid size-11 shrink-0 place-items-center rounded-lg text-ink-muted ring-1 ring-line ring-inset hover:bg-surface-sunken focus-ring"
           >
             <span aria-hidden className="text-title-sm leading-none">
               ×

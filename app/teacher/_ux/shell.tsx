@@ -376,6 +376,12 @@ export function TeacherShell({
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter' || !found[0]) return
+                e.preventDefault()
+                setQuery('')
+                router.push(found[0].href)
+              }}
               placeholder="ค้นหาหน้า เช่น รายงาน"
               aria-label="ค้นหาหน้า"
               className="h-10 w-full rounded-lg bg-surface-sunken px-3 text-label text-ink ring-1 ring-line outline-none placeholder:text-ink-subtle focus:ring-2 focus:ring-brand-500"
