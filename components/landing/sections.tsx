@@ -165,6 +165,7 @@ const TEACH = [
 
 export function TeacherSection() {
   const [caption, setCaption] = useState(0)
+  const [captionReady, setCaptionReady] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
   const [sequenceDone, setSequenceDone] = useState(false)
   const teacherRef = useRef<HTMLDivElement>(null)
@@ -172,8 +173,6 @@ export function TeacherSection() {
   const { scrollYProgress } = useScroll({ target: teacherRef, offset: ['start start', 'end end'] })
   const open = useTransform(scrollYProgress, [0, 0.28, 0.54], [-86, -86, 0])
   const closedOpacity = useTransform(open, [-86, -48, -16], [1, 0, 0])
-  const screenOpacity = useTransform(open, [-86, -18, 0], [0, 0.72, 1])
-  const screenLift = useTransform(scrollYProgress, [0.28, 0.5], [36, 0])
 
   useEffect(() => {
     const media = window.matchMedia('(min-width: 900px)')
@@ -182,6 +181,10 @@ export function TeacherSection() {
     media.addEventListener('change', sync)
     return () => media.removeEventListener('change', sync)
   }, [])
+
+  useEffect(() => {
+    if (reduce) setCaptionReady(true)
+  }, [reduce])
 
   useEffect(() => {
     const syncSequence = () => {
@@ -198,8 +201,9 @@ export function TeacherSection() {
   }, [])
 
   useMotionValueEvent(scrollYProgress, 'change', (value) => {
-    if (reduce) return
-    setCaption(value < 0.48 ? 0 : value < 0.68 ? 1 : 2)
+    const ready = reduce || value >= 0.58
+    setCaptionReady(ready)
+    if (!reduce) setCaption(value < 0.72 ? 0 : value < 0.84 ? 1 : 2)
   })
 
   return (
@@ -212,9 +216,7 @@ export function TeacherSection() {
               <motion.div className="ld-laptop" style={!isDesktop || reduce ? undefined : { perspective: 1200 }}>
                 <motion.div className="ld-laptop-lid" style={!isDesktop || reduce ? undefined : { rotateX: open }}>
                   <div className="ld-laptop-screen">
-                    <motion.div style={!isDesktop || reduce ? undefined : { opacity: screenOpacity, y: screenLift }}>
-                      <Pic src="/manual/teacher-captures/live.png" alt="หน้าคุมคาบสด แสดงรายชื่อนักเรียนและสถานะภารกิจ" width={1440} height={900} sizes="560px" />
-                    </motion.div>
+                    <Pic src="/manual/teacher-captures/live.png" alt="หน้าคุมคาบสด แสดงรายชื่อนักเรียนและสถานะภารกิจ" width={1440} height={900} sizes="560px" />
                   </div>
                 </motion.div>
                   <motion.div className="ld-laptop-closed" aria-hidden style={!isDesktop || reduce ? undefined : { opacity: closedOpacity }}><span>CEO<br />DOMAIN QUEST</span></motion.div>
@@ -223,7 +225,7 @@ export function TeacherSection() {
             </Reveal>
             <div className="ld-teacher-caption" aria-live="polite">
               {TEACH.map((t, i) => (
-              <motion.div key={t.title} className={`ld-teacher-callout ld-teacher-callout--${i + 1}`} animate={{ opacity: reduce || i === caption ? 1 : 0, y: reduce || i === caption ? 0 : 8 }}>
+              <motion.div key={t.title} className={`ld-teacher-callout ld-teacher-callout--${i + 1}`} animate={{ opacity: (!isDesktop || captionReady) && i === caption ? 1 : 0, y: (!isDesktop || captionReady) && i === caption ? 0 : 8 }}>
                   <span className="ld-callout-line" aria-hidden />
                   <span className="ld-card-ico">{icon(t.icon, 30)}</span>
                   <span><b>{t.title}</b><small>{t.note}</small></span>

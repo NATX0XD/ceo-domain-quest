@@ -377,13 +377,13 @@ body:has(.ld) { height: auto; min-height: 100dvh; overflow: visible; overscroll-
 .ld-teacher-callout small { color: var(--ld-ink-2); font-size: 13px; }
 .ld-callout-line { position: absolute; width: clamp(34px, 6vw, 86px); height: 2px; background: var(--ld-purple); }
 .ld-callout-line::after { content: ''; position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--ld-purple); top: -2.5px; }
-.ld-teacher-callout--1 { left: max(0px, calc(50% - 510px)); top: 17%; }
+.ld-teacher-callout--1 { left: max(-40px, calc(50% - 572px)); top: 17%; }
 .ld-teacher-callout--1 .ld-callout-line { right: calc(clamp(34px, 6vw, 86px) * -1); transform: rotate(12deg); transform-origin: left; }
 .ld-teacher-callout--1 .ld-callout-line::after { right: 0; }
-.ld-teacher-callout--2 { right: max(0px, calc(50% - 510px)); top: 38%; }
+.ld-teacher-callout--2 { right: max(-40px, calc(50% - 572px)); top: 38%; }
 .ld-teacher-callout--2 .ld-callout-line { left: calc(clamp(34px, 6vw, 86px) * -1); transform: rotate(-12deg); transform-origin: right; }
 .ld-teacher-callout--2 .ld-callout-line::after { left: 0; }
-.ld-teacher-callout--3 { left: max(0px, calc(50% - 480px)); bottom: 7%; }
+.ld-teacher-callout--3 { left: max(-40px, calc(50% - 572px)); bottom: 7%; }
 .ld-teacher-callout--3 .ld-callout-line { right: calc(clamp(34px, 6vw, 86px) * -1); transform: rotate(-18deg); transform-origin: left; }
 .ld-teacher-callout--3 .ld-callout-line::after { right: 0; }
 .ld-teacher-sticky .ld-feats { width: min(100%, 920px); margin: 18px auto 0; }
@@ -402,6 +402,12 @@ body:has(.ld) { height: auto; min-height: 100dvh; overflow: visible; overscroll-
   .ld-teacher-callout { position: relative; inset: auto !important; transform: none !important; }
   .ld-callout-line { display: none; }
   .ld-teacher-sticky .ld-feats { margin-top: 18px; }
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+  .ld-teacher-scene .ld-laptop { width: min(100%, 600px); }
+  .ld-teacher-callout--1, .ld-teacher-callout--3 { left: -28px; }
+  .ld-teacher-callout--2 { right: -26px; }
 }
 
 @media (max-width: 600px) {
