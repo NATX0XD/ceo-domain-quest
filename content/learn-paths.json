@@ -46,56 +46,64 @@
             "speaker": "ลูกค้า",
             "line": "หนูอยากเข้าเว็บไซต์ร้านขนมบ้านยายค่ะ",
             "caption": "อยากเข้าเว็บไซต์ร้านขนมบ้านยาย",
-            "visual": "shop"
+            "visual": "shop",
+            "image": "/learn/m1/watch-s1.webp"
           },
           {
             "id": "s2",
             "speaker": "มีน",
             "line": "ยายก็อยากให้ลูกค้าเข้าเว็บร้านได้ง่าย ๆ นะ เดี๋ยวมีนช่วยดูให้นะคะ",
             "caption": "มีนช่วยดูให้ลูกค้าเข้าเว็บร้าน",
-            "visual": "computer"
+            "visual": "computer",
+            "image": "/learn/m1/watch-s2.webp"
           },
           {
             "id": "s3",
             "speaker": "มีน",
             "line": "หนูพิมพ์ชื่อเว็บร้านค่ะ แต่ยังเข้าไม่ได้เลย",
             "caption": "พิมพ์ชื่อเว็บแล้วแต่ยังเข้าไม่ได้",
-            "visual": "computer"
+            "visual": "computer",
+            "image": "/learn/m1/watch-s3.webp"
           },
           {
             "id": "s4",
             "speaker": "ลูกค้ากับมีน",
             "line": "ลองดูนะ พอใส่ชื่อเว็บระบบก็เริ่มค้นหาที่อยู่ให้",
             "caption": "ระบบเริ่มค้นหาที่อยู่",
-            "visual": "diagram"
+            "visual": "diagram",
+            "image": "/learn/m1/watch-s4.webp"
           },
           {
             "id": "s5",
             "speaker": "มีน",
             "line": "แล้วจะเจอที่อยู่ไหมคะ",
             "caption": "จะเจอที่อยู่ไหม",
-            "visual": "diagram"
+            "visual": "diagram",
+            "image": "/learn/m1/watch-s5.webp"
           },
           {
             "id": "s6",
             "speaker": "ลูกค้ากับมีน",
             "line": "เจอแล้ว พอรู้ที่อยู่แล้ว บราวเซอร์ก็เปิดเว็บได้แล้ว",
             "caption": "เจอที่อยู่แล้ว บราวเซอร์เปิดเว็บได้",
-            "visual": "diagram"
+            "visual": "diagram",
+            "image": "/learn/m1/watch-s6.webp"
           },
           {
             "id": "s7",
             "speaker": "ลูกค้า",
             "line": "อ๋อ ร้าน",
             "caption": "เห็นร้านแล้ว",
-            "visual": "computer"
+            "visual": "computer",
+            "image": "/learn/m1/watch-s7.webp"
           },
           {
             "id": "s8",
             "speaker": "มีน",
             "line": "ขนมขึ้นมาแล้วค่ะ",
             "caption": "ร้านขนมแสดงขึ้นมาแล้ว",
-            "visual": "shop"
+            "visual": "shop",
+            "image": "/learn/m1/watch-s8.webp"
           }
         ],
         "questions": [
