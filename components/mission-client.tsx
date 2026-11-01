@@ -439,7 +439,7 @@ export function MissionClient({
    */
   return (
     <StudentShell
-      className="flex h-full min-h-0 flex-col gap-2.5"
+      className="flex h-full min-h-0 flex-col gap-2 pt-3! pb-2!"
       footer={
         <AppFooter>
           {passed ? (
@@ -534,20 +534,9 @@ export function MissionClient({
         *    เพราะ instruction ของไฟล์เนื้อหาเขียนคำตอบไว้ตรง ๆ ("ให้ได้เป็น www.…")
         *    เอามาขึ้นหัวจอเมื่อไหร่คือเฉลยข้อตรวจทันที
         */}
-      <h1 className="shrink-0 text-title-sm font-extrabold text-balance text-ink">
+      <h1 className="shrink-0 rounded-2xl bg-surface-raised px-3 py-2 text-title-sm font-extrabold text-balance text-ink shadow-soft-1 ring-1 ring-line ring-inset">
         {assemble ? mission.channels.game.title : mission.check.question}
       </h1>
-
-      {/* โดมพูดสั้น ๆ — บทเปิดเต็มอยู่ในแผ่น แตะแล้วอ่านได้ ไม่กินความสูงของจอ */}
-      <button
-        type="button"
-        onClick={() => setSheet('story')}
-        className="flex shrink-0 items-center gap-2 rounded-2xl bg-brand-50 px-3 py-2 text-left ring-1 ring-brand-100 ring-inset focus-ring"
-      >
-        <DomeAvatar mood={passed ? 'celebrate' : 'cheer'} size={40} decorative />
-        <span className="min-w-0 flex-1 truncate text-label text-ink">{domeLine}</span>
-        <ChevronRightIcon width={18} height={18} aria-hidden className="shrink-0 text-brand-700" />
-      </button>
 
       {/**
         * พื้นที่เล่น — โหมดประกอบชิ้นส่วน หรือตัวเลือก แล้วแต่รูปร่างของเนื้อหาภารกิจนั้น
@@ -623,10 +612,11 @@ export function MissionClient({
             </div>
           </div>
         ) : (
-          <ul className="grid min-h-0 flex-1 grid-rows-4 gap-2">
+          <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain">
             {mission.check.choices.map((c, i) => (
-              <li key={c} className="min-h-0">
+              <li key={c} className="shrink-0">
                 <ChoiceCard
+                  className="min-h-12 gap-2.5 px-3 py-2 [&>span:first-child]:size-9! [&>span:nth-child(2)>span]:text-label!"
                   label={c}
                   marker={CHOICE_MARKERS[i] ?? String(i + 1)}
                   selected={choiceIndex === i}
@@ -683,8 +673,16 @@ export function MissionClient({
         </div>
       )}
 
-      {/* ตัวช่วยรวมเป็นเมนูเดียว เพื่อไม่ให้แถวปุ่มรองแย่งพื้นที่จากโจทย์ */}
-      <div className="shrink-0">
+      {/* ตัวช่วยกับเรื่องของภารกิจอยู่แถวเดียวกัน — ให้ตัวเลือกได้พื้นที่ครบทั้ง 4 ข้อบนจอ 360x740 */}
+      <div className="grid shrink-0 grid-cols-2 gap-2">
+        <SheetChip
+          tone="brand"
+          icon={<DomeAvatar mood={passed ? 'celebrate' : 'cheer'} size={24} decorative />}
+          onClick={() => setSheet('story')}
+          ariaLabel={`ฟังโดมเล่าเรื่องของภารกิจ ${domeLine}`}
+        >
+          โดมเล่าเรื่อง
+        </SheetChip>
         <SheetChip
           tone="spark"
           icon={<LightbulbIcon width={18} height={18} />}

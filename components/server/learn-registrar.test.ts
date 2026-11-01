@@ -91,6 +91,34 @@ describe('checkRegistrarStep', () => {
     expect(outcome({ tld: '.co.th', docId: 'doc-id', round: 1 })).toBe('reject')
   })
 
+  it('ผลตรวจอ้างนามสกุลที่ยื่นจริงทุกคู่ owner x นามสกุล x เอกสาร (NF1)', () => {
+    const run = (ownerType: 'individual' | 'company', tld: string, docId: string, round = 1) =>
+      checkRegistrarStep({ kind: 'docs', ownerType, tld, docId, round }).result as { outcome: string; message: string }
+    // บุคคล + .in.th + บัตรประชาชน (ชัดแล้ว) = อนุมัติ ไม่มีนามสกุลอื่นในข้อความ
+    const ok = run('individual', '.in.th', 'doc-id')
+    expect(ok.outcome).toBe('approve')
+    expect(ok.message).not.toMatch(/\.or\.th|\.co\.th/)
+    // รอบแรกภาพไม่ชัด = ขอเพิ่ม และพูดถึงบัตรประชาชน ไม่ใช่นามสกุลอื่น
+    expect(run('individual', '.in.th', 'doc-id', 0).outcome).toBe('more')
+    // บริษัท + .co.th + หนังสือรับรองบริษัท = อนุมัติ
+    expect(run('company', '.co.th', 'doc-company').outcome).toBe('approve')
+    // เอกสารไม่ตรงนามสกุล = ขอเพิ่ม ข้อความระบุนามสกุลที่เลือกและเอกสารที่ต้องใช้
+    const wrongDoc = run('individual', '.in.th', 'doc-company')
+    expect(wrongDoc.outcome).toBe('more')
+    expect(wrongDoc.message).toContain('.in.th')
+    expect(wrongDoc.message).toContain('บัตรประชาชน')
+    // เลือกนามสกุลที่ไม่มีสิทธิ์ = ไม่อนุมัติ และข้อความอ้างนามสกุลที่ยื่นมา (.or.th) เท่านั้น
+    for (const tld of ['.or.th', '.co.th']) {
+      const r = run('individual', tld, 'doc-id')
+      expect(r.outcome).toBe('reject')
+      expect(r.message).toContain(tld)
+    }
+    expect(run('company', '.in.th', 'doc-company').message).toContain('.in.th')
+    // ผลต้องไม่ขึ้นกับว่าเคยยื่นนามสกุลอะไรมาก่อนหน้า (ไม่มี state ค้างระหว่างการเรียก)
+    run('individual', '.or.th', 'doc-id')
+    expect(run('individual', '.in.th', 'doc-id').outcome).toBe('approve')
+  })
+
   it('คำอธิบายให้บอสคืนรูบริกและคำถามต่อ', () => {
     const r = checkRegistrarStep({ kind: 'explain', ...GOOD_EXPLAIN, order: KEY.slice(0, 5) }).result as Extract<RegistrarStepResult, { kind: 'explain' }>
     expect(r.rubric).toHaveLength(4)

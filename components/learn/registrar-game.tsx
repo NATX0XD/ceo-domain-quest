@@ -300,7 +300,7 @@ export function RegistrarGame({ data, onSubmit, onStep, card }: Props) {
                 {current === 'st-docs' ? (
                   <DocsPanel
                     data={data}
-                    domainLabel={domainLabel}
+                    domainName={domain?.name ?? myCard.slug}
                     initialTld={domain?.tld ?? myCard.tld}
                     onSubmit={(s) => {
                       setSubmission(s)
@@ -315,7 +315,7 @@ export function RegistrarGame({ data, onSubmit, onStep, card }: Props) {
                   <EmailScreen
                     data={data}
                     check={check}
-                    domainLabel={domainLabel}
+                    domainName={domain?.name ?? myCard.slug}
                     ownerType={myCard.ownerType}
                     submission={submissionNow}
                     docsEvent={ev('docs')}

@@ -618,7 +618,11 @@ export function CeoClient({
         ) : null}
 
         <DomeSays mood="celebrate" speakerName="โดม" avatarSize={72} className="mt-5">
-          {selectedMode?.instruction ?? NO_DATA}
+          {revision
+            ? 'แก้ตามที่ครูบอกแล้วกดส่งใหม่ได้เลย ฉบับเดิมยังอยู่ ไม่หาย'
+            : feedback?.teacherConfirmed
+              ? 'ครูตรวจและยืนยันคะแนนแล้ว เก่งมาก ไปทำแบบทดสอบหลังเรียนต่อได้เลย'
+              : 'ส่งใบเสนอเรียบร้อยแล้ว ตอนนี้รอครูอ่านและยืนยันคะแนน ระหว่างนี้ไปทำแบบทดสอบหลังเรียนต่อได้เลย'}
         </DomeSays>
 
         {/**

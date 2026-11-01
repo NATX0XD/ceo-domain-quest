@@ -581,14 +581,15 @@ export type Submission = { tld: string; docId: string }
 
 export function DocsPanel({
   data,
-  domainLabel,
+  domainName,
   initialTld,
   initialDoc,
   note,
   onSubmit,
 }: {
   data: RegistrarData
-  domainLabel: string
+  /** ชื่อโดเมนที่ค้นไว้ ไม่มีนามสกุล — นามสกุลที่แสดงต้องตามที่ผู้เรียนกำลังเลือกในฟอร์มนี้ */
+  domainName: string
   initialTld: string
   initialDoc?: string
   note?: string
@@ -598,6 +599,7 @@ export function DocsPanel({
   const [tld, setTld] = useState(initialTld)
   const [doc, setDoc] = useState<string | null>(initialDoc ?? null)
   const [reviewed, setReviewed] = useState(false)
+  const domainLabel = `${domainName}${tld}`
   return (
     <div className={SCROLL}>
       {note ? (
@@ -664,8 +666,7 @@ export function DocsPanel({
         </fieldset>
         {reviewed ? (
           <p role="status" className="rounded-xl bg-[#f1e6c8] p-3 text-label font-semibold">
-            ตรวจก่อนส่ง: ขอจด {domainLabel.replace(/\.[^.]+(\.th)?$/, '')}
-            {tld} พร้อมแนบ {data.docs.find((d) => d.id === doc)?.label} ถ้าตรวจแล้วถูกต้องกดส่งคำขอได้
+            ตรวจก่อนส่ง: ขอจด {domainLabel} พร้อมแนบ {data.docs.find((d) => d.id === doc)?.label} ถ้าตรวจแล้วถูกต้องกดส่งคำขอได้
           </p>
         ) : null}
       </PixelPanel>
@@ -687,7 +688,7 @@ export function DocsPanel({
 export function EmailScreen({
   data,
   check,
-  domainLabel,
+  domainName,
   ownerType,
   submission,
   docsEvent,
@@ -698,7 +699,7 @@ export function EmailScreen({
 }: {
   data: RegistrarData
   check: Check
-  domainLabel: string
+  domainName: string
   ownerType: 'individual' | 'company'
   submission: Submission
   docsEvent: RegistrarEvent | undefined
@@ -708,6 +709,8 @@ export function EmailScreen({
   onApproved: () => void
 }) {
   const { reduce, spring } = useGameMotion()
+  // ชื่อที่ขึ้นบนหน้าจอต้องเป็นนามสกุลที่ยื่นจริง (submission.tld) ไม่ใช่นามสกุลที่ค้นไว้ตอนแรก
+  const domainLabel = `${domainName}${submission.tld}`
   const [round, setRound] = useState(0)
   const [mail, setMail] = useState<{ outcome: 'approve' | 'more' | 'reject'; message: string } | null>(null)
   const [fail, setFail] = useState(false)
@@ -748,7 +751,7 @@ export function EmailScreen({
     return (
       <DocsPanel
         data={data}
-        domainLabel={domainLabel}
+        domainName={domainName}
         initialTld={mail?.outcome === 'reject' ? (ownerType === 'company' ? '.co.th' : '.in.th') : submission.tld}
         note={mail?.outcome === 'reject' ? 'กลับไปเลือกนามสกุลที่ร้านมีสิทธิ์จดตามบัตร แล้วแนบเอกสารใหม่' : 'ส่งเอกสารที่ถูกต้องและชัดเจนอีกครั้ง'}
         onSubmit={(s) => {
@@ -798,6 +801,9 @@ export function EmailScreen({
               {tone === 'ok' ? 'ผลตรวจ: อนุมัติ' : tone === 'no' ? 'ผลตรวจ: ไม่อนุมัติ' : 'ผลตรวจ: ขอเอกสารเพิ่ม'}
             </p>
             <p className="text-body text-pretty">{mail.message}</p>
+            <p className="text-label text-pretty text-[#6b5a43]">
+              คำขอที่ส่ง: {domainLabel} · แนบ {data.docs.find((d) => d.id === submission.docId)?.label ?? 'เอกสาร'}
+            </p>
           </PixelPanel>
         </motion.div>
       ) : null}
