@@ -8,13 +8,14 @@ import { cn } from './cn'
  * โดยไม่มีกล่องคำพูด และบางหน้าอยากได้กล่องคำพูดโดยไม่มีรูป
  */
 
-export type DomeMood = 'greet' | 'cheer' | 'happy' | 'think' | 'encourage' | 'explain' | 'surprised' | 'celebrate' | 'wait'
+export type DomeMood = 'greet' | 'cheer' | 'happy' | 'think' | 'tired' | 'encourage' | 'explain' | 'surprised' | 'celebrate' | 'wait'
 
 const MOOD_ALT: Record<DomeMood, string> = {
   greet: 'โดมยกมือทักทาย',
   cheer: 'โดมชูกำปั้นให้กำลังใจ',
   happy: 'โดมชูสองมือดีใจ',
   think: 'โดมกำลังคิดอย่างสงสัย',
+  tired: 'โดมนั่งพักอย่างเหนื่อยล้า',
   encourage: 'โดมยกนิ้วให้กำลังใจ',
   explain: 'โดมกำลังชี้อธิบาย',
   surprised: 'โดมทำหน้าประหลาดใจพร้อมประกายเล็ก ๆ',
@@ -27,11 +28,13 @@ const DOME_ASSET: Record<DomeMood, string> = {
   cheer: '/dome/mascot/dome-cheer.webp',
   happy: '/dome/mascot/dome-happy.webp',
   think: '/dome/mascot/dome-think.webp',
-  encourage: '/dome/mascot/dome-encourage.webp',
+  tired: '/dome/mascot/dome-tired.webp',
+  // ชีตทางการไม่มี pose แยกสำหรับสองอารมณ์นี้ จึงใช้ pose ทางการที่ใกล้ที่สุด
+  encourage: '/dome/mascot/dome-cheer.webp',
   explain: '/dome/mascot/dome-explain.webp',
   surprised: '/dome/mascot/dome-surprised.webp',
   celebrate: '/dome/mascot/dome-celebrate.webp',
-  wait: '/dome/mascot/dome-wait.webp',
+  wait: '/dome/mascot/dome-think.webp',
 }
 
 export type DomeAvatarProps = {
