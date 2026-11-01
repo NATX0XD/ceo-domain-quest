@@ -124,8 +124,8 @@ export function AiSection() {
   )
 }
 
-export function FinalSection({ openAt, openLabel }: { openAt: string | null; openLabel: string }) {
-  const { open } = useOpenState(openAt)
+export function FinalSection({ openAt, openLabel, forceOpen = false }: { openAt: string | null; openLabel: string; forceOpen?: boolean }) {
+  const { open } = useOpenState(openAt, forceOpen)
   const ref = useRef<HTMLElement>(null)
   const [seen, setSeen] = useState(false)
   useEffect(() => {
@@ -151,11 +151,14 @@ export function FinalSection({ openAt, openLabel }: { openAt: string | null; ope
             <span className="ld-badge-dot" aria-hidden />
             {open ? 'เปิดให้เล่นแล้ว!' : `เปิดให้เล่น ${openLabel}`}
           </div>
-          <Countdown openAt={openAt} />
+          <Countdown openAt={openAt} forceOpen={forceOpen} />
           {open && (
-            <motion.a className="ld-btn" href="/join" whileTap={{ scale: 0.94 }}>
-              เข้าเล่นเลย ▶
-            </motion.a>
+            <div className="ld-launch-open-actions">
+              <motion.a className="ld-btn" href="/" whileTap={{ scale: 0.94 }}>
+                เข้าสู่เกม ▶
+              </motion.a>
+              <a className="ld-launch-teacher-link" href="/teacher">ครูเข้าสู่ระบบ</a>
+            </div>
           )}
           <p className="ld-foot">
             CEO Domain Quest · สื่อการสอนแบบเกม

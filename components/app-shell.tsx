@@ -83,6 +83,8 @@ export type AppShellProps = {
    * ของที่ยาวให้ย้ายไปอยู่ใน `<Sheet>` แทนการต่อหน้าให้ยาว
    */
   fit?: boolean
+  /** Desktop student pages get a themed world backdrop and device-like frame. */
+  student?: boolean
 }
 
 export function AppShell({
@@ -94,8 +96,9 @@ export function AppShell({
   mainClassName,
   mainLabel,
   fit = false,
+  student = width === 'app',
 }: AppShellProps) {
-  return (
+  const shell = (
     <div
       // data-* สามตัวนี้มีไว้ให้สคริปต์วัดผลจับชั้นของโครงได้ตรงตัว ไม่ต้องเดาจากคลาส
       data-app-shell=""
@@ -127,6 +130,19 @@ export function AppShell({
           {footer}
         </div>
       ) : null}
+    </div>
+  )
+
+  if (!student) return shell
+
+  return (
+    <div className="student-stage">
+      <div className="student-stage-deco" aria-hidden="true">
+        <img className="student-stage-prop student-stage-prop--one" src="/landing/deco/props-signs-palms.webp" alt="" />
+        <img className="student-stage-prop student-stage-prop--two" src="/landing/deco/props-coins-boat.webp" alt="" />
+        <img className="student-stage-prop student-stage-prop--three" src="/landing/deco/sky-beach.webp" alt="" />
+      </div>
+      {shell}
     </div>
   )
 }

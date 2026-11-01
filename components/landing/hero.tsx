@@ -22,7 +22,7 @@ function Star({ top, left, size, delay }: { top: string; left: string; size: num
   )
 }
 
-export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: string }) {
+export function Hero({ openAt, openLabel, forceOpen = false }: { openAt: string | null; openLabel: string; forceOpen?: boolean }) {
   const ref = useRef<HTMLElement>(null)
   const scrollRef = useLandingScroll()
   const reduce = useReducedMotion()
@@ -30,7 +30,7 @@ export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: 
   const bgY = useTransform(scrollYProgress, [0, 1], reduce ? ['0%', '0%'] : ['0%', '14%'])
   const cloudY = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [0, 90])
   const domeY = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [0, -36])
-  const { open } = useOpenState(openAt)
+  const { open } = useOpenState(openAt, forceOpen)
 
   return (
     <header className="ld-hero" ref={ref}>
@@ -85,13 +85,16 @@ export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: 
             {openAt && !open && (
               <div className="ld-launch-count">
                 <span className="ld-launch-label">เปิดให้เล่นในอีก</span>
-                <Countdown openAt={openAt} />
+              <Countdown openAt={openAt} forceOpen={forceOpen} />
               </div>
             )}
             {open ? (
-              <motion.a className="ld-btn ld-launch-main" href="/join" whileTap={{ scale: 0.94 }}>
-                เข้าเล่นเลย ▶
-              </motion.a>
+              <div className="ld-launch-open-actions">
+                <motion.a className="ld-btn ld-launch-main" href="/" whileTap={{ scale: 0.94 }}>
+                  เข้าสู่เกม ▶
+                </motion.a>
+                <a className="ld-launch-teacher-link" href="/teacher">ครูเข้าสู่ระบบ</a>
+              </div>
             ) : null}
           </div>
           )}

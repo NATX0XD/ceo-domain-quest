@@ -1,6 +1,6 @@
+import Link from 'next/link'
 import { AppFooter, AppShell } from '@/components/app-shell'
-import { QuestLinkButton } from '@/components/quest-link-button'
-import { SpeechBubble } from '@/components/ui'
+import { ChevronRightIcon, PlayIcon, SpeechBubble, UsersIcon } from '@/components/ui'
 import { PRODUCT_NAME_EN, PRODUCT_NAME_TH } from '@/components/product'
 
 /**
@@ -16,34 +16,39 @@ export default function LandingPage() {
   return (
     <AppShell
       fit
-      className="media-shell student-display"
+      className="media-shell student-display welcome-shell"
       footer={
-        <AppFooter className="flex flex-col gap-2 pb-2">
-          <QuestLinkButton
-            href="/join"
-            label="เข้าห้องเรียน"
-            hint="สำหรับนักเรียน ใช้รหัสห้องจากครู"
-          />
-          <QuestLinkButton
-            href="/teacher"
-            label="สำหรับครู"
-            hint="เปิดห้อง ดูผลนักเรียนแบบสด"
-            variant="secondary"
-          />
+        <AppFooter className="welcome-choices pb-3">
+          <Link href="/join" className="welcome-choice welcome-choice--primary">
+            <span className="welcome-choice-icon" aria-hidden="true"><PlayIcon width={24} height={24} fill="currentColor" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-body-lg font-extrabold">เข้าห้องเรียน</span>
+              <span className="block text-label font-semibold opacity-85">สำหรับนักเรียน</span>
+            </span>
+            <ChevronRightIcon width={24} height={24} aria-hidden />
+          </Link>
+          <Link href="/teacher" className="welcome-choice welcome-choice--secondary">
+            <span className="welcome-choice-icon" aria-hidden="true"><UsersIcon width={23} height={23} /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-body font-extrabold">สำหรับครู</span>
+              <span className="block text-label font-semibold opacity-75">เปิดห้องและดูผลนักเรียน</span>
+            </span>
+            <ChevronRightIcon width={22} height={22} aria-hidden />
+          </Link>
         </AppFooter>
       }
     >
-      <div className="media-landing-main relative isolate flex h-full min-h-0 flex-col items-center gap-2 overflow-hidden px-4 pt-3 pb-1 text-center">
-        <span className="relative z-10 shrink-0 rounded-full bg-[#FFF1D6] px-4 py-1 text-label font-bold text-[#1555C8] shadow-[0_4px_0_#6B2D12]">
+      <div className="media-landing-main welcome-main relative isolate flex h-full min-h-0 flex-col items-center gap-2 overflow-hidden px-4 pt-3 pb-1 text-center">
+        <span className="welcome-subject-sign relative z-10 shrink-0">
           21910-2002 อินเทอร์เน็ตในงานธุรกิจดิจิทัล
         </span>
-        <img src="/ui/welcome/logo.webp" alt={`${PRODUCT_NAME_EN} — โลโก้`} className="relative z-10 -mb-3 w-[min(82vw,20rem)] object-contain" />
-        <p className="relative z-10 shrink-0 rounded-full bg-[#FFF1D6] px-4 py-1 text-body font-bold text-[#1555C8] shadow-[0_4px_0_#6B2D12]">{PRODUCT_NAME_TH}</p>
-        <div className="relative z-10 min-h-0 w-full flex-1">
-          <img src="/ui/welcome/dome.webp" alt="โดม ตัวละครผู้ช่วย" className="media-landing-art mx-auto h-full w-full object-contain object-bottom" />
+        <div className="welcome-brand-lockup relative z-10">
+          <img src="/ui/welcome/logo.webp" alt={`${PRODUCT_NAME_EN} — โลโก้`} className="welcome-logo object-contain" />
+          <p className="welcome-product-name">{PRODUCT_NAME_TH}</p>
         </div>
-        <div className="relative z-10 flex w-full shrink-0 items-center gap-2 text-left">
-          <SpeechBubble speaker="dome" tail="left" className="media-panel min-w-0 flex-1 px-3 py-2">
+        <div className="welcome-dome-stage relative z-10 min-h-0 w-full flex-1">
+          <img src="/ui/welcome/dome.webp" alt="โดม ตัวละครผู้ช่วย" className="media-landing-art welcome-dome mx-auto h-full w-full object-contain object-bottom" />
+          <SpeechBubble speaker="dome" tail="none" className="welcome-dome-bubble">
             <span className="line-clamp-2 text-label font-bold text-[#6B2D12]">ขอรหัสห้อง 6 ตัวกับ PIN จากครูก่อน แล้วกดปุ่มด้านล่างได้เลยครับ</span>
           </SpeechBubble>
         </div>

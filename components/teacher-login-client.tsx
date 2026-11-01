@@ -45,6 +45,7 @@ export function TeacherLoginClient() {
 
   return (
     <AppShell
+      student={false}
       footer={
         <AppFooter>
           <Button

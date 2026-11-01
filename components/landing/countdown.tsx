@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 export type OpenState = { ready: boolean; open: boolean; left: number | null }
 
 /** นับถอยหลังถึง NEXT_PUBLIC_OPEN_AT — ฝั่งเซิร์ฟเวอร์ยังไม่รู้เวลา จึง ready=false จนกว่าจะ mount (กัน hydration ไม่ตรง) */
-export function useOpenState(openAt: string | null): OpenState {
+export function useOpenState(openAt: string | null, forceOpen = false): OpenState {
   const target = openAt ? new Date(openAt).getTime() : NaN
   const [now, setNow] = useState<number | null>(null)
   useEffect(() => {
@@ -15,6 +15,7 @@ export function useOpenState(openAt: string | null): OpenState {
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
   }, [target])
+  if (forceOpen) return { ready: true, open: true, left: 0 }
   if (Number.isNaN(target)) return { ready: true, open: false, left: null }
   if (now === null) return { ready: false, open: false, left: null }
   const left = Math.max(0, target - now)
@@ -23,8 +24,8 @@ export function useOpenState(openAt: string | null): OpenState {
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-export function Countdown({ openAt }: { openAt: string | null }) {
-  const { ready, open, left } = useOpenState(openAt)
+export function Countdown({ openAt, forceOpen = false }: { openAt: string | null; forceOpen?: boolean }) {
+  const { ready, open, left } = useOpenState(openAt, forceOpen)
   if (!openAt || open) return null
   const s = left === null ? null : Math.floor(left / 1000)
   const cells = [

@@ -21,18 +21,18 @@ export function formatOpenAt(iso: string | undefined): { openAt: string | null; 
   return { openAt: d.toISOString(), label: `${label} น.` }
 }
 
-export function Landing({ openAtEnv }: { openAtEnv?: string }) {
+export function Landing({ openAtEnv, forceOpen = false }: { openAtEnv?: string; forceOpen?: boolean }) {
   const { openAt, label } = formatOpenAt(openAtEnv)
   return (
     <MotionRoot>
       <main className="ld">
-        <Hero openAt={openAt} openLabel={label} />
+        <Hero openAt={openAt} openLabel={label} forceOpen={forceOpen} />
         <section className="ld-landscape ld-landscape--beach"><DecoLayer scene="sky" /><Fade top="#d6f1fd" bottom="#f4dfb2" /><MissionsSection /></section>
         <section className="ld-landscape ld-landscape--island"><DecoLayer scene="island" tone="purple" /><Fade top="#f4dfb2" bottom="#a9dcf0" /><HowSection /></section>
         <TourSection />
         <TeacherSection />
         <AiSection />
-        <FinalSection openAt={openAt} openLabel={label} />
+        <FinalSection openAt={openAt} openLabel={label} forceOpen={forceOpen} />
       </main>
       <ManualWarp />
     </MotionRoot>
