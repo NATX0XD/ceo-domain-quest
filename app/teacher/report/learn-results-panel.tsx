@@ -178,14 +178,26 @@ export function LearnResultsPanel({
             <ul className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-2">
               {data.missions.map((m) => (
                 <li key={m.missionId} className="rounded-xl bg-surface-sunken p-3">
+                  {(() => {
+                    const adaptive = m.missionId === 'm1' || m.missionId === 'm2'
+                    return (
+                      <>
                   <p className="text-label font-bold text-ink">{title(m.missionId)}</p>
-                  <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <Fact label="เช็กพื้นฐานแล้ว" value={`${m.warmedUp} คน · เฉลี่ย ${n(m.warmupAvg)}/3`} />
-                    <Fact label="เลือกตามที่แนะนำ" value={`${m.followedRecommendation} คน`} />
-                    <Fact label="เลือกต่างจากที่แนะนำ" value={`${m.choseDifferent} คน`} />
-                    <Fact label="เรียนครบเกณฑ์" value={`${m.done} คน · ส่งเฉลี่ย ${n(m.attemptsAvg)} ครั้ง`} />
-                  </dl>
-                  <div className="mt-2 overflow-x-auto">
+                  {adaptive ? (
+                    <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <Fact label="เช็กพื้นฐานแล้ว" value={`${m.warmedUp} คน · เฉลี่ย ${n(m.warmupAvg)}/3`} />
+                      <Fact label="เลือกตามที่แนะนำ" value={`${m.followedRecommendation} คน`} />
+                      <Fact label="เลือกต่างจากที่แนะนำ" value={`${m.choseDifferent} คน`} />
+                      <Fact label="เรียนครบเกณฑ์" value={`${m.done} คน · ส่งเฉลี่ย ${n(m.attemptsAvg)} ครั้ง`} />
+                    </dl>
+                  ) : (
+                    <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      <Fact label="คะแนนเกมเฉลี่ย" value={n(m.doneAvgByMode.do)} />
+                      <Fact label="ผ่านเกณฑ์" value={`${m.done} คน`} />
+                      <Fact label="ส่งเกมเฉลี่ย" value={`${n(m.attemptsAvg)} ครั้ง`} />
+                    </dl>
+                  )}
+                  {adaptive ? <div className="mt-2 overflow-x-auto">
 <table className="w-full min-w-[480px] text-left text-label [&_td]:whitespace-nowrap [&_td]:pr-3 [&_th]:whitespace-nowrap [&_th]:pr-3">
                     <thead>
                       <tr className="text-note text-ink-muted">
@@ -208,7 +220,10 @@ export function LearnResultsPanel({
                       ))}
                     </tbody>
                   </table>
-                  </div>
+                  </div> : null}
+                      </>
+                    )
+                  })()}
                 </li>
               ))}
             </ul>
@@ -346,20 +361,28 @@ function MissionTable({
             <p className="text-label font-bold text-ink">{title(m.missionId)}</p>
             <p className={cn('text-label font-bold', m.done ? 'text-quest-700' : 'text-ink-muted')}>{statusText(m)}</p>
           </div>
-          <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Fact label="เช็กพื้นฐาน" value={m.warmupScore === null ? '-' : `${m.warmupScore}/${m.warmupTotal ?? 3}`} />
-            <Fact label="ระบบแนะนำ" value={modeText(m.recommended)} />
-            <Fact
-              label="เลือก"
-              value={`${modeText(m.chosen)}${m.followed === false ? ' (เลือกเอง)' : ''}${
-                m.modeSwitches > 0 ? ` · เปลี่ยน ${m.modeSwitches} ครั้ง` : ''
-              }`}
-            />
-            <Fact
-              label="ส่งตรวจ"
-              value={`${m.attempts} ครั้ง${m.bestScore !== null ? ` · สูงสุด ${n(m.bestScore)}` : ''}`}
-            />
-          </dl>
+          {m.missionId === 'm1' || m.missionId === 'm2' ? (
+            <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Fact label="เช็กพื้นฐาน" value={m.warmupScore === null ? '-' : `${m.warmupScore}/${m.warmupTotal ?? 3}`} />
+              <Fact label="ระบบแนะนำ" value={modeText(m.recommended)} />
+              <Fact
+                label="เลือก"
+                value={`${modeText(m.chosen)}${m.followed === false ? ' (เลือกเอง)' : ''}${
+                  m.modeSwitches > 0 ? ` · เปลี่ยน ${m.modeSwitches} ครั้ง` : ''
+                }`}
+              />
+              <Fact
+                label="ส่งตรวจ"
+                value={`${m.attempts} ครั้ง${m.bestScore !== null ? ` · สูงสุด ${n(m.bestScore)}` : ''}`}
+              />
+            </dl>
+          ) : (
+            <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <Fact label="คะแนนเกม" value={m.bestScore === null ? '-' : n(m.bestScore)} />
+              <Fact label="สถานะเกม" value={m.done ? 'ผ่านเกณฑ์' : 'ยังไม่ผ่าน'} />
+              <Fact label="ส่งเกม" value={`${m.attempts} ครั้ง`} />
+            </dl>
+          )}
           {m.latestAnswer ? <LatestAnswer answer={m.latestAnswer} prompts={prompts[m.missionId] ?? {}} /> : null}
         </li>
       ))}

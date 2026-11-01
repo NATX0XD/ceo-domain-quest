@@ -1,6 +1,6 @@
 # Learn Path (ดู / อ่าน / ลงมือทำ) — สเปกร่วมสำหรับคนเขียนโค้ด
 
-เป้า: ก่อนทำภารกิจ m1-m4 ผู้เรียนทำ "เช็กพื้นฐาน" 3 ข้อ ระบบแนะนำวิธีเรียน 1 ใน 3 (ดู / อ่าน / ลงมือทำ) ผู้เรียนเลือกเอง แล้วเรียนตามวิธีนั้นจนผ่านเกิน 60% จากนั้นจึงไปจอภารกิจเดิม (ข้อตรวจ `/api/mission/[id]/check`) ครูเห็นผลทั้งหมดในแผงครู
+เป้า: m1/m2 ใช้เช็กพื้นฐาน 3 ข้อ ระบบแนะนำวิธีเรียน 1 ใน 3 (ดู / อ่าน / ลงมือทำ) ผู้เรียนเลือกเอง แล้วเรียนตามวิธีนั้นจนผ่านเกิน 60% ส่วน m3/m4 เป็น single-mode `do` เข้าเกมจาก intro โดยตรง ไม่มี warmup, recommendation, choose, watch หรือ read จากนั้นจึงไปจอภารกิจเดิม ครูเห็นผลทั้งหมดในแผงครู
 
 ห้ามแก้โครงสร้างฐานข้อมูล ห้าม db reset ใช้ตาราง `events` (ผ่าน `logEvent`) และ `switchLearningRoute` ที่มีอยู่
 
@@ -21,6 +21,7 @@
   "paths": [
     {
       "missionId": "m1",
+      "modes": ["watch", "read", "do"],
       "story": "ฉากและตัวละครของด่าน (1-2 ประโยค)",
       "warmup": [ { "id": "m1-w1", "question": "...", "choices": ["ก","ข","ค","ง"] } ],   // 3 ข้อพอดี
       "watch": {
@@ -35,6 +36,7 @@
       },
       "do": { "kind": "game|counter|registrar", "title": "...", "instruction": "..." }
     }
+    // m3/m4 ใช้ modes:["do"] และมี story + do เท่านั้นใน runtime
   ]
 }
 ```
@@ -45,7 +47,7 @@
   "paths": [
     {
       "missionId": "m1",
-      "warmup": { "m1-w1": 2 },                       // answerIndex
+      "warmup": { "m1-w1": 2 },                       // adaptive paths เท่านั้น
       "rubrics": {
         "m1-wq1": {
           "modelAnswer": "คำตอบตัวอย่าง",
@@ -67,12 +69,12 @@
 
 | action | body | คืนค่า | บันทึก |
 |---|---|---|---|
-| `warmup` | `{ answers: number[3] }` | `{ score, total:3, recommended:'watch'|'read'|'do', reason, perQuestion: boolean[] }` | `learn-warmup` |
-| `choose` | `{ mode }` | `{ ok:true }` | `switchLearningRoute(clip/card/game, {missionId, chosenBy:'student'})` + `learn-choose` (มี recommended, followed) |
+| `warmup` | `{ answers: number[3] }` (m1/m2 เท่านั้น) | `{ score, total:3, recommended:'watch'|'read'|'do', reason, perQuestion: boolean[] }` | `learn-warmup` |
+| `choose` | `{ mode }` (m1/m2 เท่านั้น) | `{ ok:true }` | `switchLearningRoute(clip/card/game, {missionId, chosenBy:'student'})` + `learn-choose` (มี recommended, followed) |
 | `answer` | `{ mode:'watch'|'read', answers: Record<questionId,string> }` | `{ score, passed, perQuestion:[{id,score,feedback,missing:string[]}] }` | `learn-answer` และถ้าผ่าน `learn-done` |
 | `do` | `{ payload }` | `{ score, passed, detail }` | ให้ scorer ของแต่ละด่านตัดสิน บันทึก `learn-do` และถ้าผ่าน `learn-done` |
 
-กติกาแนะนำ: คะแนนเช็กพื้นฐาน 0-1 = ดู, 2 = อ่าน, 3 = ลงมือทำ เป็นข้อเสนอเท่านั้น ทุกวิธีกดได้
+กติกาแนะนำ: คะแนนเช็กพื้นฐาน 0-1 = ดู, 2 = อ่าน, 3 = ลงมือทำ เป็นข้อเสนอเท่านั้น ทุกวิธีกดได้ เฉพาะ m1/m2; m3/m4 ไม่มีการแนะนำและส่งเกมด้วย `action:'do'` โดยตรง
 
 ## Scorer ฝั่งเซิร์ฟเวอร์ของเกมลงมือทำ
 

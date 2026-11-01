@@ -38,6 +38,8 @@ const CardSortPublicSchema = z.object({
 
 const PathSchema = z.object({
   missionId: z.string().min(1),
+  /** m1/m2 ใช้ adaptive sub-modes; m3/m4 ใช้เกมเดียวตรง ๆ */
+  modes: z.array(z.enum(LEARN_MODES)).min(1).default(['watch', 'read', 'do']),
   story: z.string().min(1),
   warmup: z
     .array(z.object({ id: z.string().min(1), question: z.string().min(1), choices: z.array(z.string().min(1)).length(4) }))
@@ -98,6 +100,10 @@ const learnPaths: LearnPath[] = z.object({ paths: z.array(PathSchema) }).parse(l
 
 export function findLearnPath(missionId: string): LearnPath | undefined {
   return learnPaths.find((p) => p.missionId === missionId)
+}
+
+export function isAdaptiveLearnPath(path: LearnPath): boolean {
+  return path.modes.length > 1
 }
 
 /* ------------------------------------------------------------------ เฉลย */
@@ -161,6 +167,7 @@ export function recommendMode(score: number): { mode: LearnMode; reason: string 
 }
 
 export async function scoreWarmup(path: LearnPath, answers: number[]): Promise<WarmupResult> {
+  if (!isAdaptiveLearnPath(path)) throw new Error(`learn-path ${path.missionId} ไม่มี warmup`)
   const key = await loadAnswers(path.missionId)
   const perQuestion = path.warmup.map((q, i) => key.warmup[q.id] === answers[i])
   const score = perQuestion.filter(Boolean).length

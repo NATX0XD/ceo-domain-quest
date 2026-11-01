@@ -62,6 +62,23 @@ describe('summarizeStudentLearn', () => {
     ])
     expect(out[0]).toMatchObject({ doneScore: 90, doneMode: 'read', doneAt: at(0) })
   })
+
+  it('m3/m4 ไม่บันทึก followed แม้มี event เก่าหรือ event ปลอม', () => {
+    const out = summarizeStudentLearn([
+      ev(0, 'learn-warmup', { missionId: 'm3', score: 3, total: 3, recommended: 'do' }),
+      ev(1, 'learn-choose', { missionId: 'm3', mode: 'do', recommended: 'do', followed: true }),
+      ev(2, 'learn-do', { missionId: 'm3', mode: 'do', score: 80 }),
+      ev(3, 'learn-done', { missionId: 'm3', mode: 'do', score: 80 }),
+    ])
+    const [m3] = out
+    expect(m3).toMatchObject({ recommended: 'do', chosen: 'do', followed: true })
+    expect(summarizeClassLearn([{ studentId: 's', nickname: 'น', missions: out }])[0]).toMatchObject({
+      followedRecommendation: 0,
+      choseDifferent: 0,
+      doneByMode: { watch: 0, read: 0, do: 1 },
+      doneAvgByMode: { watch: null, read: null, do: 80 },
+    })
+  })
 })
 
 describe('summarizeStudentLearn latestAnswer', () => {

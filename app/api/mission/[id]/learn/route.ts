@@ -9,6 +9,7 @@ import {
   LEARN_MODES,
   MODE_TO_ROUTE,
   findLearnPath,
+  isAdaptiveLearnPath,
   loadLearnState,
   recentGameSolved,
   scoreOpenAnswers,
@@ -67,6 +68,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
 
   try {
     if (body.action === 'warmup') {
+      if (!isAdaptiveLearnPath(path)) return errorResponse('single-mode', 'ภารกิจนี้เข้าเกมโดยตรง ไม่มีช่วงเช็กพื้นฐาน', 400)
       const result = await scoreWarmup(path, body.answers)
       await logEvent(studentId, LEARN_EVENTS.warmup, {
         missionId,
@@ -80,6 +82,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     }
 
     if (body.action === 'choose') {
+      if (!isAdaptiveLearnPath(path)) return errorResponse('single-mode', 'ภารกิจนี้มีโหมดลงมือทำเดียว ไม่ต้องเลือกวิธีเรียน', 400)
       const state = await loadLearnState(studentId, missionId)
       const route = MODE_TO_ROUTE[body.mode]
       const before = await getProfile(studentId)
@@ -96,6 +99,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     }
 
     if (body.action === 'answer') {
+      if (!isAdaptiveLearnPath(path)) return errorResponse('single-mode', 'ภารกิจนี้ไม่มีโหมดดูหรืออ่าน', 400)
       // เก็บเฉพาะข้อที่มีอยู่จริงในวิธีเรียนนี้ กันส่งคีย์แปลก ๆ มาถมตาราง events
       const answers = Object.fromEntries(
         path[body.mode].questions.map((q) => [q.id, body.answers[q.id] ?? '']),

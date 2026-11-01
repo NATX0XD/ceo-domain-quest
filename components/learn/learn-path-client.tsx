@@ -116,9 +116,12 @@ export function LearnPathClient({
   registrarData,
 }: LearnPathClientProps) {
   const router = useRouter()
+  const singleMode = path.modes.length === 1 && path.modes[0] === 'do'
 
   // กลับมาเปิดหน้าใหม่ = ทำต่อจากจุดเดิมที่บันทึกไว้
-  const [step, setStep] = useState<Step>(() => state.chosen ?? (state.warmup ? 'result' : 'intro'))
+  const [step, setStep] = useState<Step>(() =>
+    singleMode ? (state.chosen === 'do' ? 'do' : 'intro') : (state.chosen ?? (state.warmup ? 'result' : 'intro')),
+  )
   const [mode, setMode] = useState<LearnModeId | null>(state.chosen)
   const [picked, setPicked] = useState<LearnModeId | null>(state.chosen ?? state.warmup?.recommended ?? null)
 
@@ -181,8 +184,13 @@ export function LearnPathClient({
         const savedStep = steps.find((x) => x === saved.step)
         const needsMode =
           savedStep === 'watch' || savedStep === 'read' || savedStep === 'questions' || savedStep === 'do'
-        if (savedStep && (!needsMode || savedMode) && (savedStep !== 'result' || state.warmup || warm)) {
-          setStep(savedStep)
+        const usableSavedStep = singleMode
+          ? savedStep === 'intro' || savedStep === 'do'
+            ? savedStep
+            : null
+          : savedStep
+        if (usableSavedStep && (!needsMode || savedMode) && (usableSavedStep !== 'result' || state.warmup || warm)) {
+          setStep(usableSavedStep)
           setMode(savedMode)
           if (typeof saved.brief === 'boolean') setBrief(saved.brief)
           if (typeof saved.qIdx === 'number') setQIdx(Math.max(0, Math.min(questions.length - 1, saved.qIdx)))
@@ -194,7 +202,7 @@ export function LearnPathClient({
           if (Array.isArray(saved.warmAnswers) && saved.warmAnswers.length === path.warmup.length) {
             setWarmAnswers(saved.warmAnswers as (number | null)[])
           }
-          if (savedStep === 'watch') setAutoPlay(false)
+          if (usableSavedStep === 'watch') setAutoPlay(false)
         }
       }
     } catch {
@@ -236,7 +244,7 @@ export function LearnPathClient({
     setMode(m)
     setAnswerResult(null)
     setDoResult(null)
-    setBrief(true)
+    setBrief(!singleMode)
     setQIdx(0)
     setQPhase('ask')
     setSuppTried(0)
@@ -375,10 +383,10 @@ export function LearnPathClient({
       <Button
         size="lg"
         fullWidth
-        onClick={() => go('warmup')}
+        onClick={() => (singleMode ? openMode('do') : go('warmup'))}
         trailingIcon={<ChevronRightIcon width={22} height={22} />}
       >
-        เริ่มเช็กพื้นฐาน 3 ข้อ
+        {singleMode ? 'เข้าเกมภารกิจ' : 'เริ่มเช็กพื้นฐาน 3 ข้อ'}
       </Button>
     )
   } else if (step === 'warmup') {
@@ -613,8 +621,9 @@ export function LearnPathClient({
   }
   /* --------------------------------------------------------------- เนื้อหา */
 
-  const stage = stageOf(step)
-  const canSwitch = (step === 'watch' || step === 'read' || step === 'questions' || step === 'do') && !done
+  const stage = singleMode ? 0 : stageOf(step)
+  const stageLabels = singleMode ? (['เกม'] as const) : STAGES
+  const canSwitch = !singleMode && (step === 'watch' || step === 'read' || step === 'questions' || step === 'do') && !done
   const dark = theme.dark
   const doBrief = step === 'do' && brief && path.do.kind === 'game'
   /** ด่าน 2: ใช้ชื่อส่วนให้ตรงกับแชต (TLD / SLD / Subdomain) */
@@ -656,6 +665,7 @@ export function LearnPathClient({
 
   function back() {
     if (step === 'intro') return router.back()
+    if (singleMode && step === 'do') return go('intro')
     if (step === 'warmup') return warmIdx > 0 ? setWarmIdx((i) => i - 1) : go('intro')
     if (step === 'result') return go('intro')
     if ((step === 'watch' || step === 'read' || step === 'do') && brief) return go('result')
@@ -703,7 +713,7 @@ export function LearnPathClient({
       onBack={step === 'done' ? undefined : back}
       score={score}
       stage={stage}
-      stageCount={STAGES.length}
+      stageCount={stageLabels.length}
       menu={menu}
       dock={footer}
       flush={fullBleed}
@@ -724,7 +734,7 @@ export function LearnPathClient({
           className={cn('mx-auto flex w-full flex-col gap-4', fullBleed ? 'min-h-full' : 'max-w-md')}
         >
           <span className="sr-only" role="list" aria-label="ขั้นตอนการเรียน">
-            {STAGES.map((label, i) => (
+            {stageLabels.map((label, i) => (
               <span key={label} role="listitem" aria-current={i === stage ? 'step' : undefined}>
                 {label}
               </span>
@@ -755,9 +765,11 @@ export function LearnPathClient({
                 </p>
                 <h2 className={cn('mt-1 text-title font-extrabold', ink)}>{missionTitle}</h2>
                 <p className={cn('mt-3 text-body-lg', ink)}>{path.story}</p>
-                <p className={cn('mt-3 text-body', inkMuted)}>
-                  ก่อนเริ่ม โดมขอเช็กพื้นฐาน 3 ข้อ ไม่มีคะแนนหัก แค่ช่วยให้รู้ว่าวิธีเรียนแบบไหนเหมาะกับเราตอนนี้
-                </p>
+                {!singleMode ? (
+                  <p className={cn('mt-3 text-body', inkMuted)}>
+                    ก่อนเริ่ม โดมขอเช็กพื้นฐาน 3 ข้อ ไม่มีคะแนนหัก แค่ช่วยให้รู้ว่าวิธีเรียนแบบไหนเหมาะกับเราตอนนี้
+                  </p>
+                ) : null}
               </GlassCard>
             </>
           ) : null}

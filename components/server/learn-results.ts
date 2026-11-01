@@ -89,6 +89,10 @@ export interface MissionLearnSummary {
   attemptsAvg: number | null
 }
 
+function isAdaptiveMission(missionId: string): boolean {
+  return missionId === 'm1' || missionId === 'm2'
+}
+
 function bag(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
 }
@@ -250,8 +254,8 @@ export function summarizeClassLearn(students: readonly StudentLearnResult[]): Mi
         if (m.warmupScore !== null) warmups.push(m.warmupScore)
         if (m.recommended) recommended[m.recommended] += 1
         if (m.chosen) chosen[m.chosen] += 1
-        if (m.followed === true) followed += 1
-        if (m.followed === false) different += 1
+        if (isAdaptiveMission(m.missionId) && m.followed === true) followed += 1
+        if (isAdaptiveMission(m.missionId) && m.followed === false) different += 1
         if (m.attempts > 0) attempts.push(m.attempts)
         if (m.done && m.doneMode) {
           done += 1

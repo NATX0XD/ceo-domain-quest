@@ -800,6 +800,16 @@ describe('เนื้อหาเส้นทางเรียน (learn-*) �
     )
   })
 
+  it('m3/m4 เป็น single-mode do และยังคงเกณฑ์เกมเดิม', () => {
+    for (const id of ['m3', 'm4']) {
+      const path = learnPathsJson.paths.find((p) => p.missionId === id) as { modes?: string[]; do?: { kind?: string } }
+      expect(path.modes).toEqual(['do'])
+      expect(path.do?.kind).toBe(id === 'm3' ? 'counter' : 'registrar')
+    }
+    expect(JSON.stringify(learnPathsJson.paths.find((p) => p.missionId === 'm3')?.warmup)).toContain('m3-w1')
+    expect(JSON.stringify(learnPathsJson.paths.find((p) => p.missionId === 'm4')?.warmup)).toContain('m4-w1')
+  })
+
   it('m1-wq1 ย้อนดูหลักฐานตั้งแต่การกรอกชื่อเว็บถึงการค้นหาที่อยู่', () => {
     const m1 = learnPathsJson.paths.find((path) => path.missionId === 'm1')!
     const question = m1.watch.questions.find((item) => item.id === 'm1-wq1') as unknown as {

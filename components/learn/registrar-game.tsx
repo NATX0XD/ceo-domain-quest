@@ -216,8 +216,8 @@ export function RegistrarGame({ data, onSubmit, onStep, card }: Props) {
               </p>
               {!card ? <p className="text-label text-[#6b5a43]">ไม่มีบัตรจากด่าน 3 จึงใช้ธุรกิจตัวอย่างแทน</p> : null}
             </PixelPanel>
-            <GameButton variant="gold" className="w-full" onClick={() => setView('board')}>
-              เริ่มเดินเรื่อง
+            <GameButton variant="gold" className="w-full" onClick={() => setView('play')}>
+              เริ่มค้นชื่อจริง
             </GameButton>
           </div>
         </div>
@@ -247,6 +247,25 @@ export function RegistrarGame({ data, onSubmit, onStep, card }: Props) {
             className="flex min-h-0 flex-1 flex-col"
           >
             {view === 'board' ? <RouteBoard data={data} placed={placed} placing={placing} hint={hint} onPlace={(id) => void place(id)} /> : null}
+
+            {view === 'play' && !current ? (
+              <SearchScreen
+                data={data}
+                card={myCard}
+                check={check}
+                takenEvent={ev('search')}
+                takenDone={Boolean(events['ev-taken'])}
+                onTakenDone={(choice, correct) => record('ev-taken', choice, correct)}
+                onSearched={() => setSearched(true)}
+                onPick={(name, tld) => {
+                  setDomain({ name, tld })
+                  // R02/R03 happen before the R04 route board; entering the registrar
+                  // and opening its menu are implicit in that hand-off.
+                  setPlaced(['st-account', 'st-menu', 'st-search'])
+                  setView('board')
+                }}
+              />
+            ) : null}
 
             {view === 'play' && current ? (
               <div className="flex min-h-0 flex-1 flex-col">
