@@ -954,6 +954,7 @@ export function LearnPathClient({
                     >
                       <LearnScenePanel
                         visual={scene.visual}
+                        image={scene.image}
                         caption={scene.caption}
                         domeSpeaking={scene.speaker === 'โดม'}
                         m2={theme.id === 'm2'}

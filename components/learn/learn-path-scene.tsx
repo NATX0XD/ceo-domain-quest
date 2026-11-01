@@ -124,11 +124,13 @@ const ART: Record<string, () => ReactNode> = {
 
 export function LearnScenePanel({
   visual,
+  image,
   caption,
   domeSpeaking,
   m2 = false,
 }: {
   visual?: string
+  image?: string
   caption?: string
   domeSpeaking: boolean
   m2?: boolean
@@ -145,18 +147,23 @@ export function LearnScenePanel({
       className={cn(
         'relative aspect-[16/10] w-full overflow-hidden rounded-[24px] shadow-soft-2 ring-1 ring-inset',
         TONE[key],
-        m2 && 'bg-[#f9ddaa]'
+        m2 && 'aspect-[9/16] bg-[#f9ddaa]'
       )}
     >
-      {m2 ? (
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={image} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover" />
+      ) : m2 ? (
         // ภาพเป็นฉากประกอบเท่านั้น; ข้อความและปุ่มยัง render เป็น HTML ด้านนอกภาพ
         // eslint-disable-next-line @next/next/no-img-element
         <img src="/ui/m2/bg-bakery.webp" alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover" />
       ) : null}
-      {m2 ? <div className="absolute inset-0 bg-[#5d321d]/20" aria-hidden /> : null}
-      <svg viewBox="0 0 320 200" className="absolute inset-0 h-full w-full" aria-hidden>
-        <Art />
-      </svg>
+      {!image && m2 ? <div className="absolute inset-0 bg-[#5d321d]/20" aria-hidden /> : null}
+      {!image ? (
+        <svg viewBox="0 0 320 200" className="absolute inset-0 h-full w-full" aria-hidden>
+          <Art />
+        </svg>
+      ) : null}
       {domeBig ? (
         <Float className="absolute inset-0 flex items-center justify-center">
           <DomeAvatar mood="greet" size={120} decorative />

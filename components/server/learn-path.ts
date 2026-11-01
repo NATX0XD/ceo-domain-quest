@@ -58,6 +58,7 @@ const PathSchema = z.object({
           line: z.string().min(1),
           caption: z.string().optional(),
           visual: z.string().optional(),
+          image: z.string().startsWith('/learn/').optional(),
         }),
       )
       .min(1),
