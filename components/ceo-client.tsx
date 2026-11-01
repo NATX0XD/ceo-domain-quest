@@ -831,7 +831,7 @@ export function CeoClient({
             className="mt-2 flex min-h-0 flex-1 flex-col gap-1.5"
           >
             {field.options.map((option) => (
-              <li key={option.value} className="min-h-0 flex-1">
+              <li key={option.value}>
                 <ChoiceCard
                   label={option.label}
                   selected={value === option.value}
@@ -1069,7 +1069,7 @@ export function CeoClient({
             </p>
             <ul className="flex min-h-0 flex-1 flex-col gap-1.5">
               {rubric.map((row, index) => (
-                <li key={row.id} className="min-h-0 flex-1">
+                <li key={row.id}>
                   <ChoiceCard
                     marker={String(index + 1)}
                     label={row.dimension}

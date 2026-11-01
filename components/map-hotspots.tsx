@@ -52,7 +52,7 @@ export function MapHotspots({ imageState, missions, boss }: MapHotspotsProps) {
 
   return (
     <div className="map-page">
-      <ToastViewport>
+      <ToastViewport className="map-toast-viewport">
         {toast ? <Toast message="ผ่านภารกิจก่อนหน้าก่อนนะ" tone="info" onDismiss={() => setToast(false)} /> : null}
       </ToastViewport>
 

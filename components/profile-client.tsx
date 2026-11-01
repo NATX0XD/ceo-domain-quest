@@ -269,7 +269,7 @@ export function ProfileClient({
       className="profile-world-shell flex h-full min-h-0 flex-col gap-3 pb-6"
       footer={
         <AppFooter>
-          <FlowNote state={flow.state} className="mb-2" />
+          {flow.state.kind !== 'done' ? <FlowNote state={flow.state} className="mb-2" /> : null}
           {stepKey === 'card' ? (
             <Link
               href="/mission/m1"
@@ -388,7 +388,7 @@ export function ProfileClient({
           </h1>
           {suggestion ? (
             <DomeTip mood="greet">
-              ระบบเสนอระดับ {suggestion.suggestedLevel} เพราะ {suggestion.levelReason} · เปลี่ยนเองได้ทุกเมื่อ
+              ระบบเสนอระดับ {suggestion.suggestedLevel} จากคำตอบของเรา · เปลี่ยนเองได้ทุกเมื่อ
             </DomeTip>
           ) : null}
           <ul

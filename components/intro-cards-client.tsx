@@ -14,6 +14,12 @@ import { Button, ChevronRightIcon, cn } from '@/components/ui'
  */
 const SEEN_KEY = 'dbq_intro_seen'
 
+const CARD_ICONS: Record<string, { src: string; alt: string }> = {
+  'intro-1': { src: '/icons/3d/school.webp', alt: 'อาคารบริษัท' },
+  'intro-2': { src: '/icons/3d/gear.webp', alt: 'เครื่องมือช่วยเรียน' },
+  'intro-3': { src: '/icons/3d/bullseye.webp', alt: 'เป้าหมาย' },
+}
+
 export interface IntroCard {
   id: string
   icon: string
@@ -96,12 +102,14 @@ export function IntroCardsClient({
           <img src="/ui/welcome/dome.webp" alt="" className="intro-layer intro-layer-dome" />
         </div>
         <div className="intro-copy-panel">
-        <p className="text-label font-bold text-brand-700">
-          {index + 1}/{cards.length}
+        <p className="sr-only" aria-live="polite">
+          การ์ดที่ {index + 1} จาก {cards.length}
         </p>
-        <p aria-hidden="true" className="text-[3rem] leading-none">
-          {card.icon}
-        </p>
+        <img
+          src={CARD_ICONS[card.id]?.src ?? '/icons/3d/sparkles.webp'}
+          alt={CARD_ICONS[card.id]?.alt ?? card.icon}
+          className="mx-auto size-14 object-contain"
+        />
         <h1 className="text-display font-extrabold text-balance text-ink">{card.title}</h1>
         <div className="flex max-w-[26rem] flex-col gap-2">
           {card.lines.map((line) => (
