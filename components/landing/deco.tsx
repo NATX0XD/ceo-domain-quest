@@ -38,7 +38,5 @@ export function DecoLayer({ scene = 'sky', tone = 'bright' }: DecoProps) {
     <div className="ld-deco-scene" />
     <img className="ld-deco-props ld-deco-props--one" data-deco-float src="/landing/deco/props-coins-boat.webp" alt="" loading="lazy" />
     <img className="ld-deco-props ld-deco-props--two" data-deco-float src="/landing/deco/props-signs-palms.webp" alt="" loading="lazy" />
-    <span className="ld-deco-orb ld-deco-orb--a" data-deco-float data-deco-reveal />
-    <span className="ld-deco-orb ld-deco-orb--b" data-deco-float data-deco-reveal />
   </div>
 }
