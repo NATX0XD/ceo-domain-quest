@@ -1,6 +1,7 @@
 import './landing.css'
 import { Hero } from './hero'
 import { DecoLayer, Fade } from './deco'
+import { ManualWarp } from './manual-warp'
 import { MotionRoot } from './reveal'
 import { AiSection, FinalSection, HowSection, MissionsSection, TeacherSection, TourSection } from './sections'
 
@@ -33,6 +34,7 @@ export function Landing({ openAtEnv }: { openAtEnv?: string }) {
         <AiSection />
         <FinalSection openAt={openAt} openLabel={label} />
       </main>
+      <ManualWarp />
     </MotionRoot>
   )
 }

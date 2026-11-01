@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { PointerEvent } from 'react'
 import './manual.css'
 
 const studentSteps = [
@@ -30,6 +31,63 @@ const teacherSteps = [
   ['ตั้งค่าห้องเรียน', 'เปิดแบบทดสอบก่อน/หลังเรียน ตั้งค่าห้อง เปิดหรือปิดผู้ช่วย AI และโหมดสาธิต', '/manual/teacher-captures/settings.png'],
 ]
 
+function tilt(e: PointerEvent<HTMLElement>) {
+  if (e.pointerType !== 'mouse') return
+  const el = e.currentTarget
+  const r = el.getBoundingClientRect()
+  el.style.setProperty('--rx', `${((e.clientY - r.top) / r.height - 0.5) * -10}deg`)
+  el.style.setProperty('--ry', `${((e.clientX - r.left) / r.width - 0.5) * 14}deg`)
+  el.style.setProperty('--gx', `${((e.clientX - r.left) / r.width) * 100}%`)
+  el.style.setProperty('--gy', `${((e.clientY - r.top) / r.height) * 100}%`)
+}
+function untilt(e: PointerEvent<HTMLElement>) {
+  for (const k of ['--rx', '--ry', '--gx', '--gy']) e.currentTarget.style.removeProperty(k)
+}
+
+const SECTIONS = [
+  ['overview', 'ภาพรวมระบบ', 'เริ่มจากตรงนี้เลย!', 'greet'],
+  ['student', 'นักเรียน', 'ทำตามทีละขั้นนะ', 'explain'],
+  ['teacher', 'ครู', 'ครูดูได้ทั้งห้อง', 'think'],
+  ['help', 'ขอความช่วยเหลือ', 'ติดตรงไหนเรียกโดม!', 'cheer'],
+] as const
+
+/** หมอกคลายตอนเข้า + เผยเนื้อหาตามสกรอล์ + สารบัญติดตาม + โดมโผล่ + พารัลแลกซ์หัวหน้า */
+function useManualMotion(root: React.RefObject<HTMLElement | null>, setActive: (id: string) => void, setScrolled: (p: number) => void) {
+  useLayoutEffect(() => {
+    const page = root.current
+    if (!page) return
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const warped = sessionStorage.getItem('manual-warp') === '1'
+    sessionStorage.removeItem('manual-warp')
+    page.dataset.arrive = reduce ? 'none' : warped ? 'warp' : 'direct'
+    const items = Array.from(page.querySelectorAll<HTMLElement>('.manual-step, .manual-section-head, .manual-overview, .manual-help'))
+    let reveal: IntersectionObserver | null = null
+    if (reduce) items.forEach((el) => el.classList.add('is-in'))
+    else {
+      items.forEach((el) => el.classList.add('will-reveal'))
+      reveal = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('is-in'); reveal?.unobserve(en.target) } }), { root: page, rootMargin: '0px 0px -12% 0px' })
+      items.forEach((el) => reveal?.observe(el))
+    }
+    const spy = new IntersectionObserver((entries) => {
+      const hit = entries.filter((en) => en.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
+      if (hit) setActive(hit.target.id)
+    }, { root: page, rootMargin: '-35% 0px -55% 0px' })
+    SECTIONS.forEach(([id]) => { const el = page.querySelector(`#${id}`); if (el) spy.observe(el) })
+    let frame = 0
+    const onScroll = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        const y = page.scrollTop
+        if (!reduce) page.style.setProperty('--hero-y', `${Math.min(y, 600)}px`)
+        setScrolled(y / Math.max(1, page.scrollHeight - page.clientHeight))
+      })
+    }
+    page.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => { reveal?.disconnect(); spy.disconnect(); page.removeEventListener('scroll', onScroll); cancelAnimationFrame(frame) }
+  }, [root, setActive, setScrolled])
+}
+
 function StepCard({ step, index, onOpen }: { step: string[]; index: number; onOpen: (src: string, alt: string) => void }) {
   return <article className="manual-step" id={`step-${index + 1}`}>
     <div className="manual-step-copy">
@@ -38,19 +96,30 @@ function StepCard({ step, index, onOpen }: { step: string[]; index: number; onOp
       <p>{step[1]}</p>
       <div className="manual-tip"><b>คำแนะนำการเล่น</b> ทำตามหมายเลขบนหน้าจอ และกด <strong>ขอความช่วยเหลือ</strong> เมื่อไม่แน่ใจ</div>
     </div>
-    <figure><button className="manual-image-button" type="button" onClick={() => onOpen(step[2]!, `ภาพหน้าจอขั้นตอน ${index + 1}: ${step[0]}`)}><img src={step[2]} alt={`ภาพหน้าจอขั้นตอน ${index + 1}: ${step[0]}`} /></button><figcaption>แตะภาพเพื่อดูเต็ม · รูปที่ {index + 1}</figcaption></figure>
+    <figure><button className="manual-image-button" type="button" onPointerMove={tilt} onPointerLeave={untilt} onClick={() => onOpen(step[2]!, `ภาพหน้าจอขั้นตอน ${index + 1}: ${step[0]}`)}><img src={step[2]} alt={`ภาพหน้าจอขั้นตอน ${index + 1}: ${step[0]}`} /></button><figcaption>แตะภาพเพื่อดูเต็ม · รูปที่ {index + 1}</figcaption></figure>
   </article>
 }
 
 export default function ManualPage() {
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null)
+  const page = useRef<HTMLElement>(null)
+  const [active, setActive] = useState('overview')
+  const [scrolled, setScrolled] = useState(0)
+  useManualMotion(page, setActive, setScrolled)
+  const now = SECTIONS.find(([id]) => id === active) ?? SECTIONS[0]
   useEffect(() => {
     if (!lightbox) return
     const close = (event: KeyboardEvent) => event.key === 'Escape' && setLightbox(null)
     document.addEventListener('keydown', close)
     return () => document.removeEventListener('keydown', close)
   }, [lightbox])
-  return <main className="manual-page">
+  return <main className="manual-page" ref={page}>
+    <div className="manual-arrive-fog" aria-hidden />
+    <div className="manual-progress" aria-hidden style={{ transform: `scaleX(${scrolled})` }} />
+    <div className="manual-buddy" aria-hidden data-hide={scrolled < 0.04}>
+      <span className="manual-buddy-say" key={now[0]}>{now[2]}</span>
+      <img key={now[3]} src={`/dome/mascot/dome-${now[3]}.webp`} alt="" />
+    </div>
     <header className="manual-hero">
       <nav className="manual-nav"><a href="/landing">← กลับหน้าแรก</a></nav>
       <div className="manual-hero-inner">
@@ -62,7 +131,7 @@ export default function ManualPage() {
       </div>
     </header>
     <div className="manual-layout">
-      <aside className="manual-toc"><b>สารบัญย่อ</b><a href="#overview">ภาพรวมระบบ</a><a href="#student">นักเรียน</a><a href="#teacher">ครู</a><a href="#help">ขอความช่วยเหลือ</a></aside>
+      <aside className="manual-toc"><b>สารบัญย่อ</b>{SECTIONS.map(([id, label]) => <a key={id} href={`#${id}`} className={active === id ? 'is-active' : ''} aria-current={active === id ? 'true' : undefined}>{label}</a>)}</aside>
       <div className="manual-content">
         <section id="overview" className="manual-overview"><span className="manual-kicker">START HERE</span><h1>ออกเดินทางจากชื่อร้าน<br />ไปสู่โดเมนที่ใช่</h1><p>CEO Domain Quest คือเกมการเรียนรู้ที่พานักเรียนสำรวจโดเมน ตั้งร้าน ทดลองทำภารกิจ และสรุปความรู้ร่วมกับครูในห้องเรียนเดียวกัน</p><div className="manual-overview-grid"><div><b>1 ห้องเรียน</b><span>รหัสห้องเดียว เข้าพร้อมกันทั้งชั้น</span></div><div><b>4 ภารกิจ</b><span>ดู อ่าน ลงมือทำ ได้ตามจังหวะตัวเอง</span></div><div><b>1 บอส CEO</b><span>นำความรู้ไปตัดสินใจจริง</span></div></div></section>
         <section id="student" className="manual-section"><div className="manual-section-head"><span className="manual-kicker">PART 01</span><h2>สำหรับนักเรียน</h2><p>ใช้มือถือหรือแท็บเล็ต เปิดลิงก์จากครู แล้วเดินทางตามเกาะทีละขั้น</p></div><div className="manual-steps">{studentSteps.map((step, i) => <StepCard key={step[0]} step={step} index={i} onOpen={(src, alt) => setLightbox({ src, alt })} />)}</div></section>

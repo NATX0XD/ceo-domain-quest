@@ -791,3 +791,8 @@ body:has(.ld) { height: 100%; min-height: 100dvh; overflow: hidden; overscroll-b
   .ld-hw-pin { min-height: 0; }
   .ld-hw-stage { position: static; height: auto; padding: 72px 0; }
 }
+
+/* วาร์ปไปคู่มือ: ฉากซูมเข้าหมอก (หมอกใช้ .map-fog-transition จาก globals) */
+.ld-viewport.is-warping > .ld { transform-origin: 50% 40%; animation: ld-warp-zoom .72s cubic-bezier(.5,0,.75,0) both; }
+@keyframes ld-warp-zoom { to { transform: scale(1.12); filter: blur(4px) saturate(1.2); } }
+.ld-warp-fog { z-index: 60; font-family: var(--font-display-thai), sans-serif; }
