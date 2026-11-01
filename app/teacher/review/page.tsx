@@ -19,7 +19,7 @@ export default async function TeacherReviewPage({
     <PageBody>
       <PageHead
         title="งานรอตรวจ"
-        subtitle="คะแนนทุกก้อนเป็นข้อเสนอ ครูเป็นคนยืนยันเสมอ · ส่งกลับให้แก้ได้จากการ์ดเดียวกัน"
+        subtitle="ครูเป็นคนยืนยันคะแนนเสมอ"
       />
       <ReviewList teacherId={data.teacherId} classroomId={data.selectedId} />
     </PageBody>

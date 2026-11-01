@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertIcon, Card, cn } from '../../components/ui'
+import { Icon3d, InfoTip } from './_ux/v2'
 
 /**
  * E-16 โหมดสาธิต — ป้ายบอกว่านี่ไม่ใช่ข้อมูลเด็กจริง + ปุ่มล้างกลับค่าเริ่มต้น
@@ -75,81 +75,81 @@ export function DemoModeBanner({ classroomId, roomCode, isDemo, showReset = fals
   }
 
   return (
-    <Card tone="danger" className="mt-4" role="region" aria-label="โหมดสาธิต">
-      <div className="flex items-start gap-3">
-        <span aria-hidden="true" className="mt-0.5 shrink-0 text-danger-700">
-          <AlertIcon width={24} height={24} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-label font-extrabold tracking-wide text-danger-700">
-            โหมดสาธิต · ห้อง {roomCode ?? '-'}
-          </p>
-          <p className="mt-1 text-body text-pretty text-ink">
-            ข้อมูลในห้องนี้เป็น<strong>นักเรียนหุ่น</strong>ที่ระบบสร้างขึ้นเพื่อสาธิต
-            ไม่ใช่ข้อมูลของนักเรียนจริง และ<strong>ห้ามนำตัวเลขจากห้องนี้ไปอ้างเป็นผลการทดลอง</strong>
-          </p>
+    <section
+      role="region"
+      aria-label="โหมดสาธิต"
+      className="t2-note shrink-0"
+      data-tone="danger"
+      style={{ alignItems: 'flex-start', borderRadius: 24, padding: '0.875rem 1.125rem' }}
+    >
+      <Icon3d name="performing-arts" size={40} />
+      <div className="min-w-0 flex-1">
+        <p className="text-label font-extrabold text-ink">โหมดสาธิต · ห้อง {roomCode ?? '-'}</p>
+        <p className="mt-0.5 text-label font-bold text-pretty text-ink">
+          ข้อมูลเป็น<strong>นักเรียนหุ่น</strong> ·{' '}
+          <strong>ห้ามนำตัวเลขจากห้องนี้ไปอ้างเป็นผลการทดลอง</strong>
+        </p>
 
-          {showReset ? (
-            <div className="mt-3">
-              {confirming ? (
-                <div className="rounded-xl bg-surface-raised p-3 ring-2 ring-danger-500 ring-inset">
-                  <p className="text-body font-bold text-ink">
-                    ล้างห้อง {roomCode} กลับค่าเริ่มต้นใช่ไหม
-                  </p>
-                  <p className="mt-1 text-label text-ink-muted">
-                    นักเรียนหุ่นทั้งห้องกับงานที่ทำไว้จะถูกลบแล้วสร้างใหม่ชุดเดิม กู้ของเดิมกลับไม่ได้
-                    · ห้องเรียนจริงกดปุ่มนี้ไม่ได้อยู่แล้ว
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={reset}
-                      disabled={busy}
-                      className="btn-base bg-danger-600 px-4 text-ink-onbrand shadow-soft-1 disabled:opacity-60"
-                    >
-                      {busy ? 'กำลังล้าง…' : 'ใช่ ล้างเลย'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirming(false)}
-                      disabled={busy}
-                      className="btn-base bg-surface-raised px-4 text-ink ring-2 ring-line-contrast ring-inset"
-                    >
-                      ไม่ล้าง
-                    </button>
-                  </div>
+        {showReset ? (
+          <div className="mt-3">
+            {confirming ? (
+              <div className="rounded-[18px] bg-white p-3">
+                <p className="flex flex-wrap items-center gap-2 text-label font-extrabold text-ink">
+                  ล้างห้อง {roomCode} กลับค่าเริ่มต้นใช่ไหม
+                  <InfoTip
+                    label="เรื่องการล้างห้อง"
+                    text="นักเรียนหุ่นทั้งห้องกับงานที่ทำไว้จะถูกลบแล้วสร้างใหม่ชุดเดิม กู้ของเดิมกลับไม่ได้ ห้องเรียนจริงกดปุ่มนี้ไม่ได้อยู่แล้ว"
+                  />
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={reset}
+                    disabled={busy}
+                    className="t2-btn focus-ring"
+                    data-kind="dangerfill"
+                  >
+                    {busy ? 'กำลังล้าง…' : 'ใช่ ล้างเลย'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirming(false)}
+                    disabled={busy}
+                    className="t2-btn focus-ring"
+                  >
+                    ไม่ล้าง
+                  </button>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConfirming(true)
-                    setDone(null)
-                    setError(null)
-                  }}
-                  className={cn(
-                    'btn-base bg-surface-raised px-4 text-danger-700',
-                    'ring-2 ring-danger-500 ring-inset hover:bg-danger-100',
-                  )}
-                >
-                  ล้างห้องสาธิตกลับค่าเริ่มต้น
-                </button>
-              )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirming(true)
+                  setDone(null)
+                  setError(null)
+                }}
+                className="t2-btn focus-ring"
+                data-kind="danger"
+                style={{ whiteSpace: 'normal', paddingBlock: '0.5rem', textAlign: 'center' }}
+              >
+                ล้างห้องสาธิตกลับค่าเริ่มต้น
+              </button>
+            )}
 
-              {done ? (
-                <p role="status" className="mt-2 text-label font-bold text-ink">
-                  {done}
-                </p>
-              ) : null}
-              {error ? (
-                <p role="alert" className="mt-2 text-label font-bold text-danger-700">
-                  {error}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
+            {done ? (
+              <p role="status" className="mt-2 text-label font-bold text-ink">
+                {done}
+              </p>
+            ) : null}
+            {error ? (
+              <p role="alert" className="mt-2 text-label font-bold text-danger-700">
+                {error}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
-    </Card>
+    </section>
   )
 }

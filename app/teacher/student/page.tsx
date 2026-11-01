@@ -24,7 +24,7 @@ export default async function TeacherStudentReportPage({
       title="รายงานรายคน"
       subtitle={
         data.selectedRoomCode
-          ? `ห้อง ${data.selectedRoomCode} · เลือกชื่อแล้วกดพิมพ์ได้เลย`
+          ? `ห้อง ${data.selectedRoomCode}`
           : 'ยังไม่มีห้องเรียน'
       }
       basePath="/teacher/student"

@@ -1,7 +1,8 @@
 import rubric from '@/content/rubric.json'
 import { listPendingReview, listSubmissions, type Submission } from '@/lib/db/repo'
 import { TeacherConfirmScore, type RubricDimensionView } from '@/components/teacher-confirm-client'
-import { Card, EmptyState, InfoIcon, CheckIcon, AlertIcon, DomeAvatar } from '@/components/ui'
+import { EmptyState, InfoIcon, CheckIcon, AlertIcon, DomeAvatar } from '@/components/ui'
+import { Chip, Fact, Icon3d, InfoTip } from './v2'
 import { sourceLabel, type AiSourceInfo } from '@/components/server/ai'
 import { MAX_REVISION_ROUNDS } from '@/components/server/revision'
 import { isTeacherConfirmed } from '@/lib/db/submission-scores'
@@ -139,8 +140,8 @@ export async function ReviewList({
     return (
       <EmptyState
         as="h2"
-        title="ยังไม่มีงานรอตรวจในห้องนี้"
-        description="เมื่อนักเรียนส่งงาน การ์ดจะขึ้นตรงนี้ให้ครูตรวจทีละใบ"
+        title="ยังไม่มีงานรอตรวจ"
+        description="งานที่นักเรียนส่งจะขึ้นที่นี่"
         illustration={<CheckIcon width={48} height={48} className="text-quest-600" />}
       />
     )
@@ -159,7 +160,7 @@ export async function ReviewList({
   })
 
   return (
-    <ul aria-live="polite" className="flex flex-col gap-3">
+    <ul aria-live="polite" className="flex flex-col gap-4">
       {pending.map((row) => {
         const ai = readAiScores(row.ai_scores)
         // ฉบับทั้งหมดของคนนี้ ใหม่สุดอยู่หน้าสุด (listSubmissions เรียง created_at DESC)
@@ -167,48 +168,54 @@ export async function ReviewList({
         const indexFromNewest = versions.findIndex((v) => v.id === row.id)
         const versionNo = indexFromNewest >= 0 ? versions.length - indexFromNewest : 1
         const older = indexFromNewest >= 0 ? versions.slice(indexFromNewest + 1) : []
+        const initial = Array.from((row.nickname ?? '?').trim())[0] ?? '?'
+        const aiTotal =
+          ai?.aiProposed?.weightedTotal !== undefined
+            ? `${ai.aiProposed.weightedTotal}/${ai.aiProposed.weightedMax ?? ai.maxScore ?? '-'}`
+            : ai?.gradingStatus === 'pending-ai'
+              ? 'กำลังตรวจ…'
+              : 'ไม่ได้เรียก AI'
         return (
-          <Card as="li" key={row.id} padding="sm" className="p-4">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-              <p className="min-w-0 text-body-lg font-bold text-ink">{row.nickname}</p>
-              <p className="min-w-0 text-body font-semibold break-all text-brand-700">
+          <li key={row.id} className="t2-card">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="t2-avatar" data-level="yellow" aria-hidden>
+                {initial}
+              </span>
+              <p className="min-w-0 flex-1 text-title-sm font-extrabold text-ink">{row.nickname}</p>
+              <p className="min-w-0 text-body font-extrabold break-all text-brand-700">
                 {row.domain_name}
                 {row.tld}
               </p>
             </div>
-            <p className="mt-1 text-label text-ink-muted">
-              {row.emphasis_criterion
-                ? `ภารกิจใหญ่ CEO · ผู้เรียนขอให้เน้นด้าน ${emphasisName(row.emphasis_criterion)} (คิดคะแนน 2 เท่า)`
-                : 'สถานี B · ยื่นจดทะเบียน'}{' '}
-              · {FORMAT_THAI[row.format] ?? `ส่งงานแบบ ${row.format}`}
+
+            <p className="mt-3 flex flex-wrap items-center gap-2">
+              <Chip tone="sky">{row.emphasis_criterion ? 'ภารกิจใหญ่ CEO' : 'สถานี B · จดทะเบียน'}</Chip>
+              {row.emphasis_criterion ? <Chip tone="yellow">เน้น {emphasisName(row.emphasis_criterion)} ×2</Chip> : null}
+              <Chip>{FORMAT_THAI[row.format] ?? `ส่งงานแบบ ${row.format}`}</Chip>
+              {versions.length > 1 ? (
+                <Chip tone="orange">
+                  ฉบับที่ {versionNo}/{versions.length}
+                </Chip>
+              ) : null}
             </p>
 
-            {versions.length > 1 ? (
-              <p className="mt-2 inline-flex items-center rounded-full bg-spark-100 px-3 py-1 text-label font-bold text-spark-800">
-                ฉบับที่ {versionNo} จาก {versions.length} (แก้มาแล้ว {versions.length - 1} รอบ)
-              </p>
-            ) : null}
-
             {row.reason_text ? (
-              <p className="mt-3 rounded-xl bg-surface-sunken p-3 text-body whitespace-pre-line text-ink">
+              <p className="mt-3 rounded-[18px] bg-[#f6f2e8] p-3 text-body whitespace-pre-line text-ink">
                 {row.reason_text}
               </p>
             ) : null}
 
             {/* ฉบับก่อนหน้า — เปิดดูเทียบได้ว่านักเรียนแก้อะไรมา */}
             {older.length > 0 ? (
-              <details className="mt-3 rounded-xl bg-surface-sunken p-3">
-                <summary className="cursor-pointer text-label font-bold text-ink">
-                  ดูฉบับก่อนหน้า {older.length} ฉบับ
+              <details className="mt-3 rounded-[18px] bg-[#f6f2e8] p-3">
+                <summary className="flex min-h-11 cursor-pointer items-center text-label font-extrabold text-ink">
+                  ฉบับก่อนหน้า {older.length} ฉบับ
                 </summary>
                 <ul className="mt-2 flex flex-col gap-2">
                   {older.map((old, i) => {
                     const teacherBag = readTeacherScores(old.teacher_confirmed_scores)
                     return (
-                      <li
-                        key={old.id}
-                        className="rounded-lg bg-surface-raised p-3 ring-1 ring-line ring-inset"
-                      >
+                      <li key={old.id} className="rounded-[14px] bg-white p-3">
                         <p className="text-label font-bold text-ink">
                           ฉบับที่ {older.length - i} · {old.domain_name}
                           {old.tld}
@@ -231,60 +238,51 @@ export async function ReviewList({
             ) : null}
 
             {ai ? (
-              <div className="mt-3 rounded-xl bg-brand-50 p-3 ring-1 ring-brand-100 ring-inset">
+              <div className="mt-3">
                 {/* สองค่าคู่กันเสมอ: กฎให้เท่าไร AI เสนอเท่าไร ครูเป็นคนตัดสินคะแนนจริง */}
-                <dl className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg bg-surface-raised p-2">
-                    <dt className="text-label font-bold text-ink-muted">ระบบตรวจตามเกณฑ์ให้</dt>
-                    <dd className="text-body font-bold text-ink">
-                      {ai.ruleScores?.weightedTotal ?? ai.score ?? '-'}/
-                      {ai.ruleScores?.weightedMax ?? ai.maxScore ?? '-'}
-                    </dd>
-                  </div>
-                  <div className="rounded-lg bg-surface-raised p-2">
-                    <dt className="text-label font-bold text-ink-muted">AI อ่านแล้วเสนอ</dt>
-                    <dd className="text-body font-bold text-ink">
-                      {ai.aiProposed?.weightedTotal !== undefined
-                        ? `${ai.aiProposed.weightedTotal}/${ai.aiProposed.weightedMax ?? ai.maxScore ?? '-'}`
-                        : ai.gradingStatus === 'pending-ai'
-                          ? 'กำลังตรวจ…'
-                          : 'ไม่ได้เรียก AI'}
-                    </dd>
-                  </div>
+                <dl className="t2-facts">
+                  <Fact
+                    label="ระบบตรวจให้"
+                    icon="clipboard"
+                    tone="mint"
+                    value={`${ai.ruleScores?.weightedTotal ?? ai.score ?? '-'}/${ai.ruleScores?.weightedMax ?? ai.maxScore ?? '-'}`}
+                  />
+                  <Fact label="AI เสนอ" icon="robot" tone="lilac" value={aiTotal} />
                 </dl>
-                {ai.feedback ? <p className="mt-1 text-body text-ink-muted">{ai.feedback}</p> : null}
+                {ai.feedback ? <p className="mt-2 text-label text-ink-muted">{ai.feedback}</p> : null}
                 {/* flow-1 ข้อ 17: ครูไม่ต้องรอ AI ก่อนยืนยัน */}
                 {ai.gradingStatus === 'pending-ai' && !ai.aiProposed ? (
-                  <p className="mt-2 text-label font-bold text-ink">
-                    AI กำลังอ่านอยู่ ปกติไม่เกิน 5 วินาที ·
-                    <strong> ครูยืนยันคะแนนได้เลยไม่ต้องรอ</strong>{' '}
-                    ความเห็นของ AI เป็นแค่ข้อมูลประกอบ
+                  <p className="mt-2 flex flex-wrap items-center gap-2">
+                    <Chip tone="yellow">AI กำลังอ่าน · ยืนยันได้เลยไม่ต้องรอ</Chip>
                   </p>
                 ) : null}
-                <p className="mt-2 flex items-start gap-1.5 text-label font-bold text-brand-700">
-                  <InfoIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0" />
-                  <span>
-                    ที่มาของคะแนนที่เสนอ:{' '}
-                    {sourceLabel({
-                      source: ai.source ?? 'fallback',
-                      provider: ai.provider ?? 'rules',
-                      fallbackReason: ai.fallbackReason ?? null,
-                    })}
-                  </span>
+                <p className="mt-2 flex items-center gap-1 text-note font-bold text-ink-muted">
+                  ที่มา: {sourceLabel({
+                    source: ai.source ?? 'fallback',
+                    provider: ai.provider ?? 'rules',
+                    fallbackReason: ai.fallbackReason ?? null,
+                  })}
+                  <InfoTip
+                    label="เรื่องที่มาของคะแนน"
+                    text="คะแนนที่เสนอเป็นแค่ข้อมูลประกอบ ครูเป็นคนยืนยันคะแนนจริงเสมอ ความเห็นของ AI ไม่ผูกมัด"
+                  />
                 </p>
               </div>
             ) : (
-              <p className="mt-3 flex items-start gap-1.5 text-label text-ink-muted">
-                <InfoIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0" />
+              <p className="mt-3 flex items-center gap-1.5 text-label text-ink-muted">
+                <InfoIcon width={18} height={18} aria-hidden className="shrink-0" />
                 <span>ยังไม่มีคะแนนที่เสนอไว้</span>
               </p>
             )}
 
             {/* flow-1 ข้อ 24: บอกให้ชัดว่ากดยืนยันแล้วเกิดอะไรกับเด็ก ครูจะได้ไม่ลังเล */}
-            <p className="mt-3 rounded-xl bg-brand-50 p-3 text-label text-ink ring-1 ring-brand-100 ring-inset">
-              กดยืนยันแล้ว <strong>นักเรียนเห็นคะแนนกับข้อความของครูทันที</strong> และได้ใบประกาศ
-              ถ้าได้ระดับ 3 ครบทั้ง 4 ด้าน · <strong>แก้คะแนนทีหลังได้</strong> ·
-              ถ้ายังไม่พร้อมให้คะแนน กด “ส่งกลับให้แก้” แล้วเขียนบอกว่าต้องเติมอะไร
+            <p className="mt-3 flex items-center gap-2 text-label font-bold text-ink-muted">
+              <Icon3d name="light-bulb" size={24} />
+              ยืนยันแล้วนักเรียนเห็นทันที · แก้ทีหลังได้
+              <InfoTip
+                label="เรื่องการยืนยันคะแนน"
+                text="กดยืนยันแล้วนักเรียนเห็นคะแนนกับข้อความของครูทันที และได้ใบประกาศถ้าได้ระดับ 3 ครบทั้ง 4 ด้าน แก้คะแนนทีหลังได้ ถ้ายังไม่พร้อมให้คะแนน กด ส่งกลับให้แก้ แล้วเขียนบอกว่าต้องเติมอะไร"
+              />
             </p>
 
             <TeacherConfirmScore
@@ -302,7 +300,7 @@ export async function ReviewList({
               roundsUsed={Math.max(0, versions.length - 1)}
               maxRounds={MAX_REVISION_ROUNDS}
             />
-          </Card>
+          </li>
         )
       })}
     </ul>

@@ -287,6 +287,8 @@ export type BoardStageProps = {
   subtitle?: ReactNode
   children?: ReactNode
   className?: string
+  /** ไอคอน 3 มิติเหนือหัวข้อ (ตกแต่ง) */
+  icon?: ReactNode
 }
 
 /**
@@ -299,7 +301,7 @@ export type BoardStageProps = {
  * ⚠️ `justify-center` ทำให้เนื้อหาที่งอกมาทีหลัง (เช่นการ์ดผลงานที่ครูเพิ่งปักหมุด)
  *    ดันออกจากกึ่งกลางเท่า ๆ กันทั้งบนล่าง ไม่ใช่กระโดดลงมาจากขอบบน
  */
-export function BoardStage({ title, subtitle, children, className }: BoardStageProps) {
+export function BoardStage({ title, subtitle, children, className, icon }: BoardStageProps) {
   return (
     <section
       className={cn(
@@ -319,6 +321,7 @@ export function BoardStage({ title, subtitle, children, className }: BoardStageP
         }}
       />
 
+      {icon ? <div className="relative">{icon}</div> : null}
       <h2
         className={cn(
           'relative leading-tight font-black text-balance text-ink',

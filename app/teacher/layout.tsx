@@ -3,6 +3,7 @@ import { listClassroomsByTeacher } from '@/lib/db/repo'
 import { getServiceClient } from '@/lib/db/client'
 import { readTeacherSession } from '@/app/api/_lib/session-cookie'
 import { TeacherShell } from './_ux/shell'
+import './teacher-v2.css'
 
 /**
  * UX-6 โครงเดียวของทุกหน้าครู — แถบบน + เมนูข้าง อยู่กับที่ เนื้อหาเปลี่ยนตามหน้า

@@ -8,8 +8,9 @@ import type {
   StudentLearnResult,
   StudentMissionLearn,
 } from '../../../components/server/learn-results'
-import { AlertIcon, Card, cn } from '../../../components/ui'
-import { FilterChips, KpiCard, KpiRow, SideDrawer } from '../_ux/cms'
+import { AlertIcon, cn } from '../../../components/ui'
+import { FilterChips, SideDrawer } from '../_ux/cms'
+import { Icon3d, InfoTip, Kpi, KpiGrid, Radar } from '../_ux/v2'
 
 /**
  * ผลเส้นทางเรียน (ดู / อ่าน / ลงมือทำ) บนแผงครู
@@ -116,14 +117,14 @@ export function LearnResultsPanel({
   const title = (id: string) => (titles[id] ? `${id.toUpperCase()} ${titles[id]}` : id.toUpperCase())
 
   return (
-    <Card as="section" className="mt-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-title-sm font-bold text-ink">เส้นทางเรียนก่อนภารกิจ (ดู / อ่าน / ลงมือทำ)</h2>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="btn-base min-h-11 bg-surface-raised px-4 text-ink ring-2 ring-line-contrast ring-inset print:hidden"
-        >
+    <details className="t2-more mt-4">
+      <summary className="focus-ring">
+        <Icon3d name="books" size={32} />
+        เส้นทางเรียน ดู · อ่าน · ลงมือ
+      </summary>
+      <div className="t2-more__body">
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+        <button type="button" onClick={() => void load()} className="t2-btn focus-ring print:hidden">
           โหลดใหม่
         </button>
       </div>
@@ -150,24 +151,31 @@ export function LearnResultsPanel({
             const att = data.missions.filter((m) => m.attemptsAvg !== null)
             return (
               <div className="mt-3">
-                <KpiRow>
-                  <KpiCard
-                    label="เริ่มเส้นทางเรียนแล้ว"
-                    value={`${started.length} คน`}
-                    hint={`จาก ${data.students.length} คนในห้อง`}
+                <KpiGrid>
+                  <Kpi
+                    label="เริ่มเรียนแล้ว"
+                    value={started.length}
+                    unit="คน"
+                    tone="sky"
+                    icon="rocket"
+                    hint={`จาก ${data.students.length} คน`}
                   />
-                  <KpiCard label="เรียนครบเกณฑ์อย่างน้อย 1 ด่าน" value={`${doneStudents} คน`} tone="good" />
-                  <KpiCard
-                    label="เลือกตามที่ระบบแนะนำ"
+                  <Kpi label="ครบอย่างน้อย 1 ด่าน" value={doneStudents} unit="คน" tone="mint" icon="check-mark-button" />
+                  <Kpi
+                    label="ทำตามที่แนะนำ"
                     value={followed + different > 0 ? `${Math.round((followed / (followed + different)) * 100)}%` : '-'}
+                    tone="yellow"
+                    icon="bullseye"
                     hint={`${followed} จาก ${followed + different} ครั้ง`}
                   />
-                  <KpiCard
-                    label="ส่งตรวจเฉลี่ยต่อด่าน"
+                  <Kpi
+                    label="ส่งตรวจ/ด่าน"
                     value={att.length ? n(att.reduce((a, m) => a + (m.attemptsAvg ?? 0), 0) / att.length) : '-'}
-                    hint="ครั้ง"
+                    unit="ครั้ง"
+                    tone="lilac"
+                    icon="memo"
                   />
-                </KpiRow>
+                </KpiGrid>
               </div>
             )
           })()}
@@ -335,7 +343,76 @@ export function LearnResultsPanel({
       ) : !error ? (
         <p className="mt-2 text-label text-ink-muted">กำลังโหลด…</p>
       ) : null}
-    </Card>
+      </div>
+    </details>
+  )
+}
+
+/** เรดาร์ความเข้าใจรายภารกิจ M1-M4 — ร้อยละของคนในห้องที่เรียนครบเกณฑ์ของแต่ละด่าน */
+export function MasteryRadarCard({ classroomId }: { classroomId: string | null }) {
+  const [data, setData] = useState<ClassData | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    if (!classroomId) return
+    const controller = new AbortController()
+    setData(null)
+    setFailed(false)
+    fetch(`/api/teacher/learn?${new URLSearchParams({ classroomId })}`, { cache: 'no-store', signal: controller.signal })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('bad'))))
+      .then((body: ClassData) => setData(body))
+      .catch(() => {
+        if (!controller.signal.aborted) setFailed(true)
+      })
+    return () => controller.abort()
+  }, [classroomId])
+
+  const ids = ['m1', 'm2', 'm3', 'm4']
+  const axes = ids.map((id, i) => {
+    const done = data?.missions.find((m) => m.missionId === id)?.done ?? 0
+    const started = data?.students.filter((st) => st.missions.some((m) => m.missionId === id)).length ?? 0
+    const total = data?.students.length ?? 0
+    const value = total > 0 ? Math.round((done / total) * 100) : 0
+    return {
+      label: `ด่าน ${i + 1}`,
+      sub: started === 0 ? 'ยังไม่เริ่ม' : `ผ่าน ${done} · เริ่ม ${started}`,
+      value,
+      value2: total > 0 ? Math.round((started / total) * 100) : 0,
+    }
+  })
+  const scale = Math.min(100, Math.max(20, Math.ceil(Math.max(0, ...axes.map((a) => Math.max(a.value, a.value2 ?? 0))) / 10) * 10))
+  const titles = ids.map((id, i) => `ด่าน ${i + 1} ${data?.missionTitles[id] ?? ''}`.trim())
+
+  return (
+    <section className="t2-card" aria-label="ความเข้าใจรายภารกิจ">
+      <h2 className="t2-card-title">
+        <Icon3d name="brain" size={32} />
+        ผ่านเกณฑ์รายด่าน
+        <InfoTip label="เรื่องกราฟ" text={`พื้นที่สีเหลืองคือคนที่ผ่านเกณฑ์ พื้นที่เส้นประสีฟ้าคือคนที่เริ่มเรียนแล้ว นับเทียบทั้งห้อง · ${titles.join(' · ')}`} />
+      </h2>
+      {failed ? (
+        <p role="alert" className="t2-empty">
+          อ่านผลไม่สำเร็จ
+        </p>
+      ) : !data ? (
+        <p className="t2-empty">กำลังโหลด…</p>
+      ) : (
+        <>
+          <Radar axes={axes} title="ผ่านเกณฑ์รายด่าน" scale={scale} />
+          <p className="t2-legend mt-2 justify-center">
+            <span>
+              <i className="t2-dot" style={{ background: 'var(--t2-gold)' }} />
+              ผ่านเกณฑ์
+            </span>
+            <span>
+              <i className="t2-dot" style={{ background: 'var(--t2-blue)' }} />
+              เริ่มเรียนแล้ว
+            </span>
+            <span>เต็มวง = {scale}% ของห้อง</span>
+          </p>
+        </>
+      )}
+    </section>
   )
 }
 

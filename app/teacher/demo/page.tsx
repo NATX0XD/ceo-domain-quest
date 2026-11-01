@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
-import { Card, DomeAvatar } from '@/components/ui'
+import { DomeAvatar } from '@/components/ui'
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
 import { PageBody, PageHead } from '../_ux/page-head'
 import { DemoModeBanner } from '../demo-mode'
+import { InfoTip, Kpi, KpiGrid } from '../_ux/v2'
 
 export const metadata: Metadata = { title: 'โหมดสาธิต — สำหรับครู' }
 export const dynamic = 'force-dynamic'
@@ -21,12 +22,9 @@ export default async function TeacherDemoPage({
 
   return (
     <PageBody>
-      <PageHead
-        title="โหมดสาธิต"
-        subtitle="ห้องหุ่นสำหรับซ้อมและขึ้นเวที · ล้างกลับค่าเริ่มต้นได้ในไม่กี่วินาที"
-      />
+      <PageHead title="โหมดสาธิต" subtitle="ห้องหุ่นสำหรับซ้อมและขึ้นเวที" />
 
-      <div className="flex flex-col gap-4">
+      <div className="t2-stack">
         <DemoModeBanner
           classroomId={data.selectedId}
           roomCode={data.selectedRoomCode}
@@ -35,38 +33,26 @@ export default async function TeacherDemoPage({
         />
 
         {!data.selectedIsDemo ? (
-          <Card as="section">
-            <div className="flex items-start gap-3">
-              <DomeAvatar mood="greet" size={56} decorative />
-              <div className="min-w-0">
-                <h2 className="text-title-sm font-bold text-ink">
-                  ห้อง {data.selectedRoomCode ?? '—'} ไม่ใช่ห้องสาธิต
-                </h2>
-                <p className="mt-1 text-body text-ink-muted">
-                  หน้านี้จะมีปุ่ม “ล้างกลับค่าเริ่มต้น” ให้เฉพาะห้องที่ติดป้ายว่าเป็นห้องสาธิตตั้งแต่ตอนสร้าง
-                  <strong> ห้องเรียนจริงกดล้างไม่ได้เลย</strong> เพราะฐานข้อมูลปฏิเสธคำสั่งนั้นเอง
-                  ไม่ใช่แค่ซ่อนปุ่มบนจอ
-                </p>
-                <p className="mt-2 text-label text-ink-muted">
-                  ต้องการห้องสาธิต: ให้ผู้ดูแลระบบรัน <code>npm run seed:demo</code> หนึ่งครั้ง
-                  จะได้ห้อง QUEST9 พร้อมนักเรียนหุ่น 20 คนที่มีสถานะครบทุกแบบ
-                </p>
-              </div>
+          <section className="t2-card flex flex-wrap items-center gap-4">
+            <DomeAvatar mood="greet" size={64} decorative />
+            <div className="min-w-0 flex-1">
+              <h2 className="flex items-center gap-1 text-title-sm font-extrabold text-ink">
+                ห้อง {data.selectedRoomCode ?? '—'} ไม่ใช่ห้องสาธิต
+                <InfoTip
+                  label="เรื่องห้องสาธิต"
+                  text="ปุ่มล้างกลับค่าเริ่มต้นมีเฉพาะห้องที่ติดป้ายห้องสาธิตตั้งแต่สร้าง ห้องเรียนจริงกดล้างไม่ได้เพราะฐานข้อมูลปฏิเสธคำสั่งเอง ต้องการห้องสาธิต ให้ผู้ดูแลรัน npm run seed:demo หนึ่งครั้ง จะได้ห้อง QUEST9 พร้อมนักเรียนหุ่น 20 คน"
+                />
+              </h2>
+              <p className="mt-1 text-label font-semibold text-ink-muted">ห้องจริงกดล้างไม่ได้</p>
             </div>
-          </Card>
+          </section>
         ) : null}
 
-        <Card as="section">
-          <h2 className="text-title-sm font-bold text-ink">ใช้ตอนไหน</h2>
-          <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-body text-ink">
-            <li>ซ้อมก่อนขึ้นเวที — กดทุกปุ่มได้โดยไม่กระทบห้องเรียนจริง</li>
-            <li>สาธิตให้กรรมการดู — ทุกหน้ามีข้อมูลให้ดูครบ ไม่มีจอว่าง</li>
-            <li>กดล้างกลับค่าเริ่มต้นเมื่อสาธิตเสร็จ ห้องจะกลับไปเหมือนตอนซ้อมเป๊ะ</li>
-          </ul>
-          <p className="mt-3 text-label font-bold text-danger-700">
-            ตัวเลขจากห้องสาธิตเป็นข้อมูลหุ่น ห้ามนำไปอ้างเป็นผลการทดลอง
-          </p>
-        </Card>
+        <KpiGrid cols={3}>
+          <Kpi label="ซ้อมก่อนขึ้นเวที" value="ปลอดภัย" tone="mint" icon="rocket" hint="กดได้ทุกปุ่ม ไม่กระทบห้องจริง" />
+          <Kpi label="สาธิตให้กรรมการ" value="ข้อมูลครบ" tone="yellow" icon="trophy" hint="ทุกหน้ามีของให้ดู" />
+          <Kpi label="เสร็จแล้วล้าง" value="กลับเดิม" tone="lilac" icon="counterclockwise-arrows-button" hint="เหมือนตอนซ้อมเป๊ะ" />
+        </KpiGrid>
       </div>
     </PageBody>
   )

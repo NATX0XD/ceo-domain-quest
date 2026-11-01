@@ -7,7 +7,6 @@ import {
   CheckIcon,
   ChevronRightIcon,
   TextField,
-  Button,
 } from '@/components/ui'
 
 /**
@@ -183,22 +182,21 @@ export function TeacherConfirmScore({
   }
 
   return (
-    <div className="mt-4 rounded-2xl bg-surface-sunken p-3">
+    <div className="mt-4 rounded-[22px] bg-[#f6f2e8] p-3">
       {dimensions.length > 0 ? (
         <ul className="mb-4 flex flex-col gap-2">
           {dimensions.map((d) => (
             <li
               key={d.id}
-              className="rounded-xl bg-surface-raised p-3 shadow-soft-1 ring-1 ring-line ring-inset"
+              className="rounded-[18px] bg-white p-3"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="min-w-0 text-label font-bold text-ink">
+                <p className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-label font-extrabold text-ink">
                   {d.name}
-                  {d.emphasized ? (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-spark-100 px-2 py-0.5 text-note font-bold text-spark-700">
-                      ผู้เรียนขอให้เน้น ×2
-                    </span>
-                  ) : null}
+                  {d.emphasized ? <span className="t2-chip" data-tone="yellow">เน้น ×2</span> : null}
+                  <span className="t2-chip" data-tone="lilac">
+                    ระบบเสนอ {d.score} · {d.levelLabel}
+                  </span>
                 </p>
                 <select
                   aria-label={`คะแนนด้าน ${d.name}`}
@@ -212,7 +210,7 @@ export function TeacherConfirmScore({
                     )
                     setScore(String(total))
                   }}
-                  className="min-h-11 shrink-0 rounded-sm bg-surface-raised px-3 text-body font-bold text-ink ring-2 ring-line-contrast ring-inset outline-none focus-ring focus:ring-brand-500"
+                  className="min-h-11 min-w-16 shrink-0 rounded-full bg-white px-4 text-body font-extrabold text-ink ring-2 ring-line-contrast ring-inset outline-none focus-ring focus:ring-brand-500"
                 >
                   {[1, 2, 3].map((v) => (
                     <option key={v} value={v}>
@@ -221,23 +219,26 @@ export function TeacherConfirmScore({
                   ))}
                 </select>
               </div>
-              <p className="mt-2 text-label text-ink-muted">
-                <span className="font-bold text-ink">
-                  ระบบเสนอ {d.score} ({d.levelLabel}) · ยกมาอ้าง:{' '}
-                </span>
-                {d.evidence}
-              </p>
-              <p className="mt-1 text-label text-brand-700">ข้อเสนอแนะ: {d.suggestion}</p>
+              <details className="mt-1">
+                <summary className="flex min-h-11 cursor-pointer items-center text-note font-extrabold text-brand-700">
+                  หลักฐาน · ข้อเสนอแนะ
+                </summary>
+                <p className="text-label text-ink-muted">
+                  <span className="font-bold text-ink">ยกมาอ้าง: </span>
+                  {d.evidence}
+                </p>
+                <p className="mt-1 text-label text-brand-700">ข้อเสนอแนะ: {d.suggestion}</p>
+              </details>
             </li>
           ))}
-          <li className="text-right text-label font-bold text-ink-muted">
-            รวมถ่วงน้ำหนักตอนนี้ {computedTotal} / {maxScore}
+          <li className="text-right text-label font-extrabold text-ink">
+            รวมถ่วงน้ำหนัก {computedTotal} / {maxScore}
           </li>
         </ul>
       ) : null}
 
       {/* ก่อน → หลัง: คะแนนที่ระบบเสนอ เทียบกับคะแนนที่ครูกำลังจะยืนยัน */}
-      <div className="flex items-center gap-2 rounded-xl bg-surface-raised p-3 ring-1 ring-line ring-inset">
+      <div className="flex items-center gap-2 rounded-[18px] bg-white p-3">
         <div className="min-w-0 flex-1">
           <p className="text-note font-bold text-ink-muted">ระบบเสนอ</p>
           <p className="text-body-lg font-bold tabular-nums text-ink-muted">
@@ -274,7 +275,7 @@ export function TeacherConfirmScore({
         <div>
           <label
             htmlFor={`note-${submissionId}`}
-            className="block text-body font-bold text-ink"
+            className="block text-label font-extrabold text-ink"
           >
             ข้อความถึงผู้เรียน (บังคับ)
           </label>
@@ -285,32 +286,30 @@ export function TeacherConfirmScore({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="เช่น เหตุผลข้อ 2 ชัดมาก ลองเพิ่มว่าลูกค้าเป็นใครอีกนิด"
-            className="mt-2 w-full rounded-sm bg-surface-raised p-3 text-body text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus focus:ring-brand-500"
+            className="mt-2 w-full rounded-[18px] bg-white p-3 text-body text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus focus:ring-brand-500"
           />
         </div>
 
-        <Button
-          variant="success"
-          size="lg"
-          fullWidth
+        <button
+          type="button"
           onClick={confirm}
           disabled={busy}
-          loading={busy}
-          loadingLabel="กำลังบันทึกคะแนน"
-          leadingIcon={<CheckIcon width={22} height={22} />}
+          className="t2-btn focus-ring"
+          data-kind="primary"
+          data-block="true"
         >
-          {done ? 'ยืนยันอีกครั้ง' : 'ยืนยันคะแนน'}
-        </Button>
+          <CheckIcon width={20} height={20} aria-hidden />
+          {busy ? 'กำลังบันทึก…' : done ? 'ยืนยันอีกครั้ง' : 'ยืนยันคะแนน'}
+        </button>
       </div>
 
       {/* ทางที่สองของครู: ยังไม่ให้คะแนนสุดท้าย แต่ส่งกลับไปให้แก้ก่อน (สเปกข้อ 3.3) */}
-      <details className="mt-3 rounded-xl bg-surface-raised p-3 ring-1 ring-line ring-inset">
-        <summary className="cursor-pointer text-body font-bold text-ink">
-          ส่งกลับให้แก้ (ยังไม่ให้คะแนนสุดท้าย)
+      <details className="mt-3 rounded-[18px] bg-white p-3">
+        <summary className="flex min-h-11 cursor-pointer items-center text-label font-extrabold text-ink">
+          ส่งกลับให้แก้ · แก้มาแล้ว {roundsUsed}/{maxRounds} รอบ
         </summary>
-        <p className="mt-2 text-label text-ink-muted">
-          เลือกด้านที่ต้องแก้ นักเรียนจะเห็นว่าต้องทำอะไรถึงจะได้ 3 แล้วส่งใหม่เป็นฉบับใหม่
-          ฉบับเดิมยังอยู่ให้ครูเทียบ · แก้มาแล้ว {roundsUsed} จาก {maxRounds} รอบ
+        <p className="mt-1 text-note text-ink-muted">
+          เลือกด้านที่ต้องแก้ นักเรียนส่งใหม่เป็นฉบับใหม่ ฉบับเดิมยังอยู่ให้ครูเทียบ
         </p>
 
         <fieldset className="mt-3">
@@ -346,7 +345,7 @@ export function TeacherConfirmScore({
           value={reviseNote}
           onChange={(e) => setReviseNote(e.target.value)}
           placeholder="เช่น เขียนเพิ่มว่าลูกค้าเป็นใคร แล้วส่งกลับมาได้เลย"
-          className="mt-2 w-full rounded-sm bg-surface-raised p-3 text-body text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus focus:ring-brand-500"
+          className="mt-2 w-full rounded-[18px] bg-[#f6f2e8] p-3 text-body text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus focus:ring-brand-500"
         />
 
         {roundsUsed >= maxRounds ? (
@@ -361,17 +360,16 @@ export function TeacherConfirmScore({
           </label>
         ) : null}
 
-        <Button
-          variant="secondary"
-          fullWidth
-          className="mt-3"
+        <button
+          type="button"
           onClick={sendBack}
           disabled={busy}
-          loading={busy}
-          loadingLabel="กำลังส่งกลับ"
+          className="t2-btn mt-3 focus-ring"
+          data-kind="soft"
+          data-block="true"
         >
-          ส่งกลับให้แก้
-        </Button>
+          {busy ? 'กำลังส่งกลับ…' : 'ส่งกลับให้แก้'}
+        </button>
 
         {sentBack ? (
           <p className="mt-3 flex items-start gap-2 rounded-xl bg-quest-50 p-3 text-label font-bold text-quest-700">

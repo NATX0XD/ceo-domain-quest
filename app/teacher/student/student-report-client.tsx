@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { AlertIcon, Card, EmptyState, UsersIcon, cn } from '../../../components/ui'
+import { AlertIcon, EmptyState, UsersIcon } from '../../../components/ui'
+import { Bar, Bars, Chip, Fact, Icon3d, InfoTip, Kpi, KpiGrid } from '../_ux/v2'
 import { LearnResultsPanel } from '../report/learn-results-panel'
 
 /**
@@ -188,183 +189,190 @@ export function StudentReportClient({
   const chosen = str(profile?.learning_route)
   const chosenBy = str(profile?.channel_chosen_by)
 
+  const initial = (name: string) => Array.from(name.trim())[0] ?? '?'
+  const current = roster.find((r) => r.studentId === selected) ?? null
+
   return (
-    <div>
-      {/* เลือกคน — อยู่บนสุดเพราะครูใช้ไล่ทีละคนตอนให้คะแนน */}
-      <nav aria-label="เลือกนักเรียน" className="print:hidden">
-        <ul className="flex flex-wrap gap-2">
-          {roster.map((s) => (
-            <li key={s.studentId}>
-              <button
-                type="button"
-                onClick={() => setSelected(s.studentId)}
-                aria-current={s.studentId === selected ? 'true' : undefined}
-                className={cn(
-                  'inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-label font-bold ring-2 ring-inset focus-ring',
-                  s.studentId === selected
-                    ? 'bg-brand-600 text-ink-onbrand ring-brand-600'
-                    : 'bg-surface-raised text-ink ring-line-contrast hover:bg-brand-50',
-                )}
-              >
+    <div className="t2-stack">
+      {/* เลือกคน — อยู่บนสุดเพราะครูใช้ไล่ทีละคนตอนให้คะแนน (รายชื่อยาวจึงใช้ช่องเลือกแทนปุ่มเรียงเต็มจอ) */}
+      <nav aria-label="เลือกนักเรียน" className="flex flex-wrap items-center gap-3 print:hidden">
+        <label className="flex items-center gap-2">
+          <Icon3d name="graduation-cap" size={32} />
+          <span className="text-label font-extrabold text-ink">นักเรียน</span>
+          <select
+            value={selected ?? ''}
+            onChange={(e) => setSelected(e.target.value || null)}
+            className="h-11 min-w-48 rounded-full bg-white px-4 text-label font-extrabold text-ink ring-2 ring-line-contrast focus-ring"
+          >
+            {roster.map((s) => (
+              <option key={s.studentId} value={s.studentId}>
                 {s.nickname}
-                {s.pendingReview ? <span className="text-note">· รอตรวจ</span> : null}
-              </button>
-            </li>
-          ))}
-        </ul>
+                {s.pendingReview ? ' · รอตรวจ' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Chip tone="sky">{roster.length} คน</Chip>
+        {current?.pendingReview ? <Chip tone="lilac">รอตรวจ</Chip> : null}
       </nav>
 
       {roster.length === 0 ? (
-        <p className="mt-3 text-label text-ink-muted">ยังไม่มีนักเรียนในห้องนี้</p>
+        <p className="t2-empty">ยังไม่มีนักเรียนในห้องนี้</p>
       ) : null}
 
       {error ? (
-        <p role="alert" className="mt-4 flex items-start gap-2 rounded-2xl bg-danger-100 p-4 text-body font-semibold text-danger-700">
-          <AlertIcon width={22} height={22} className="mt-0.5 shrink-0" />
+        <p role="alert" className="t2-note" data-tone="danger">
+          <AlertIcon width={22} height={22} className="shrink-0" />
           <span>{error}</span>
         </p>
       ) : null}
 
       {report ? (
         <>
-          <div className="mt-4 flex flex-wrap items-center gap-2 print:hidden">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="btn-base bg-brand-600 px-5 text-ink-onbrand shadow-soft-1"
-            >
-              พิมพ์ / บันทึกเป็น PDF
-            </button>
-            <button
-              type="button"
-              onClick={() => void load()}
-              className="btn-base bg-surface-raised px-5 text-ink ring-2 ring-line-contrast ring-inset"
-            >
-              โหลดใหม่
-            </button>
-          </div>
+          <section className="t2-card flex flex-wrap items-center gap-4" style={{ background: 'var(--t2-lilac)', borderColor: 'transparent' }}>
+            <span className="t2-avatar" data-level="green" style={{ width: '3.5rem', height: '3.5rem', fontSize: '1.5rem', background: '#fff' }} aria-hidden>
+              {initial(report.student.nickname)}
+            </span>
+            <div className="min-w-[14rem] flex-1">
+              <h2 className="text-title font-extrabold text-ink">{report.student.nickname}</h2>
+              <p className="mt-1 flex flex-wrap items-center gap-2">
+                <Chip>{str(profile?.business_name) ?? 'ยังไม่ตั้งชื่อร้าน'}</Chip>
+                {str(profile?.domain_name) ? <Chip tone="sky">{str(profile?.domain_name)}</Chip> : null}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 print:hidden">
+              <button type="button" onClick={() => window.print()} className="t2-btn focus-ring" data-kind="primary">
+                <Icon3d name="printer" size={24} />
+                พิมพ์ / บันทึกเป็น PDF
+              </button>
+              <button type="button" onClick={() => void load()} className="t2-btn focus-ring">
+                โหลดใหม่
+              </button>
+            </div>
+          </section>
 
-          <Card as="section" className="mt-4">
-            <h2 className="text-title-sm font-bold text-ink">{report.student.nickname}</h2>
-            <p className="mt-0.5 text-label text-ink-muted">
-              {str(profile?.business_name) ?? 'ยังไม่ได้ตั้งชื่อร้าน'}
-              {str(profile?.domain_name) ? ` · ชื่อโดเมนที่ยื่น ${str(profile?.domain_name)}` : ''}
-            </p>
-
-            <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Fact label="ดาวที่ได้" value={`${report.stars?.earned ?? 0} ดวง`} />
-              <Fact
-                label="เป้าหมายที่ตั้งเอง"
-                value={report.stars?.goalStars == null ? 'ยังไม่ตั้งเป้า' : `${report.stars.goalStars} ดวง`}
-              />
-              <Fact label="ก่อนเรียน" value={report.tests.pre === null ? 'ยังไม่ทำ' : `${report.tests.pre}`} />
-              <Fact label="หลังเรียน" value={report.tests.post === null ? 'ยังไม่ทำ' : `${report.tests.post}`} />
-            </dl>
-          </Card>
+          <KpiGrid>
+            <Kpi label="ดาวที่ได้" value={`${report.stars?.earned ?? 0} ดวง`} tone="yellow" icon="star" />
+            <Kpi
+              label="เป้าหมายที่ตั้งเอง"
+              value={report.stars?.goalStars == null ? '—' : `${report.stars.goalStars} ดวง`}
+              tone="lilac"
+              icon="bullseye"
+              hint={report.stars?.goalStars == null ? 'ยังไม่ตั้งเป้า' : undefined}
+            />
+            <Kpi
+              label="ก่อนเรียน"
+              value={report.tests.pre === null ? '—' : `${report.tests.pre}`}
+              tone="peach"
+              icon="memo"
+              hint={report.tests.pre === null ? 'ยังไม่ทำ' : undefined}
+            />
+            <Kpi
+              label="หลังเรียน"
+              value={report.tests.post === null ? '—' : `${report.tests.post}`}
+              tone="mint"
+              icon="chart-increasing"
+              hint={report.tests.post === null ? 'ยังไม่ทำ' : undefined}
+            />
+          </KpiGrid>
 
           {/* ── จุดประสงค์ที่ผ่าน */}
-          <Card as="section" className="mt-4">
-            <h2 className="text-title-sm font-bold text-ink">ภารกิจและจุดประสงค์</h2>
-            <table className="mt-2 w-full text-left text-label">
-              <thead>
-                <tr className="text-ink-muted">
-                  <th scope="col" className="py-1">จุดประสงค์</th>
-                  <th scope="col" className="py-1">ช่องทางที่ใช้</th>
-                  <th scope="col" className="py-1">ลอง</th>
-                  <th scope="col" className="py-1">คำใบ้</th>
-                  <th scope="col" className="py-1">ดาว</th>
-                  <th scope="col" className="py-1">เวลา</th>
-                  <th scope="col" className="py-1">ผล</th>
-                </tr>
-              </thead>
-              <tbody className="text-ink">
-                {report.missions.map((m) => {
-                  const skipped = report.skips.find((s) => s.missionId === m.missionId)
-                  return (
-                    <tr key={m.missionId} className="border-t border-line align-top">
-                      <th scope="row" className="py-1.5 font-bold">
-                        {MISSION_OBJECTIVE[m.missionId] ?? m.missionId}
-                      </th>
-                      <td className="py-1.5">{routeName(m.channelUsed)}</td>
-                      <td className="py-1.5">{m.attempts}</td>
-                      <td className="py-1.5">{m.hintsUsed}</td>
-                      <td className="py-1.5 font-bold">{m.stars ?? 0}</td>
-                      <td className="py-1.5">{timeText(m.secondsSpent)}</td>
-                      <td className="py-1.5">
-                        {m.passedAt ? (
-                          <span className="font-bold text-quest-700">ผ่าน</span>
-                        ) : skipped ? (
-                          <span className="font-bold text-spark-700">ข้าม</span>
-                        ) : m.missionId === 'boss' ? (
-                          /**
-                           * ด่านบอส**ไม่เคยมี passed_at โดยดีไซน์** (ดู board/route.ts)
-                           * สรุปว่า "ยังไม่ผ่าน" จึงผิด — ดูที่คะแนนที่ครูยืนยันแทน (UAT-7 ข้อ ค-5)
-                           */
-                          <span className="text-ink-muted">ดูผลที่ช่องคะแนนของครู</span>
-                        ) : (
-                          <span className="text-ink-muted">ยังไม่ผ่าน</span>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
-                {report.missions.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-2 text-ink-muted">ยังไม่ได้เริ่มภารกิจ</td>
+          <section className="t2-card">
+            <h2 className="t2-card-title">
+              <Icon3d name="rocket" size={32} />
+              ภารกิจและจุดประสงค์
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-label">
+                <thead>
+                  <tr className="text-ink-muted">
+                    <th scope="col" className="py-1">จุดประสงค์</th>
+                    <th scope="col" className="py-1">ช่องทาง</th>
+                    <th scope="col" className="py-1">ลอง</th>
+                    <th scope="col" className="py-1">คำใบ้</th>
+                    <th scope="col" className="py-1">ดาว</th>
+                    <th scope="col" className="hidden py-1 lg:table-cell">เวลา</th>
+                    <th scope="col" className="py-1">ผล</th>
                   </tr>
-                ) : null}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="text-ink">
+                  {report.missions.map((m) => {
+                    const skipped = report.skips.find((sk) => sk.missionId === m.missionId)
+                    return (
+                      <tr key={m.missionId} className="border-t border-line align-top">
+                        <th scope="row" className="py-2 pr-2 font-extrabold">
+                          {MISSION_OBJECTIVE[m.missionId] ?? m.missionId}
+                        </th>
+                        <td className="py-2">{routeName(m.channelUsed)}</td>
+                        <td className="py-2">{m.attempts}</td>
+                        <td className="py-2">{m.hintsUsed}</td>
+                        <td className="py-2 font-extrabold">{m.stars ?? 0}</td>
+                        <td className="hidden py-2 lg:table-cell">{timeText(m.secondsSpent)}</td>
+                        <td className="py-2">
+                          {m.passedAt ? (
+                            <Chip tone="green">ผ่าน</Chip>
+                          ) : skipped ? (
+                            <Chip tone="orange">ข้าม</Chip>
+                          ) : m.missionId === 'boss' ? (
+                            /**
+                             * ด่านบอส**ไม่เคยมี passed_at โดยดีไซน์** (ดู board/route.ts)
+                             * สรุปว่า "ยังไม่ผ่าน" จึงผิด — ดูที่คะแนนที่ครูยืนยันแทน (UAT-7 ข้อ ค-5)
+                             */
+                            <Chip title="ด่านบอสไม่มีสถานะผ่าน ดูที่คะแนนของครู">ดูคะแนนครู</Chip>
+                          ) : (
+                            <Chip>ยังไม่ผ่าน</Chip>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  {report.missions.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-2 text-ink-muted">ยังไม่ได้เริ่มภารกิจ</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
 
             {report.skips.length > 0 ? (
-              <p className="mt-2 text-note text-ink-muted">
+              <p className="mt-2 text-note font-bold text-ink-muted">
                 ข้ามภารกิจ {report.skips.length} ครั้ง:{' '}
-                {report.skips.map((s) => `${s.missionId}${s.reason ? ` (${s.reason})` : ''}`).join(' · ')}
+                {report.skips.map((sk) => `${sk.missionId}${sk.reason ? ` (${sk.reason})` : ''}`).join(' · ')}
               </p>
             ) : null}
-          </Card>
+          </section>
 
           {/* ── ร่องรอยการปรับเหมาะ: ระบบเสนออะไร เด็กเลือกอะไร */}
-          <Card as="section" className="mt-4" tone="brand">
-            <h2 className="text-title-sm font-bold text-ink">ร่องรอยการปรับเหมาะ (ระบบเสนอ ผู้เรียนเลือก)</h2>
-            <dl className="mt-2 grid gap-2 sm:grid-cols-3">
-              <Fact label="ระบบเสนอช่องทาง" value={routeName(suggested)} />
+          <section className="t2-card">
+            <h2 className="t2-card-title">
+              <Icon3d name="brain" size={32} />
+              ร่องรอยการปรับเหมาะ
+              <InfoTip label="เรื่องการปรับเหมาะ" text="ระบบเสนออะไร ผู้เรียนเลือกอะไร เปลี่ยนกี่ครั้ง ใครเป็นคนสั่ง" />
+            </h2>
+            <dl className="t2-facts" data-cols="3">
+              <Fact label="ระบบเสนอช่องทาง" icon="light-bulb" tone="mint" value={routeName(suggested)} />
               <Fact
                 label="ผู้เรียนใช้จริง"
-                value={`${routeName(chosen)}${chosenBy ? ` (${chosenBy === 'student' ? 'เลือกเอง' : 'ตามที่ระบบเสนอ'})` : ''}`}
+                icon="rocket"
+                tone="sky"
+                value={`${routeName(chosen)}${chosenBy ? ` (${chosenBy === 'student' ? 'เลือกเอง' : 'ตามระบบ'})` : ''}`}
               />
-              <Fact label="เปลี่ยนช่องทางระหว่างเรียน" value={`${report.routeChanges.count} ครั้ง`} />
-            </dl>
-
-            {suggested && chosen && suggested !== chosen ? (
-              <p className="mt-2 rounded-xl bg-surface-raised p-3 text-label font-semibold text-brand-700">
-                เลือกต่างจากที่ระบบเสนอ — ระบบเสนอ {routeName(suggested)} แต่เลือก {routeName(chosen)} เอง
-              </p>
-            ) : null}
-
-            {report.routeChanges.items.length > 0 ? (
-              <ul className="mt-2 flex flex-col gap-1">
-                {report.routeChanges.items.map((c, i) => (
-                  <li key={`${c.changedAt}-${i}`} className="text-note text-ink-muted">
-                    {c.missionId ? `${c.missionId} · ` : ''}
-                    {routeName(c.from)} → {routeName(c.to)}
-                    {c.changedBy ? ` · ${c.changedBy === 'student' ? 'ผู้เรียนเปลี่ยนเอง' : 'ระบบปรับให้'}` : ''}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-
-            <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Fact label="เปลี่ยนช่องทาง" icon="counterclockwise-arrows-button" tone="peach" value={`${report.routeChanges.count} ครั้ง`} />
               {/*
                 "ระบบเสนอระดับไหน เทียบกับที่ใช้จริง" คือหลักฐานการปรับเหมาะที่สไลด์อ้างถึง
                 API ส่ง level_suggested มาตั้งแต่ต้น แต่จอเคยโชว์แค่ระดับที่ใช้จริง เทียบไม่ได้เลย
               */}
               <Fact
-                label="ตัวช่วยระดับ (ระบบเสนอ → ใช้จริง)"
+                label="ตัวช่วยระดับ (เสนอ → ใช้)"
+                icon="gear"
+                tone="lilac"
                 value={`${num(profile?.level_suggested) ?? '-'} → ${num(profile?.scaffold_level) ?? '-'}`}
               />
               <Fact
                 label="ใครปรับตัวช่วย"
+                icon="handshake"
+                tone="yellow"
                 value={
                   str(profile?.hints_toggled_by) === 'student'
                     ? 'ผู้เรียนกดเอง'
@@ -375,30 +383,58 @@ export function StudentReportClient({
                         : '-'
                 }
               />
-              <Fact label="ยกระดับเป้าหมายเอง" value={`${num(profile?.goal_raised_count) ?? 0} ครั้ง`} />
-              <Fact label="เขียนทบทวนตัวเอง" value={`${report.reflections.length} ข้อ`} />
+              <Fact label="ยกระดับเป้าเอง" icon="chart-increasing" tone="mint" value={`${num(profile?.goal_raised_count) ?? 0} ครั้ง`} />
             </dl>
+
+            {suggested && chosen && suggested !== chosen ? (
+              <p className="t2-note mt-3" data-tone="sky">
+                <span>
+                  เลือกต่างจากที่ระบบเสนอ — เสนอ {routeName(suggested)} แต่เลือก {routeName(chosen)} เอง
+                </span>
+              </p>
+            ) : null}
+
+            {report.routeChanges.items.length > 0 ? (
+              <details className="mt-3">
+                <summary className="flex min-h-11 cursor-pointer items-center text-label font-extrabold text-brand-700">
+                  ประวัติเปลี่ยนช่องทาง {report.routeChanges.items.length} ครั้ง
+                </summary>
+                <ul className="flex flex-col gap-1">
+                  {report.routeChanges.items.map((c, i) => (
+                    <li key={`${c.changedAt}-${i}`} className="text-note font-semibold text-ink-muted">
+                      {c.missionId ? `${c.missionId} · ` : ''}
+                      {routeName(c.from)} → {routeName(c.to)}
+                      {c.changedBy ? ` · ${c.changedBy === 'student' ? 'ผู้เรียนเปลี่ยนเอง' : 'ระบบปรับให้'}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
 
             {/*
               เป้าหมายที่ผู้เรียนพิมพ์เอง — หลักฐานตรง ๆ ว่า "ผู้เรียนตั้งเป้าเอง ไม่ใช่ระบบตั้งให้"
               เป็นข้อความของเด็ก ขึ้นเต็มไม่ตัดคำ และเป็นคนละอย่างกับระดับเป้า 1-3 ที่กดเลือก
             */}
             {str(profile?.own_goal_text) ? (
-              <div className="mt-3 rounded-xl bg-surface-raised p-3">
-                <p className="text-note font-bold text-ink-muted">เป้าหมายที่ผู้เรียนเขียนเอง</p>
+              <div className="mt-3 rounded-[18px] bg-[#f6f2e8] p-3">
+                <p className="text-note font-bold text-ink-muted">เป้าหมายที่เขียนเอง</p>
                 <blockquote className="mt-1 text-label text-pretty text-ink">
                   “{str(profile?.own_goal_text)}”
                 </blockquote>
               </div>
             ) : null}
-          </Card>
+          </section>
 
-          {/* ── ความมั่นใจ · เพื่อน · ด่านบอส */}
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <Card as="section">
-              <h2 className="text-title-sm font-bold text-ink">ความมั่นใจรายจุดประสงค์</h2>
+          {/* ── ความมั่นใจ · เพื่อน */}
+          <div className="t2-grid">
+            <section className="t2-card">
+              <h2 className="t2-card-title">
+                <Icon3d name="bullseye" size={32} />
+                ความมั่นใจ
+                <InfoTip label="เรื่องความมั่นใจ" text="ระดับความมั่นใจที่ผู้เรียนให้ตัวเองในแต่ละจุดประสงค์ จาก 1 ถึง 3" />
+              </h2>
               {report.confidence && Object.keys(report.confidence).length > 0 ? (
-                <ul className="mt-2 flex flex-col gap-1">
+                <Bars>
                   {/**
                    * บางแถวมีทั้งคีย์เก่า (m1..m4) และคีย์จริง (obj-1..obj-4) ปนกัน
                    * รวมให้เหลือชื่อละบรรทัดเดียว ไม่งั้นครูเห็น 8 บรรทัดซ้ำเรื่องเดียวกัน (UAT-7 ค-4)
@@ -410,56 +446,61 @@ export function StudentReportClient({
                         level,
                       ]),
                     ).entries(),
-                  ].map(([name, level]) => (
-                    <li key={name} className="text-label text-ink">
-                      {name}: มั่นใจระดับ {level} จาก 3
-                    </li>
+                  ].map(([name, level], i) => (
+                    <Bar
+                      key={name}
+                      color={(['blue', 'purple', 'coral', 'green', 'gold', 'red'] as const)[i % 6] ?? 'purple'}
+                      value={(Number(level) / 3) * 100}
+                      display={`${level}/3`}
+                      label={<span className="truncate">{name}</span>}
+                    />
                   ))}
-                </ul>
+                </Bars>
               ) : (
-                <p className="mt-2 text-label text-ink-muted">ยังไม่มีข้อมูลความมั่นใจ</p>
+                <p className="t2-empty">ยังไม่มีข้อมูล</p>
               )}
-            </Card>
+            </section>
 
-            <Card as="section">
-              <h2 className="text-title-sm font-bold text-ink">เพื่อนและการช่วยเหลือ</h2>
-              <dl className="mt-2 grid grid-cols-2 gap-2">
-                <Fact label="ช่วยเพื่อน" value={`${report.buddy.helpedOthers} ครั้ง`} />
-                <Fact label="ขอให้เพื่อนช่วย" value={`${report.buddy.askedForHelp} ครั้ง`} />
-                <Fact label="ชมเพื่อน" value={`${report.peerFeedback.given} ครั้ง`} />
-                <Fact label="ได้รับคำชม" value={`${report.peerFeedback.received} ครั้ง`} />
+            <section className="t2-card">
+              <h2 className="t2-card-title">
+                <Icon3d name="handshake" size={32} />
+                เพื่อนและการช่วย
+              </h2>
+              <dl className="t2-facts">
+                <Fact label="ช่วยเพื่อน" icon="handshake" tone="mint" value={`${report.buddy.helpedOthers} ครั้ง`} />
+                <Fact label="ขอเพื่อนช่วย" icon="speech-balloon" tone="sky" value={`${report.buddy.askedForHelp} ครั้ง`} />
+                <Fact label="ชมเพื่อน" icon="party-popper" tone="yellow" value={`${report.peerFeedback.given} ครั้ง`} />
+                <Fact label="ได้รับคำชม" icon="sparkles" tone="peach" value={`${report.peerFeedback.received} ครั้ง`} />
               </dl>
-            </Card>
+            </section>
           </div>
 
           {report.reflections.length > 0 ? (
-            <Card as="section" className="mt-4">
-              <h2 className="text-title-sm font-bold text-ink">สิ่งที่ผู้เรียนเขียนไว้เอง</h2>
-              <ul className="mt-2 flex flex-col gap-2">
-                {report.reflections.map((r, i) => (
-                  <li key={`${r.questionId}-${i}`} className="rounded-xl bg-surface-sunken p-3">
-                    <p className="text-note font-bold text-ink-muted">{r.questionId}</p>
-                    <p className="mt-0.5 text-body whitespace-pre-line text-ink">{r.answer}</p>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+            <details className="t2-more">
+              <summary className="focus-ring">
+                <Icon3d name="memo" size={32} />
+                ที่ผู้เรียนเขียนเอง
+                <Chip tone="lilac">{report.reflections.length} ข้อ</Chip>
+              </summary>
+              <div className="t2-more__body">
+                <ul className="flex flex-col gap-2">
+                  {report.reflections.map((r, i) => (
+                    <li key={`${r.questionId}-${i}`} className="rounded-[18px] bg-[#f6f2e8] p-3">
+                      <p className="text-note font-bold text-ink-muted">{r.questionId}</p>
+                      <p className="mt-0.5 text-body whitespace-pre-line text-ink">{r.answer}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </details>
           ) : null}
 
           <LearnResultsPanel classroomId={classroomId} studentId={report.student.id} />
         </>
       ) : !error ? (
-        <p className="mt-4 text-body text-ink-muted">เลือกชื่อนักเรียนด้านบนเพื่อดูรายงาน</p>
+        <p className="t2-empty">เลือกนักเรียนเพื่อดูรายงาน</p>
       ) : null}
     </div>
   )
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-surface-sunken p-3">
-      <dt className="text-note font-bold text-ink-muted">{label}</dt>
-      <dd className="mt-0.5 text-body font-bold text-ink">{value}</dd>
-    </div>
-  )
-}

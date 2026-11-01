@@ -10,7 +10,7 @@ import {
   type PlanRequestKind,
   type PlanRequestStatus,
 } from '../../../core/plan-request'
-import { AlertIcon, Card, CheckIcon, cn } from '../../../components/ui'
+import { Chip, Icon3d, InfoTip } from '../_ux/v2'
 
 /**
  * S-08 คำขอเปลี่ยนแผนจากผู้เรียน — ฝั่งครู
@@ -165,48 +165,48 @@ export function PlanRequests({
   const pending = rows.filter((r) => r.status === 'pending')
   const answered = rows.filter((r) => r.status !== 'pending')
 
+  const initial = (name: string | null) => Array.from((name ?? 'ผ').trim())[0] ?? '?'
+
   return (
-    <Card
-      as="section"
-      tone={pending.length > 0 ? 'spark' : 'plain'}
-      className="mt-4"
-    >
+    <section className="t2-card" aria-label="คำขอเปลี่ยนแผนจากผู้เรียน">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-title-sm font-bold text-ink">
-          คำขอเปลี่ยนแผนจากผู้เรียน
-          {pending.length > 0 ? (
-            <span className="ml-2 inline-flex items-center rounded-full bg-spark-600 px-2 py-0.5 text-note font-bold text-ink-onbrand">
-              รอตอบ {pending.length}
-            </span>
-          ) : null}
+        <h2 className="t2-card-title" style={{ margin: 0 }}>
+          <Icon3d name="speech-balloon" size={36} />
+          คำขอจากนักเรียน
+          {pending.length > 0 ? <Chip tone="orange">รอตอบ {pending.length}</Chip> : null}
+          <InfoTip
+            label="เรื่องคำขอ"
+            text="นักเรียนขอเปลี่ยนระดับ เปลี่ยนช่องทาง ขอข้าม หรือขอเวลาเพิ่มได้จากหน้าของตัวเอง แล้วคำขอจะเด้งขึ้นตรงนี้เอง"
+          />
         </h2>
         <button
           type="button"
           onClick={() => setShowAnswered((v) => !v)}
-          className="btn-base min-h-11 bg-surface-raised px-4 text-label text-ink ring-2 ring-line-contrast ring-inset"
+          className="t2-btn focus-ring"
+          data-size="sm"
         >
-          {showAnswered ? 'ดูเฉพาะที่ยังไม่ตอบ' : 'ดูที่ตอบไปแล้วด้วย'}
+          {showAnswered ? 'เฉพาะที่รอตอบ' : 'ดูที่ตอบแล้ว'}
         </button>
       </div>
 
       {notice ? (
-        <p className="mt-2 flex items-start gap-2 rounded-xl bg-quest-100 p-3 text-label font-semibold text-quest-700">
-          <CheckIcon width={18} height={18} className="mt-0.5 shrink-0" />
+        <p className="t2-note mt-3" data-tone="quest">
+          <Icon3d name="check-mark-button" size={28} />
           <span>{notice}</span>
         </p>
       ) : null}
 
       {error ? (
-        <p role="alert" className="mt-2 flex items-start gap-2 rounded-xl bg-danger-100 p-3 text-label font-semibold text-danger-700">
-          <AlertIcon width={18} height={18} className="mt-0.5 shrink-0" />
+        <p role="alert" className="t2-note mt-3" data-tone="danger">
+          <Icon3d name="warning" size={28} />
           <span>{error}</span>
         </p>
       ) : null}
 
       {pending.length === 0 ? (
-        <p className="mt-2 text-body text-ink-muted">
-          ยังไม่มีคำขอที่รอตอบ · ผู้เรียนขอเปลี่ยนระดับ เปลี่ยนช่องทาง ขอข้าม หรือขอเวลาเพิ่มได้จากหน้าของตัวเอง
-          แล้วคำขอจะเด้งขึ้นตรงนี้เอง
+        <p className="mt-3 flex items-center gap-2 text-label font-extrabold text-ink">
+          <Icon3d name="sparkles" size={28} />
+          ยังไม่มีคำขอที่รอตอบ
         </p>
       ) : (
         <ul className="mt-3 flex flex-col gap-3">
@@ -214,28 +214,28 @@ export function PlanRequests({
             const options = optionsFor(row.kind)
             const picked = granted[row.id] ?? ''
             return (
-              <li key={row.id} className="rounded-2xl bg-surface-raised p-4 ring-1 ring-spark-200 ring-inset">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="text-body-lg font-bold text-ink">
+              <li key={row.id} className="rounded-[22px] bg-[#fff8e3] p-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="t2-avatar" data-level="yellow" aria-hidden>
+                    {initial(row.nickname)}
+                  </span>
+                  <p className="min-w-0 flex-1 text-body-lg font-extrabold text-ink">
                     {row.nickname ?? 'ผู้เรียน'}
-                    <span className="ml-2 text-label font-semibold text-spark-700">
-                      {PLAN_REQUEST_LABELS[row.kind]}
+                    <span className="ml-2 align-middle">
+                      <Chip tone="orange">{PLAN_REQUEST_LABELS[row.kind]}</Chip>
                     </span>
                   </p>
-                  <p className="text-note text-ink-muted">{waitedText(row.createdAt)}</p>
+                  <Chip>{waitedText(row.createdAt)}</Chip>
                 </div>
 
-                <p className="mt-1 text-body font-semibold text-ink">{row.summary}</p>
+                <p className="mt-2 text-label font-extrabold text-ink">{row.summary}</p>
 
                 {/* ข้อความของเด็ก — ขึ้นเต็ม ไม่ตัด ไม่ย่อ */}
-                <blockquote className="mt-2 rounded-xl bg-surface-sunken p-3 text-body text-pretty text-ink">
+                <blockquote className="mt-2 rounded-[16px] bg-white p-3 text-label text-pretty text-ink">
                   “{row.reason}”
                 </blockquote>
 
-                <label
-                  htmlFor={`reply-${row.id}`}
-                  className="mt-3 block text-label font-bold text-ink"
-                >
+                <label htmlFor={`reply-${row.id}`} className="mt-3 block text-label font-extrabold text-ink">
                   ตอบกลับสั้น ๆ (ไม่ใส่ก็ได้)
                 </label>
                 <textarea
@@ -245,12 +245,12 @@ export function PlanRequests({
                   value={replies[row.id] ?? ''}
                   onChange={(e) => setReplies((prev) => ({ ...prev, [row.id]: e.target.value }))}
                   placeholder="เช่น ลองระดับนี้ก่อน ถ้ายังยากบอกครูอีกที"
-                  className="mt-1 w-full rounded-sm bg-surface-raised p-3 text-body text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus"
+                  className="mt-1 w-full rounded-[16px] bg-white p-3 text-label text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus"
                 />
 
                 {options.length > 0 ? (
                   <fieldset className="mt-3">
-                    <legend className="text-label font-bold text-ink">
+                    <legend className="text-label font-extrabold text-ink">
                       ถ้าจะให้แบบอื่นแทน เลือกสิ่งที่ให้จริง
                     </legend>
                     <div className="mt-1 flex flex-wrap gap-2">
@@ -265,12 +265,7 @@ export function PlanRequests({
                             }))
                           }
                           aria-pressed={picked === o.value}
-                          className={cn(
-                            'btn-base min-h-11 px-4 text-label',
-                            picked === o.value
-                              ? 'bg-brand-600 text-ink-onbrand'
-                              : 'bg-surface-sunken text-ink ring-2 ring-line-contrast ring-inset',
-                          )}
+                          className="t2-tab focus-ring"
                         >
                           {o.label}
                         </button>
@@ -284,7 +279,8 @@ export function PlanRequests({
                     type="button"
                     disabled={busyId === row.id}
                     onClick={() => void answer(row, 'approved')}
-                    className="btn-base bg-quest-600 px-5 text-ink-onbrand shadow-soft-1 disabled:opacity-60"
+                    className="t2-btn focus-ring"
+                    data-kind="primary"
                   >
                     ให้ตามที่ขอ
                   </button>
@@ -293,7 +289,8 @@ export function PlanRequests({
                       type="button"
                       disabled={busyId === row.id}
                       onClick={() => void answer(row, 'changed')}
-                      className="btn-base bg-surface-raised px-5 text-brand-700 ring-2 ring-brand-200 ring-inset disabled:opacity-60"
+                      className="t2-btn focus-ring"
+                      data-kind="soft"
                     >
                       ให้แบบอื่นแทน
                     </button>
@@ -302,7 +299,7 @@ export function PlanRequests({
                     type="button"
                     disabled={busyId === row.id}
                     onClick={() => void answer(row, 'rejected')}
-                    className="btn-base bg-surface-raised px-5 text-ink ring-2 ring-line-contrast ring-inset disabled:opacity-60"
+                    className="t2-btn focus-ring"
                   >
                     ยังไม่ให้รอบนี้
                   </button>
@@ -316,20 +313,20 @@ export function PlanRequests({
       {showAnswered && answered.length > 0 ? (
         <ul className="mt-4 flex flex-col gap-2">
           {answered.map((row) => (
-            <li key={row.id} className="rounded-xl bg-surface-sunken p-3">
-              <p className="text-label font-bold text-ink">
+            <li key={row.id} className="rounded-[18px] bg-[#f6f2e8] p-3">
+              <p className="text-label font-extrabold text-ink">
                 {row.nickname ?? 'ผู้เรียน'} · {row.summary}
               </p>
-              <p className="mt-0.5 text-note text-ink-muted">
-                {STATUS_LABEL[row.status] ?? row.status}
-                {row.grantedValue ? ` · ให้จริง ${row.grantedValue}` : ''}
-                {row.teacherResponse ? ` · ครูบอกว่า “${row.teacherResponse}”` : ''}
+              <p className="mt-1 flex flex-wrap items-center gap-2 text-note text-ink-muted">
+                <Chip tone={row.status === 'rejected' ? 'orange' : 'green'}>{STATUS_LABEL[row.status] ?? row.status}</Chip>
+                {row.grantedValue ? `ให้จริง ${row.grantedValue}` : null}
+                {row.teacherResponse ? `ครูบอกว่า “${row.teacherResponse}”` : null}
               </p>
-              <p className="mt-0.5 text-note text-ink-muted">เด็กเขียนว่า “{row.reason}”</p>
+              <p className="mt-1 text-note text-ink-muted">เด็กเขียนว่า “{row.reason}”</p>
             </li>
           ))}
         </ul>
       ) : null}
-    </Card>
+    </section>
   )
 }

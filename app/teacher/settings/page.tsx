@@ -3,9 +3,9 @@ import QRCode from 'qrcode'
 import { getActiveClassSession } from '@/lib/db/repo'
 import { TeacherRoomClient } from '@/components/teacher-room-client'
 import { TeacherPosttestClient } from '@/components/teacher-posttest-client'
-import { Card } from '@/components/ui'
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
 import { PageBody, PageHead } from '../_ux/page-head'
+import { Icon3d, InfoTip } from '../_ux/v2'
 import { AiSwitch } from '../ai-switch'
 import { DemoModeBanner } from '../demo-mode'
 import { SessionSettings } from './session-settings'
@@ -14,11 +14,11 @@ export const metadata: Metadata = { title: 'ตั้งค่าห้อง �
 export const dynamic = 'force-dynamic'
 
 const EXPORTS = [
-  { type: 'students', label: 'รายชื่อและโปรไฟล์' },
-  { type: 'scores', label: 'คะแนนก่อน-หลังเรียน' },
-  { type: 'events', label: 'ร่องรอยการเรียน' },
-  { type: 'reflections', label: 'สะท้อนคิด' },
-  { type: 'survey', label: 'ความพึงพอใจ' },
+  { type: 'students', label: 'รายชื่อ', icon: 'graduation-cap' },
+  { type: 'scores', label: 'คะแนน', icon: 'bar-chart' },
+  { type: 'events', label: 'ร่องรอยการเรียน', icon: 'clipboard' },
+  { type: 'reflections', label: 'สะท้อนคิด', icon: 'brain' },
+  { type: 'survey', label: 'ความพึงพอใจ', icon: 'sparkles' },
 ] as const
 
 /**
@@ -44,12 +44,9 @@ export default async function TeacherSettingsPage({
 
   return (
     <PageBody>
-      <PageHead
-        title="ตั้งค่าห้อง"
-        subtitle="รหัสห้องและ QR · สวิตช์ของคาบ · สวิตช์ปิด AI · ดาวน์โหลดข้อมูล"
-      />
+      <PageHead title="ตั้งค่าห้อง" subtitle="รหัสห้อง · สวิตช์ของคาบ · ข้อมูล" />
 
-      <div className="flex flex-col gap-4">
+      <div className="t2-stack">
         {/* E-16 ป้ายโหมดสาธิต + ปุ่มล้างกลับค่าเริ่มต้น — ขึ้นเฉพาะห้องที่ติดป้ายห้องสาธิต */}
         <DemoModeBanner
           classroomId={data.selectedId}
@@ -58,21 +55,24 @@ export default async function TeacherSettingsPage({
           showReset
         />
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="t2-grid-2" style={{ alignItems: 'stretch' }}>
           <TeacherRoomClient roomCode={data.selectedRoomCode} joinPath={joinPath} />
 
           {qrSvg ? (
-            <Card as="section" className="text-center">
-              <h2 className="text-title-sm font-bold text-ink">สแกนเข้าห้องได้เลย</h2>
+            <section className="t2-card text-center">
+              <h2 className="t2-card-title" style={{ justifyContent: 'center' }}>
+                <Icon3d name="magnifying-glass-tilted-left" size={32} />
+                สแกนเข้าห้อง
+              </h2>
               {/* eslint-disable-next-line react/no-danger */}
               <div
-                className="mx-auto mt-3 w-full max-w-[14rem]"
+                className="mx-auto w-full max-w-[12rem]"
                 role="img"
                 aria-label={`QR code ของลิงก์ ${joinUrl}`}
                 dangerouslySetInnerHTML={{ __html: qrSvg }}
               />
-              <p className="mt-3 text-label break-all text-ink-muted">{joinUrl}</p>
-            </Card>
+              <p className="mt-2 text-note font-bold break-all text-ink-muted">{joinUrl}</p>
+            </section>
           ) : null}
         </div>
 
@@ -86,24 +86,31 @@ export default async function TeacherSettingsPage({
         <TeacherPosttestClient classroomId={data.selectedId} />
 
         {data.selectedId ? (
-          <Card as="section">
-            <h2 className="text-title-sm font-bold text-ink">ดาวน์โหลดข้อมูลเป็น CSV</h2>
-            <p className="mt-1 text-label text-ink-muted">
-              ไฟล์ใช้ชื่อสมมติแทนชื่อจริงของนักเรียน (pseudonymize) นำไปวิเคราะห์ต่อได้เลย
-            </p>
-            <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <section className="t2-card">
+            <h2 className="t2-card-title">
+              <Icon3d name="package" size={32} />
+              ดาวน์โหลด CSV
+              <InfoTip
+                label="เรื่องไฟล์ CSV"
+                text="ไฟล์ใช้ชื่อสมมติแทนชื่อจริงของนักเรียน (pseudonymize) นำไปวิเคราะห์ต่อได้เลย"
+              />
+            </h2>
+            <ul className="t2-grid" style={{ listStyle: 'none', padding: 0, margin: 0, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 13rem), 1fr))' }}>
               {EXPORTS.map((item) => (
                 <li key={item.type}>
                   <a
                     href={`/api/teacher/export?classroomId=${data.selectedId}&type=${item.type}&pseudonymize=1`}
-                    className="btn-base w-full bg-surface-raised text-ink ring-1 ring-line ring-inset hover:bg-brand-50"
+                    className="t2-btn focus-ring"
+                    data-block="true"
+                    style={{ justifyContent: 'flex-start' }}
                   >
+                    <Icon3d name={item.icon} size={26} />
                     {item.label}
                   </a>
                 </li>
               ))}
             </ul>
-          </Card>
+          </section>
         ) : null}
       </div>
     </PageBody>

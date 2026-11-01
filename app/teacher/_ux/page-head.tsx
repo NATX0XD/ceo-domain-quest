@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react'
+import { HighlightTitle } from './v2'
 
 /**
- * หัวของหน้าในแดชบอร์ดครู — ชื่อหน้า + คำอธิบายสั้น + ปุ่มมุมขวา
- *
- * โครงแดชบอร์ด (แถบบน + เมนูข้าง) อยู่ที่ `layout.tsx` แล้ว หน้าแต่ละหน้าจึงเหลือแค่หัวกับเนื้อหา
- * ระยะ 16/24px ตามกติกาแดชบอร์ดที่ไปดูมา (ห่างระหว่างชิ้น 16 · ระหว่างหมวด 24-32)
+ * หัวของหน้าในแดชบอร์ดครู — ชื่อหน้าสั้นบนป้ายเหลือง + บรรทัดช่วยเหลือบรรทัดเดียว + ปุ่มมุมขวา
+ * (visual v2: คำอธิบายยาว ๆ ย้ายไปอยู่ในไอคอน i ของแต่ละการ์ด)
  */
 export function PageHead({
   title,
@@ -16,10 +15,10 @@ export function PageHead({
   action?: ReactNode
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <div className="t2-head">
       <div className="min-w-0">
-        <h1 className="text-title font-extrabold text-balance text-ink">{title}</h1>
-        {subtitle ? <p className="mt-1 text-label text-ink-muted">{subtitle}</p> : null}
+        <HighlightTitle title={title} />
+        {subtitle ? <p className="t2-sub">{subtitle}</p> : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>

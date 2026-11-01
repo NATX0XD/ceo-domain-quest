@@ -410,3 +410,20 @@ NEXT_PUBLIC_DOME_SET=alt       # ชุดที่ Codex สร้าง (ต�
 | ภาพ SVG | `curl` ทุกไฟล์ใน `public/` | **200 ทุกไฟล์** |
 | Contrast | สคริปต์ OKLCH → sRGB → WCAG | **41/41 ผ่าน 0 ตก** |
 | Fixed width > 390px | `grep -rE 'w-\[[0-9]+px\]'` ใน scope | **ไม่พบ** |
+
+---
+
+## 13. Teacher CMS visual v2 (แดชบอร์ดครู)
+
+ขอบเขต: `app/teacher/**`, `app/board/**` (จอฉาย) — ฝั่งนักเรียนไม่เกี่ยว
+
+- สไตล์: การ์ดมนบนพื้นครีมอุ่น (`#faf8f3`) · การ์ดตัวเลขพาสเทลหนึ่งใบต่อหนึ่งไอคอน 3 มิติ · ตัวเลขใหญ่ · กราฟแทนประโยค (เรดาร์ + แถบสี) · ป้ายหน้าเหลืองเอียงเล็กน้อย
+- ไฟล์: `app/teacher/teacher-v2.css` (ทุกกฎอยู่ใต้ `.teacher-cms` ไม่แก้ `globals.css`) · `app/teacher/_ux/v2.tsx` (`Icon3d` `Kpi` `Bar` `Radar` `InfoTip` `Chip` `Fact`)
+- กติกา: คำอธิบายหน้า ≤ 1 บรรทัด · รายละเอียดอยู่ใน `InfoTip` หรือ `<details class="t2-more">` · ปุ่มป้ายบรรทัดเดียว ≤ 4 คำ สูง ≥ 44px · ปุ่มหลักต่อหนึ่งพื้นที่มีปุ่มเดียว · สีไม่ใช่ตัวบอกสถานะอย่างเดียว (มีป้ายตัวหนังสือเสมอ)
+
+### ไอคอน 3 มิติ — Microsoft Fluent Emoji 3D
+
+- ที่มา: https://github.com/microsoft/fluentui-emoji (`assets/<Name>/3D/*.png`)
+- สัญญาอนุญาต: **MIT License, Copyright (c) Microsoft Corporation** — ใช้เชิงพาณิชย์และแก้ไขได้ ต้องคงประกาศลิขสิทธิ์นี้ไว้
+- ไฟล์ที่ใช้: ดาวน์โหลดเฉพาะที่ใช้ แปลงเป็น WebP 128px (`cwebp -q 85`) เก็บที่ `public/icons/3d/*.webp` (ประมาณ 160 KB ทั้งชุด)
+- ใช้เป็นภาพตกแต่งเท่านั้น (`alt=""`) ความหมายต้องมีตัวหนังสือกำกับข้าง ๆ เสมอ

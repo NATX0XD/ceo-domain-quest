@@ -4,20 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { TeacherGradeQueueClient } from '../../../components/teacher-grade-queue-client'
-import {
-  AlertIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  ClockIcon,
-  CloseIcon,
-  CrownIcon,
-  GlobeIcon,
-  ProfileIcon,
-  QuestIcon,
-  RewardIcon,
-  StarIcon,
-  UsersIcon,
-} from '../../../components/ui'
+import { CloseIcon, ProfileIcon } from '../../../components/ui'
+import { Icon3d, type Icon3dName } from './v2'
 
 /**
  * UX-6 โครงแดชบอร์ดของครู — แถบบน + เมนูข้าง + พื้นที่เนื้อหา
@@ -75,7 +63,7 @@ interface NavGroup {
   items: NavItem[]
 }
 
-const ICON = { width: 20, height: 20, 'aria-hidden': true } as const
+const ico = (name: Icon3dName) => <Icon3d name={name} size={28} />
 
 export function TeacherShell({
   teacherEmail,
@@ -200,30 +188,30 @@ export function TeacherShell({
     {
       title: 'ภาพรวม',
       items: [
-        { href: `/teacher${q}`, label: 'คุมคาบสด', icon: <QuestIcon {...ICON} />, badge: badges.needAttention, urgent: true },
-        { href: `/teacher/board${q}`, label: 'ห้องเรียน', icon: <UsersIcon {...ICON} /> },
+        { href: `/teacher${q}`, label: 'คุมคาบสด', icon: ico('chequered-flag'), badge: badges.needAttention, urgent: true },
+        { href: `/teacher/board${q}`, label: 'ห้องเรียน', icon: ico('school') },
       ],
     },
     {
       title: 'นักเรียน',
       items: [
-        { href: `/teacher/student${q}`, label: 'นักเรียนรายคน', icon: <ProfileIcon {...ICON} /> },
-        { href: `/teacher/review${q}`, label: 'งานรอตรวจ', icon: <CheckIcon {...ICON} />, badge: badges.review },
-        { href: `/teacher/requests${q}`, label: 'คำขอจากนักเรียน', icon: <AlertIcon {...ICON} />, badge: badges.requests },
+        { href: `/teacher/student${q}`, label: 'นักเรียนรายคน', icon: ico('graduation-cap') },
+        { href: `/teacher/review${q}`, label: 'งานรอตรวจ', icon: ico('memo'), badge: badges.review },
+        { href: `/teacher/requests${q}`, label: 'คำขอจากนักเรียน', icon: ico('speech-balloon'), badge: badges.requests },
       ],
     },
     {
       title: 'รายงาน',
       items: [
-        { href: `/teacher/report${q}`, label: 'รายงานผลการเรียน', icon: <RewardIcon {...ICON} /> },
-        { href: `/teacher/showcase${q}`, label: 'ผลงานเด่น', icon: <GlobeIcon {...ICON} /> },
+        { href: `/teacher/report${q}`, label: 'รายงานผลการเรียน', icon: ico('bar-chart') },
+        { href: `/teacher/showcase${q}`, label: 'ผลงานเด่น', icon: ico('glowing-star') },
       ],
     },
     {
       title: 'ระบบ',
       items: [
-        { href: `/teacher/settings${q}`, label: 'ตั้งค่า', icon: <CrownIcon {...ICON} /> },
-        { href: `/teacher/demo${q}`, label: 'โหมดสาธิต', icon: <StarIcon {...ICON} /> },
+        { href: `/teacher/settings${q}`, label: 'ตั้งค่า', icon: ico('gear') },
+        { href: `/teacher/demo${q}`, label: 'โหมดสาธิต', icon: ico('performing-arts') },
       ],
     },
   ]
@@ -270,11 +258,8 @@ export function TeacherShell({
       className="flex h-14 shrink-0 items-center gap-2.5 border-b border-line px-4 focus-ring"
       aria-label="CEO Domain Quest แผงครู"
     >
-      <span
-        aria-hidden
-        className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-700 to-brand-500 text-ink-onbrand"
-      >
-        <QuestIcon width={20} height={20} />
+      <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[#fff0bd]">
+        <Icon3d name="rocket" size={30} />
       </span>
       <span className={`min-w-0 leading-tight ${collapsedOnTablet ? 'hidden xl:block' : ''}`}>
         <span className="block truncate text-label font-extrabold text-ink">CEO Domain Quest</span>
@@ -302,7 +287,7 @@ export function TeacherShell({
             onClick={signOut}
             disabled={signingOut}
             title="ออกจากระบบ"
-            className="btn-base mt-2 w-full touch-manipulation bg-surface-raised text-label text-ink-muted ring-1 ring-line ring-inset hover:bg-danger-100 hover:text-danger-700 disabled:opacity-60"
+            className="t2-btn mt-2" data-block="true" data-size="sm"
           >
             {signingOut ? 'กำลังออกจากระบบ…' : 'ออกจากระบบ'}
           </button>
@@ -337,7 +322,7 @@ export function TeacherShell({
                 type="button"
                 onClick={signOut}
                 disabled={signingOut}
-                className="btn-base mt-2 w-full bg-surface-raised text-label text-ink-muted ring-1 ring-line ring-inset hover:bg-danger-100 hover:text-danger-700 disabled:opacity-60"
+                className="t2-btn mt-2" data-block="true" data-size="sm"
               >
                 {signingOut ? 'กำลังออกจากระบบ…' : 'ออกจากระบบ'}
               </button>
@@ -362,12 +347,7 @@ export function TeacherShell({
           </button>
 
           <div className="min-w-0 flex-1">
-            <nav aria-label="เส้นทางหน้า" className="hidden items-center gap-1 text-note text-ink-muted sm:flex">
-              <span>แผงครู</span>
-              <ChevronRightIcon width={14} height={14} aria-hidden />
-              <span>{current?.label ? groups.find((g) => g.items.includes(current))?.title : 'หน้า'}</span>
-            </nav>
-            <p className="line-clamp-2 text-label leading-tight font-extrabold text-ink sm:truncate sm:text-body">{current?.label ?? 'แผงครู'}</p>
+            <p className="truncate text-body font-extrabold text-ink">{current?.label ?? 'แผงครู'}</p>
           </div>
 
           {/* ค้นหาเมนู/หน้า */}
@@ -384,7 +364,7 @@ export function TeacherShell({
               }}
               placeholder="ค้นหาหน้า เช่น รายงาน"
               aria-label="ค้นหาหน้า"
-              className="h-10 w-full rounded-lg bg-surface-sunken px-3 text-label text-ink ring-1 ring-line outline-none placeholder:text-ink-subtle focus:ring-2 focus:ring-brand-500"
+              className="h-11 w-full rounded-lg bg-surface-sunken px-3 text-label text-ink ring-1 ring-line outline-none placeholder:text-ink-subtle focus:ring-2 focus:ring-brand-500"
             />
             {found.length > 0 ? (
               <ul className="absolute top-11 right-0 left-0 z-30 overflow-hidden rounded-lg bg-surface-raised shadow-soft-3 ring-1 ring-line">
@@ -401,8 +381,8 @@ export function TeacherShell({
           </div>
 
           {phaseLabel ? (
-            <p className="hidden shrink-0 items-center gap-2 rounded-full bg-surface-sunken px-3 py-1.5 text-label font-bold text-ink xl:flex">
-              <ClockIcon width={18} height={18} aria-hidden className="text-brand-700" />
+            <p className="hidden shrink-0 items-center gap-2 rounded-full bg-[#e8e3fa] px-3 py-1.5 text-label font-bold text-ink xl:flex">
+              <Icon3d name="alarm-clock" size={22} />
               <span className="max-w-[10rem] truncate">{phaseLabel}</span>
               <span className="tabular-nums text-brand-700">{mmss(seconds)}</span>
             </p>
@@ -415,7 +395,7 @@ export function TeacherShell({
               <select
                 value={classroomId ?? ''}
                 onChange={(e) => router.push(`${pathname}?classroomId=${e.target.value}`)}
-                className="h-10 w-[8.5rem] max-w-[9rem] rounded-lg bg-surface-raised px-1.5 text-ellipsis sm:w-auto sm:max-w-[12rem] sm:px-2 text-label font-bold text-ink ring-1 ring-line-contrast focus-ring"
+                className="h-11 w-[8.5rem] max-w-[9rem] rounded-lg bg-surface-raised px-1.5 text-ellipsis sm:w-auto sm:max-w-[12rem] sm:px-2 text-label font-bold text-ink ring-1 ring-line-contrast focus-ring"
               >
                 {classrooms.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -437,7 +417,7 @@ export function TeacherShell({
               aria-haspopup="menu"
               aria-expanded={menuOpen}
               aria-label="เมนูบัญชีครู"
-              className="grid size-10 place-items-center rounded-full bg-brand-100 text-brand-700 focus-ring"
+              className="grid size-11 place-items-center rounded-full bg-[#e8e3fa] text-brand-700 focus-ring"
             >
               <ProfileIcon width={20} height={20} aria-hidden />
             </button>
@@ -498,10 +478,9 @@ function SideLink({
       title={item.label}
       className={`group relative flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-label transition-colors duration-200 focus-ring ${
         collapsible ? 'justify-center xl:justify-start' : ''
-      } ${active ? 'bg-brand-100 font-extrabold text-brand-700 ring-1 ring-brand-200' : 'font-semibold text-ink hover:bg-surface-sunken'}`}
+      } ${active ? 'bg-[#e8e3fa] font-extrabold text-ink' : 'font-semibold text-ink hover:bg-[#f6f2e8]'}`}
     >
-      {active ? <span aria-hidden className="absolute inset-y-1 left-0 w-1 rounded-r bg-brand-600" /> : null}
-      <span className={`relative ${active ? 'text-brand-700' : 'text-ink-muted'}`}>
+            <span className="relative grid size-8 place-items-center">
         {item.icon}
         {collapsible && badge > 0 ? (
           <span

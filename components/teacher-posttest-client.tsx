@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { AlertIcon, Button, CheckIcon, cn } from '@/components/ui'
+import { Chip, Icon3d, InfoTip } from '@/app/teacher/_ux/v2'
 
 /**
  * ครูกดเปิดแบบทดสอบก่อน/หลังเรียน (T-12) + ดู E1/E2 ของห้อง
@@ -31,8 +31,6 @@ interface Efficiency {
 export function TeacherPosttestClient({ classroomId }: { classroomId: string | null }) {
   const [session, setSession] = useState<SessionInfo | null>(null)
   const [efficiency, setEfficiency] = useState<Efficiency | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!classroomId) return
@@ -58,102 +56,40 @@ export function TeacherPosttestClient({ classroomId }: { classroomId: string | n
     void load()
   }, [load])
 
-  async function toggleTest(kind: 'pretest' | 'posttest', enabled: boolean) {
-    if (!session || busy) return
-    setBusy(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/teacher/session', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ action: 'test', sessionId: session.id, kind, enabled }),
-      })
-      const data = (await res.json().catch(() => null)) as {
-        message?: string
-        session?: SessionInfo
-      } | null
-      if (!res.ok) {
-        setError(data?.message ?? 'สั่งเปิด/ปิดแบบทดสอบไม่สำเร็จ ลองใหม่อีกครั้ง')
-        return
-      }
-      if (data?.session) setSession(data.session)
-      await load()
-    } catch {
-      setError('ต่อเน็ตไม่ได้ ลองใหม่อีกครั้ง')
-    } finally {
-      setBusy(false)
-    }
-  }
-
   if (!classroomId) return null
 
   const opened = session?.posttest_enabled === true
   const preOpened = session?.pretest_enabled === true
+  const done = efficiency?.postTestDone ?? 0
+  const total = efficiency?.studentCount ?? 0
 
   return (
-    <div className="mt-4 rounded-2xl bg-surface-raised p-4 ring-1 ring-line ring-inset">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-2 text-label font-bold text-ink">
-            <span
-              aria-hidden="true"
-              className={cn(
-                'inline-block size-2.5 shrink-0 rounded-full',
-                opened ? 'bg-quest-500' : 'bg-spark-500',
-              )}
-            />
-            แบบทดสอบหลังเรียน {opened ? 'เปิดให้ทำแล้ว' : 'ยังไม่เปิด'}
+    <section className="t2-card" aria-label="แบบทดสอบหลังเรียน">
+      <div className="flex flex-wrap items-center gap-3">
+        <Icon3d name="bar-chart" size={44} />
+        <div className="min-w-0 flex-1">
+          <p className="flex flex-wrap items-center gap-2 text-label font-extrabold text-ink">
+            ทำแบบทดสอบหลังเรียนแล้ว {done}/{total} คน
+            <Chip tone={opened ? 'green' : 'yellow'}>{opened ? 'หลังเรียน เปิด' : 'หลังเรียน ยังไม่เปิด'}</Chip>
+            <Chip tone={preOpened ? 'green' : undefined}>{preOpened ? 'ก่อนเรียน เปิด' : 'ก่อนเรียน ปิด'}</Chip>
           </p>
-          <p className="mt-1 text-label text-ink-muted">
-            {opened
-              ? `นักเรียนเข้า /posttest ได้แล้ว · ทำไปแล้ว ${efficiency?.postTestDone ?? 0} จาก ${efficiency?.studentCount ?? 0} คน`
-              : 'กดเปิดเมื่อสอนจบคาบ นักเรียนถึงจะทำได้ (ทำได้คนละครั้งเดียว)'}
-          </p>
+          {/* ตัวเลขสำหรับตอบกรรมการ — คิดที่เซิร์ฟเวอร์ด้วย core/efficiency.ts */}
+          {efficiency ? (
+            <p className="mt-1 text-label font-bold text-ink-muted">
+              E1/E2 = {efficiency.label} · เกณฑ์ {efficiency.standardLabel} ·{' '}
+              {efficiency.meetsStandard ? 'ผ่านเกณฑ์' : 'ยังไม่ถึงเกณฑ์'}
+            </p>
+          ) : null}
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <Button
-            variant={preOpened ? 'primary' : 'secondary'}
-            onClick={() => toggleTest('pretest', !preOpened)}
-            disabled={busy || session === null}
-            loading={busy}
-            loadingLabel="กำลังสั่ง"
-            leadingIcon={preOpened ? <CheckIcon width={20} height={20} /> : undefined}
-          >
-            {preOpened ? 'ปิดแบบทดสอบก่อนเรียน' : 'เปิดแบบทดสอบก่อนเรียน'}
-          </Button>
-          <Button
-            variant={opened ? 'primary' : 'secondary'}
-            onClick={() => toggleTest('posttest', !opened)}
-            disabled={busy || session === null}
-            loading={busy}
-            loadingLabel="กำลังสั่ง"
-            leadingIcon={opened ? <CheckIcon width={20} height={20} /> : undefined}
-          >
-            {opened ? 'ปิดแบบทดสอบหลังเรียน' : 'เปิดแบบทดสอบหลังเรียน'}
-          </Button>
-        </div>
+        <InfoTip
+          label="เรื่องแบบทดสอบ"
+          align="end"
+          text="เปิด-ปิดแบบทดสอบได้ที่สวิตช์ของคาบด้านบน นักเรียนทำได้คนละครั้งเดียวที่ /posttest"
+        />
       </div>
 
-      {/* ตัวเลขสำหรับตอบกรรมการ — คิดที่เซิร์ฟเวอร์ด้วย core/efficiency.ts */}
-      {efficiency ? (
-        <div className="mt-3 rounded-xl bg-surface-sunken p-3">
-          <p className="text-label font-bold text-ink">
-            ประสิทธิภาพสื่อ E1/E2 = {efficiency.label} (เกณฑ์ {efficiency.standardLabel}){' '}
-            {efficiency.meetsStandard ? '· ผ่านเกณฑ์' : '· ยังไม่ถึงเกณฑ์'}
-          </p>
-          <p className="mt-1 text-note text-ink-muted">{efficiency.summary}</p>
-        </div>
-      ) : null}
+      {efficiency?.summary ? <p className="sr-only">{efficiency.summary}</p> : null}
 
-      {error ? (
-        <p
-          role="alert"
-          className="mt-3 flex items-start gap-2 rounded-xl bg-danger-100 p-3 text-label font-semibold text-danger-700"
-        >
-          <AlertIcon width={18} height={18} className="mt-0.5 shrink-0" />
-          <span>{error}</span>
-        </p>
-      ) : null}
-    </div>
+    </section>
   )
 }

@@ -51,44 +51,39 @@ export function Dialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="teacher-cms-dialog"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div aria-hidden className="absolute inset-0 bg-ink/40" />
+      <div aria-hidden className="teacher-cms-dialog__scrim" />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className={[
-          'relative flex max-h-[88dvh] w-full flex-col rounded-2xl bg-surface-raised shadow-soft-2',
-          'ring-1 ring-line ring-inset focus-visible:outline-none',
-          size === 'lg' ? 'max-w-4xl' : 'max-w-2xl',
-        ].join(' ')}
+        data-size={size}
+        className="teacher-cms-dialog__panel"
       >
-        <div className="flex shrink-0 items-start gap-3 border-b border-line px-5 py-4">
+        <div className="teacher-cms-dialog__head">
           <div className="min-w-0 flex-1">
-            <h2 className="text-title-sm font-extrabold text-ink">{title}</h2>
-            {description ? <p className="mt-1 text-label text-ink-muted">{description}</p> : null}
+            <h2 className="teacher-cms-dialog__title">{title}</h2>
+            {description ? <p className="teacher-cms-dialog__desc">{description}</p> : null}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="ปิดหน้าต่าง"
-            className="tap-target grid size-11 shrink-0 place-items-center rounded-lg text-ink-muted ring-1 ring-line ring-inset hover:bg-surface-sunken focus-ring"
+            className="teacher-cms-dialog__close focus-ring"
           >
-            <span aria-hidden className="text-title-sm leading-none">
-              ×
-            </span>
+            <span aria-hidden>×</span>
           </button>
         </div>
 
         {/* ชั้นเดียวในกล่องที่เลื่อนได้ — หน้าข้างนอกยังไม่เลื่อน */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
+        <div className="teacher-cms-dialog__body">{children}</div>
       </div>
     </div>
   )
@@ -118,12 +113,10 @@ export function DangerButton({
       type="button"
       disabled={disabled}
       onClick={() => (confirming ? onConfirm() : onArm())}
-      className={[
-        'btn-base w-full',
-        confirming
-          ? 'bg-danger-600 text-ink-onbrand shadow-soft-1'
-          : 'bg-surface-raised text-danger-700 ring-2 ring-danger-500 ring-inset hover:bg-danger-100',
-      ].join(' ')}
+      data-block="true"
+      data-kind={confirming ? 'dangerfill' : 'danger'}
+      style={{ whiteSpace: 'normal', paddingBlock: '0.5rem' }}
+      className="t2-btn focus-ring"
     >
       {confirming ? confirmLabel : label}
     </button>

@@ -1,8 +1,20 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { AlertIcon, Card, EmptyState, UsersIcon, cn } from '../../../components/ui'
+import {
+  BAR_COLOR,
+  Bar,
+  Bars,
+  Chip,
+  Distribution,
+  Icon3d,
+  InfoTip,
+  Kpi,
+  KpiGrid,
+  type BarColor,
+} from '../_ux/v2'
 
 /**
  * T-11 รายงานรายห้อง — ตัวเลขที่เอาขึ้นสไลด์ได้จริง
@@ -180,6 +192,16 @@ const OBJECTIVE_NAME: Record<string, string> = {
   'obj-6': 'ข้อ 6 กำกับการเรียนของตัวเองครบวง',
 }
 
+/** ชื่อสั้นของจุดประสงค์สำหรับแถบกราฟ — ชื่อเต็มอยู่ในตารางสถิติละเอียด */
+const OBJECTIVE_SHORT: Record<string, string> = {
+  'obj-1': 'ความหมายโดเมน',
+  'obj-2': 'ส่วนประกอบชื่อเว็บ',
+  'obj-3': 'ประเภทนามสกุล',
+  'obj-4': 'การจดทะเบียน',
+  'obj-5': 'ตั้งชื่อให้ธุรกิจ',
+  'obj-6': 'กำกับการเรียนเอง',
+}
+
 const ROUTE_LABEL: Record<string, string> = {
   clip: 'ดูคลิป',
   card: 'อ่านการ์ด',
@@ -287,6 +309,7 @@ export function ClassReportClient({
   csvHref,
   initialReport = null,
   initialItemAnalysis = null,
+  masterySlot = null,
 }: {
   classroomId: string | null
   roomCode: string | null
@@ -294,6 +317,8 @@ export function ClassReportClient({
   /** ใส่ค่าเริ่มต้นได้เพื่อให้เทสต์เรนเดอร์ตรวจตัวเลขได้โดยไม่ต้องยิงเครือข่าย */
   initialReport?: ClassReport | null
   initialItemAnalysis?: ItemAnalysisReport | null
+  /** การ์ดเรดาร์ความเข้าใจรายภารกิจ (มาจาก /api/teacher/learn คนละ endpoint) */
+  masterySlot?: ReactNode
 }) {
   const [report, setReport] = useState<ClassReport | null>(initialReport)
   const [itemReport, setItemReport] = useState<ItemAnalysisReport | null>(initialItemAnalysis)
@@ -335,6 +360,26 @@ export function ClassReportClient({
     void load()
   }, [load])
 
+  // พิมพ์/บันทึก PDF แล้วตารางที่พับไว้ต้องกางครบ ไม่งั้นเอกสารผลการทดลองขาด
+  useEffect(() => {
+    const closed: HTMLDetailsElement[] = []
+    const open = () => {
+      document.querySelectorAll<HTMLDetailsElement>('details.t2-more:not([open])').forEach((d) => {
+        d.open = true
+        closed.push(d)
+      })
+    }
+    const restore = () => {
+      closed.splice(0).forEach((d) => (d.open = false))
+    }
+    window.addEventListener('beforeprint', open)
+    window.addEventListener('afterprint', restore)
+    return () => {
+      window.removeEventListener('beforeprint', open)
+      window.removeEventListener('afterprint', restore)
+    }
+  }, [])
+
   async function copyNumbers() {
     if (!report) return
     try {
@@ -368,59 +413,302 @@ export function ClassReportClient({
   if (!report) return <p className="text-body text-ink-muted">กำลังคำนวณรายงานของห้อง…</p>
 
   const t = report.tests
+  const hasPost = (t.post.n ?? 0) > 0
+  const gain = hakeGainOf(report)
+  const objColor = (i: number): BarColor =>
+    (['blue', 'purple', 'coral', 'green', 'gold', 'red'] as const)[i % 6] ?? 'purple'
+  const objEntries = Object.entries(report.objectives)
+  const survey = report.survey && report.survey.responses > 0 ? report.survey : null
+  const dist = (['1', '2', '3', '4', '5'] as const).map((k) => ({
+    label: k,
+    value: Object.values(survey?.items ?? {}).reduce((a, it) => a + (it.distribution?.[k] ?? 0), 0),
+  }))
+  const weak = report.objectiveGaps
 
   return (
-    <div>
+    <div className="t2-stack">
       {/* E-16 ต้องติดมากับตัวรายงาน ไม่ใช่แค่หัวจอ — หน้านี้ถูกสั่งพิมพ์และถ่ายรูปขึ้นสไลด์ */}
       {report.isDemo ? (
-        <p
-          role="note"
-          className="mb-3 rounded-2xl bg-danger-100 p-3 text-body font-bold text-danger-700"
-        >
+        <p role="note" className="t2-note" data-tone="danger">
           ตัวเลขชุดนี้มาจากห้องสาธิต (นักเรียนหุ่น) ห้ามใช้อ้างอิงเป็นผลการทดลอง
         </p>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2 print:hidden">
         <details className="relative">
-          <summary className="btn-base cursor-pointer list-none bg-surface-raised px-4 text-brand-700 ring-2 ring-brand-100 ring-inset hover:bg-brand-50">
+          <summary className="t2-btn focus-ring" data-kind="primary" style={{ listStyle: 'none' }}>
             ส่งออก
           </summary>
-          <div className="absolute left-0 top-[calc(100%+0.5rem)] z-10 grid min-w-52 gap-1 rounded-xl bg-surface-raised p-2 shadow-soft-3 ring-1 ring-line print:hidden">
+          <div className="absolute left-0 top-[calc(100%+0.5rem)] z-30 grid min-w-60 gap-1 rounded-[20px] bg-white p-2 shadow-soft-3 ring-1 ring-line print:hidden">
             <button
               type="button"
               onClick={() => window.print()}
-              className="min-h-11 rounded-lg px-3 text-left text-label font-bold text-brand-700 hover:bg-brand-50"
+              className="min-h-11 rounded-xl px-3 text-left text-label font-bold text-brand-700 hover:bg-[#f3effc]"
             >
               พิมพ์ / บันทึกเป็น PDF
             </button>
             <button
               type="button"
               onClick={() => void copyNumbers()}
-              className="min-h-11 rounded-lg px-3 text-left text-label font-bold text-brand-700 hover:bg-brand-50"
+              className="min-h-11 rounded-xl px-3 text-left text-label font-bold text-brand-700 hover:bg-[#f3effc]"
             >
               {copied ? 'คัดลอกแล้ว ✓' : 'คัดลอกตัวเลขทั้งชุด'}
             </button>
             {csvHref ? (
-              <Link href={csvHref} className="min-h-11 rounded-lg px-3 py-2 text-label font-bold text-brand-700 hover:bg-brand-50">
+              <Link href={csvHref} className="flex min-h-11 items-center rounded-xl px-3 text-label font-bold text-brand-700 hover:bg-[#f3effc]">
                 ดาวน์โหลด CSV
               </Link>
             ) : null}
           </div>
         </details>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="btn-base bg-surface-raised px-5 text-ink ring-2 ring-line-contrast ring-inset"
-        >
+        <button type="button" onClick={() => void load()} className="t2-btn focus-ring">
           คำนวณใหม่
         </button>
+        <span className="t2-chip" data-tone="sky" title={`ห้อง ${roomCode ?? '-'}`}>
+          {report.headcount} คน
+        </span>
+        <InfoTip
+          label="เรื่องที่มาของตัวเลข"
+          text="ตัวเลขทุกค่าคำนวณที่ core/ ที่เดียว หน้านี้แสดงอย่างเดียว ส่งออกเป็นข้อความล้วนไม่มีชื่อนักเรียน"
+        />
       </div>
 
-      <p className="mt-3 text-label text-ink-muted">
-        ห้อง {roomCode ?? '-'} · ผู้เรียน {report.headcount} คน · ตัวเลขทุกค่าคำนวณที่ core/ ที่เดียว หน้านี้แสดงอย่างเดียว
-      </p>
+      {/* ── ตัวเลขหลัก 4 ช่อง */}
+      <KpiGrid>
+        <Kpi
+          label="ประสิทธิภาพสื่อ E1/E2"
+          value={report.efficiency.label}
+          tone="yellow"
+          icon="trophy"
+          hint={
+            hasPost
+              ? `เกณฑ์ ${report.efficiency.standardLabel} · ${report.efficiency.meetsStandard ? 'ผ่าน' : 'ยังไม่ผ่าน'}`
+              : `เกณฑ์ ${report.efficiency.standardLabel} · ยังไม่มีข้อมูล`
+          }
+          tip="คะแนนของสื่อ ไม่ใช่คะแนนของนักเรียน E1 = ระหว่างเรียน E2 = หลังเรียน เชื่อถือได้เมื่อนักเรียนทำครบทั้งก่อนและหลังเรียน"
+        />
+        <Kpi
+          label="คะแนนก่อน → หลัง"
+          value={`${n2(t.pre.mean, 1)}→${n2(t.post.mean, 1)}`}
+          tone="mint"
+          icon="chart-increasing"
+          hint={`เต็ม ${t.quizMax} · หลังเรียน ${t.post.n}/${report.headcount} คน`}
+        />
+        <Kpi
+          label="ขนาดอิทธิพล d"
+          value={n2(t.effectSize.d, 2)}
+          tone="lilac"
+          icon="rocket"
+          hint={t.effectSize.level ? `ระดับ${t.effectSize.level}` : (t.effectSize.reason ?? '-')}
+          tip="Cohen's d บอกว่าผลต่างก่อน-หลังใหญ่แค่ไหน ส่วน Hake's ⟨g⟩ บอกว่าห้องเก็บช่องว่างที่เหลือไปได้กี่ส่วน เป็นคนละสถิติ"
+        />
+        <Kpi
+          label="พัฒนาการ Hake ⟨g⟩"
+          value={n2(gain, 2)}
+          tone="sky"
+          icon="seedling"
+          hint={t.normalizedGain.level ? `ระดับ${t.normalizedGain.level}` : (t.normalizedGain.reason ?? '-')}
+        />
+      </KpiGrid>
 
+      {/* ── เรดาร์ความเข้าใจรายภารกิจ + แถบจุดประสงค์ */}
+      <div className="t2-grid-2">
+        {masterySlot}
+        <section className="t2-card" aria-label="ผลตามจุดประสงค์">
+          <h2 className="t2-card-title">
+            <Icon3d name="bullseye" size={32} />
+            จุดประสงค์ 6 ข้อ
+            <InfoTip
+              label="เรื่องจุดประสงค์"
+              text="แถบสีคือร้อยละของคนที่ผ่านแต่ละจุดประสงค์ ชื่อเต็มของแต่ละข้ออยู่ในตารางสถิติละเอียดด้านล่าง"
+            />
+          </h2>
+          <Bars>
+            {objEntries.map(([id, count], i) => {
+              const percent = report.objectivePercents?.[id] ?? 0
+              return (
+                <Bar
+                  key={id}
+                  color={objColor(i)}
+                  value={percent}
+                  display={`${count}/${report.headcount}`}
+                  label={
+                    <>
+                      <span className="t2-dot" style={{ background: BAR_COLOR[objColor(i)] }} />
+                      <span className="truncate">{OBJECTIVE_SHORT[id] ?? id}</span>
+                    </>
+                  }
+                />
+              )
+            })}
+          </Bars>
+        </section>
+      </div>
+
+      {/* ── ภารกิจที่ยาก · ช่องทางที่ได้ผล · ความพึงพอใจ */}
+      <div className="t2-grid">
+        <section className="t2-card" aria-label="คะแนนเทียบเกณฑ์">
+          <h2 className="t2-card-title">
+            <Icon3d name="chart-increasing" size={32} />
+            คะแนนเทียบเกณฑ์
+            <InfoTip
+              label="เรื่องคะแนน"
+              text={`แถบแรกคือคะแนนเฉลี่ยก่อน-หลังเรียนเทียบคะแนนเต็ม ${t.quizMax} แถบ E1/E2 คือร้อยละของสื่อ เกณฑ์ ${report.efficiency.standardLabel}`}
+            />
+          </h2>
+          <Bars>
+            <Bar
+              color="gold"
+              value={t.quizMax > 0 ? (t.pre.mean / t.quizMax) * 100 : 0}
+              display={`${n2(t.pre.mean, 1)}/${t.quizMax}`}
+              label="ก่อนเรียน"
+            />
+            <Bar
+              color="green"
+              value={t.quizMax > 0 ? (t.post.mean / t.quizMax) * 100 : 0}
+              display={hasPost ? `${n2(t.post.mean, 1)}/${t.quizMax}` : '-'}
+              label="หลังเรียน"
+            />
+            <Bar color="blue" value={report.efficiency.e1.percent} display={`${n2(report.efficiency.e1.percent, 1)}%`} label="E1 ระหว่างเรียน" />
+            <Bar color="purple" value={report.efficiency.e2.percent} display={hasPost ? `${n2(report.efficiency.e2.percent, 1)}%` : '-'} label="E2 หลังเรียน" />
+          </Bars>
+        </section>
+
+        <section className="t2-card" aria-label="ภารกิจที่คนผ่านน้อย">
+          <h2 className="t2-card-title">
+            <Icon3d name="fire" size={32} />
+            ภารกิจที่ยาก
+          </h2>
+          {report.hardestMissions.length === 0 ? (
+            <p className="t2-empty">ยังไม่มีใครเล่น</p>
+          ) : (
+            <Bars>
+              {report.hardestMissions.map((m) => (
+                <Bar
+                  key={m.missionId}
+                  color={m.passRate >= 0.8 ? 'green' : m.passRate >= 0.5 ? 'gold' : 'red'}
+                  value={Math.round(m.passRate * 100)}
+                  display={`${m.passed}/${m.played}`}
+                  label={<span className="truncate">{m.title}</span>}
+                  sub={`ลองเฉลี่ย ${n2(m.attemptsMean, 1)} ครั้ง`}
+                />
+              ))}
+            </Bars>
+          )}
+        </section>
+
+        <section className="t2-card" aria-label="ช่องทางเรียนที่ได้ผล">
+          <h2 className="t2-card-title">
+            <Icon3d name="books" size={32} />
+            ช่องทางที่ได้ผล
+          </h2>
+          {report.helperEffectiveness.length === 0 ? (
+            <p className="t2-empty">ยังไม่มีข้อมูล</p>
+          ) : (
+            <Bars>
+              {report.helperEffectiveness.map((h, i) => (
+                <Bar
+                  key={h.route}
+                  color={objColor(i)}
+                  value={Math.round(h.passRate * 100)}
+                  label={<span className="truncate">{ROUTE_LABEL[h.route] ?? h.route}</span>}
+                  sub={`ใช้ ${h.used} ครั้ง · คำใบ้ ${n2(h.hintsPerMission, 1)}/ภารกิจ`}
+                />
+              ))}
+            </Bars>
+          )}
+        </section>
+
+        <section className="t2-card" aria-label="ความพึงพอใจ">
+          <h2 className="t2-card-title">
+            <Icon3d name="sparkles" size={32} />
+            ความพึงพอใจ
+          </h2>
+          {survey ? (
+            <>
+              <p className="mb-3 flex items-baseline gap-2">
+                <span className="text-hero font-extrabold tabular-nums text-ink">{n2(survey.overallMean, 1)}</span>
+                <span className="text-label font-bold text-ink-muted">จาก 5 · ตอบ {survey.responses} คน</span>
+              </p>
+              <Distribution items={dist} color="var(--t2-purple)" />
+            </>
+          ) : (
+            <p className="t2-empty">ยังไม่มีคนตอบ</p>
+          )}
+        </section>
+      </div>
+
+      {/* ── จุดประสงค์ที่ยังอ่อน + บทสอนซ่อม (กางอ่านเมื่อต้องการ) */}
+      <details className="t2-more">
+        <summary className="focus-ring">
+          <Icon3d name="light-bulb" size={32} />
+          ห้องนี้ยังอ่อนเรื่องไหน
+          <Chip tone={weak.length > 0 ? 'orange' : 'green'}>{weak.length > 0 ? `${weak.length} เรื่อง` : 'ผ่านครบ'}</Chip>
+        </summary>
+        <div className="t2-more__body">
+        {report.objectiveGaps.length > 0 ? (
+          <div className="mt-4 rounded-xl bg-spark-100/60 p-3 ring-1 ring-spark-300 ring-inset">
+            <h3 className="text-body font-bold text-ink">ห้องนี้ยังอ่อนเรื่องไหน</h3>
+            {/*
+              API ส่งบทสอนซ่อม 3 นาที + คำถามชวนคิดมาพร้อมกับ advice ตั้งแต่ต้น (สเปกข้อ 11.12)
+              แต่จอเคยโชว์แค่ advice — ครูรู้ว่า "ต้องทบทวนเรื่องนี้" แต่ไม่มีของให้หยิบไปสอนจริง
+              ⚠️ คำถามชวนคิดเป็นคำถามล้วน ไม่มีเฉลย ตามกติกาในไฟล์เนื้อหา
+            */}
+            <ul className="mt-1 flex flex-col gap-3">
+              {report.objectiveGaps.map((g) => (
+                <li key={g.objectiveId} className="text-label text-ink">
+                  <p>
+                    <span className="font-bold">{OBJECTIVE_NAME[g.objectiveId] ?? g.objectiveId}</span> —{' '}
+                    ผ่าน {g.passedCount}/{g.headcount} คน · {g.advice}
+                  </p>
+
+                  {g.miniLesson && g.miniLesson.minutes.length > 0 ? (
+                    <div className="mt-1.5 rounded-xl bg-surface-raised p-3">
+                      <p className="text-note font-bold text-brand-700">
+                        สอนซ่อมท้ายคาบ {g.miniLesson.minutes.length} นาที
+                      </p>
+                      <ol className="mt-1 flex flex-col gap-0.5">
+                        {g.miniLesson.minutes.map((step, i) => (
+                          <li key={`${g.miniLesson?.id}-${i}`} className="text-note text-ink">
+                            นาทีที่ {i + 1} · {step}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  ) : null}
+
+                  {g.coachQuestions && g.coachQuestions.length > 0 ? (
+                    <div className="mt-1.5 rounded-xl bg-surface-raised p-3">
+                      <p className="text-note font-bold text-brand-700">
+                        ถ้าเด็กเข้าใจผิดแบบนี้ ลองถามแบบนี้ (คำถามล้วน ไม่มีเฉลย)
+                      </p>
+                      <ul className="mt-1 flex flex-col gap-1">
+                        {g.coachQuestions.map((c, i) => (
+                          <li key={`${g.objectiveId}-q${i}`} className="text-note text-ink">
+                            <span className="text-ink-muted">{c.misconception}</span> → &ldquo;{c.question}&rdquo;
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="mt-3 text-label font-semibold text-quest-700">ทุกจุดประสงค์ผ่านเกณฑ์ ไม่มีข้อไหนต้องทบทวนซ้ำ</p>
+        )}
+
+        </div>
+      </details>
+
+      {/* ── ตัวเลขสถิติละเอียด (พิมพ์แล้วกางให้เองทั้งหมด) */}
+      <details className="t2-more">
+        <summary className="focus-ring">
+          <Icon3d name="clipboard" size={32} />
+          ตารางสถิติละเอียด
+        </summary>
+        <div className="t2-more__body">
       {/* ── E1/E2 */}
       <Card as="section" className="mt-4">
         <h2 className="text-title-sm font-bold text-ink">ประสิทธิภาพของสื่อ (E1/E2)</h2>
@@ -583,124 +871,6 @@ export function ClassReportClient({
           </dl>
         </Card>
       ) : null}
-
-      {/* ── จุดประสงค์ */}
-      <Card as="section" className="mt-4">
-        <h2 className="text-title-sm font-bold text-ink">ผลตามจุดประสงค์ทั้ง 6 ข้อ</h2>
-        <ul className="mt-2 flex flex-col gap-2">
-          {Object.entries(report.objectives).map(([id, count]) => {
-            /** ร้อยละมาจาก API (UAT-7 ข้อ ข-12) จอไม่หารเอง — แถบสีใช้ค่าเดียวกับตัวเลข */
-            const percent = report.objectivePercents?.[id] ?? 0
-            const rate = percent / 100
-            return (
-              <li key={id}>
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="min-w-0 text-label font-semibold text-ink">{OBJECTIVE_NAME[id] ?? id}</p>
-                  <p className="shrink-0 text-label font-bold text-ink">
-                    {count}/{report.headcount} คน ({percent}%)
-                  </p>
-                </div>
-                <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-surface-sunken">
-                  <div
-                    className={cn('h-full rounded-full', rate >= 0.8 ? 'bg-quest-500' : rate >= 0.5 ? 'bg-spark-500' : 'bg-danger-500')}
-                    style={{ width: `${percent}%` }}
-                  />
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-
-        {report.objectiveGaps.length > 0 ? (
-          <div className="mt-4 rounded-xl bg-spark-100/60 p-3 ring-1 ring-spark-300 ring-inset">
-            <h3 className="text-body font-bold text-ink">ห้องนี้ยังอ่อนเรื่องไหน</h3>
-            {/*
-              API ส่งบทสอนซ่อม 3 นาที + คำถามชวนคิดมาพร้อมกับ advice ตั้งแต่ต้น (สเปกข้อ 11.12)
-              แต่จอเคยโชว์แค่ advice — ครูรู้ว่า "ต้องทบทวนเรื่องนี้" แต่ไม่มีของให้หยิบไปสอนจริง
-              ⚠️ คำถามชวนคิดเป็นคำถามล้วน ไม่มีเฉลย ตามกติกาในไฟล์เนื้อหา
-            */}
-            <ul className="mt-1 flex flex-col gap-3">
-              {report.objectiveGaps.map((g) => (
-                <li key={g.objectiveId} className="text-label text-ink">
-                  <p>
-                    <span className="font-bold">{OBJECTIVE_NAME[g.objectiveId] ?? g.objectiveId}</span> —{' '}
-                    ผ่าน {g.passedCount}/{g.headcount} คน · {g.advice}
-                  </p>
-
-                  {g.miniLesson && g.miniLesson.minutes.length > 0 ? (
-                    <div className="mt-1.5 rounded-xl bg-surface-raised p-3">
-                      <p className="text-note font-bold text-brand-700">
-                        สอนซ่อมท้ายคาบ {g.miniLesson.minutes.length} นาที
-                      </p>
-                      <ol className="mt-1 flex flex-col gap-0.5">
-                        {g.miniLesson.minutes.map((step, i) => (
-                          <li key={`${g.miniLesson?.id}-${i}`} className="text-note text-ink">
-                            นาทีที่ {i + 1} · {step}
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                  ) : null}
-
-                  {g.coachQuestions && g.coachQuestions.length > 0 ? (
-                    <div className="mt-1.5 rounded-xl bg-surface-raised p-3">
-                      <p className="text-note font-bold text-brand-700">
-                        ถ้าเด็กเข้าใจผิดแบบนี้ ลองถามแบบนี้ (คำถามล้วน ไม่มีเฉลย)
-                      </p>
-                      <ul className="mt-1 flex flex-col gap-1">
-                        {g.coachQuestions.map((c, i) => (
-                          <li key={`${g.objectiveId}-q${i}`} className="text-note text-ink">
-                            <span className="text-ink-muted">{c.misconception}</span> → &ldquo;{c.question}&rdquo;
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <p className="mt-3 text-label font-semibold text-quest-700">ทุกจุดประสงค์ผ่านเกณฑ์ ไม่มีข้อไหนต้องทบทวนซ้ำ</p>
-        )}
-      </Card>
-
-      {/* ── ภารกิจที่ยากที่สุด + ช่องทางที่ได้ผล */}
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <Card as="section">
-          <h2 className="text-title-sm font-bold text-ink">ภารกิจที่คนผ่านน้อยที่สุด</h2>
-          <ul className="mt-2 flex flex-col gap-2">
-            {report.hardestMissions.map((m) => (
-              <li key={m.missionId} className="rounded-xl bg-surface-sunken p-3">
-                <p className="text-label font-bold text-ink">{m.title}</p>
-                <p className="mt-0.5 text-note text-ink-muted">
-                  ผ่าน {m.passed}/{m.played} คน ({Math.round(m.passRate * 100)}%) · ลองเฉลี่ย {n2(m.attemptsMean)} ครั้ง
-                </p>
-              </li>
-            ))}
-            {report.hardestMissions.length === 0 ? (
-              <li className="text-label text-ink-muted">ยังไม่มีใครทำภารกิจ</li>
-            ) : null}
-          </ul>
-        </Card>
-
-        <Card as="section">
-          <h2 className="text-title-sm font-bold text-ink">ช่องทางเรียนไหนได้ผลกับห้องนี้</h2>
-          <ul className="mt-2 flex flex-col gap-2">
-            {report.helperEffectiveness.map((h) => (
-              <li key={h.route} className="rounded-xl bg-surface-sunken p-3">
-                <p className="text-label font-bold text-ink">{ROUTE_LABEL[h.route] ?? h.route}</p>
-                <p className="mt-0.5 text-note text-ink-muted">
-                  ใช้ {h.used} ครั้ง · ผ่าน {Math.round(h.passRate * 100)}% · คำใบ้เฉลี่ย {n2(h.hintsPerMission)} ครั้ง/ภารกิจ
-                </p>
-              </li>
-            ))}
-            {report.helperEffectiveness.length === 0 ? (
-              <li className="text-label text-ink-muted">ยังไม่มีข้อมูล</li>
-            ) : null}
-          </ul>
-        </Card>
-      </div>
 
       {/* ── หลักฐาน personalized + คู่หู + แบบสอบถาม */}
       <Card as="section" className="mt-4">
@@ -895,6 +1065,9 @@ export function ClassReportClient({
           ตารางนี้ไม่บอกว่าข้อไหนเฉลยตัวเลือกใด — แผงครูได้แค่ &ldquo;กี่คนตอบข้อนี้ถูก&rdquo; เท่านั้น
         </p>
       </Card>
+
+        </div>
+      </details>
     </div>
   )
 }

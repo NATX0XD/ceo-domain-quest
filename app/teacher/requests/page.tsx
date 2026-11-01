@@ -18,8 +18,8 @@ export default async function TeacherRequestsPage({
   return (
     <PageBody>
       <PageHead
-        title="คำขอจากนักเรียน"
-        subtitle="ตอบแล้วเด็กเห็นทันทีว่าครูให้อะไร · ให้แบบอื่นแทนได้ ไม่ต้องตอบแค่ได้หรือไม่ได้"
+        title="คำขอนักเรียน"
+        subtitle="ตอบแล้วเด็กเห็นทันที"
       />
       <PlanRequests classroomId={data.selectedId} />
     </PageBody>

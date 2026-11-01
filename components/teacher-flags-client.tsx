@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { AlertIcon, Button, CheckIcon, cn } from '@/components/ui'
+import { CheckIcon } from '@/components/ui'
+import { Icon3d, InfoTip } from '@/app/teacher/_ux/v2'
 
 /**
  * ธงคำไม่เหมาะสมบนแผงครู (E-11)
@@ -85,62 +86,50 @@ export function TeacherFlagsClient({ classroomId }: { classroomId: string | null
   if (!classroomId || flags.length === 0) return null
 
   return (
-    <section className="mt-4 rounded-2xl bg-danger-100 p-4 ring-1 ring-danger-300 ring-inset">
-      <h3 className="flex items-center gap-2 text-body-lg font-bold text-danger-700">
-        <AlertIcon width={22} height={22} aria-hidden />
-        ข้อความที่ต้องดูแล {flags.length} รายการ
+    <section className="t2-card shrink-0" style={{ background: '#fdeceb', borderColor: '#eba7a3' }}>
+      <h3 className="t2-card-title" style={{ marginBottom: '0.75rem' }}>
+        <Icon3d name="warning" size={32} />
+        ต้องดูแล {flags.length} รายการ
+        <InfoTip
+          label="เรื่องข้อความที่ต้องดูแล"
+          text="ระบบไม่ได้ลบข้อความของนักเรียน ระดับ 3 ครูเห็นข้อความเต็มเพื่อดูแลได้ถูก ระดับต่ำกว่านั้นเห็นแบบปิดบางส่วน"
+        />
       </h3>
-      <p className="mt-1 text-label text-ink-muted">
-        ระบบไม่ได้ลบข้อความของนักเรียน · ระดับ 3 ครูเห็นข้อความเต็มเพื่อดูแลได้ถูก
-        ระดับต่ำกว่านั้นเห็นแบบปิดบางส่วน
-      </p>
 
-      <ul aria-live="polite" className="mt-3 flex flex-col gap-2">
+      <ul aria-live="polite" className="flex flex-col gap-2">
         {flags.map((flag) => (
-          <li
-            key={flag.id}
-            className="rounded-xl bg-surface-raised p-3 ring-1 ring-line ring-inset"
-          >
+          <li key={flag.id} className="rounded-[18px] bg-white p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="min-w-0 text-body font-bold text-ink">
+              <p className="min-w-0 text-label font-extrabold text-ink">
                 {flag.nickname}
-                <span className="ml-2 text-label font-semibold text-ink-muted">
+                <span className="ml-2 text-note font-bold text-ink-muted">
                   {CONTEXT_LABEL[flag.context] ?? flag.context}
                 </span>
               </p>
-              <span
-                className={cn(
-                  'inline-flex shrink-0 items-center rounded-full px-3 py-1 text-label font-bold',
-                  flag.level >= 3
-                    ? 'bg-danger-100 text-danger-700'
-                    : 'bg-spark-100 text-spark-700',
-                )}
-              >
+              <span className="t2-chip" data-tone={flag.level >= 3 ? 'red' : 'orange'}>
                 ระดับ {flag.level}
-                {flag.is_full_text ? ' · ข้อความเต็ม' : ' · ปิดบางส่วน'}
+                {flag.is_full_text ? ' · เต็ม' : ' · ปิดบางส่วน'}
               </span>
             </div>
 
-            <p className="mt-2 rounded-lg bg-surface-sunken p-2 text-body break-words text-ink">
+            <p className="mt-2 rounded-[14px] bg-[#f6f2e8] p-2 text-label break-words text-ink">
               {flag.text_for_teacher ?? '(ไม่มีข้อความ)'}
             </p>
 
             {flag.categories.length > 0 ? (
-              <p className="mt-1 text-note text-ink-muted">กลุ่มคำ: {flag.categories.join(' · ')}</p>
+              <p className="mt-1 text-note font-bold text-ink-muted">กลุ่มคำ: {flag.categories.join(' · ')}</p>
             ) : null}
 
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-2"
+            <button
+              type="button"
+              className="t2-btn mt-2 focus-ring"
+              data-size="sm"
               disabled={busyId === flag.id}
-              loading={busyId === flag.id}
-              loadingLabel="กำลังปิดธง"
-              leadingIcon={<CheckIcon width={18} height={18} />}
               onClick={() => resolve(flag.id)}
             >
-              ดูแลแล้ว
-            </Button>
+              <CheckIcon width={18} height={18} aria-hidden />
+              {busyId === flag.id ? 'กำลังปิดธง…' : 'ดูแลแล้ว'}
+            </button>
           </li>
         ))}
       </ul>

@@ -20,12 +20,8 @@ export default async function TeacherBoardPage({
   return (
     <TeacherSubPage
       data={data}
-      title="แผงห้องเรียนสด"
-      subtitle={
-        data.selectedRoomCode
-          ? `ห้อง ${data.selectedRoomCode} · แดงก่อนเสมอ เดินไปหาคนบนสุดได้เลย`
-          : 'ยังไม่มีห้องเรียน'
-      }
+      title="ห้องเรียนสด"
+      subtitle={data.selectedRoomCode ? `ห้อง ${data.selectedRoomCode} · แดงก่อนเสมอ` : 'ยังไม่มีห้องเรียน'}
       basePath="/teacher/board"
     >
       <LiveBoardClient classroomId={data.selectedId} />

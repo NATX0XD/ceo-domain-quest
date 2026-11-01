@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { AppShell } from '@/components/app-shell'
+import { Icon3d, type Icon3dName } from '@/app/teacher/_ux/v2'
 import {
   BoardBigNumber,
   BoardPhaseBanner,
@@ -42,6 +43,13 @@ function mmss(total: number | null): string {
 }
 
 /** เมืองของห้องเรา — ก่อสร้างเพิ่มทีละส่วนทุกครั้งที่มีคนในห้องผ่านภารกิจ (ไม่ผูกกับจำนวนคน) */
+/** สีพาสเทลเข้มของตึกในเมือง — ตึกที่ยังไม่สร้างเป็นสีเทาอ่อน */
+const CITY_COLORS = ['#f0b823', '#8f7be8', '#e5805b', '#4f9d66', '#4a98c9']
+
+function stageIcon(name: Icon3dName) {
+  return <Icon3d name={name} size={112} />
+}
+
 function ClassCity({ built }: { built: number }) {
   const blocks = Array.from({ length: 12 }, (_, i) => i < built)
   return (
@@ -53,12 +61,12 @@ function ClassCity({ built }: { built: number }) {
       {blocks.map((on, i) => (
         <span
           key={i}
-          className={
-            on
-              ? 'w-8 rounded-t-md bg-brand-600 sm:w-12'
-              : 'w-8 rounded-t-md bg-surface-sunken sm:w-12'
-          }
-          style={{ height: `${40 + (i % 4) * 26}px` }}
+          className="w-8 rounded-t-2xl sm:w-14"
+          style={{
+            height: `${56 + (i % 4) * 36}px`,
+            background: on ? CITY_COLORS[i % CITY_COLORS.length] : '#ece8dd',
+            boxShadow: on ? 'inset 0 -6px 0 rgb(0 0 0 / 0.12)' : undefined,
+          }}
         />
       ))}
     </div>
@@ -125,8 +133,9 @@ export function BoardScreenClient({
       {/* รอเริ่ม / รู้จักตัวเอง — รหัสห้องกับ QR ตัวใหญ่ */}
       {phase === 'wait' || phase === 'onboard' ? (
         <BoardStage
+          icon={stageIcon('rocket')}
           title="CEO Domain Quest"
-          subtitle="21910-2002 อินเทอร์เน็ตในงานธุรกิจดิจิทัล · ปวช.1"
+          subtitle="สแกน QR หรือพิมพ์รหัสห้อง"
         >
           <BoardRoomCode
             roomCode={roomCode}
@@ -140,8 +149,9 @@ export function BoardScreenClient({
       {/* ภารกิจย่อย — เมืองของห้องเรา ไม่มีชื่อใครเลย */}
       {phase === 'mission' ? (
         <BoardStage
+          icon={stageIcon('school')}
           title="เมืองของห้องเรา"
-          subtitle={`ทั้งห้องผ่านภารกิจไปแล้ว ${state?.missionsPassed ?? 0} ครั้ง — สร้างเมืองด้วยกัน`}
+          subtitle={`ผ่านภารกิจแล้ว ${state?.missionsPassed ?? 0} ครั้ง`}
         >
           <ClassCity built={Math.min(12, state?.missionsPassed ?? 0)} />
         </BoardStage>
@@ -149,7 +159,7 @@ export function BoardScreenClient({
 
       {/* ด่านบอส — จำนวนผลงานที่ส่งแล้ว (ตัวเลขรวม ไม่มีรายคน) */}
       {phase === 'boss' ? (
-        <BoardStage title="ด่านบอส CEO">
+        <BoardStage icon={stageIcon('trophy')} title="ด่านบอส CEO">
           <BoardBigNumber value={state?.submitted ?? 0} caption="ใบเสนอที่ส่งเข้ามาแล้ว" />
         </BoardStage>
       ) : null}
@@ -164,11 +174,12 @@ export function BoardScreenClient({
         */}
       {phase === 'summary' ? (
         <BoardStage
+          icon={stageIcon('glowing-star')}
           title="ผลงานของห้องเรา"
           subtitle={
             (state?.showcase ?? []).length === 0
-              ? 'ครูยังไม่ได้ปักหมุดผลงาน — เลือกได้ที่หน้าครู'
-              : 'จอนี้ไม่มีดาวและไม่มีคะแนนของใครทั้งสิ้น'
+              ? 'ครูยังไม่ได้ปักหมุดผลงาน'
+              : 'ไม่มีดาว ไม่มีคะแนน'
           }
         >
           <ul className="grid w-full gap-4 md:grid-cols-3">
@@ -189,11 +200,12 @@ export function BoardScreenClient({
       {/* สะท้อนคิด / จบคาบ */}
       {phase === 'reflect' || phase === 'end' || phase === 'home' ? (
         <BoardStage
+          icon={stageIcon(phase === 'reflect' ? 'brain' : 'sparkles')}
           title={phase === 'reflect' ? 'ทบทวนตัวเอง' : 'ทำต่อที่บ้านได้'}
           subtitle={
             phase === 'reflect'
-              ? 'วันนี้เราทำอะไรได้แล้วบ้าง · ตรงไหนที่ยังไม่แน่ใจ · ครั้งหน้าอยากทำอะไรต่อ'
-              : 'เข้าเว็บเดิมด้วยรหัสห้องกับรหัส 4 หลักของตัวเอง งานทุกอย่างถูกบันทึกไว้แล้ว'
+              ? 'ทำอะไรได้แล้ว · ไม่แน่ใจตรงไหน · ครั้งหน้าอยากทำอะไร'
+              : 'เข้าเว็บเดิมด้วยรหัสห้องกับรหัส 4 หลัก'
           }
         >
           {/* ช่วงนี้ไม่ต้องบอกจำนวนคน เหลือแค่ทางกลับเข้าห้อง */}

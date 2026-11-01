@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlertIcon, Button, CheckIcon, EmptyState, ShareIcon, UsersIcon } from '@/components/ui'
+import { AlertIcon, CheckIcon, ShareIcon } from '@/components/ui'
+import { Icon3d } from '@/app/teacher/_ux/v2'
 
 /**
  * ปุ่มเปิดห้องใหม่ + ป้ายรหัสห้องตัวใหญ่สำหรับฉายขึ้นจอ
@@ -55,68 +56,66 @@ export function TeacherRoomClient({
   /* ยังไม่มีห้อง → นี่คือปุ่มหลักหนึ่งเดียวของหน้า · มีห้องแล้ว → ลดเป็นปุ่มรอง
      เพื่อไม่ให้ครูเผลอกดเปิดห้องใหม่ทับห้องที่กำลังฉายอยู่ */
   const createRoomButton = (
-    <Button
-      variant={roomCode ? 'secondary' : 'primary'}
-      size="lg"
-      fullWidth
+    <button
+      type="button"
       onClick={createRoom}
       disabled={busy}
-      loading={busy}
-      loadingLabel="กำลังเปิดห้อง"
+      className="t2-btn focus-ring"
+      data-kind={roomCode ? undefined : 'primary'}
+      data-block="true"
     >
-      เปิดห้องใหม่
-    </Button>
+      {busy ? 'กำลังเปิดห้อง…' : 'เปิดห้องใหม่'}
+    </button>
   )
 
   return (
-    <section>
+    <section className="flex flex-col gap-3">
       {roomCode ? (
-        <div className="rounded-3xl bg-brand-600 p-5 text-center text-ink-onbrand shadow-soft-3">
-          <p className="text-label font-bold">รหัสห้องสำหรับนักเรียน</p>
+        <div className="t2-card text-center" style={{ background: 'var(--t2-lilac)', borderColor: 'transparent' }}>
+          <p className="flex items-center justify-center gap-2 text-label font-extrabold text-ink">
+            <Icon3d name="school" size={32} />
+            รหัสห้อง
+          </p>
           {/* ตัวใหญ่พิเศษเพราะรหัสนี้ถูกฉายขึ้นจอหน้าห้อง ต้องอ่านออกจากหลังห้อง */}
-          <p className="mt-1 text-[2.75rem] leading-tight font-black tracking-[0.18em] break-all sm:text-[4rem]">
+          <p
+            className="mt-1 text-[2.75rem] leading-tight font-black tracking-[0.18em] break-all sm:text-[4rem]"
+            style={{ color: 'var(--t2-brand)' }}
+          >
             {roomCode}
           </p>
-          <p className="mt-3 text-body">ให้นักเรียนเปิดเว็บแล้วกด “เข้าห้องเรียน”</p>
-          <p className="mt-1 text-label break-all opacity-90">ลิงก์ตรง: {joinPath}</p>
-          <Button
-            variant="secondary"
-            fullWidth
-            className="mt-4"
+          <button
+            type="button"
             onClick={copyLink}
-            leadingIcon={
-              copied ? (
-                <CheckIcon width={20} height={20} />
-              ) : (
-                <ShareIcon width={20} height={20} />
-              )
-            }
+            className="t2-btn mt-3 focus-ring"
+            data-kind="primary"
+            data-block="true"
           >
-            {copied ? 'คัดลอกลิงก์แล้ว' : 'คัดลอกลิงก์เข้าห้อง'}
-          </Button>
+            {copied ? (
+              <CheckIcon width={20} height={20} aria-hidden />
+            ) : (
+              <ShareIcon width={20} height={20} aria-hidden />
+            )}
+            {copied ? 'คัดลอกแล้ว' : 'คัดลอกลิงก์'}
+          </button>
         </div>
       ) : (
-        <EmptyState
-          as="h2"
-          title="ยังไม่มีห้องเรียน"
-          description="กดเปิดห้องใหม่ แล้วรหัส 6 ตัวจะขึ้นตัวใหญ่ให้ฉายบนจอหน้าห้อง"
-          illustration={<UsersIcon width={48} height={48} className="text-brand-400" />}
-          action={createRoomButton}
-        />
+        <div className="t2-card t2-empty">
+          <Icon3d name="school" size={64} />
+          <h2 className="text-title-sm font-extrabold text-ink">ยังไม่มีห้องเรียน</h2>
+          <p className="text-label font-semibold text-ink-muted">กดเปิดห้อง แล้วรหัส 6 ตัวจะขึ้นให้ฉาย</p>
+          <div className="w-full max-w-xs">{createRoomButton}</div>
+        </div>
       )}
 
       {/* ข้อความผิดมีไอคอนคู่เสมอ ไม่ได้สื่อด้วยสีแดงอย่างเดียว (WCAG 1.4.1) */}
       {error ? (
-        <p
-          role="alert"
-          className="mt-3 flex items-start gap-2 rounded-2xl bg-danger-100 p-4 text-label font-semibold break-all text-danger-700"
-        >
-          <AlertIcon width={20} height={20} className="mt-0.5 shrink-0" />
+        <p role="alert" className="t2-note break-all" data-tone="danger">
+          <AlertIcon width={20} height={20} className="shrink-0" />
           <span>{error}</span>
         </p>
       ) : null}
 
-      {roomCode ? <div className="mt-3">{createRoomButton}</div> : null}
+      {roomCode ? createRoomButton : null}
     </section>
   )
 }

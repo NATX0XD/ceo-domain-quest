@@ -2,15 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import {
-  AlertIcon,
-  CheckIcon,
-  ClockIcon,
-  DomeAvatar,
-  StarIcon,
-  UsersIcon,
-} from '../../../components/ui'
+import { DomeAvatar } from '../../../components/ui'
 import { Dialog } from './dialog'
+import { Chip, Fact, Icon3d, InfoTip, Kpi, KpiGrid } from './v2'
 
 /**
  * UX-6 ห้องของครูแบบ "แผงคุมคาบ" — จอเดียว ไม่ต้องเลื่อน สวยพอขึ้นเวที และบอกได้ว่าต้องทำอะไรต่อ
@@ -229,7 +223,7 @@ function mmss(total: number | null): string {
   return `${String(Math.floor(safe / 60)).padStart(2, '0')}:${String(safe % 60).padStart(2, '0')}`
 }
 
-/** ปุ่มเล็กบนการ์ดนาฬิกา — ตัวอักษรบนพื้นเข้ม สูง 44 และห่างกัน 8 ตามเกณฑ์การแตะ */
+/** ปุ่มเล็กบนการ์ดนาฬิกา — สูง 44 ห่างกัน 8 ป้ายบรรทัดเดียว */
 function TimerChip({
   label,
   onClick,
@@ -247,71 +241,19 @@ function TimerChip({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className="inline-flex min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center rounded-lg bg-surface-raised/20 px-3 text-label font-bold text-ink-onbrand ring-1 ring-ink-onbrand/50 ring-inset transition-colors duration-200 hover:bg-surface-raised/25 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ink-onbrand disabled:opacity-50"
+      className="t2-chipbtn focus-ring"
     >
       {label}
     </button>
   )
 }
 
-/**
- * ช่องตัวเลขสรุปหนึ่งช่อง — ตามแบบ IXL: ขีดสีที่ขอบบน + ไอคอน + ตัวเลขใหญ่ + คำกำกับตัวเล็ก
- * ไม่ถมสีทั้งช่อง เพื่อให้สีที่ถมจริง ๆ (การ์ดคนที่ต้องช่วย) เด่นอยู่เจ้าเดียวบนจอ
- */
-function MetricCell({
-  label,
-  count,
-  tone,
-  icon,
-  onClick,
-  href,
-}: {
-  label: string
-  count: number
-  tone: 'quest' | 'danger' | 'spark' | 'brand'
-  icon: ReactNode
-  /** กดแล้วเปิด popup ในหน้านี้ */
-  onClick?: () => void
-  /** กดแล้วไปหน้าอื่นของแดชบอร์ด (งานรอตรวจ · คำขอ) */
-  href?: string
-}) {
-  const active = count > 0
-  const accent = 'bg-surface-sunken'
-  const number = {
-    quest: 'text-quest-700',
-    danger: 'text-danger-700',
-    spark: 'text-spark-800',
-    brand: 'text-brand-700',
-  }[tone]
-
-  const inner = (
-    <>
-      <span aria-hidden className={`absolute inset-x-0 top-0 h-1 ${accent}`} />
-      <span className={`flex items-center gap-1.5 ${active ? number : 'text-ink-muted'}`}>
-        {icon}
-        <span className="text-display leading-none font-extrabold tabular-nums">{count}</span>
-      </span>
-      <span className="mt-1 text-note leading-tight font-bold text-ink-muted">{label}</span>
-    </>
-  )
-
-  const shared =
-    'relative flex min-h-20 flex-1 flex-col items-center justify-center overflow-hidden rounded-2xl px-2 pt-2 pb-1.5 bg-surface-raised ring-1 ring-line ring-inset'
-
-  const interactive = `${shared} cursor-pointer touch-manipulation transition-shadow duration-200 hover:shadow-soft-1 focus-ring`
-  if (href) {
-    return (
-      <Link href={href} className={interactive}>
-        {inner}
-      </Link>
-    )
-  }
-  if (!onClick) return <div className={shared}>{inner}</div>
-  return (
-    <button type="button" onClick={onClick} className={interactive}>
-      {inner}
-    </button>
-  )
+/** ชื่อสั้นของระดับ — ใช้บนการ์ดเด็กที่ต้องอ่านในแวบเดียว (ชื่อเต็มจาก API อยู่ในหน้าต่างรายคน) */
+const LEVEL_SHORT: Record<Level, { text: string; tone: 'red' | 'orange' | 'yellow' | 'green' }> = {
+  red: { text: 'ต้องช่วย', tone: 'red' },
+  orange: { text: 'ติดอยู่', tone: 'orange' },
+  yellow: { text: 'ควรดู', tone: 'yellow' },
+  green: { text: 'ปกติ', tone: 'green' },
 }
 
 export function TeacherCockpit({
@@ -573,86 +515,54 @@ export function TeacherCockpit({
     )
   }
 
-  const spotlightTone = {
-    danger: 'bg-danger-100 ring-danger-300',
-    spark: 'bg-spark-100 ring-spark-300',
-    quest: 'bg-quest-100 ring-quest-300',
-  }[stepTone]
+  const noteTone = stepTone === 'danger' ? 'danger' : stepTone === 'spark' ? 'spark' : 'quest'
+  const initial = (name: string) => Array.from(name.trim())[0] ?? '?'
+  const rowChip = (row: BoardRow) => {
+    if (row.pendingReview) return { text: 'รอตรวจ', tone: 'lilac' as const }
+    if (row.askedForHelp) return { text: 'ขอช่วย', tone: 'red' as const }
+    if (levelOf(row) === 'green' && row.awayFromClass) return { text: 'ไม่อยู่', tone: undefined }
+    return LEVEL_SHORT[levelOf(row)]
+  }
 
   return (
-    <div className="teacher-cockpit flex h-full min-h-0 flex-col gap-3 px-3 pt-3 pb-3 sm:gap-4 sm:px-5">
+    <div className="teacher-cockpit flex h-full min-h-0 flex-col gap-4 px-3 pt-4 pb-3 sm:px-6">
       {alertsSlot}
 
-      {/* ───────── ของที่ครูมองบ่อยที่สุด: ช่วงของคาบ + นาฬิกา */}
-      <section
-        aria-label="ช่วงของคาบและเวลาที่เหลือ"
-        /**
-         * การ์ดนี้เป็นสีแบรนด์เสมอ **ไม่เปลี่ยนเป็นสีแดง/ส้มทั้งใบตอนเวลาใกล้หมด**
-         * เพราะการถมสีทั้งใบทำให้จอดูเป็นสีโคลนและไปแย่งความเด่นกับ "คนที่ต้องเดินไปช่วย"
-         * ความด่วนของเวลาบอกที่**ตัวเลขนาฬิกาเปลี่ยนเป็นสีเหลืองอำพัน + ป้ายกำกับ** ก็พอ
-         */
-        className="shrink-0 rounded-3xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 p-4 shadow-soft-2 sm:p-5"
-      >
-        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+      {/* ───────── ช่วงของคาบ + นาฬิกา */}
+      <section aria-label="ช่วงของคาบและเวลาที่เหลือ" className="t2-timer shrink-0">
+        <div className="t2-timer__phase">
+          <Icon3d name="alarm-clock" size={56} />
           <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-note font-bold tracking-wide text-ink-onbrand/90">
-              <UsersIcon width={16} height={16} aria-hidden />
-              ห้อง {roomCode ?? '—'} · {board?.students ?? 0} คน
-            </p>
-            <p className="mt-0.5 truncate pb-1 text-display leading-tight font-extrabold text-ink-onbrand">
+            <p className="t2-timer__name truncate">
               {currentPhase?.label ?? (noSession ? 'ยังไม่ได้เปิดคาบ' : 'กำลังอ่านสถานะ…')}
             </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <ClockIcon
-              width={30}
-              height={30}
-              aria-hidden
-              className={`shrink-0 ${urgent ? 'text-spark-200' : 'text-ink-onbrand/90'}`}
-            />
-            <div>
-              <p
-                className={`text-note font-bold ${urgent ? 'text-spark-200' : 'text-ink-onbrand/90'}`}
-              >
-                {paused ? 'หยุดไว้ที่' : seconds === 0 ? 'หมดเวลาช่วงนี้แล้ว' : 'เหลือเวลา'}
+            <p className="t2-timer__room">
+              ห้อง {roomCode ?? '—'} · {board?.students ?? 0} คน
+            </p>
+            {/* หมดเวลาแล้วต้องบอกว่าระบบไม่ย้ายช่วงให้เอง ไม่งั้นครูปล่อยห้องค้างทั้งคาบ (flow-1 ข้อ 4) */}
+            {seconds === 0 && !paused ? (
+              <p className="mt-1">
+                <Chip tone="orange">
+                  หมดเวลา · กด ถัดไป{nextPhase ? ` (${nextPhase.label})` : ''} หรือ +5
+                </Chip>
               </p>
-              <p
-                className={`text-hero leading-none font-extrabold tabular-nums ${
-                  urgent ? 'text-spark-200' : 'text-ink-onbrand'
-                }`}
-              >
-                {mmss(seconds)}
-              </p>
-            </div>
+            ) : null}
           </div>
         </div>
 
-        {/* หมดเวลาแล้วต้องบอกว่าระบบไม่ย้ายช่วงให้เอง ไม่งั้นครูปล่อยห้องค้างทั้งคาบ (flow-1 ข้อ 4) */}
-        {seconds === 0 && !paused ? (
-          <p className="mt-2 rounded-xl bg-surface-raised/20 px-3 py-2 text-label font-bold text-ink-onbrand">
-            หมดเวลาช่วงนี้แล้ว · ระบบไม่ย้ายช่วงให้เอง
-            {nextPhase ? ` — กดปุ่ม "ไปช่วงถัดไป · ${nextPhase.label}" ด้านล่างเมื่อพร้อม` : ''}{' '}
-            หรือกด +5 ถ้าอยากให้เด็กทำต่อ
-          </p>
-        ) : null}
-
-        {/* แถบเวลาของช่วง — ความยาวช่วงมาจากแผนเวลาที่ครูตั้งไว้จริง */}
-        {phaseTotal > 0 ? (
-          <div
-            className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-raised/25"
-            role="img"
-            aria-label={`ช่วงนี้เดินมาแล้ว ${elapsedPercent} เปอร์เซ็นต์ของ ${Math.round(phaseTotal / 60)} นาที`}
-          >
-            <div
-              className="h-full rounded-full bg-surface-raised/80 transition-[width] duration-1000 ease-linear"
-              style={{ width: `${elapsedPercent}%` }}
-            />
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-note font-bold text-ink-muted">
+              {paused ? 'หยุดไว้ที่' : seconds === 0 ? 'หมดเวลา' : 'เหลือ'}
+            </p>
+            <p className="t2-timer__clock" data-urgent={urgent ? 'true' : 'false'}>
+              {mmss(seconds)}
+            </p>
           </div>
-        ) : null}
+        </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-note font-bold text-ink-onbrand/90">เพิ่มนาที</span>
+        <div className="t2-timer__actions">
+          <span className="text-note font-bold text-ink-muted">เพิ่มนาที</span>
           {[1, 3, 5].map((m) => (
             <TimerChip
               key={m}
@@ -671,70 +581,72 @@ export function TeacherCockpit({
               session && send({ action: 'pause', sessionId: session.id, paused: !paused })
             }
           />
-          <span className="hidden sm:inline-flex">
-            <TimerChip
-              label="ตั้งใหม่"
-              ariaLabel="ตั้งเวลาของช่วงนี้ใหม่"
-              disabled={busy || !session}
-              onClick={() => session && resetTimer()}
-            />
-          </span>
+          <TimerChip
+            label="ตั้งใหม่"
+            ariaLabel="ตั้งเวลาของช่วงนี้ใหม่"
+            disabled={busy || !session}
+            onClick={() => session && resetTimer()}
+          />
+          <InfoTip
+            label="วิธีใช้เวลา"
+            align="end"
+            text="เวลาหมดแล้วระบบไม่ย้ายช่วงให้เอง กดปุ่ม ถัดไป ด้านล่างเมื่อพร้อม หรือกด +5 ให้เด็กทำต่อ"
+          />
         </div>
+
+        {phaseTotal > 0 ? (
+          <div
+            className="t2-progress"
+            role="img"
+            aria-label={`ช่วงนี้เดินมาแล้ว ${elapsedPercent} เปอร์เซ็นต์ของ ${Math.round(phaseTotal / 60)} นาที`}
+          >
+            <span style={{ width: `${elapsedPercent}%` }} />
+          </div>
+        ) : null}
       </section>
 
-      {/* ───────── แถบตัวเลขสรุป — ขีดสีบอกความหมาย ไม่ถมสีทั้งช่อง (แบบ IXL) */}
-      <div className="flex shrink-0 gap-2 sm:gap-3">
-        <MetricCell
-          label="นักเรียน"
-          count={board?.students ?? 0}
-          tone="quest"
-          icon={<UsersIcon width={18} height={18} aria-hidden />}
-        />
-        <MetricCell
+      {/* ───────── ตัวเลขสรุป — พาสเทล + ไอคอนเดียว + ตัวเลขใหญ่ */}
+      <KpiGrid>
+        <Kpi label="นักเรียน" value={board?.students ?? 0} tone="sky" icon="busts-in-silhouette" />
+        <Kpi
           label="ต้องช่วยด่วน"
-          count={redCount}
-          tone="danger"
-          icon={<AlertIcon width={18} height={18} aria-hidden />}
+          value={redCount}
+          tone="peach"
+          icon="warning"
           onClick={() => setOpenDialog('help')}
         />
-        <MetricCell
+        <Kpi
           label="คำขอค้าง"
-          count={planCount}
-          tone="spark"
-          icon={<AlertIcon width={18} height={18} aria-hidden />}
+          value={planCount}
+          tone="yellow"
+          icon="speech-balloon"
           href={`/teacher/requests?classroomId=${classroomId}`}
         />
-        <MetricCell
+        <Kpi
           label="รอครูยืนยัน"
-          count={reviewCount}
-          tone="brand"
-          icon={<CheckIcon width={18} height={18} aria-hidden />}
+          value={reviewCount}
+          tone="mint"
+          icon="memo"
           href={`/teacher/review?classroomId=${classroomId}`}
         />
-      </div>
+      </KpiGrid>
 
       {/* ───────── โดมบอกว่าทำอะไรต่อ + ปุ่มพาไปจุดนั้น */}
-      <div
-        className={`flex shrink-0 items-center gap-3 rounded-2xl px-3 py-2 ring-1 ring-inset ${spotlightTone}`}
-      >
+      <div className="t2-note shrink-0" data-tone={noteTone}>
         <span className="shrink-0">
           <DomeAvatar mood={stepMood} size={44} decorative />
         </span>
-        <p className="min-w-0 flex-1 text-label font-bold text-balance text-ink">
-          {step?.text ?? 'กำลังอ่านสถานะห้อง…'}
-        </p>
+        <p className="min-w-0 flex-1 text-balance">{step?.text ?? 'กำลังอ่านสถานะห้อง…'}</p>
         {stepHref ? (
-          <Link
-            href={stepHref}
-            className="btn-base shrink-0 touch-manipulation bg-surface-raised px-3 text-label text-ink shadow-soft-1 ring-1 ring-line ring-inset hover:bg-brand-50"
-          >
+          <Link href={stepHref} className="t2-btn focus-ring" data-kind="soft">
             {step?.actionLabel ?? 'ไปดู'}
           </Link>
         ) : step?.action === 'help' ? (
           <button
             type="button"
             onClick={() => setOpenDialog('help')}
-            className="btn-base shrink-0 touch-manipulation bg-surface-raised px-3 text-label text-ink shadow-soft-1 ring-1 ring-line ring-inset hover:bg-brand-50"
+            className="t2-btn focus-ring"
+            data-kind="soft"
           >
             {step.actionLabel ?? 'ดูว่าใครบ้าง'}
           </button>
@@ -742,117 +654,77 @@ export function TeacherCockpit({
       </div>
 
       {error ? (
-        <p
-          role="alert"
-          className="shrink-0 rounded-xl bg-danger-100 px-3 py-2 text-label font-bold text-danger-700"
-        >
+        <p role="alert" className="t2-note shrink-0" data-tone="danger">
           {error}
         </p>
       ) : null}
 
       {/* ───────── รายชื่อเด็ก + แถบขวา */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-4">
-        <section
-          aria-label="สถานะนักเรียนรายคน"
-          className="flex min-h-0 flex-col rounded-2xl bg-surface-raised p-3 shadow-soft-1 ring-1 ring-line ring-inset"
-        >
-          <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
-            {/* ตัวกรอง — แบบเดียวกับ Scenes ของ GoGuardian: ตัดให้เหลือเฉพาะกลุ่มที่สนใจ */}
-            <div role="group" aria-label="กรองรายชื่อ" className="flex flex-wrap gap-2">
-              {(
-                [
-                  ['all', `ทั้งห้อง ${rows.length}`],
-                  ['help', `ต้องช่วย ${needHelpCount}`],
-                  ['review', `รอตรวจ ${rows.filter((r) => r.pendingReview).length}`],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={filter === key}
-                  onClick={() => setFilter(key)}
-                  className={`inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-full px-3 text-label font-bold transition-colors duration-200 focus-ring ${
-                    filter === key
-                      ? 'bg-brand-600 text-ink-onbrand'
-                      : 'bg-surface-sunken text-ink-muted hover:bg-brand-50'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-note text-ink-muted">
-              {(['red', 'orange', 'yellow', 'green'] as Level[]).map((lv) => (
-                <span key={lv} className="inline-flex items-center gap-1.5">
-                  <span aria-hidden className={`size-2.5 rounded-full ${LEVEL[lv].dot}`} />
-                  {LEVEL[lv].name}
-                </span>
-              ))}
-            </p>
+      <div className="grid min-h-0 shrink-0 grid-cols-1 gap-4 lg:shrink lg:flex-1 lg:grid-cols-[minmax(0,1fr)_16rem]">
+        <section aria-label="สถานะนักเรียนรายคน" className="t2-card flex max-h-[30rem] min-h-0 flex-col lg:max-h-none">
+          <div role="group" aria-label="กรองรายชื่อ" className="t2-tabs shrink-0">
+            {(
+              [
+                ['all', `ทั้งห้อง ${rows.length}`],
+                ['help', `ต้องช่วย ${needHelpCount}`],
+                ['review', `รอตรวจ ${rows.filter((r) => r.pendingReview).length}`],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={filter === key}
+                onClick={() => setFilter(key)}
+                className="t2-tab focus-ring"
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
           {shown.length === 0 ? (
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 text-center">
+            <div className="t2-empty min-h-0 flex-1">
               <DomeAvatar mood={rows.length === 0 ? 'greet' : 'cheer'} size={56} decorative />
-              <p className="text-body font-bold text-ink">
+              <p>
                 {rows.length === 0
                   ? 'ยังไม่มีใครเข้าห้อง'
                   : filter === 'help'
-                    ? 'ตอนนี้ไม่มีใครติด ทั้งห้องเดินได้'
-                    : 'ยังไม่มีใครส่งงานเข้ามา'}
+                    ? 'ไม่มีใครติด ทั้งห้องเดินได้'
+                    : 'ยังไม่มีใครส่งงาน'}
               </p>
-              <p className="text-label text-ink-muted">
-                {rows.length === 0
-                  ? `ฉายรหัสห้อง ${roomCode ?? '—'} ให้นักเรียนพิมพ์ที่หน้า /join`
-                  : 'กดปุ่ม "ทั้งห้อง" เพื่อดูทุกคน'}
-              </p>
+              {rows.length === 0 ? (
+                <p className="text-label font-semibold text-ink-muted">
+                  ฉายรหัสห้อง {roomCode ?? '—'} ที่หน้า /join
+                </p>
+              ) : null}
             </div>
           ) : (
-            <ul className="mt-3 grid min-h-0 flex-1 auto-rows-max grid-cols-2 gap-2 overflow-y-auto overscroll-contain xl:grid-cols-3">
+            <ul className="t2-students mt-3 min-h-0 flex-1 auto-rows-max overflow-y-auto overscroll-contain">
               {shown.map((row) => {
                 const lv = levelOf(row)
                 const goal = row.goalStars ?? 0
                 const stars = row.earnedStars ?? 0
+                const chip = rowChip(row)
                 return (
                   <li key={row.studentId}>
                     <button
                       type="button"
                       onClick={() => setOpenStudent(row.studentId)}
-                      className={`relative flex min-h-14 w-full cursor-pointer touch-manipulation items-center gap-2 overflow-hidden rounded-xl py-2 pr-3 pl-4 text-left ring-1 ring-inset transition-shadow duration-200 hover:shadow-soft-1 focus-ring ${LEVEL[lv].card}`}
+                      className="t2-student focus-ring"
+                      data-level={lv}
+                      title={row.progressLabel}
                     >
-                      {/* ขีดสีซ้าย = สถานะ (มีคำอธิบายกำกับในแถบสีข้างบนเสมอ ไม่ได้ใช้สีอย่างเดียว) */}
-                      <span
-                        aria-hidden
-                        className={`absolute inset-y-0 left-0 w-1.5 ${LEVEL[lv].bar}`}
-                      />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-label font-bold text-ink">
-                          {row.nickname}
-                        </span>
-                        {/* บรรทัดสถานะบรรทัดเดียว — "ส่งงานแล้ว" มาอยู่ตรงนี้แทนป้ายลอย
-                            เพราะป้ายลอยไปเบียดชื่อจนชื่อถูกตัดกลางคำบนจอแคบ */}
-                        <span className="flex min-w-0 items-center gap-1 text-note text-ink-muted">
-                          {row.pendingReview ? (
-                            <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-brand-600" />
-                          ) : null}
-                          <span className="truncate">
-                            {row.pendingReview
-                              ? 'ส่งงานแล้ว รอครูตรวจ'
-                              : row.askedForHelp
-                                ? 'กดขอให้ครูช่วย'
-                                : (row.flag.label ?? row.progressLabel)}
-                          </span>
-                        </span>
+                      <span className="t2-avatar" data-level={lv} aria-hidden>
+                        {initial(row.nickname)}
                       </span>
-                      {/* ตัวเลขใหญ่ชิดขวา = จุดนำสายตาแบบ SmartScore ของ IXL */}
-                      <span className="flex shrink-0 items-center gap-0.5 text-reward-700">
-                        <StarIcon width={16} height={16} aria-hidden />
-                        <span className="text-body-lg leading-none font-extrabold tabular-nums">
-                          {stars}
-                        </span>
-                        {goal > 0 ? (
-                          <span className="text-note font-bold text-ink-muted">/{goal}</span>
-                        ) : null}
+                      <span className="t2-student__body">
+                        <span className="t2-student__name" title={row.nickname}>{row.nickname}</span>
+                        <Chip tone={chip.tone}>{chip.text}</Chip>
+                      </span>
+                      <span className="t2-stars">
+                        <Icon3d name="star" size={20} />
+                        {stars}
+                        {goal > 0 ? <small>/{goal}</small> : null}
                       </span>
                     </button>
                   </li>
@@ -863,85 +735,92 @@ export function TeacherCockpit({
         </section>
 
         {/* แถบขวา — ทางลัดของงานคุมคาบ (เมนูหลักอยู่ที่ sidebar ของแดชบอร์ดแล้ว) */}
-        <aside className="hidden min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain lg:flex">
-          <div className="grid shrink-0 grid-cols-1 gap-2">
-            {[
-              {
-                href: `/board?classroomId=${classroomId}`,
-                label: 'จอฉายหน้าห้อง (โปรเจกเตอร์)',
-                blank: true,
-              },
-              {
-                href: `/teacher/board?classroomId=${classroomId}`,
-                label: 'แผงติดตามสด',
-              },
-            ].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                {...(item.blank ? { target: '_blank' } : {})}
-                className="btn-base w-full touch-manipulation bg-surface-raised px-2 text-label text-ink ring-1 ring-line ring-inset hover:bg-brand-50"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
+        <aside className="grid min-h-0 grid-cols-1 content-start gap-3 overflow-y-auto sm:grid-cols-3 lg:grid-cols-1">
+          <Link
+            href={`/board?classroomId=${classroomId}`}
+            target="_blank"
+            className="t2-kpi focus-ring"
+            data-tone="lilac"
+            style={{ minHeight: '3.5rem', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}
+          >
+            <Icon3d name="television" size={32} />
+            <span className="t2-kpi__label">จอฉายห้อง</span>
+          </Link>
+          <Link
+            href={`/teacher/board?classroomId=${classroomId}`}
+            className="t2-kpi focus-ring"
+            data-tone="sky"
+            style={{ minHeight: '3.5rem', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}
+          >
+            <Icon3d name="eyes" size={32} />
+            <span className="t2-kpi__label">แผงติดตามสด</span>
+          </Link>
 
-          {/* คิวตรวจ AI — แถบสรุปของเราเอง พอดีใบ ไม่มีแถบเลื่อนของตัวเอง */}
-          <div className="shrink-0 rounded-2xl bg-surface-raised p-3 shadow-soft-1 ring-1 ring-line ring-inset">
-            <p className="flex items-center gap-1.5 text-note font-bold tracking-wide text-ink-muted">
+          {/* คิวตรวจ AI — คนละเรื่องกับ "รอครูยืนยัน" */}
+          <div className="t2-card" style={{ padding: '0.875rem 1rem' }}>
+            <p className="t2-card-title" style={{ marginBottom: '0.5rem', fontSize: '0.9375rem' }}>
+              <Icon3d name="robot" size={32} />
+              AI อ่านงาน
+              <InfoTip
+                label="เรื่องคิว AI"
+                align="end"
+                text="AI อ่านงานล่วงหน้าให้ครู คนละเรื่องกับ รอครูยืนยัน ที่ครูต้องกดยืนยันคะแนนเอง"
+              />
+            </p>
+            <p className="mb-2 flex items-center gap-2 text-label font-extrabold text-ink">
               <span
                 aria-hidden
-                className={`size-2 rounded-full ${
-                  (queue?.pending ?? 0) + (queue?.running ?? 0) > 0 ? 'bg-spark-500' : 'bg-quest-500'
-                }`}
+                className="t2-dot"
+                style={{
+                  background:
+                    (queue?.pending ?? 0) + (queue?.running ?? 0) > 0 ? 'var(--t2-gold)' : 'var(--t2-green)',
+                }}
               />
-              AI อ่านงานล่วงหน้าให้ครู
-            </p>
-            <p className="mt-1 text-label font-bold text-ink">
               {queue === null
-                ? 'กำลังอ่านสถานะคิว…'
+                ? 'กำลังอ่านคิว…'
                 : queue.pending + queue.running === 0
-                  ? 'AI อ่านครบแล้ว ไม่มีงานค้างในคิวของ AI'
-                  : `AI ยังไม่ได้อ่าน ${queue.pending} ชิ้น · กำลังอ่าน ${queue.running} ชิ้น`}
+                  ? 'ไม่มีงานค้าง'
+                  : `ค้าง ${queue.pending} · กำลังอ่าน ${queue.running}`}
             </p>
-            <p className="mt-1 text-note text-ink-muted">คนละเรื่องกับ "รอครูยืนยัน" ข้างบน</p>
             <button
               type="button"
               onClick={runDrain}
               disabled={queueBusy}
-              className="btn-base mt-2 w-full touch-manipulation bg-surface-sunken text-label text-ink ring-1 ring-line ring-inset hover:bg-brand-50 disabled:opacity-60"
+              className="t2-btn focus-ring"
+              data-kind="soft"
+              data-block="true"
             >
-              {queueBusy ? 'กำลังให้ AI อ่าน…' : 'ให้ AI อ่านงานที่ค้างเดี๋ยวนี้'}
+              {queueBusy ? 'กำลังอ่าน…' : 'ให้ AI อ่านเลย'}
             </button>
           </div>
-
         </aside>
       </div>
 
-      {/* ───────── แถวคำสั่งหลัก อยู่ล่างสุดในระยะนิ้วโป้ง ไม่ขยับไปไหน */}
+      {/* ───────── แถวคำสั่งหลัก — ปุ่มหลักมีปุ่มเดียว */}
       <div className="teacher-action-bar flex shrink-0 gap-2">
         {nextPhase ? (
           <button
             type="button"
             disabled={busy}
             onClick={() => goPhase(nextPhase.phase)}
-            className="btn-base min-w-0 flex-1 touch-manipulation bg-brand-600 px-3 text-ink-onbrand shadow-soft-1 transition-colors duration-200 hover:bg-brand-700 disabled:opacity-60 sm:px-5"
+            aria-label={`ไปช่วงถัดไป · ${nextPhase.label}`}
+            className="t2-btn focus-ring"
+            data-kind="primary"
+            style={{ minWidth: 0 }}
           >
-            <span className="truncate">ไปช่วงถัดไป · {nextPhase.label}</span>
+            <span className="truncate">ถัดไป · {nextPhase.label}</span>
           </button>
         ) : null}
         <button
           type="button"
           onClick={() => setOpenDialog('phase')}
-          className="btn-base shrink-0 touch-manipulation bg-surface-raised px-3 text-brand-700 ring-2 ring-brand-300 ring-inset hover:bg-brand-50 sm:px-4"
+          className="t2-btn focus-ring"
+          data-kind="soft"
         >
           ย้ายช่วง
         </button>
-        <Link
-          href={`/teacher/settings?classroomId=${classroomId}`}
-          className="btn-base shrink-0 touch-manipulation bg-surface-raised px-3 text-ink ring-1 ring-line-contrast ring-inset hover:bg-brand-50 sm:px-4"
-        >
+        <Link href={`/teacher/settings?classroomId=${classroomId}`} className="t2-btn focus-ring">
+          <Icon3d name="gear" size={22} />
           ตั้งค่าห้อง
         </Link>
       </div>
@@ -950,12 +829,13 @@ export function TeacherCockpit({
       <Dialog
         open={openDialog === 'phase'}
         onClose={() => setOpenDialog(null)}
-        title="ย้ายช่วงของคาบ"
-        description="กดแล้วเครื่องนักเรียนเปลี่ยนตามภายใน 3 วินาที · ข้ามช่วงได้ · เวลาต่อช่วงมาจากแผนที่ตั้งไว้"
+        title="ย้ายช่วง"
+        description="เครื่องนักเรียนเปลี่ยนตามใน 3 วินาที"
       >
         <ul className="grid gap-2 sm:grid-cols-2">
           {phases.map((p) => {
             const minutes = minutesOf(p.phase)
+            const here = p.phase === session?.phase
             return (
               <li key={p.phase}>
                 <button
@@ -965,40 +845,23 @@ export function TeacherCockpit({
                     await goPhase(p.phase)
                     setOpenDialog(null)
                   }}
-                  className={`btn-base w-full touch-manipulation justify-between ${
-                    p.phase === session?.phase
-                      ? 'bg-brand-600 text-ink-onbrand shadow-soft-1'
-                      : 'bg-surface-raised text-ink ring-1 ring-line-contrast ring-inset hover:bg-brand-50'
-                  }`}
+                  className="t2-btn focus-ring"
+                  data-kind={here ? 'primary' : undefined}
+                  data-block="true"
+                  style={{ justifyContent: 'space-between' }}
                 >
-                  <span className="truncate">
-                    {p.phase === session?.phase ? `${p.label} (อยู่ตรงนี้)` : p.label}
-                  </span>
-                  {minutes > 0 ? (
-                    <span className="shrink-0 text-note font-bold opacity-80">{minutes} นาที</span>
-                  ) : null}
+                  <span className="truncate">{here ? `${p.label} ●` : p.label}</span>
+                  {minutes > 0 ? <span className="shrink-0 text-note opacity-80">{minutes} นาที</span> : null}
                 </button>
               </li>
             )
           })}
         </ul>
-        <button
-          type="button"
-          disabled={busy || !session}
-          onClick={async () => {
-            await resetTimer()
-            setOpenDialog(null)
-          }}
-          className="btn-base mt-3 w-full touch-manipulation bg-surface-raised text-ink ring-1 ring-line-contrast ring-inset disabled:opacity-50 sm:hidden"
-        >
-          ตั้งเวลาของช่วงนี้ใหม่
-        </button>
 
-        <div className="mt-4 rounded-xl bg-surface-sunken p-3">
-          <p className="text-label font-bold text-ink">ย้ายผิดช่วง</p>
-          <p className="mt-1 text-note text-ink-muted">
-            ย้อนได้ภายใน 30 วินาทีหลังย้าย หลังจากนั้นให้กดย้ายไปช่วงที่ต้องการแทน
-          </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-[20px] bg-[#f6f2e8] p-3">
+          <Icon3d name="hourglass-not-done" size={32} />
+          <p className="min-w-0 flex-1 text-label font-extrabold text-ink">ย้ายผิดช่วง</p>
+          <InfoTip label="เรื่องการย้อนช่วง" align="end" text="ย้อนได้ภายใน 30 วินาทีหลังย้าย หลังจากนั้นให้กดย้ายไปช่วงที่ต้องการแทน" />
           <button
             type="button"
             disabled={busy || undoLeft <= 0 || !session}
@@ -1007,23 +870,35 @@ export function TeacherCockpit({
               const done = await send({ action: 'revert', sessionId: session.id })
               if (done) lastPhaseChangeRef.current = 0
             }}
-            className="btn-base mt-2 w-full touch-manipulation bg-surface-raised text-ink ring-1 ring-line-contrast ring-inset disabled:opacity-50"
+            className="t2-btn focus-ring"
           >
-            ย้อนการย้ายช่วง{undoLeft > 0 ? ` (${undoLeft} วินาที)` : ''}
+            ย้อนช่วง{undoLeft > 0 ? ` · ${undoLeft} วิ` : ''}
           </button>
         </div>
+        <button
+          type="button"
+          disabled={busy || !session}
+          onClick={async () => {
+            await resetTimer()
+            setOpenDialog(null)
+          }}
+          className="t2-btn mt-3 focus-ring sm:hidden"
+          data-block="true"
+        >
+          ตั้งเวลาใหม่
+        </button>
       </Dialog>
 
       <Dialog
         open={openDialog === 'help'}
         onClose={() => setOpenDialog(null)}
-        title="คนที่ต้องเดินไปหาก่อน"
-        description="เรียงจากด่วนที่สุด · การ์ดโค้ชมีแต่คำถาม ไม่มีเฉลย"
+        title="ต้องเดินไปหา"
+        description="เรียงจากด่วนที่สุด"
       >
         {needHelpCount === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-4 text-center">
+          <div className="t2-empty">
             <DomeAvatar mood="cheer" size={72} decorative />
-            <p className="text-body font-bold text-ink">ตอนนี้ไม่มีใครติด ทั้งห้องเดินได้</p>
+            <p>ไม่มีใครติด ทั้งห้องเดินได้</p>
           </div>
         ) : (
           <ul className="flex flex-col gap-3">
@@ -1031,47 +906,44 @@ export function TeacherCockpit({
               .filter((r) => ['red', 'orange'].includes(levelOf(r)))
               .map((row) => {
                 const lv = levelOf(row)
+                const chip = rowChip(row)
                 return (
-                  <li
-                    key={row.studentId}
-                    className={`relative overflow-hidden rounded-xl p-3 pl-4 ring-1 ring-inset ${LEVEL[lv].card}`}
-                  >
-                    <span
-                      aria-hidden
-                      className={`absolute inset-y-0 left-0 w-1.5 ${LEVEL[lv].bar}`}
-                    />
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-body-lg font-extrabold text-ink">{row.nickname}</p>
-                      <span className="rounded-full bg-surface-raised px-3 py-1 text-note font-bold text-ink">
-                        {levelName(row)}
+                  <li key={row.studentId} className="t2-student" data-level={lv} style={{ cursor: 'default', flexWrap: 'wrap' }}>
+                    <span className="t2-avatar" data-level={lv} aria-hidden>
+                      {initial(row.nickname)}
+                    </span>
+                    <span className="t2-student__body">
+                      <span className="t2-student__name">{row.nickname}</span>
+                      <span className="flex flex-wrap items-center gap-2">
+                        <Chip tone={chip.tone} title={levelName(row)}>
+                          {chip.text}
+                        </Chip>
+                        <span className="text-note font-bold text-ink-muted">{row.idleLabel}</span>
                       </span>
-                    </div>
-                    <p className="mt-1 text-label text-ink">
-                      {row.flag.label ?? (row.askedForHelp ? 'กดขอให้ครูช่วย' : '')} ·{' '}
-                      {row.idleLabel}
-                    </p>
-                    {row.coachCard ? (
-                      <p className="mt-2 rounded-lg bg-surface-raised p-2 text-label text-ink">
-                        ลองถามว่า: {row.coachCard.question}
-                      </p>
-                    ) : null}
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
                         setOpenDialog(null)
                         setOpenStudent(row.studentId)
                       }}
-                      className="btn-base mt-2 w-full touch-manipulation bg-surface-raised text-ink ring-1 ring-line-contrast ring-inset"
+                      className="t2-btn focus-ring"
+                      data-kind="soft"
                     >
                       ดูรายคน
                     </button>
+                    {row.coachCard ? (
+                      <p className="flex w-full items-start gap-2 rounded-[16px] bg-white p-2 text-label font-bold text-ink">
+                        <Icon3d name="light-bulb" size={24} />
+                        <span>{row.coachCard.question}</span>
+                      </p>
+                    ) : null}
                   </li>
                 )
               })}
           </ul>
         )}
       </Dialog>
-
 
       <Dialog
         open={openRow !== null}
@@ -1081,68 +953,87 @@ export function TeacherCockpit({
       >
         {openRow ? (
           <div className="flex flex-col gap-3">
-            <dl className="grid grid-cols-2 gap-2">
-              {[
-                ['สถานะ', levelName(openRow)],
-                ['ตอนนี้ทำอะไร', openRow.progressLabel],
-                ['ช่องทางที่ใช้', ROUTE_LABEL[openRow.learningRoute ?? ''] ?? 'ยังไม่ได้เลือก'],
-                ['ตัวช่วยระดับ', String(openRow.scaffoldLevel ?? '-')],
-                [
-                  'ดาวสะสม',
+            <div className="flex flex-wrap items-center gap-2">
+              <Chip tone={rowChip(openRow).tone} title={levelName(openRow)}>
+                {rowChip(openRow).text}
+              </Chip>
+              <Chip tone="sky">{ROUTE_LABEL[openRow.learningRoute ?? ''] ?? 'ยังไม่เลือกช่องทาง'}</Chip>
+              <Chip>{openRow.idleLabel}</Chip>
+            </div>
+
+            <p className="t2-note" data-tone="sky">
+              <Icon3d name="eyes" size={28} />
+              <span className="min-w-0 flex-1">{openRow.progressLabel}</span>
+            </p>
+
+            <dl className="t2-facts" data-cols="3">
+              <Fact
+                label="ดาว"
+                icon="star"
+                tone="yellow"
+                value={
                   openRow.goalStars
-                    ? `${openRow.earnedStars ?? 0} จากเป้า ${openRow.goalStars}`
-                    : String(openRow.earnedStars ?? 0),
-                ],
-                ['เป้าที่ตั้งไว้', openRow.goalStatus],
-                ['ความเคลื่อนไหว', openRow.idleLabel],
-                [
-                  'ลองผิดลองถูก',
-                  openRow.currentMission
-                    ? `ตอบมาแล้ว ${openRow.currentMission.attempts} ครั้ง · เปิดคำใบ้ ${openRow.currentMission.hintsUsed}/${openRow.currentMission.maxHints}`
-                    : '—',
-                ],
-              ].map(([k, v]) => (
-                <div key={k} className="rounded-xl bg-surface-sunken p-2">
-                  <dt className="text-note font-bold text-ink-muted">{k}</dt>
-                  <dd className="text-label font-bold text-ink">{v}</dd>
-                </div>
-              ))}
+                    ? `${openRow.earnedStars ?? 0}/${openRow.goalStars}`
+                    : String(openRow.earnedStars ?? 0)
+                }
+              />
+              <Fact label="ตัวช่วย" icon="light-bulb" tone="mint" value={`ระดับ ${openRow.scaffoldLevel ?? '-'}`} />
+              <Fact
+                label="ตอบแล้ว"
+                icon="memo"
+                tone="sky"
+                value={openRow.currentMission ? `${openRow.currentMission.attempts} ครั้ง` : '—'}
+              />
+              <Fact
+                label="คำใบ้"
+                icon="magnifying-glass-tilted-left"
+                tone="peach"
+                value={openRow.currentMission ? `${openRow.currentMission.hintsUsed}/${openRow.currentMission.maxHints}` : '—'}
+              />
+              <Fact label="เป้าหมาย" icon="bullseye" tone="lilac" value={openRow.goalStatus} />
             </dl>
 
             {openRow.flag.teacherNote ? (
-              <p className="rounded-xl bg-spark-100 p-3 text-label font-bold text-spark-800">
+              <p className="t2-note" data-tone="spark">
                 {openRow.flag.teacherNote}
               </p>
             ) : null}
 
             {openRow.coachCard ? (
-              <div className="rounded-xl bg-surface-sunken p-3">
-                <p className="text-label font-bold text-ink">
-                  ลองถามว่า: {openRow.coachCard.question}
+              <div className="rounded-[20px] bg-[#f6f2e8] p-3">
+                <p className="flex items-start gap-2 text-label font-extrabold text-ink">
+                  <Icon3d name="light-bulb" size={28} />
+                  <span>ลองถามว่า: {openRow.coachCard.question}</span>
                 </p>
-                <p className="mt-1 text-note text-ink-muted">
-                  ถามต่อ: {openRow.coachCard.followUpQuestion}
-                </p>
-                <p className="mt-1 text-note text-ink-muted">สังเกต: {openRow.coachCard.watchFor}</p>
-                <p className="mt-1 text-note font-bold text-danger-700">
-                  เลี่ยงพูด: {openRow.coachCard.avoidSaying}
-                </p>
+                <details className="mt-1">
+                  <summary className="flex min-h-11 cursor-pointer items-center text-label font-extrabold text-brand-700">
+                    คำถามต่อ · สิ่งที่ควรเลี่ยง
+                  </summary>
+                  <p className="mt-1 text-label text-ink">ถามต่อ: {openRow.coachCard.followUpQuestion}</p>
+                  <p className="mt-1 text-label text-ink-muted">สังเกต: {openRow.coachCard.watchFor}</p>
+                  <p className="mt-1 text-label font-bold text-danger-700">
+                    เลี่ยงพูด: {openRow.coachCard.avoidSaying}
+                  </p>
+                </details>
               </div>
             ) : null}
 
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className={openRow.pendingReview ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-2'}>
               <Link
                 href={`/teacher/student?classroomId=${classroomId}&studentId=${openRow.studentId}`}
-                className="btn-base w-full touch-manipulation bg-brand-600 text-ink-onbrand shadow-soft-1"
+                className="t2-btn focus-ring"
+                data-kind="primary"
+                data-block="true"
               >
-                เปิดรายงานรายคน
+                รายงานรายคน
               </Link>
               {openRow.pendingReview ? (
                 <Link
                   href={`/teacher/review?classroomId=${classroomId}`}
-                  className="btn-base w-full touch-manipulation bg-surface-raised text-ink ring-1 ring-line-contrast ring-inset"
+                  className="t2-btn focus-ring"
+                  data-block="true"
                 >
-                  ไปที่คิวตรวจงาน
+                  คิวตรวจงาน
                 </Link>
               ) : null}
             </div>

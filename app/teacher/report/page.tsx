@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { ClassReportClient } from './class-report-client'
-import { LearnResultsPanel } from './learn-results-panel'
+import { LearnResultsPanel, MasteryRadarCard } from './learn-results-panel'
 import { TeacherSignedOut, TeacherSubPage, loadTeacherPage, type SearchParams } from '../_lib/teacher-page'
 
 /**
@@ -21,17 +21,14 @@ export default async function TeacherClassReportPage({
   return (
     <TeacherSubPage
       data={data}
-      title="รายงานรายห้อง"
-      subtitle={
-        data.selectedRoomCode
-          ? `ห้อง ${data.selectedRoomCode} · ตัวเลขสำหรับเอกสารผลการทดลองและสไลด์`
-          : 'ยังไม่มีห้องเรียน'
-      }
+      title="ผลการเรียน"
+      subtitle={data.selectedRoomCode ? `ห้อง ${data.selectedRoomCode}` : 'ยังไม่มีห้องเรียน'}
       basePath="/teacher/report"
     >
       <ClassReportClient
         classroomId={data.selectedId}
         roomCode={data.selectedRoomCode}
+        masterySlot={<MasteryRadarCard classroomId={data.selectedId} />}
         csvHref={
           data.selectedId
             ? `/api/teacher/export?classroomId=${data.selectedId}&type=scores&pseudonymize=1`

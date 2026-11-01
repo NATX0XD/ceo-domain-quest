@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, cn } from '../../components/ui'
+import { Chip, Icon3d } from './_ux/v2'
 
 /**
  * สวิตช์ "ใช้ AI ช่วยคิดในคาบนี้" (REVIEW-8 H-3)
@@ -58,20 +58,25 @@ export function AiSwitch({ sessionId, aiEnabled }: AiSwitchProps) {
   }
 
   return (
-    <Card tone={enabled ? 'plain' : 'danger'} className="mt-4" role="region" aria-label="สวิตช์ AI">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <section
+      className="t2-card"
+      role="region"
+      aria-label="สวิตช์ AI"
+      style={enabled ? undefined : { background: '#fdeceb', borderColor: '#eba7a3' }}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <Icon3d name="robot" size={44} />
         <div className="min-w-0 flex-1">
-          <p className="text-label font-extrabold tracking-wide text-ink-muted">AI ช่วยคิดในคาบนี้</p>
-          <p className="mt-1 text-body text-pretty text-ink">
+          <p className="flex items-center gap-2 text-label font-extrabold text-ink">
+            AI ช่วยคิดในคาบนี้
+            <Chip tone={enabled ? 'green' : 'red'}>{enabled ? 'เปิดอยู่' : 'ปิดอยู่'}</Chip>
+          </p>
+          <p className="mt-1 text-label font-semibold text-pretty text-ink-muted">
             {enabled ? (
-              <>
-                <strong>เปิดอยู่</strong> · คำใบ้ ลูกค้าจำลอง และคิวตรวจงานจะลองถาม AI ก่อน
-                ถ้า AI ช้าหรือล่มจะตกไปใช้กฎในโค้ดให้เอง
-              </>
+              <>AI ช้าหรือล่มจะใช้<strong>กฎในโค้ด</strong>แทนเอง</>
             ) : (
               <>
-                <strong>ปิดอยู่</strong> · ทั้งห้องใช้<strong>กฎในโค้ด</strong>ล้วน ไม่มีการเรียก AI เลย
-                นักเรียนยังได้คำใบ้และคะแนนเสนอเหมือนเดิม และไม่เห็นข้อความผิดพลาดใด ๆ
+                ทั้งห้องใช้<strong>กฎในโค้ด</strong>ล้วน · นักเรียนไม่เห็นข้อความผิดพลาด
               </>
             )}
           </p>
@@ -82,12 +87,8 @@ export function AiSwitch({ sessionId, aiEnabled }: AiSwitchProps) {
           onClick={toggle}
           disabled={busy}
           aria-pressed={!enabled}
-          className={cn(
-            'btn-base px-4 disabled:opacity-60',
-            enabled
-              ? 'bg-surface-raised text-danger-700 ring-2 ring-danger-500 ring-inset hover:bg-danger-100'
-              : 'bg-brand-600 text-ink-onbrand shadow-soft-1',
-          )}
+          className="t2-btn focus-ring"
+          data-kind={enabled ? 'danger' : 'primary'}
         >
           {busy ? 'กำลังเปลี่ยน…' : enabled ? 'ปิด AI ทั้งห้อง' : 'เปิด AI อีกครั้ง'}
         </button>
@@ -98,6 +99,6 @@ export function AiSwitch({ sessionId, aiEnabled }: AiSwitchProps) {
           {error}
         </p>
       ) : null}
-    </Card>
+    </section>
   )
 }
