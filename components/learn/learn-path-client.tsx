@@ -956,6 +956,7 @@ export function LearnPathClient({
                         visual={scene.visual}
                         caption={scene.caption}
                         domeSpeaking={scene.speaker === 'โดม'}
+                        m2={theme.id === 'm2'}
                       />
                       <GlassCard dark={dark} className="p-4">
                         <div aria-live="polite">
@@ -1065,10 +1066,9 @@ export function LearnPathClient({
             >
               {path.do.kind === 'game' && theme.id === 'm2' ? (
                 <div
-                  className="self-center rounded-xl border-2 border-fuchsia-300 bg-[#1a0f2e] px-4 py-1.5 text-body font-extrabold tracking-wide text-fuchsia-200"
+                  className="m2-game-badge self-center rounded-xl px-4 py-1.5 text-body font-extrabold tracking-wide"
                   style={{
-                    textShadow: '0 0 8px #e879f9, 0 0 18px #c026d3',
-                    boxShadow: '0 0 14px #c026d388',
+                    textShadow: 'none',
                   }}
                 >
                   อ่านจากขวาไปซ้าย
@@ -1077,7 +1077,7 @@ export function LearnPathClient({
               {path.do.kind === 'game' && viewGame ? (
                 <GlassCard
                   dark={dark}
-                  className="p-2.5 [&_.mt-3]:mt-1 [&_.mt-4]:mt-2 [&_.min-h-12]:min-h-10 [&_.min-h-14]:min-h-10 [&_li>div]:!p-2.5 [&_ul]:gap-2 [&_ul]:!mt-2 [&_p+p]:hidden"
+                  className="m2-game-panel p-2.5 [&_.mt-3]:mt-1 [&_.mt-4]:mt-2 [&_.min-h-12]:min-h-10 [&_.min-h-14]:min-h-10 [&_li>div]:!p-2.5 [&_ul]:gap-2 [&_ul]:!mt-2 [&_p+p]:hidden"
                 >
                   <MissionGame missionId={missionId} data={viewGame} onSolved={() => void submitGameSolved()} />
                 </GlassCard>

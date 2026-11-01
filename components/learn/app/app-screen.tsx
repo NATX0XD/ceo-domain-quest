@@ -48,7 +48,10 @@ export function AppScreen({
   const style: CSSProperties = { backgroundImage: theme.fallback }
   return (
     <div
-      className="fixed inset-0 z-40 flex h-dvh w-full flex-col overflow-hidden"
+      className={cn(
+        'fixed inset-0 z-40 flex h-dvh w-full flex-col overflow-hidden',
+        theme.id === 'm2' && 'm2-shell',
+      )}
       style={style}
       data-theme-id={theme.id}
     >
