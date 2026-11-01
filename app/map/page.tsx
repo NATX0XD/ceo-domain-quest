@@ -6,6 +6,7 @@ import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { bigMission, selfProfile } from '@/components/server/lesson-content'
 import { MapHotspots } from '@/components/map-hotspots'
+import { loadTestNudge } from '@/components/server/test-nudge'
 import { requireShopProfile } from '@/components/server/shop-gate'
 
 export const metadata: Metadata = { title: 'แผนภารกิจของฉัน — CEO Domain Quest' }
@@ -18,12 +19,14 @@ export default async function MapPage() {
   await requireShopProfile(session.studentId)
   const data = await lessonSummary(session.studentId)
   const allMissionsPassed = data.missions.length > 0 && data.missions.every((mission) => mission.passed)
+  const nudge = await loadTestNudge(session.studentId, data.missions.filter((m) => m.passed).length)
   const mapState = Math.min(data.summary.done + 1, 4)
 
   return (
     <AppShell className="media-shell student-display student-world" mainLabel="แผนที่ภารกิจ" footer={<BottomNav />}>
       <MapHotspots
         imageState={mapState}
+        nudge={nudge}
         missions={data.missions.map((mission) => ({
           id: mission.id,
           title: mission.title,

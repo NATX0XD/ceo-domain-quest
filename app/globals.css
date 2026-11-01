@@ -1455,3 +1455,186 @@ select {
 .student-world .app-shell-main:has(.sheet-panel:target) {
   z-index: var(--z-overlay);
 }
+
+/* ---- game frame (pretest / posttest / reflect): wood sign header, cream panel, glossy buttons.
+   Only new gf-* classes; nothing above is changed. ---- */
+.gf-sign {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: .5rem .75rem .25rem;
+  padding: .4rem .6rem;
+  border: 3px solid #4a1f0a;
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, #c98238 0%, #8a4a21 100%);
+  box-shadow: 0 4px 0 #4a1f0a, inset 0 2px 0 rgb(255 255 255 / .35);
+  color: #fff1d6;
+}
+.gf-sign h1 {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.125rem;
+  font-weight: 900;
+  line-height: 1.3;
+  text-shadow: 0 2px 0 rgb(74 31 10 / .55);
+}
+.gf-back {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 3px solid #fff1d6;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #a85d28, #6b2d12);
+  box-shadow: 0 3px 0 #3b1707;
+  color: #fff1d6;
+}
+.student-world .gf-sign h1 { color: #fff1d6; }
+.gf-count {
+  flex: none;
+  min-width: 3.25rem;
+  padding: .25rem .65rem;
+  border: 2px solid #fff1d6;
+  border-radius: 9999px;
+  background: #ffc51b;
+  box-shadow: 0 2px 0 #4a1f0a;
+  color: #4a1f0a;
+  font-size: .9375rem;
+  font-weight: 900;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.gf-panel {
+  border: 3px solid #6b2d12;
+  border-radius: 1.5rem;
+  background: rgb(255 241 214 / .97);
+  box-shadow: 0 5px 0 rgb(107 45 18 / .3);
+}
+.gf-question {
+  font-size: 1.1875rem;
+  font-weight: 800;
+  line-height: 1.45;
+  color: #3b1707;
+}
+.gf-btn-side {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.5rem;
+  padding: 0 1.1rem;
+  border: 3px solid #fff1d6;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #a85d28, #6b2d12);
+  box-shadow: 0 5px 0 #3b1707;
+  color: #fff1d6;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.gf-btn-side:disabled { opacity: .45; }
+.gf-footer {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  padding: .625rem 1rem .75rem;
+  border-top: 3px solid #6b2d12;
+  background: rgb(255 241 214 / .97);
+}
+.gf-footer .btn-go { min-height: 3.5rem; flex: 1; white-space: nowrap; }
+.gf-pick {
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  gap: .75rem;
+  width: 100%;
+  padding: .5rem .875rem;
+  border: 3px solid rgb(107 45 18 / .25);
+  border-radius: 1.125rem;
+  background: #fffaf0;
+  box-shadow: 0 4px 0 rgb(107 45 18 / .18);
+  color: #3b1707;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: left;
+}
+.gf-pick[aria-checked='true'], .gf-pick[aria-pressed='true'] {
+  border-color: #4a1f0a;
+  background: linear-gradient(180deg, #ffe58a, #ffc51b);
+  box-shadow: 0 4px 0 #4a1f0a;
+}
+.gf-pick-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: #8a4a21;
+  color: #fff1d6;
+  font-size: .9375rem;
+  font-weight: 900;
+}
+.gf-feel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  min-height: 5.5rem;
+  padding: .5rem;
+  border: 3px solid rgb(107 45 18 / .25);
+  border-radius: 1.25rem;
+  background: #fffaf0;
+  box-shadow: 0 4px 0 rgb(107 45 18 / .18);
+  color: #3b1707;
+  font-size: .9375rem;
+  font-weight: 800;
+}
+.gf-feel[aria-pressed='true'] {
+  border-color: #4a1f0a;
+  background: linear-gradient(180deg, #ffe58a, #ffc51b);
+  box-shadow: 0 4px 0 #4a1f0a;
+}
+.gf-feel-icon { font-size: 2.25rem; line-height: 1; }
+.gf-star {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 9999px;
+  color: #c9a979;
+}
+.gf-star[aria-checked='true'] { color: #ffb400; filter: drop-shadow(0 2px 0 #6b2d12); }
+.gf-wait-dot { animation: gf-pulse 1.4s ease-in-out infinite; }
+@keyframes gf-pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .gf-wait-dot { animation: none; } }
+.gf-nudge {
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  gap: .75rem;
+  padding: .5rem .875rem;
+  border: 3px solid #fff1d6;
+  border-radius: 1.125rem;
+  background: linear-gradient(180deg, #ffe58a, #ffc51b);
+  box-shadow: 0 5px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .75);
+  color: #3b1707;
+  font-size: 1rem;
+  font-weight: 900;
+}
+.gf-nudge-chip {
+  display: inline-block;
+  margin-top: .125rem;
+  padding: 0 .5rem;
+  border-radius: 9999px;
+  background: #6b2d12;
+  color: #fff1d6;
+  font-size: .8125rem;
+  font-weight: 800;
+}
+.map-test-strip { padding: .625rem 1rem .25rem; background: #20a9f3; }

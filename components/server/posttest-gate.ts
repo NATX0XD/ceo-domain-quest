@@ -65,3 +65,5 @@ export async function posttestGate(studentId: string): Promise<TestGate & { phas
 export async function pretestGate(studentId: string): Promise<TestGate> {
   return testGate(studentId, 'pretest')
 }
+
+export { REFLECT_LOCKED_MESSAGE, reflectUnlocked } from '@/core/reflect-gate'

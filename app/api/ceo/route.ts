@@ -386,7 +386,7 @@ export async function POST(request: Request) {
     totalStars,
     /** งานที่เข้าคิวให้ AI ตรวจทีหลัง (null = เข้าคิวไม่สำเร็จ ไม่กระทบคะแนนที่ได้ไปแล้ว) */
     gradeJobQueued: queued !== null,
-    nextHref: '/reflect',
+    nextHref: '/posttest',
     ...meta,
   })
 }

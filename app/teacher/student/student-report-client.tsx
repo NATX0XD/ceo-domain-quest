@@ -110,6 +110,14 @@ function timeText(seconds: number | null): string {
   return `${Math.floor(seconds / 60)} นาที ${seconds % 60} วินาที`
 }
 
+const REFLECT_LABEL: Record<string, string> = {
+  'reflect-feel': 'ความรู้สึกวันนี้',
+  'reflect-1': 'วันนี้ได้เรียนรู้อะไร',
+  'reflect-conf': 'ความมั่นใจ (เต็ม 5)',
+  'reflect-2': 'ยังสงสัยเรื่องไหน',
+  'reflect-3': 'ข้อความถึงตัวเอง',
+}
+
 export function StudentReportClient({
   classroomId,
   studentId,
@@ -486,7 +494,7 @@ export function StudentReportClient({
                 <ul className="flex flex-col gap-2">
                   {report.reflections.map((r, i) => (
                     <li key={`${r.questionId}-${i}`} className="rounded-[18px] bg-[#f6f2e8] p-3">
-                      <p className="text-note font-bold text-ink-muted">{r.questionId}</p>
+                      <p className="text-note font-bold text-ink-muted">{REFLECT_LABEL[r.questionId] ?? r.questionId}</p>
                       <p className="mt-0.5 text-body whitespace-pre-line text-ink">{r.answer}</p>
                     </li>
                   ))}

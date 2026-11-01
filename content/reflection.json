@@ -23,7 +23,10 @@
   "submitPolicy": {
     "id": "reflection-submit-policy",
     "specRef": "docs/lesson-plan.md บรรทัด 150 — ในคาบตอบ 2 ข้อ ข้อ จะนำไปใช้อย่างไร ตอบต่อที่บ้าน",
-    "requiredQuestionIds": ["reflect-1", "reflect-2"],
+    "requiredQuestionIds": [
+      "reflect-1",
+      "reflect-2"
+    ],
     "optionalChipLabel": "ของแถม ทำหรือไม่ทำก็ได้",
     "optionalHint": "ข้อนี้ไม่บังคับในคาบ ทำต่อที่บ้านได้ ไม่ทำก็กดส่งได้เลย",
     "readyMessage": "ตอบครบตามที่ต้องทำในคาบแล้ว กดส่งได้เลย",
@@ -87,6 +90,32 @@
       "followUpTriggerLength": 25
     }
   ],
+  "_extrasComment": "คำถามสั้นแบบแตะเลือก 2 ข้อ (ความรู้สึก + ความมั่นใจ) เก็บลงตาราง reflections เหมือนข้ออื่น แต่ไม่นับเป็นข้อบังคับและไม่นับใน TOTAL_REFLECTION_COUNT · ไม่ให้คะแนน ไม่ตัดสินถูกผิด",
+  "extras": [
+    {
+      "id": "reflect-feel",
+      "kind": "feeling",
+      "question": "วันนี้รู้สึกยังไงบ้าง",
+      "options": [
+        "สนุกมาก",
+        "ภูมิใจ",
+        "เฉย ๆ",
+        "งงนิดหน่อย",
+        "เหนื่อย"
+      ]
+    },
+    {
+      "id": "reflect-conf",
+      "kind": "stars",
+      "question": "ตอนนี้มั่นใจแค่ไหน",
+      "max": 5
+    }
+  ],
+  "promptShort": {
+    "reflect-1": "วันนี้ได้เรียนรู้อะไร",
+    "reflect-2": "ยังสงสัยเรื่องไหน",
+    "reflect-3": "ฝากข้อความถึงตัวเอง"
+  },
   "goalCompare": [
     {
       "id": "compare-below",

@@ -4,6 +4,8 @@ import { reflection } from '@/components/server/lesson-content'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
 import { loadReflectionDb, saveReflectionDb } from '@/components/server/game-state'
+import { REFLECT_LOCKED_MESSAGE, reflectUnlocked } from '@/components/server/posttest-gate'
+import { getProfile } from '@/lib/db/repo'
 import { moderateFields } from '@/components/server/moderation'
 import {
   CERTIFICATE_STATUS_LABEL,
@@ -71,6 +73,9 @@ async function certificatePayload(studentId: string) {
 export async function GET() {
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง')
+  if (!reflectUnlocked(await getProfile(session.studentId))) {
+    return errorResponse('posttest-first', REFLECT_LOCKED_MESSAGE, 403)
+  }
 
   const answers = await loadReflectionDb(session.studentId)
   const check = reflectionSubmitCheck(answers)
@@ -99,6 +104,9 @@ export async function GET() {
 export async function POST(request: Request) {
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง ใส่รหัสห้องกับ PIN ที่หน้า /join ก่อน')
+  if (!reflectUnlocked(await getProfile(session.studentId))) {
+    return errorResponse('posttest-first', REFLECT_LOCKED_MESSAGE, 403)
+  }
 
   const parsed = RequestSchema.safeParse(await readJsonBody(request))
   if (!parsed.success) {
@@ -125,6 +133,17 @@ export async function POST(request: Request) {
       field: checked.failedFieldId,
       original: checked.verdict.original,
     })
+  }
+
+  // ข้อแตะเลือกสั้น ๆ (ความรู้สึก/ความมั่นใจ) — รับเฉพาะค่าที่อยู่ในตัวเลือกของไฟล์เนื้อหา
+  for (const extra of reflection.extras) {
+    const value = parsed.data.answers[extra.id]
+    if (typeof value !== 'string') continue
+    const ok =
+      extra.kind === 'feeling'
+        ? (extra.options ?? []).includes(value)
+        : /^\d$/.test(value) && Number(value) >= 1 && Number(value) <= (extra.max ?? 5)
+    if (ok) answers[extra.id] = value
   }
 
   await saveReflectionDb(session.studentId, answers)

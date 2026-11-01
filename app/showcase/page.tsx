@@ -89,8 +89,8 @@ export default async function ShowcasePage() {
                 <span className="break-words text-label font-bold text-ink">{nowLine}</span>
               </SpeechBubble>
             </div>
-            <Link href="/reflect" className="btn-go">
-              ไปทบทวนตัวเอง
+            <Link href="/posttest" className="btn-go">
+              แบบทดสอบหลังเรียน
               <ChevronRightIcon width={22} height={22} aria-hidden />
             </Link>
           </AppFooter>

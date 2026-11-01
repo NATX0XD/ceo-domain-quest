@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ClassReportClient } from './class-report-client'
+import { ReflectionPanel } from './reflection-panel'
 import { LearnResultsPanel, MasteryRadarCard } from './learn-results-panel'
 import { TeacherSignedOut, TeacherSubPage, loadTeacherPage, type SearchParams } from '../_lib/teacher-page'
 
@@ -36,6 +37,7 @@ export default async function TeacherClassReportPage({
         }
       />
       <LearnResultsPanel classroomId={data.selectedId} />
+      <ReflectionPanel teacherId={data.teacherId} classroomId={data.selectedId} />
     </TeacherSubPage>
   )
 }

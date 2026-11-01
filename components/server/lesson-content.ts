@@ -362,6 +362,17 @@ const ReflectionSchema = z.object({
       }),
     )
     .min(1),
+  /** คำถามแตะเลือกสั้น ๆ (ความรู้สึก/ความมั่นใจ) — ไม่บังคับ ไม่นับใน TOTAL_REFLECTION_COUNT */
+  extras: z.array(
+    z.object({
+      id: z.string().min(1),
+      kind: z.enum(['feeling', 'stars']),
+      question: z.string().min(1),
+      options: z.array(z.string().min(1)).optional(),
+      max: z.number().int().positive().optional(),
+    }),
+  ),
+  promptShort: z.record(z.string(), z.string().min(1)),
   goalCompare: z
     .array(
       z.object({

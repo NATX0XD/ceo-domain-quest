@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import Link from 'next/link'
 import { DomeAvatar } from '../../../components/ui'
 import { Dialog } from './dialog'
+import { PosttestSwitch } from './posttest-switch'
 import { Chip, Fact, Icon3d, InfoTip, Kpi, KpiGrid } from './v2'
 
 /**
@@ -71,6 +72,7 @@ interface SessionInfo {
   timer_paused_seconds: number | null
   focus_screen: boolean
   survey_enabled: boolean
+  posttest_enabled?: boolean
   ended_at: string | null
   /** แผนเวลาต่อช่วงที่ครูตั้งไว้จริง — null = ยังไม่ได้ตั้ง */
   phase_minutes: Record<string, number> | null
@@ -604,6 +606,16 @@ export function TeacherCockpit({
           </div>
         ) : null}
       </section>
+
+      <PosttestSwitch
+        classroomId={classroomId}
+        sessionId={session?.id ?? null}
+        enabled={session?.posttest_enabled === true}
+        busy={busy}
+        onToggle={(next) =>
+          session && send({ action: 'test-window', sessionId: session.id, which: 'post', enabled: next })
+        }
+      />
 
       {/* ───────── ตัวเลขสรุป — พาสเทล + ไอคอนเดียว + ตัวเลขใหญ่ */}
       <KpiGrid>

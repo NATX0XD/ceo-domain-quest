@@ -565,10 +565,10 @@ export function CeoClient({
               </Button>
             ) : (
               <Link
-                href="/reflect"
+                href="/posttest"
                 className="btn-quest bg-brand-600 text-ink-onbrand hover:bg-brand-700"
               >
-                ไปทบทวนตัวเอง
+                ไปทำแบบทดสอบหลังเรียน
                 <ChevronRightIcon width={22} height={22} aria-hidden />
               </Link>
             )}
@@ -731,10 +731,10 @@ export function CeoClient({
               ทางไปขั้นต่อไปจึงยังต้องมีให้กดตรงนี้ */}
           {revision ? (
             <Link
-              href="/reflect"
+              href="/posttest"
               className="btn-base min-h-12 w-full bg-surface-raised text-brand-700 shadow-soft-1 ring-2 ring-brand-100 ring-inset hover:bg-brand-50"
             >
-              ไปทบทวนตัวเอง
+              ไปทำแบบทดสอบหลังเรียน
             </Link>
           ) : null}
           <Link

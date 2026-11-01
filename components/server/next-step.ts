@@ -164,7 +164,7 @@ export function studentNextStep(input: NextStepInput): StudentNextStep {
         badge: 'ครูยืนยันครบทุกด้านแล้ว',
         line: 'ครูยืนยันแล้วว่าทำได้ครบทั้ง 4 ด้าน ไปรับใบประกาศได้เลย',
         primary: { href: '/result', label: 'ดูผลและรับใบประกาศ', longLabel: 'ดูผลและรับใบประกาศ' },
-        secondary: { href: '/reflect', label: 'ไปทบทวนตัวเอง', longLabel: 'ไปทบทวนตัวเอง' },
+        secondary: { href: '/posttest', label: 'แบบทดสอบหลังเรียน', longLabel: 'ไปทำแบบทดสอบหลังเรียน' },
         tone: 'done',
       }
   }

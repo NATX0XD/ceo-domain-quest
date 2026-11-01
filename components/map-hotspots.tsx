@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useState, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
+import { TestNudgeCard } from '@/components/test-nudge'
+import type { TestNudge } from '@/components/server/test-nudge'
 import { ArrowLeftIcon, CheckIcon, LockIcon, StarIcon, Toast, ToastViewport } from '@/components/ui'
 
 type Mission = {
@@ -16,7 +18,7 @@ type Mission = {
 
 type Boss = { title: string; unlocked: boolean; href: string }
 
-type MapHotspotsProps = { imageState: number; missions: Mission[]; boss: Boss }
+type MapHotspotsProps = { imageState: number; missions: Mission[]; boss: Boss; nudge?: TestNudge | null }
 
 const ISLAND_HOTSPOTS = [
   { left: '42%', top: '24%', width: '55%', height: '20%' },
@@ -39,7 +41,7 @@ function statusOf(mission: Mission, unlocked: boolean) {
   return 'ล็อกอยู่'
 }
 
-export function MapHotspots({ imageState, missions, boss }: MapHotspotsProps) {
+export function MapHotspots({ imageState, missions, boss, nudge = null }: MapHotspotsProps) {
   const [toast, setToast] = useState(false)
   const [entering, setEntering] = useState<number | null>(null)
   const router = useRouter()
@@ -56,6 +58,12 @@ export function MapHotspots({ imageState, missions, boss }: MapHotspotsProps) {
       <ToastViewport className="map-toast-viewport">
         {toast ? <Toast message="ผ่านภารกิจก่อนหน้าก่อนนะ" tone="info" onDismiss={() => setToast(false)} /> : null}
       </ToastViewport>
+
+      {nudge ? (
+        <div className="map-test-strip">
+          <TestNudgeCard nudge={nudge} />
+        </div>
+      ) : null}
 
       <div
         className={entering === null ? 'map-artboard' : 'map-artboard map-artboard-entering'}

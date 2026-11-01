@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { SignInGate } from '@/components/student-shell'
 import { ReflectClient, type ReflectCompareCard, type ReflectOutcome } from '@/components/reflect-client'
 import {
@@ -9,7 +10,8 @@ import {
 } from '@/components/server/lesson-content'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { loadReflectionDb, loadShopProfile } from '@/components/server/game-state'
-import { getStudent } from '@/lib/db/repo'
+import { reflectUnlocked } from '@/components/server/posttest-gate'
+import { getProfile, getStudent } from '@/lib/db/repo'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 
 export const metadata: Metadata = { title: 'ทบทวนตัวเอง — CEO Domain Quest' }
@@ -31,6 +33,9 @@ export default async function ReflectPage() {
   if (!session) {
     return <SignInGate message="ใส่รหัสห้องกับ PIN ที่ครูให้ก่อน แล้วค่อยกลับมาทบทวนตัวเอง" />
   }
+
+  // ทบทวนได้หลังส่งแบบทดสอบหลังเรียนแล้วเท่านั้น (เดาลิงก์มาตรง ๆ ก็เด้งกลับ)
+  if (!reflectUnlocked(await getProfile(session.studentId))) redirect('/posttest')
 
   const [student, shop, answers, summary] = await Promise.all([
     getStudent(session.studentId),
@@ -88,13 +93,8 @@ export default async function ReflectPage() {
   return (
     <ReflectClient
       meta={{
-        headline: reflection.meta.headline,
-        subHeadline: reflection.meta.subHeadline,
         submitButtonLabel: reflection.meta.submitButtonLabel,
-        skipNote: reflection.meta.skipNote,
         savedMessage: fillTemplate(reflection.meta.savedMessage, templateValues),
-        minuteFrom: reflection.meta.minuteFrom,
-        minuteTo: reflection.meta.minuteTo,
       }}
       questions={reflection.questions
         .slice()
@@ -108,13 +108,15 @@ export default async function ReflectPage() {
           minLength: q.minLength,
           maxLength: q.maxLength,
         }))}
-      closing={{
-        title: reflection.closing.title,
-        messageAll: reflection.closing.messageAll,
-        messageThanks: reflection.closing.messageThanks,
-        certificateButtonLabel: reflection.closing.certificateButtonLabel,
-        certificateNote: reflection.closing.certificateNote,
-      }}
+      extras={reflection.extras.map((x) => ({
+        id: x.id,
+        kind: x.kind,
+        question: x.question,
+        options: x.options ?? [],
+        max: x.max ?? 5,
+      }))}
+      promptShort={reflection.promptShort}
+      learnedOptions={summary.missions.map((m) => m.title)}
       initialAnswers={answers}
       initiallyComplete={alreadyComplete}
       stars={{

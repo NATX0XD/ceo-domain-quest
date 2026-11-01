@@ -10,6 +10,8 @@ import { ChevronRightIcon, DomeAvatar, SpeechBubble, StarIcon } from '@/componen
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
+import { TestNudgeCard } from '@/components/test-nudge'
+import { loadTestNudge } from '@/components/server/test-nudge'
 import { requireShopProfile } from '@/components/server/shop-gate'
 
 export const metadata: Metadata = { title: 'หน้าหลัก — CEO Domain Quest' }
@@ -46,6 +48,7 @@ export default async function HomePage() {
     lessonSummary(session.studentId),
     certificateEligibility(session.studentId),
   ])
+  const nudge = await loadTestNudge(session.studentId, summary.missions.filter((m) => m.passed).length)
 
   const nextMission = summary.missions.find((m) => !m.passed)
   /**
@@ -75,7 +78,9 @@ export default async function HomePage() {
           ? `ครูอ่านงานเราแล้วครับ ส่งกลับมาให้แก้ ${standing.missing.length} ด้าน · แก้แล้วส่งใหม่ได้เลย`
           : 'ครูยืนยันครบทุกด้านแล้วครับ ไปรับใบประกาศได้เลย'
 
-  const primary = nextMission
+  const primary = nudge && !nudge.waiting
+    ? { href: nudge.href, label: nudge.title }
+    : nextMission
     ? { href: `/mission/${nextMission.id}`, label: 'ทำภารกิจต่อ' }
     : standing.status === 'not-submitted'
       ? { href: '/ceo', label: 'ไปด่านบอส CEO' }
@@ -145,6 +150,8 @@ export default async function HomePage() {
         <div className="min-h-0 flex-1 overflow-hidden rounded-3xl scene-sky shadow-soft-2 ring-1 ring-brand-100 ring-inset">
           <ShopStages level={level} kind={kind} decorative className="h-full" />
         </div>
+
+        {nudge?.waiting ? <TestNudgeCard nudge={nudge} className="shrink-0" /> : null}
 
         {/* ชื่อร้าน + ความคืบหน้า — อยู่นอกภาพเสมอ */}
         <div className="shrink-0 rounded-2xl bg-surface-raised px-4 py-3 shadow-soft-1">
