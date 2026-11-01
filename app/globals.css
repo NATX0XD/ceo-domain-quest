@@ -1407,7 +1407,8 @@ select {
 /* ตัวเปิด-ปิดจริงของแผ่น: ไม่มี JavaScript มีแต่ตัวเลือก :target ของ CSS
    เขียนเป็นกฎ CSS ตรง ๆ เพราะต้องอ้างถึง "พี่น้องที่อยู่หลังตัวที่ถูก target" ซึ่ง utility ทำไม่ได้ */
 .sheet-panel:target {
-  transform: translateY(0);
+  translate: 0 0;
+  transform: none;
 }
 .sheet-panel:target ~ .sheet-backdrop {
   opacity: 1;

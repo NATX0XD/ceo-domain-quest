@@ -642,7 +642,7 @@ export function MissionClient({
         ) : (
           <ul className="flex h-full flex-col gap-1.5">
             {mission.check.choices.map((c, i) => (
-              <li key={c} className="min-h-0 flex-1">
+              <li key={c}>
                 <ChoiceCard
                   label={c}
                   marker={CHOICE_MARKERS[i] ?? String(i + 1)}

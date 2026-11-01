@@ -92,7 +92,7 @@ export function QuizStepper({
         className="flex min-h-0 flex-1 flex-col gap-2"
       >
         {current.choices.map((choice, i) => (
-          <li key={choice} className="min-h-0 flex-1">
+            <li key={choice}>
             <ChoiceCard
               marker={CHOICE_MARKERS[i] ?? String(i + 1)}
               label={choice}

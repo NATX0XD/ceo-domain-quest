@@ -364,7 +364,7 @@ export function ProfileClient({
             className="flex min-h-0 flex-1 flex-col gap-2"
           >
             {channels.map((c) => (
-              <li key={c.id} className="min-h-0 flex-1">
+              <li key={c.id}>
                 <ChoiceCard
                   label={c.name}
                   description={
@@ -397,7 +397,7 @@ export function ProfileClient({
             className="flex min-h-0 flex-1 flex-col gap-2"
           >
             {([1, 2, 3] as const).map((n) => (
-              <li key={n} className="min-h-0 flex-1">
+              <li key={n}>
                 <ChoiceCard
                   marker={String(n)}
                   label={LEVEL_LABELS[n].title}
@@ -423,13 +423,14 @@ export function ProfileClient({
             เป้าหมายดาวที่ตั้งเอง
           </h1>
           <DomeTip mood="cheer">{goalPolicyNote}</DomeTip>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2">
           <ul
             role="radiogroup"
             aria-label="เป้าหมายดาวของฉัน"
-            className="flex min-h-0 flex-1 flex-col gap-2"
+            className="flex flex-col gap-2"
           >
             {goals.map((g) => (
-              <li key={g.id} className="min-h-0 flex-1">
+              <li key={g.id}>
                 <ChoiceCard
                   label={
                     <span className="flex flex-wrap items-center gap-2">
@@ -447,6 +448,8 @@ export function ProfileClient({
             ))}
           </ul>
           {goalNote ? <FlowNote state={{ kind: 'failed', text: goalNote }} /> : null}
+          {goalForm}
+          </div>
         </>
       ) : null}
 
@@ -494,8 +497,6 @@ export function ProfileClient({
         </div>
       ) : null}
 
-      {/* ช่องเป้าหมายที่พิมพ์เอง — หน้าเซิร์ฟเวอร์ส่งเข้ามา อยู่ในขั้นเป้าหมายเท่านั้น */}
-      {stepKey === 'goal' ? goalForm : null}
     </StudentShell>
   )
 }
