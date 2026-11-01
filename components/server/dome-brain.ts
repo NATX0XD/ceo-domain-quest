@@ -1,17 +1,23 @@
 /**
- * สมองของ "เลขาโดม" — ตอนนี้เป็นบทสนทนาแบบกฎ (scripted) ยังไม่ได้ต่อโมเดล
- * (คีย์ AI มีแล้วและใช้กับคำใบ้/การให้คะแนนอยู่ จะสลับโดมมาใช้โมเดลเมื่อไรก็ได้)
+ * สมองของ "เลขาโดม"
  *
- * รอยต่อสำหรับสลับไปใช้ AI จริง (อีก session กำลังทำ lib/ai/ ที่คืน source: 'ai' | 'fallback'):
- * แก้แค่ใน askDome() 3 บรรทัด
- *   import { askAi } from '@/lib/ai'
- *   const ai = await askAi({ system: DOME_PERSONA, message })
- *   if (ai.source === 'ai') return { reply: ai.text, source: 'ai', suggestions: defaultSuggestions() }
- * หน้าจอไม่ต้องแก้เลย เพราะสัญญาการคืนค่าเป็นตัวเดียวกันอยู่แล้ว
+ * ลำดับการตอบ (askDome):
+ * 1. ปุ่มตอบเร็ว → บทสำเร็จรูป (ปุ่มกระโดดไปหน้าอื่นใช้ได้ทันที ไม่เสียโควตา AI)
+ * 2. จัดหมวดข้อความด้วย lib/ai/dome-scope: unsafe / injection / ข้อมูลส่วนตัว / ขอเฉลย / นอกวิชา / ภารกิจถัดไป
+ *    → โดมปฏิเสธหรือเลื่อนเองด้วยบทของโดม ไม่ส่งเข้าโมเดล
+ * 3. ภารกิจปัจจุบัน / ภารกิจที่ผ่านมา / คุยทั่วไป → AI จริงผ่าน createAiClient().domeChat
+ *    (ตัวเลือกผู้ให้บริการ + failover + circuit breaker ใช้ชุดเดียวกับคำใบ้) แล้วผ่านตัวกันหัวข้อ + ตัวกันเฉลย
+ * 4. ผู้ให้บริการล้มทุกเจ้า / ติดลิมิต / ไม่มีคีย์ / คำตอบไม่ผ่านตัวกัน → กฎในไฟล์นี้ตอบแทน (source: 'fallback')
  *
  * ⚠️ ฝั่งเซิร์ฟเวอร์เท่านั้น และห้ามให้โดมเฉลยข้อสอบ — บทพูดทุกบรรทัดในไฟล์นี้เป็นคำอธิบายกว้าง ๆ
  *    ไม่มีคำตอบของข้อ check ภารกิจไหนอยู่ในนี้
  */
+import { createAiClient } from '../../lib/ai'
+import type { AiClient } from '../../lib/ai/types'
+import { classifyDomeMessage, type DomeScope } from '../../lib/ai/dome-scope'
+import { guardMissionScopedText, missionIndex, normalizeMissionId } from '../../lib/ai/topic-lock'
+import { leaksAnswer } from './dome-guard'
+
 export type DomeSource = 'ai' | 'fallback'
 
 export interface DomeSuggestion {
@@ -29,6 +35,10 @@ export interface DomeReply {
   source: DomeSource
   suggestions: DomeSuggestion[]
   action: DomeAction | null
+  /** ผู้ให้บริการที่ตอบจริง (typhoon · gemini · cloudflare) หรือ 'rules' เมื่อเป็นกฎในโค้ด */
+  provider?: string
+  /** หมวดที่จัดให้ข้อความนี้ ใช้ตรวจย้อนหลังและเขียนเทสต์ */
+  scope?: DomeScope
 }
 
 export const DOME_PERSONA =
@@ -111,54 +121,35 @@ const RULES: Rule[] = [
 const FALLBACK_REPLY =
   'ผมยังตอบเรื่องนี้ได้ไม่ละเอียดครับ แต่ถ้าเป็นเรื่องชื่อเว็บ นามสกุลโดเมน หรือขั้นตอนจดทะเบียน ถามผมได้เลย หรือจะเริ่มภารกิจก่อนก็ได้ครับ'
 
+
+
 /**
- * ตอบข้อความของผู้เรียน
- * ตอนนี้ source เป็น 'fallback' เสมอ พอเสียบ AI จริงแล้วค่อยคืน 'ai'
+ * ศัพท์เฉพาะที่เป็น "เนื้อหาหลัก" ของแต่ละภารกิจ — ถ้านักเรียนยังไม่ถึงภารกิจนั้นแต่คำตอบสอนศัพท์เหล่านี้ ให้ทิ้งคำตอบ
+ * ตั้งใจให้แคบ เพราะคำกว้างอย่าง .com / www / จดทะเบียน โผล่เป็นตัวอย่างในคำตอบปกติได้
  */
-export async function askDome(input: {
-  message: string
-  quickReplyId?: string | null
-  shopName: string | null
-  missionId?: string
-  role?: 'dome'
-}): Promise<DomeReply> {
-  // จุดเสียบ AI จริง — ดูหัวไฟล์
-  const text = input.message.trim()
+const STRONG_LATER_TERMS: Record<'m2' | 'm3' | 'm4' | 'm5', string[]> = {
+  m2: ['นามสกุลโดเมน', 'โฮสต์', 'tld'],
+  m3: ['.co.th', '.in.th', '.ไทย', '.net', '.shop', 'ประเภทผู้จด'],
+  m4: ['ตรวจชื่อว่าง', 'ขั้นตอนการจด', 'ค่าธรรมเนียม', 'ผู้ให้บริการจด'],
+  m5: ['รูบริก', 'ใบเสนอชื่อเว็บ'],
+}
 
-  if (input.quickReplyId === 'want-website') {
-    return {
-      reply: `เยี่ยมเลยครับ งั้นเริ่มจากทำความรู้จักตัวเองก่อน ผมจะได้เสนอวิธีเรียนที่เข้ากับคุณที่สุด แล้วคุณเลือกเองได้ว่าจะเอาตามที่ผมเสนอหรือจะเปลี่ยน`,
-      source: 'fallback',
-      suggestions: QUICK_REPLIES,
-      action: { href: '/profile', label: 'ไปทำความรู้จักตัวเอง' },
-    }
-  }
-  if (input.quickReplyId === 'explain-domain') {
-    const rule = RULES[0]
-    return {
-      reply: rule?.reply ?? FALLBACK_REPLY,
-      source: 'fallback',
-      suggestions: QUICK_REPLIES,
-      action: rule?.action ?? null,
-    }
-  }
-  if (input.quickReplyId === 'ready') {
-    return {
-      reply: 'พร้อมแล้วก็ลุยเลยครับ ผมจะคอยเชียร์อยู่ข้าง ๆ ถ้าติดตรงไหนกดขอคำใบ้ได้',
-      source: 'fallback',
-      suggestions: QUICK_REPLIES,
-      action: { href: '/map', label: 'ดูแผนภารกิจของฉัน' },
-    }
-  }
-  if (input.quickReplyId === 'other') {
-    return {
-      reply: 'ถามมาได้เลยครับ พิมพ์คำถามในช่องข้างล่าง ผมตอบเรื่องชื่อโดเมนได้เกือบทุกเรื่อง',
-      source: 'fallback',
-      suggestions: QUICK_REPLIES,
-      action: null,
-    }
-  }
+/** คำตอบสอนศัพท์เฉพาะของภารกิจที่นักเรียนยังไม่ถึงหรือไม่ */
+function teachesLater(reply: string, missionId: string): boolean {
+  const lower = reply.toLowerCase()
+  const idx = missionIndex(missionId)
+  return (Object.entries(STRONG_LATER_TERMS) as Array<[keyof typeof STRONG_LATER_TERMS, string[]]>)
+    .filter(([id]) => missionIndex(id) > idx)
+    .some(([, terms]) => terms.some((t) => lower.includes(t)))
+}
 
+/** ประวัติสั้น ๆ ที่ส่งให้โมเดลเป็นบริบท (route โหลดจากตารางแชท) */
+export interface DomeTurn {
+  role: 'student' | 'dome'
+  text: string
+}
+
+function matchRule(text: string): Rule | undefined {
   // เลือกกฎที่ตรงคำมากที่สุด ไม่ใช่กฎแรกที่เจอ จะได้ไม่ตอบผิดเรื่อง
   let matched: Rule | undefined
   let bestHits = 0
@@ -169,10 +160,111 @@ export async function askDome(input: {
       matched = rule
     }
   }
+  return matched
+}
+
+function scripted(reply: string, action: DomeAction | null, scope?: DomeScope): DomeReply {
+  return { reply, source: 'fallback', suggestions: QUICK_REPLIES, action, provider: 'rules', scope }
+}
+
+/** บทปฏิเสธ/เลื่อนของโดม (ข้อความสั้น ปวช. อ่านรู้เรื่อง ไม่ดุ ไม่มีคำว่าตก/ไม่ผ่าน) */
+export function domeRefusal(scope: DomeScope, missionId: string): DomeReply | null {
+  const mission = normalizeMissionId(missionId)
+  const num = mission.replace('m', '')
+  const back: DomeAction = { href: `/mission/${mission}`, label: `กลับไปภารกิจที่ ${num}` }
+  switch (scope) {
+    case 'unsafe':
+      return scripted('เรื่องนี้โดมช่วยไม่ได้นะครับ ถ้าไม่สบายใจหรืออยากคุยเรื่องส่วนตัว ลองบอกครูหรือผู้ใหญ่ที่ไว้ใจได้นะครับ ส่วนเรื่องชื่อเว็บ โดมยินดีช่วยเสมอ', back, scope)
+    case 'injection':
+      return scripted('อันนี้โดมขอไม่ทำตามนะครับ โดมช่วยได้แค่เรื่องชื่อโดเมนกับภารกิจของเรา ลองถามเรื่องที่ติดอยู่ดูไหมครับ', back, scope)
+    case 'personal':
+      return scripted('ข้อมูลส่วนตัวอย่าเพิ่งบอกโดมนะครับ ทั้งเบอร์โทร เลขบัตร และรหัสผ่าน เก็บไว้กับตัวเองดีที่สุด เรากลับมาคุยเรื่องชื่อเว็บของร้านกันต่อดีกว่าครับ', back, scope)
+    case 'answer-seek':
+      return scripted('เฉลยตรง ๆ โดมบอกไม่ได้นะครับ เพราะอยากให้คุณคิดเองได้ แต่โดมช่วยใบ้ได้ ลองบอกว่าติดตรงไหน หรือกดขอคำใบ้ในภารกิจได้เลยครับ', back, scope)
+    case 'offtopic':
+      return scripted('เรื่องนี้นอกวิชาของโดมนะครับ โดมถนัดเรื่องชื่อโดเมนกับการตั้งชื่อเว็บให้ร้านของคุณ ลองถามเรื่องนี้ดูไหมครับ', back, scope)
+    case 'later':
+      return scripted(`เรื่องนี้เราจะได้เรียนในภารกิจถัดไปนะครับ ตอนนี้ขอให้ผ่านภารกิจที่ ${num} ก่อน แล้วโดมจะอธิบายให้เต็มที่ครับ`, back, scope)
+    default:
+      return null
+  }
+}
+
+function scriptedFallback(text: string, scope?: DomeScope, why?: string): DomeReply {
+  if (why && process.env.NODE_ENV !== 'test') console.warn(`[dome] ใช้กฎแทน AI: ${why}`)
+  const matched = matchRule(text)
+  return scripted(matched?.reply ?? FALLBACK_REPLY, matched?.action ?? null, scope)
+}
+
+/**
+ * ตอบข้อความของผู้เรียน — พยายามใช้ AI จริงก่อน ตกไปใช้กฎเมื่อไม่ได้
+ * ai ใส่เองได้ในเทสต์ (ไม่ใส่ = ชั้น lib/ai ตัวจริงที่อ่านคีย์จาก env)
+ */
+export async function askDome(input: {
+  message: string
+  quickReplyId?: string | null
+  shopName: string | null
+  missionId?: string
+  role?: 'dome'
+  history?: DomeTurn[]
+  /** ขออนุญาตเรียกโมเดล (ลิมิตต่อคน) เรียกเฉพาะเมื่อข้อความจะถึงโมเดลจริง; false = ใช้กฎแทน */
+  allowAi?: boolean | (() => boolean)
+  ai?: Pick<AiClient, 'domeChat'>
+}): Promise<DomeReply> {
+  const text = input.message.trim()
+  const missionId = normalizeMissionId(input.missionId)
+
+  if (input.quickReplyId === 'want-website') {
+    return scripted('เยี่ยมเลยครับ งั้นเริ่มจากทำความรู้จักตัวเองก่อน ผมจะได้เสนอวิธีเรียนที่เข้ากับคุณที่สุด แล้วคุณเลือกเองได้ว่าจะเอาตามที่ผมเสนอหรือจะเปลี่ยน', { href: '/profile', label: 'ไปทำความรู้จักตัวเอง' })
+  }
+  if (input.quickReplyId === 'explain-domain') {
+    const rule = RULES[0]
+    return scripted(rule?.reply ?? FALLBACK_REPLY, rule?.action ?? null)
+  }
+  if (input.quickReplyId === 'ready') {
+    return scripted('พร้อมแล้วก็ลุยเลยครับ ผมจะคอยเชียร์อยู่ข้าง ๆ ถ้าติดตรงไหนกดขอคำใบ้ได้', { href: '/map', label: 'ดูแผนภารกิจของฉัน' })
+  }
+  if (input.quickReplyId === 'other') {
+    return scripted('ถามมาได้เลยครับ พิมพ์คำถามในช่องข้างล่าง ผมตอบเรื่องชื่อโดเมนได้เกือบทุกเรื่อง', null)
+  }
+  if (!text) return scriptedFallback(text)
+
+  const scope = classifyDomeMessage(text, missionId)
+  const refusal = domeRefusal(scope, missionId)
+  if (refusal) return refusal
+  const allowed = typeof input.allowAi === 'function' ? input.allowAi() : input.allowAi !== false
+  if (!allowed) return scriptedFallback(text, scope, 'เกินลิมิตต่อคน')
+
+  const mode = scope === 'earlier' ? 'earlier' : scope === 'current' ? 'current' : 'general'
+  const client = input.ai ?? createAiClient()
+  let result
+  try {
+    result = await client.domeChat({ missionId, message: text, mode, shopName: input.shopName, history: input.history })
+  } catch (error) {
+    return scriptedFallback(text, scope, `domeChat throw ${error instanceof Error ? error.message : 'unknown'}`)
+  }
+  if (result.source !== 'ai') return scriptedFallback(text, scope, `provider ไม่ตอบ (${result.fallbackReason ?? 'unknown'})`)
+  if (result.scope === 'off') return domeRefusal('offtopic', missionId) ?? scriptedFallback(text, scope)
+
+  const reply = result.text.trim()
+  // ย้อนทบทวนภารกิจก่อนหน้า = อนุญาตคำของภารกิจก่อนหน้าในคำตอบ ไม่ให้ตัวกันหัวข้อตีเป็นหลุดเรื่อง
+  const guarded = guardMissionScopedText(reply, {
+    missionId,
+    role: 'dome',
+    // คำยึดเรื่อง: คำตอบที่ยังพูดถึงโดเมน/เว็บ/ร้าน ถือว่าอยู่ในเรื่อง (ตัวกัน unsafe/injection ยังทำงานเสมอ)
+    keywords: ['โดเมน', 'ชื่อเว็บ', 'เว็บ', 'ร้าน', 'ภารกิจ'],
+    fallback: '',
+  })
+  if (guarded === '') return scriptedFallback(text, scope, 'ตัวกันหัวข้อตีคำตอบตก')
+  if (leaksAnswer(guarded)) return scriptedFallback(text, scope, 'ตัวกันเฉลยจับได้')
+  if (teachesLater(guarded, missionId)) return scriptedFallback(text, scope, 'คำตอบสอนศัพท์ภารกิจที่ยังไม่ถึง')
+
   return {
-    reply: matched?.reply ?? FALLBACK_REPLY,
-    source: 'fallback',
+    reply: guarded,
+    source: 'ai',
     suggestions: QUICK_REPLIES,
-    action: matched?.action ?? null,
+    action: matchRule(text)?.action ?? null,
+    provider: result.provider,
+    scope,
   }
 }

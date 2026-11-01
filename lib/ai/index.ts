@@ -20,6 +20,7 @@ import { callGemini } from './gemini'
 import { callCloudflare } from './cloudflare'
 import { fallbackLearnCheck, parseLearnCheck } from './learn-check'
 import {
+  domeChatPrompt,
   gradeReasonPrompt,
   hintPrompt,
   learnCheckPrompt,
@@ -42,6 +43,8 @@ import type {
   AiClient,
   AiProvider,
   FallbackReason,
+  DomeChatInput,
+  DomeChatResult,
   GradeReasonInput,
   GradeReasonResult,
   HintInput,
@@ -83,6 +86,8 @@ export const TASK_TIMEOUT_MS: Record<AiTask, number> = {
   story: BACKGROUND_TIMEOUT_MS,
   /** ตรวจคำตอบปลายเปิดของเส้นทางเรียน — ผู้เรียนรอผลอยู่หน้าจอ */
   learnCheck: DEFAULT_TIMEOUT_MS,
+  /** แชทกับโดม — ผู้เรียนรอคำตอบอยู่หน้าจอ */
+  dome: DEFAULT_TIMEOUT_MS,
 }
 
 /** เวลาที่กันไว้ให้คำขอจริงหลังรอคิว ถ้าเหลือน้อยกว่านี้ไม่ต้องเข้าคิวแล้ว ไปใช้ทางถัดไปเลย */
@@ -496,6 +501,26 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
   }
 
   return {
+    async domeChat(input: DomeChatInput): Promise<DomeChatResult> {
+      // ไม่ส่ง studentId เข้า gate: โควตาแชทโดมคุมแยกที่ route (ต่อคนต่อนาที) ไม่ไปกินโควตาคำใบ้/ตรวจงาน
+      const gated = gate(undefined, 'dome')
+      if (typeof gated === 'string') return { text: '', scope: 'on', source: 'fallback', provider: 'rules', fallbackReason: gated }
+      const { value, lastReason } = await runChain(
+        gated,
+        'dome',
+        () => domeChatPrompt(input),
+        (raw, provider): DomeChatResult => {
+          const data = raw as { text?: unknown; reply?: unknown; scope?: unknown }
+          const text = typeof data?.text === 'string' ? data.text : data?.reply
+          if (typeof text !== 'string' || text.trim().length === 0) {
+            throw new Error('โมเดลไม่ได้ตอบกลับเป็น JSON ที่ใช้ได้')
+          }
+          return { text: text.trim(), scope: data?.scope === 'off' ? 'off' : 'on', source: 'ai', provider, fallbackReason: null }
+        },
+      )
+      return value ?? { text: '', scope: 'on', source: 'fallback', provider: 'rules', fallbackReason: lastReason }
+    },
+
     async hintFor(input: HintInput): Promise<HintResult> {
       const gated = gate(input?.studentId, 'hint')
       if (typeof gated === 'string') return fallbackHint(input, gated)

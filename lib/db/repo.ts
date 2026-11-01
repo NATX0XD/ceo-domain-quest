@@ -1191,6 +1191,19 @@ export async function listChatMessages(studentId: string, limit = 200): Promise<
   return data
 }
 
+/** ข้อความล่าสุด n ข้อความ เรียงเก่า → ใหม่ — ใช้เป็นบริบทสั้น ๆ ให้โดม */
+export async function listRecentChatMessages(studentId: string, n = 6): Promise<ChatMessage[]> {
+  const { data, error } = await getServiceClient()
+    .from('chat_messages')
+    .select()
+    .eq('student_id', studentId)
+    .order('created_at', { ascending: false })
+    .limit(n)
+
+  if (error) fail('listRecentChatMessages', error)
+  return [...data].reverse()
+}
+
 // ------------------------------------------------------- ด่านบอส: อัดเสียงนำเสนอ
 
 export type VoiceSubmissionInput = {

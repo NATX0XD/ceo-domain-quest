@@ -27,7 +27,7 @@ export type MeasurableProvider = Exclude<AiProvider, 'rules'>
 /**
  * learnCheck = ตรวจคำตอบปลายเปิดของเส้นทางเรียนว่าครอบคลุมแนวคิดไหนบ้าง (ผู้เรียนรอ งบ 5 วินาที)
  */
-export type AiTaskId = 'hint' | 'grade' | 'customer' | 'story' | 'learnCheck'
+export type AiTaskId = 'hint' | 'grade' | 'customer' | 'story' | 'learnCheck' | 'dome'
 
 /**
  * learnCheck วัดแยกเมื่อ 31 ตุลาคม 2569 (npx tsx scripts/check-learn-ai.ts) ยิงตรง ไม่ผ่านคิว
@@ -39,9 +39,9 @@ const LEARN_CHECK_GEMINI_MS = 1_517
 
 /** มัธยฐานที่วัดได้จริง 30 กันยายน 2569 (มิลลิวินาที) */
 export const MEASURED_LATENCY_MS: Record<MeasurableProvider, Record<AiTaskId, number>> = {
-  typhoon: { hint: 811, grade: 13_304, customer: 938, story: 9_281, learnCheck: LEARN_CHECK_TYPHOON_MS },
-  gemini: { hint: 1_020, grade: 2_240, customer: 1_017, story: 2_934, learnCheck: LEARN_CHECK_GEMINI_MS },
-  cloudflare: { hint: 1_200, grade: 2_500, customer: 1_200, story: 3_000, learnCheck: 2_500 },
+  typhoon: { hint: 811, grade: 13_304, customer: 938, story: 9_281, learnCheck: LEARN_CHECK_TYPHOON_MS, dome: 1_500 },
+  gemini: { hint: 1_020, grade: 2_240, customer: 1_017, story: 2_934, learnCheck: LEARN_CHECK_GEMINI_MS, dome: 1_500 },
+  cloudflare: { hint: 1_200, grade: 2_500, customer: 1_200, story: 3_000, learnCheck: 2_500, dome: 2_000 },
 }
 
 /**

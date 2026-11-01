@@ -222,7 +222,26 @@ export interface LearnCheckResult extends AiMeta {
   items: LearnCheckItemResult[]
 }
 
+export type DomeChatMode = 'current' | 'earlier' | 'general'
+
+export interface DomeChatInput {
+  missionId: string
+  message: string
+  mode: DomeChatMode
+  shopName?: string | null
+  /** บทสนทนาล่าสุดสั้น ๆ เรียงเก่า → ใหม่ */
+  history?: Array<{ role: 'student' | 'dome'; text: string }>
+}
+
+export interface DomeChatResult extends AiMeta {
+  /** ว่างเมื่อ source เป็น 'fallback' ให้ผู้เรียกใช้บทสำรองของตัวเอง */
+  text: string
+  /** 'off' = โมเดลบอกว่าเรื่องนอกวิชา ผู้เรียกต้องปฏิเสธด้วยบทของโดม */
+  scope: 'on' | 'off'
+}
+
 export interface AiClient {
+  domeChat(input: DomeChatInput): Promise<DomeChatResult>
   hintFor(input: HintInput): Promise<HintResult>
   gradeReason(input: GradeReasonInput): Promise<GradeReasonResult>
   simulateCustomer(input: SimulateCustomerInput): Promise<SimulateCustomerResult>

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { saveChatMessage } from '@/lib/db/repo'
+import { isAiEnabledForStudent, listRecentChatMessages, saveChatMessage } from '@/lib/db/repo'
 import { askDome, domeQuickReplies } from '@/components/server/dome-brain'
 import { loadShopProfile } from '@/components/server/game-state'
+import { lessonSummary } from '@/components/server/lesson-progress'
 import { moderateStudentText } from '@/components/server/moderation'
 import {
   errorResponse,
@@ -14,12 +15,28 @@ import {
 /**
  * คุยกับเลขาโดม
  *
- * ตอบด้วยบทสนทนาแบบกฎในโค้ด (source: 'fallback') เสมอ ยังไม่ได้ต่อโมเดลกับโดม
- * ถ้าจะให้โดมใช้โมเดล ให้สลับที่ components/server/dome-brain.ts ที่เดียว หน้าจอไม่ต้องแก้
- * ⚠️ studentId จากคุกกี้ dbq_student เท่านั้น
+ * ตอบด้วย AI จริงผ่านชั้น lib/ai (Typhoon · Gemini · Cloudflare ตามคีย์ที่ตั้งไว้ พร้อม failover)
+ * ภายใต้ตัวกันหัวข้อตามภารกิจของนักเรียน ถ้าทุกเจ้าล้ม/ติดลิมิต/ไม่มีคีย์ ตกไปใช้กฎใน dome-brain.ts
+ * ⚠️ studentId และภารกิจปัจจุบันมาจากฝั่งเซิร์ฟเวอร์ (คุกกี้ + ความคืบหน้าใน DB) ไม่เชื่อ missionId จากหน้าจอ
  */
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+/** ลิมิตต่อคน: เรียกโมเดลได้ไม่เกิน N ครั้งต่อหน้าต่าง 60 วินาที เกินแล้วโดมตอบด้วยกฎ (ไม่ error) */
+const AI_PER_MINUTE = Math.max(1, Number(process.env.DOME_AI_PER_MINUTE) || 8)
+const WINDOW_MS = 60_000
+const recentCalls = new Map<string, number[]>()
+
+function takeAiSlot(studentId: string, now = Date.now()): boolean {
+  const calls = (recentCalls.get(studentId) ?? []).filter((t) => now - t < WINDOW_MS)
+  if (calls.length >= AI_PER_MINUTE) {
+    recentCalls.set(studentId, calls)
+    return false
+  }
+  calls.push(now)
+  recentCalls.set(studentId, calls)
+  return true
+}
 
 const RequestSchema = z.object({
   message: z.string().max(500).default(''),
@@ -45,13 +62,23 @@ export async function POST(request: Request) {
     })
   }
 
-  const profile = await loadShopProfile(session.studentId)
+  const [profile, summary, recent, aiOn] = await Promise.all([
+    loadShopProfile(session.studentId),
+    lessonSummary(session.studentId),
+    listRecentChatMessages(session.studentId, 6),
+    // ครูปิด AI ทั้งห้องได้ที่หน้าตั้งค่า — ปิดแล้วโดมตอบด้วยกฎ (เหมือนคำใบ้)
+    isAiEnabledForStudent(session.studentId),
+  ])
+  // ภารกิจปัจจุบัน = ภารกิจแรกที่ยังไม่ผ่านตามข้อมูลจริงใน DB (ตรงกับที่หน้า /dome ใช้)
+  const missionId = summary.missions.find((mission) => !mission.passed)?.id ?? 'm5'
   const reply = await askDome({
     message: parsed.data.message,
     quickReplyId: parsed.data.quickReplyId ?? null,
     shopName: profile?.shopName ?? null,
-    missionId: parsed.data.missionId ?? 'm1',
+    missionId,
     role: 'dome',
+    history: recent.map((m) => ({ role: m.role === 'student' ? 'student' : 'dome', text: m.text })),
+    allowAi: () => aiOn && takeAiSlot(session.studentId),
   })
 
   // เก็บบทสนทนาไว้เป็นหลักฐานให้ครูดูย้อนหลังได้ (source บอกว่ามาจากสคริปต์หรือ AI)

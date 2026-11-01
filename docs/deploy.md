@@ -203,6 +203,21 @@ Vercel → Project → **Settings → Environment Variables** (ใส่ให�
 
 Cloudflare Workers AI ปิดไว้เป็นค่าเริ่มต้น หากต้องการเปิดให้ตั้ง `CF_ACCOUNT_ID`, `CF_AI_TOKEN`, `CF_AI_MODEL` และตั้งลิมิต `CF_RPS`, `CF_RPM`, `CF_RPD`; ไม่มี token จะไม่ยิงเครือข่าย ค่าลิมิตของ Typhoon/Gemini ตั้งทับได้ด้วย `TYPHOON_RPS/RPM/RPD` และ `GEMINI_RPS/RPM/RPD` ระบบเก็บหน้าต่างเลื่อนแยกต่อ provider และหยุด provider ที่ตอบ 429/5xx ประมาณ 60 วินาที
 
+#### แชตโดม (/dome) ใช้ AI จริงผ่านลูกโซ่เดียวกัน
+
+`app/api/dome/route.ts` → `components/server/dome-brain.ts` → `createAiClient().domeChat` ใช้ตัวเลือกผู้ให้บริการ failover คิวจำกัดอัตรา และ circuit breaker ชุดเดียวกับคำใบ้ ไม่มีโค้ดเฉพาะผู้ให้บริการในส่วนโดม เพิ่มเจ้าใหม่ได้ด้วยการตั้ง env เท่านั้น
+
+| ตัวแปร env | เปิดผู้ให้บริการ |
+|---|---|
+| `TYPHOON_API_KEY` | Typhoon (ลำดับแรกสำหรับงานโดม) |
+| `GEMINI_API_KEY` | Gemini (ถูกตัดออกเมื่อ `AI_MINORS_MODE=1`) |
+| `CF_ACCOUNT_ID` + `CF_AI_TOKEN` (ทางเลือก `CF_AI_MODEL`, `CF_AI_BASE_URL`) | Cloudflare Workers AI |
+
+- ไม่มีคีย์เลย / ครูปิด AI ทั้งห้อง / ทุกเจ้าล้ม ติดลิมิต / คำตอบไม่ผ่านตัวกันหัวข้อหรือตัวกันเฉลย = โดมตอบด้วยกฎใน `dome-brain.ts` (ผลมี `source: "fallback"`)
+- ลิมิตต่อคน: เรียกโมเดลได้ `DOME_AI_PER_MINUTE` ครั้งต่อนาที (ค่าเริ่มต้น 8) เกินแล้วใช้กฎ ไม่ error แชตโดมไม่กินโควตา `AI_MAX_CALLS_PER_STUDENT` ของคำใบ้
+- ภารกิจปัจจุบันของนักเรียนอ่านจาก DB ฝั่งเซิร์ฟเวอร์ (ภารกิจแรกที่ยังไม่ผ่าน) ไม่เชื่อค่าจากเบราว์เซอร์ ล็อกหัวข้อตาม `lib/ai/topic-lock.ts` และ `lib/ai/dome-scope.ts`
+- เฉลยจาก `content/*-answers.json` ไม่เคยถูกส่งให้โมเดล และคำตอบที่คัดลอกประโยคเฉลยมาจะถูกทิ้ง (`components/server/dome-guard.ts`)
+
 ลำดับเดียวกันทุกชนิดงาน (`lib/ai/index.ts` → `providerChain`): **Typhoon → Gemini → กฎในโค้ด** งบเวลารวมทั้งลูกโซ่ 5 วินาที
 
 ```

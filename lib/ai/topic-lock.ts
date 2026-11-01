@@ -24,6 +24,7 @@ export const AI_ROLE_REGISTRY: Record<AiRoleId, AiRoleDefinition> = {
 }
 
 const MISSION_ORDER: MissionId[] = ['m1', 'm2', 'm3', 'm4', 'm5']
+export const MISSION_ORDER_IDS: readonly MissionId[] = MISSION_ORDER
 const MISSION_KEYWORDS: Record<MissionId, string[]> = {
   m1: ['ชื่อโดเมน', 'ชื่อเว็บ', 'บ้านเลขที่', 'หมายเลขไอพี', 'ip', 'dns', 'จำง่าย', 'น่าเชื่อถือ'],
   m2: ['โฮสต์', 'host', 'ชื่อโดเมน', 'นามสกุลโดเมน', 'ส่วนประกอบ', 'www', 'tld', 'จุด com', 'dns', 'ดีเอ็นเอส', 'ไอพี', 'ip', 'เบราว์เซอร์', 'แปลงชื่อ'],
