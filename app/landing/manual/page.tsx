@@ -1,10 +1,7 @@
-import type { Metadata } from 'next'
-import './manual.css'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'คู่มือการใช้งาน — CEO Domain Quest',
-  description: 'คู่มือฉบับย่อสำหรับนักเรียนและครู วิชา 21910-2002',
-}
+import { useEffect, useState } from 'react'
+import './manual.css'
 
 const studentSteps = [
   ['เข้าห้องเรียน', 'เปิดลิงก์จากครู ใส่รหัสห้อง ชื่อเล่น และ PIN 4 หลักเพื่อกลับมาเล่นต่อได้', '/manual/student-join.png'],
@@ -33,7 +30,7 @@ const teacherSteps = [
   ['ตั้งค่าห้องเรียน', 'เปิดแบบทดสอบก่อน/หลังเรียน ตั้งค่าห้อง เปิดหรือปิดผู้ช่วย AI และโหมดสาธิต', '/manual/teacher-captures/settings.png'],
 ]
 
-function StepCard({ step, index }: { step: string[]; index: number }) {
+function StepCard({ step, index, onOpen }: { step: string[]; index: number; onOpen: (src: string, alt: string) => void }) {
   return <article className="manual-step" id={`step-${index + 1}`}>
     <div className="manual-step-copy">
       <span className="manual-step-no">{index + 1}</span>
@@ -41,11 +38,18 @@ function StepCard({ step, index }: { step: string[]; index: number }) {
       <p>{step[1]}</p>
       <div className="manual-tip"><b>คำแนะนำการเล่น</b> ทำตามหมายเลขบนหน้าจอ และกด <strong>ขอความช่วยเหลือ</strong> เมื่อไม่แน่ใจ</div>
     </div>
-    <figure><img src={step[2]} alt={`ภาพหน้าจอขั้นตอน ${index + 1}: ${step[0]}`} /><figcaption>รูปที่ {index + 1} · {step[0]}</figcaption></figure>
+    <figure><button className="manual-image-button" type="button" onClick={() => onOpen(step[2]!, `ภาพหน้าจอขั้นตอน ${index + 1}: ${step[0]}`)}><img src={step[2]} alt={`ภาพหน้าจอขั้นตอน ${index + 1}: ${step[0]}`} /></button><figcaption>แตะภาพเพื่อดูเต็ม · รูปที่ {index + 1}</figcaption></figure>
   </article>
 }
 
 export default function ManualPage() {
+  const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null)
+  useEffect(() => {
+    if (!lightbox) return
+    const close = (event: KeyboardEvent) => event.key === 'Escape' && setLightbox(null)
+    document.addEventListener('keydown', close)
+    return () => document.removeEventListener('keydown', close)
+  }, [lightbox])
   return <main className="manual-page">
     <header className="manual-hero">
       <nav className="manual-nav"><a href="/landing">← กลับหน้าแรก</a></nav>
@@ -61,11 +65,12 @@ export default function ManualPage() {
       <aside className="manual-toc"><b>สารบัญย่อ</b><a href="#overview">ภาพรวมระบบ</a><a href="#student">นักเรียน</a><a href="#teacher">ครู</a><a href="#help">ขอความช่วยเหลือ</a></aside>
       <div className="manual-content">
         <section id="overview" className="manual-overview"><span className="manual-kicker">START HERE</span><h1>ออกเดินทางจากชื่อร้าน<br />ไปสู่โดเมนที่ใช่</h1><p>CEO Domain Quest คือเกมการเรียนรู้ที่พานักเรียนสำรวจโดเมน ตั้งร้าน ทดลองทำภารกิจ และสรุปความรู้ร่วมกับครูในห้องเรียนเดียวกัน</p><div className="manual-overview-grid"><div><b>1 ห้องเรียน</b><span>รหัสห้องเดียว เข้าพร้อมกันทั้งชั้น</span></div><div><b>4 ภารกิจ</b><span>ดู อ่าน ลงมือทำ ได้ตามจังหวะตัวเอง</span></div><div><b>1 บอส CEO</b><span>นำความรู้ไปตัดสินใจจริง</span></div></div></section>
-        <section id="student" className="manual-section"><div className="manual-section-head"><span className="manual-kicker">PART 01</span><h2>สำหรับนักเรียน</h2><p>ใช้มือถือหรือแท็บเล็ต เปิดลิงก์จากครู แล้วเดินทางตามเกาะทีละขั้น</p></div><div className="manual-steps">{studentSteps.map((step, i) => <StepCard key={step[0]} step={step} index={i} />)}</div></section>
-        <section id="teacher" className="manual-section manual-teacher"><div className="manual-section-head"><span className="manual-kicker">PART 02</span><h2>สำหรับครู</h2><p>เปิดห้อง คุมจังหวะ ดูคำตอบ และเปลี่ยนข้อมูลในห้องให้เป็นบทสนทนา</p></div><div className="manual-steps">{teacherSteps.map((step, i) => <StepCard key={step[0]} step={step} index={i + studentSteps.length} />)}</div></section>
+        <section id="student" className="manual-section"><div className="manual-section-head"><span className="manual-kicker">PART 01</span><h2>สำหรับนักเรียน</h2><p>ใช้มือถือหรือแท็บเล็ต เปิดลิงก์จากครู แล้วเดินทางตามเกาะทีละขั้น</p></div><div className="manual-steps">{studentSteps.map((step, i) => <StepCard key={step[0]} step={step} index={i} onOpen={(src, alt) => setLightbox({ src, alt })} />)}</div></section>
+        <section id="teacher" className="manual-section manual-teacher"><div className="manual-section-head"><span className="manual-kicker">PART 02</span><h2>สำหรับครู</h2><p>เปิดห้อง คุมจังหวะ ดูคำตอบ และเปลี่ยนข้อมูลในห้องให้เป็นบทสนทนา</p></div><div className="manual-steps">{teacherSteps.map((step, i) => <StepCard key={step[0]} step={step} index={i + studentSteps.length} onOpen={(src, alt) => setLightbox({ src, alt })} />)}</div></section>
         <section id="help" className="manual-help"><img src="/dome/mascot/dome-explain.webp" alt="โดมช่วยอธิบาย" /><div><h2>ติดตรงไหน ให้เรียกโดม</h2><p>ลองอ่านคำใบ้ในภารกิจก่อน ถ้ายังไม่แน่ใจให้กดขอความช่วยเหลือ ครูจะเห็นคำขอในคิวและเข้ามาช่วยได้ทันที</p><a href="/landing">กลับไปดูภาพรวมเกม ↗</a></div></section>
       </div>
     </div>
     <footer className="manual-footer">CEO Domain Quest · วิชา 21910-2002 อินเทอร์เน็ตในงานธุรกิจดิจิทัล</footer>
+    {lightbox && <div className="manual-lightbox" role="dialog" aria-modal="true" aria-label="ภาพหน้าจอขนาดเต็ม" onClick={() => setLightbox(null)}><button type="button" className="manual-lightbox-close" aria-label="ปิดภาพ" onClick={() => setLightbox(null)}>×</button><img src={lightbox.src} alt={lightbox.alt} onClick={(event) => event.stopPropagation()} /></div>}
   </main>
 }
