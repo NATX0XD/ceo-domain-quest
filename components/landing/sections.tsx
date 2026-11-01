@@ -34,7 +34,7 @@ export function MissionsSection() {
         <div className="ld-world">
           <Reveal>
             <motion.div className="ld-map-frame" whileHover={{ rotate: -1.5, scale: 1.02 }} transition={{ type: 'spring', stiffness: 200, damping: 14 }}>
-              <Pic src="/landing/map-sharp.svg" alt="แผนที่เกาะภารกิจ 4 เกาะ" width={941} height={1672} sizes="380px" />
+              <Pic src="/ui/map/state-1.webp" alt="แผนที่เกาะภารกิจ 4 เกาะ" width={941} height={1672} sizes="380px" />
               <span className={`ld-map-ring ld-map-ring--${selectedMission}`} aria-hidden />
             </motion.div>
           </Reveal>
