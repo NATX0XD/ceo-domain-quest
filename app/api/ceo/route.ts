@@ -25,6 +25,7 @@ import {
   readStudentSession,
   unauthorized,
 } from '../_lib/session-cookie'
+import { hasShopProfile } from '@/components/server/shop-gate'
 
 /**
  * ภารกิจใหญ่ CEO (ขั้นที่ 4) — ส่งใบเสนอชื่อเว็บลงตาราง submissions
@@ -53,6 +54,7 @@ const RequestSchema = z.object({
 export async function GET() {
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง')
+  if (!(await hasShopProfile(session.studentId))) return errorResponse('no-profile', 'ยังไม่ได้ตั้งค่าร้าน กลับไปที่หน้า /setup ก่อน', 409, { href: '/setup' })
   /**
    * ต้องกรองแบบเดียวกับ POST — ใบของสถานี B ไม่มี emphasis_criterion ส่วนใบภารกิจใหญ่บังคับมีเสมอ
    * ถ้าไม่กรอง นักเรียนที่เพิ่งยื่นจดทะเบียนที่ m3 จะเปิดหน้าด่านบอสแล้วเจอว่า "ส่งไปแล้ว" ทั้งที่ยังไม่ได้ส่ง
@@ -200,6 +202,7 @@ function teacherFacingScores(
 export async function POST(request: Request) {
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง ใส่รหัสห้องกับ PIN ที่หน้า /join ก่อน')
+  if (!(await hasShopProfile(session.studentId))) return errorResponse('no-profile', 'ยังไม่ได้ตั้งค่าร้าน กลับไปที่หน้า /setup ก่อน', 409, { href: '/setup' })
 
   /**
    * ส่งซ้ำได้เมื่อครูกด "ส่งกลับให้แก้" เท่านั้น (สเปกข้อ 3.3)

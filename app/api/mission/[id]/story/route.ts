@@ -7,6 +7,7 @@ import {
   enqueueStory,
   storyItemFor,
 } from '../../../story/_lib/runner'
+import { hasShopProfile } from '@/components/server/shop-gate'
 
 /**
  * S-16 เรื่องเปิดของภารกิจนี้ เฉพาะของผู้เรียนคนนี้
@@ -34,6 +35,7 @@ function storyIdForMission(missionId: string): string {
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง ใส่รหัสห้องกับ PIN ที่หน้า /join ก่อน')
+  if (!(await hasShopProfile(session.studentId))) return NextResponse.json({ ok: false, code: 'no-profile', message: 'ยังไม่ได้ตั้งค่าร้าน กลับไปที่หน้า /setup ก่อน', href: '/setup' }, { status: 409 })
 
   const { id } = await context.params
   const mission = findMission(id)

@@ -121,6 +121,11 @@ const RULES: Rule[] = [
 const FALLBACK_REPLY =
   'ผมยังตอบเรื่องนี้ได้ไม่ละเอียดครับ แต่ถ้าเป็นเรื่องชื่อเว็บ นามสกุลโดเมน หรือขั้นตอนจดทะเบียน ถามผมได้เลย หรือจะเริ่มภารกิจก่อนก็ได้ครับ'
 
+const READY_INTENT = /พร้อม|เริ่ม|ลุย|ไปต่อ|ไป.*ภารกิจ|แผนที่|ทำภารกิจ/i
+
+const SETUP_FIRST_REPLY = 'ตั้งร้านก่อนนะครับ พอมีร้านแล้วเราค่อยออกไปทำภารกิจด้วยกัน'
+const SETUP_FIRST_ACTION: DomeAction = { href: '/setup', label: 'ไปตั้งร้านก่อน' }
+
 
 
 /**
@@ -213,6 +218,10 @@ export async function askDome(input: {
 }): Promise<DomeReply> {
   const text = input.message.trim()
   const missionId = normalizeMissionId(input.missionId)
+
+  if (!input.shopName && (input.quickReplyId === 'ready' || READY_INTENT.test(text))) {
+    return scripted(SETUP_FIRST_REPLY, SETUP_FIRST_ACTION)
+  }
 
   if (input.quickReplyId === 'want-website') {
     return scripted('เยี่ยมเลยครับ งั้นเริ่มจากทำความรู้จักตัวเองก่อน ผมจะได้เสนอวิธีเรียนที่เข้ากับคุณที่สุด แล้วคุณเลือกเองได้ว่าจะเอาตามที่ผมเสนอหรือจะเปลี่ยน', { href: '/profile', label: 'ไปทำความรู้จักตัวเอง' })

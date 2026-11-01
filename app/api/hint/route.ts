@@ -14,6 +14,7 @@ import {
   recordStationBHintDb,
 } from '@/components/server/game-state'
 import { errorResponse, readJsonBody, readStudentSession, unauthorized } from '../_lib/session-cookie'
+import { hasShopProfile } from '@/components/server/shop-gate'
 
 /**
  * ขอคำใบ้ถัดไป — ผ่านชั้น AI (lib/ai) ทุกครั้ง
@@ -36,6 +37,7 @@ const RequestSchema = z.object({ missionId: z.string().min(1).max(40) })
 export async function POST(request: Request) {
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง ใส่รหัสห้องกับ PIN ที่หน้า /join ก่อน')
+  if (!(await hasShopProfile(session.studentId))) return errorResponse('no-profile', 'ยังไม่ได้ตั้งค่าร้าน กลับไปที่หน้า /setup ก่อน', 409, { href: '/setup' })
 
   const parsed = RequestSchema.safeParse(await readJsonBody(request))
   if (!parsed.success) return errorResponse('bad-request', 'ต้องส่ง missionId มาด้วย', 400)

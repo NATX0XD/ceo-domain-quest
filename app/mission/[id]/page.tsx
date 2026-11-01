@@ -7,7 +7,7 @@ import { findMission } from '@/components/missions'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { confidenceScaleForClient } from '@/components/server/lesson-content'
 import { listProgress } from '@/lib/db/repo'
-import { loadMissionRow, loadSelfProfileDb, loadShopProfile } from '@/components/server/game-state'
+import { loadMissionRow, loadSelfProfileDb } from '@/components/server/game-state'
 import { m2VariantFor, personalizeM2LearnPath, personalizeM2Mission } from '@/components/server/mission-variant'
 import { suggestChannel } from '@/components/server/channel-advice'
 import { missionStoryFor } from '@/components/server/mission-story'
@@ -21,6 +21,7 @@ import { LearnPathClient } from '@/components/learn/learn-path-client'
 import { PASS_SCORE, findLearnPath, loadLearnState, type LearnState } from '@/components/server/learn-path'
 import { publicCounterData } from '@/components/server/learn-counter'
 import { publicRegistrarData } from '@/components/server/learn-registrar'
+import { requireShopProfile } from '@/components/server/shop-gate'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,7 +49,7 @@ export default async function MissionPage({
     return <SignInGate message="ใส่รหัสห้องกับรหัส 4 หลักที่ครูให้ก่อน แล้วค่อยเริ่มภารกิจ" />
   }
 
-  const shopProfile = mission.id === 'm2' ? await loadShopProfile(session.studentId) : null
+  const shopProfile = await requireShopProfile(session.studentId)
   const m2Variant = mission.id === 'm2' ? m2VariantFor(session.studentId, shopProfile?.domainName) : null
   const studentMission = m2Variant ? personalizeM2Mission(mission, m2Variant) : mission
 

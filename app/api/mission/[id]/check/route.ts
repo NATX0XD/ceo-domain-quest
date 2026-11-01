@@ -15,6 +15,7 @@ import {
   syncEarnedStars,
 } from '@/components/server/game-state'
 import { objectiveIdForMission } from '@/components/server/lesson-content'
+import { hasShopProfile } from '@/components/server/shop-gate'
 import {
   errorResponse,
   readJsonBody,
@@ -133,6 +134,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
 
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง ใส่รหัสห้องกับ PIN ที่หน้า /join ก่อน')
+  if (!(await hasShopProfile(session.studentId))) return NextResponse.json({ error: 'no-profile', message: 'ยังไม่ได้ตั้งค่าร้าน กลับไปที่หน้า /setup ก่อน', href: '/setup' }, { status: 409 })
 
   const mission = findMission(id)
   if (!mission) return errorResponse('mission-not-found', 'ไม่พบภารกิจนี้', 404, { missionId: id })

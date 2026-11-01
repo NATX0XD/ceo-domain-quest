@@ -18,6 +18,7 @@ import {
 import { ai } from '@/components/server/ai'
 import { checkCounterStep, scoreCounter } from '@/components/server/learn-counter'
 import { checkRegistrarStep, scoreRegistrar } from '@/components/server/learn-registrar'
+import { hasShopProfile } from '@/components/server/shop-gate'
 import {
   errorResponse,
   readJsonBody,
@@ -55,6 +56,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
 
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง ใส่รหัสห้องกับ PIN ที่หน้า /join ก่อน')
+  if (!(await hasShopProfile(session.studentId))) return errorResponse('no-profile', 'ยังไม่ได้ตั้งค่าร้าน กลับไปที่หน้า /setup ก่อน', 409, { href: '/setup' })
 
   const mission = findMission(id)
   const path = findLearnPath(id)

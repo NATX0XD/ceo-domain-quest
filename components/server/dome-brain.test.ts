@@ -63,9 +63,15 @@ describe('askDome with real-AI path', () => {
     expect(reply.reply).toContain('นอกวิชา')
   })
   it('quick reply buttons stay scripted with jump-to-page action', async () => {
-    const { reply, ai } = await askDome({ message: 'x', quickReplyId: 'ready', shopName: null, ai: fakeAi(aiReply('x')) }).then((r) => ({ reply: r, ai: null }))
+    const { reply, ai } = await askDome({ message: 'x', quickReplyId: 'ready', shopName: 'ร้านทดสอบ', ai: fakeAi(aiReply('x')) }).then((r) => ({ reply: r, ai: null }))
     expect(ai).toBeNull()
     expect(reply.action?.href).toBe('/map')
+  })
+
+  it('blocks ready intent until the shop is set up', async () => {
+    const reply = await askDome({ message: 'ฉันพร้อมเริ่มภารกิจแล้ว', shopName: null, ai: fakeAi(aiReply('ไม่ควรเรียก')) })
+    expect(reply.reply).toContain('ตั้งร้านก่อนนะ')
+    expect(reply.action?.href).toBe('/setup')
   })
 })
 

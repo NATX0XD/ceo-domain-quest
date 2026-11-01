@@ -1,16 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageHeading, Section, StudentShell } from '@/components/student-shell'
 import { AppFooter } from '@/components/app-shell'
 import {
   Button,
-  Card,
   CheckIcon,
   ChoiceCard,
   ProgressBar,
-  ShopScene,
   TextField,
   Toast,
   ToastViewport,
@@ -33,6 +31,7 @@ export function SetupForm({
   const router = useRouter()
   const [shopName, setShopName] = useState('')
   const [businessTypeId, setBusinessTypeId] = useState('')
+  const [domainName, setDomainName] = useState('')
   const [isRegisteredCompany, setIsRegisteredCompany] = useState<boolean | null>(null)
   const [audience, setAudience] = useState<Audience | null>(null)
   const [saving, setSaving] = useState(false)
@@ -42,15 +41,24 @@ export function SetupForm({
   const ready =
     trimmedName.length > 0 &&
     businessTypeId.length > 0 &&
+    domainName.trim().length > 0 &&
     isRegisteredCompany !== null &&
     audience !== null
 
   // นับเฉพาะเพื่อแสดงความคืบหน้าให้นักเรียนเห็นว่าเหลืออีกกี่ช่อง — ไม่ได้ใช้ตัดสินอะไร
   const filledCount = [
-    trimmedName.length > 0 && businessTypeId.length > 0,
+    trimmedName.length > 0,
+    businessTypeId.length > 0,
+    domainName.trim().length > 0,
     isRegisteredCompany !== null,
     audience !== null,
   ].filter(Boolean).length
+
+  const selectedBusiness = useMemo(
+    () => businessTypes.find((business) => business.id === businessTypeId),
+    [businessTypes, businessTypeId],
+  )
+  const previewImage = businessTypeId ? `/setup/${businessTypeId}.webp` : '/setup/empty-lot.webp'
 
   async function handleSubmit() {
     if (!ready || isRegisteredCompany === null || audience === null || saving) return
@@ -64,7 +72,7 @@ export function SetupForm({
           shopName: trimmedName,
           businessTypeId,
           // สถานี A (โรงทำป้าย) ยังไม่เสร็จ ตอนนี้ใช้ชื่อร้านเป็นชื่อโดเมนไปก่อน
-          domainName: trimmedName,
+          domainName: domainName.trim(),
           isRegisteredCompany,
           audience,
         }),
@@ -105,7 +113,7 @@ export function SetupForm({
             loadingLabel="กำลังบันทึกข้อมูลร้าน"
             leadingIcon={ready && !saving ? <CheckIcon width={22} height={22} /> : undefined}
           >
-            {ready ? 'บันทึกแล้วไปคุยกับโดม' : `ตอบแล้ว ${filledCount} จาก 3 ข้อ`}
+            {ready ? 'บันทึกแล้วไปคุยกับโดม' : `ตอบแล้ว ${filledCount} จาก 5 ข้อ`}
           </Button>
         </AppFooter>
       }
@@ -119,16 +127,32 @@ export function SetupForm({
       <PageHeading
         eyebrow="ก่อนเริ่มภารกิจ"
         title="ตั้งค่าร้านของเรา"
-        description="ตอบ 3 ข้อ แล้วเริ่มภารกิจได้เลย ข้อมูลนี้จะถูกล็อกเมื่อเริ่มภารกิจแรก"
+        description="เลือกภาพร้าน ตั้งชื่อ แล้วค่อยเริ่มภารกิจ ข้อมูลนี้จะถูกล็อกเมื่อเริ่มภารกิจแรก"
       />
 
       <ProgressBar
         value={filledCount}
-        max={3}
+        max={5}
         tone="brand"
-        label={`ตั้งค่าร้านไปแล้ว ${filledCount} จาก 3 ข้อ`}
+        label={`ตั้งค่าร้านไปแล้ว ${filledCount} จาก 5 ข้อ`}
         showValue={false}
       />
+
+      <div className="setup-preview-sticky" aria-live="polite">
+        <div className="setup-preview-art">
+          <img src={previewImage} alt="" draggable={false} />
+          <div className="setup-preview-sign">
+            <span>{selectedBusiness?.label ?? 'ที่ดินว่าง รอร้านของเรา'}</span>
+            <strong>{trimmedName || 'ป้ายชื่อร้านของเรา'}</strong>
+            {domainName.trim() ? <small>{domainName.trim()}</small> : null}
+          </div>
+        </div>
+        <p className="setup-preview-caption">
+          {businessTypeId
+            ? `${selectedBusiness?.label ?? 'ร้านของเรา'} กำลังรอชื่อของคุณ`
+            : 'เริ่มจากเลือกประเภทร้าน ภาพร้านจะค่อย ๆ ปรากฏ'}
+        </p>
+      </div>
 
       <Section title="1. ร้านของเราชื่ออะไร" description="พิมพ์ภาษาไทยหรืออังกฤษก็ได้">
         <TextField
@@ -144,20 +168,7 @@ export function SetupForm({
           inputClassName="text-body-lg font-bold"
         />
 
-        {/* ป้ายหน้าร้านจำลอง — ขึ้นตามที่พิมพ์จริง ไม่มีค่าตัวอย่างฝังไว้ */}
-        <Card tone="quest" padding="sm" className="mt-4">
-          <div className="grid place-items-center">
-            <ShopScene stage={1} decorative />
-          </div>
-          <div className="mt-2 rounded-xl bg-surface-raised p-3 shadow-soft-1">
-            <p className="text-note font-semibold text-ink-muted">ป้ายหน้าร้านของเรา</p>
-            <p className="mt-0.5 truncate text-body-lg font-extrabold text-ink">
-              {trimmedName.length > 0 ? trimmedName : 'ยังไม่ได้ตั้งชื่อร้าน'}
-            </p>
-          </div>
-        </Card>
-
-        <h3 className="mt-6 text-title-sm font-bold text-balance text-ink">ร้านของเราขายอะไร</h3>
+        <h3 className="mt-6 text-title-sm font-bold text-balance text-ink">2. ร้านของเราขายอะไร</h3>
         <div
           role="radiogroup"
           aria-label="ประเภทของร้าน"
@@ -174,7 +185,22 @@ export function SetupForm({
         </div>
       </Section>
 
-      <Section title="2. จดทะเบียนนิติบุคคลแล้วหรือยัง">
+      <Section title="3. ชื่อเว็บของร้าน" description="ใช้ชื่อสั้น ๆ ภาษาอังกฤษหรือตัวเลขก็ได้">
+        <TextField
+          label="ชื่อโดเมนชั่วคราว"
+          value={domainName}
+          onChange={(e) => setDomainName(e.target.value)}
+          type="text"
+          inputMode="url"
+          autoComplete="off"
+          placeholder="เช่น mycake หรือ gamehub"
+          valid={domainName.trim().length > 0}
+          hint="ตอนนี้ใช้เป็นชื่อเว็บตัวอย่างในป้ายร้านก่อน"
+          inputClassName="text-body-lg font-bold"
+        />
+      </Section>
+
+      <Section title="4. จดทะเบียนนิติบุคคลแล้วหรือยัง">
         <div
           role="radiogroup"
           aria-label="สถานะการจดทะเบียนนิติบุคคล"
@@ -195,7 +221,7 @@ export function SetupForm({
         </div>
       </Section>
 
-      <Section title="3. ลูกค้าของเราอยู่ที่ไหน">
+      <Section title="5. ลูกค้าของเราอยู่ที่ไหน">
         <div role="radiogroup" aria-label="กลุ่มลูกค้าของร้าน" className="flex flex-col gap-2">
           <ChoiceCard
             label="ในไทย"

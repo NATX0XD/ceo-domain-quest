@@ -9,8 +9,8 @@ import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
 import { ChevronRightIcon, DomeAvatar, ProgressBar, SpeechBubble, StarIcon } from '@/components/ui'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
-import { loadShopProfile } from '@/components/server/game-state'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
+import { requireShopProfile } from '@/components/server/shop-gate'
 
 export const metadata: Metadata = { title: 'หน้าหลัก — CEO Domain Quest' }
 
@@ -42,7 +42,7 @@ export default async function HomePage() {
 
   const [student, profile, summary, standing] = await Promise.all([
     getStudent(session.studentId),
-    loadShopProfile(session.studentId),
+    requireShopProfile(session.studentId),
     lessonSummary(session.studentId),
     certificateEligibility(session.studentId),
   ])

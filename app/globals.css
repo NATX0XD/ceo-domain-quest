@@ -723,6 +723,94 @@ select {
   @apply mx-auto w-full max-w-[30rem] px-4;
 }
 
+/* Setup preview: keep the evolving shop in view while the form grows below it. */
+.setup-preview-sticky {
+  position: sticky;
+  top: 0.5rem;
+  z-index: var(--z-sticky);
+  margin: 0.75rem 0 1.25rem;
+  padding: 0.65rem;
+  border: 1px solid color-mix(in oklab, var(--color-brand-200) 76%, white);
+  border-radius: 1.25rem;
+  background: color-mix(in oklab, var(--color-surface) 94%, transparent);
+  box-shadow: 0 8px 26px color-mix(in oklab, var(--color-brand-900) 10%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.setup-preview-art {
+  position: relative;
+  display: grid;
+  min-height: 10rem;
+  place-items: end center;
+  overflow: hidden;
+  border-radius: 0.95rem;
+  background:
+    radial-gradient(circle at 50% 18%, color-mix(in oklab, var(--color-spark-200) 55%, white), transparent 52%),
+    linear-gradient(180deg, var(--color-brand-50), var(--color-surface-raised));
+}
+
+.setup-preview-art img {
+  display: block;
+  width: min(100%, 21rem);
+  height: 10.5rem;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.setup-preview-sign {
+  position: absolute;
+  top: 0.7rem;
+  left: 50%;
+  display: grid;
+  width: min(76%, 15rem);
+  transform: translateX(-50%);
+  gap: 0.05rem;
+  padding: 0.4rem 0.75rem 0.45rem;
+  border: 2px solid var(--color-spark-500);
+  border-radius: 0.75rem;
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  text-align: center;
+  box-shadow: 0 3px 0 color-mix(in oklab, var(--color-spark-600) 45%, transparent);
+}
+
+.setup-preview-sign span,
+.setup-preview-sign small {
+  overflow: hidden;
+  color: var(--color-ink-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setup-preview-sign strong {
+  overflow: hidden;
+  color: var(--color-brand-700);
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setup-preview-caption {
+  margin: 0.45rem 0 0.1rem;
+  color: var(--color-ink-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+
+@media (max-width: 380px) {
+  .setup-preview-sticky { margin-bottom: 0.8rem; padding: 0.5rem; }
+  .setup-preview-art, .setup-preview-art img { min-height: 8.7rem; height: 8.7rem; }
+  .setup-preview-sign { top: 0.5rem; padding: 0.3rem 0.55rem; }
+  .setup-preview-sign strong { font-size: 0.9rem; }
+}
+
 /* เว้นท้ายหน้าให้พ้นแถบเมนูล่าง — ใช้เฉพาะกรณีที่แถบเมนูลอยทับเนื้อหาจริง ๆ
    ใน AppShell แถบเมนูเป็นชั้น footer แยกอยู่แล้ว จึงไม่ต้องเว้นระยะนี้ */
 @utility pb-nav {
