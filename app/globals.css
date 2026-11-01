@@ -383,7 +383,7 @@
 .teacher-cockpit > .grid.min-h-0 > aside a {
   min-height: 3rem;
   padding-inline: 0.75rem;
-  white-space: normal;
+  white-space: nowrap;
   text-align: left;
 }
 

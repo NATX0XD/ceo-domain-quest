@@ -276,12 +276,7 @@ function MetricCell({
   href?: string
 }) {
   const active = count > 0
-  const accent = {
-    quest: 'bg-quest-500',
-    danger: 'bg-danger-600',
-    spark: 'bg-spark-500',
-    brand: 'bg-brand-600',
-  }[tone]
+  const accent = 'bg-surface-sunken'
   const number = {
     quest: 'text-quest-700',
     danger: 'text-danger-700',
@@ -878,7 +873,7 @@ export function TeacherCockpit({
               },
               {
                 href: `/teacher/board?classroomId=${classroomId}`,
-                label: 'แผงติดตามนักเรียนสด (บนเครื่องครู)',
+                label: 'แผงติดตามสด',
               },
             ].map((item) => (
               <Link
