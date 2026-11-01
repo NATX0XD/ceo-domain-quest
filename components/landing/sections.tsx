@@ -4,7 +4,7 @@ import { motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { Countdown, useOpenState } from './countdown'
 import { PhoneTour } from './phone-tour'
-import { Cloud, Pic } from './pic'
+import { Pic } from './pic'
 import { Reveal } from './reveal'
 
 const icon = (name: string, size = 38) => <Pic src={`/icons/3d/${name}.webp`} alt="" width={size} height={size} />
@@ -80,31 +80,33 @@ export function HowSection() {
     <section className="ld-sec ld-sec--sand" id="how" aria-label="นักเรียนเล่นยังไง">
       <div className="ld-wrap">
         <Head title="เล่นยังไง" sub="ใช้มือถือเครื่องเดียว ไม่ต้องติดตั้งอะไร" />
-        <div className="ld-route-scene" aria-hidden="true"><span className="ld-route-bridge" /><span className="ld-route-flag">★</span></div>
         <ol className="ld-steps">
           {FLOW.map((s, i) => (
             <Reveal as="li" key={s.title} delay={i * 0.1} className="ld-step">
-              <span className="ld-step-ico">
-                {icon(s.icon, 42)}
-                <span className="ld-step-no">{i + 1}</span>
-              </span>
-              <div>
-                <h3>{s.title}</h3>
-                <p>{s.note}</p>
-                {'chips' in s && (
-                  <div className="ld-chips">
-                    {s.chips.map(([ic, label]) => (
-                      <span className="ld-chip" key={label}>
-                        {icon(ic, 20)}
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <a className="ld-step-link" href={`/landing/manual#step-${i + 1}`} aria-label={`เปิดคู่มือ: ${s.title}`}>
+                <span className="ld-step-ico">
+                  {icon(s.icon, 42)}
+                  <span className="ld-step-no">{i + 1}</span>
+                </span>
+                <span className="ld-step-copy">
+                  <h3>{s.title}</h3>
+                  <p>{s.note}</p>
+                  {'chips' in s && (
+                    <span className="ld-chips">
+                      {s.chips.map(([ic, label]) => (
+                        <span className="ld-chip" key={label}>
+                          {icon(ic, 20)}
+                          {label}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </span>
+              </a>
             </Reveal>
           ))}
         </ol>
+        <a className="ld-how-cta" href="/landing/manual">ดูคู่มือฉบับเต็ม <span aria-hidden>↗</span></a>
       </div>
     </section>
   )
@@ -249,32 +251,32 @@ export function FinalSection({ openAt, openLabel }: { openAt: string | null; ope
   const confetti = Array.from({ length: 14 }, (_, i) => i)
   return (
     <footer className="ld-final" ref={ref}>
-      <Cloud className="ld-cloud ld-cloud--a" />
-      <Cloud className="ld-cloud ld-cloud--b" />
-      <div className="ld-final-islands" aria-hidden><span /><span /><span /></div>
+      <div className="ld-final-bg" aria-hidden />
       <div className={`ld-confetti ${seen ? 'is-live' : ''}`} aria-hidden>{confetti.map((i) => <i key={i} style={{ ['--i' as string]: i }} />)}</div>
       <div className="ld-wrap ld-final-inner">
         <motion.div animate={seen ? { y: [0, -24, 0], rotate: [0, -3, 3, 0] } : {}} transition={{ duration: 1.1, type: 'tween', ease: [0.22, 1, 0.36, 1] }}>
           <Pic className="ld-final-dome ld-dome" src="/dome/mascot/dome-celebrate.webp" alt="" width={499} height={532} />
         </motion.div>
-        <h2 className="ld-sign">พร้อมออกผจญภัย</h2>
-        <div className="ld-badge">
-          <span className="ld-badge-dot" aria-hidden />
-          {open ? 'เปิดให้เล่นแล้ว!' : `เปิดให้เล่น ${openLabel}`}
+        <div className="ld-final-plaque">
+          <h2 className="ld-sign">พร้อมออกผจญภัย</h2>
+          <div className="ld-badge">
+            <span className="ld-badge-dot" aria-hidden />
+            {open ? 'เปิดให้เล่นแล้ว!' : `เปิดให้เล่น ${openLabel}`}
+          </div>
+          <Countdown openAt={openAt} />
+          {open && (
+            <motion.a className="ld-btn" href="/join" whileTap={{ scale: 0.94 }}>
+              เข้าเล่นเลย ▶
+            </motion.a>
+          )}
+          <p className="ld-foot">
+            CEO Domain Quest · สื่อการสอนแบบเกม
+            <br />
+            วิชา 21910-2002 อินเทอร์เน็ตในงานธุรกิจดิจิทัล
+            <br />
+            <a href="/landing/manual" className="ld-foot-link">เปิดคู่มือการใช้งาน</a>
+          </p>
         </div>
-        <Countdown openAt={openAt} />
-        {open && (
-          <motion.a className="ld-btn" href="/join" whileTap={{ scale: 0.94 }}>
-            เข้าเล่นเลย ▶
-          </motion.a>
-        )}
-        <p className="ld-foot">
-          CEO Domain Quest · สื่อการสอนแบบเกม
-          <br />
-          วิชา 21910-2002 อินเทอร์เน็ตในงานธุรกิจดิจิทัล
-          <br />
-          <a href="/landing/manual" className="ld-foot-link">เปิดคู่มือการใช้งาน</a>
-        </p>
       </div>
     </footer>
   )
