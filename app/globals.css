@@ -1417,10 +1417,20 @@ select {
 /* ตัวเปิด-ปิดจริงของแผ่น: ไม่มี JavaScript มีแต่ตัวเลือก :target ของ CSS
    เขียนเป็นกฎ CSS ตรง ๆ เพราะต้องอ้างถึง "พี่น้องที่อยู่หลังตัวที่ถูก target" ซึ่ง utility ทำไม่ได้ */
 .sheet-panel:target {
-  translate: 0 0;
+  /* Tailwind v4 emits translate-y-full through --tw-translate-y. Reset the
+     variable as well as transform so the target sheet actually enters. */
+  --tw-translate-x: 0px;
+  --tw-translate-y: 0px;
   transform: none;
 }
 .sheet-panel:target ~ .sheet-backdrop {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* A sheet lives inside the scrolling main, which is its own stacking context
+   on student pages. Lift that context above the shell footer so the footer and
+   bottom nav cannot cover the open sheet. */
+.student-world .app-shell-main:has(.sheet-panel:target) {
+  z-index: var(--z-overlay);
 }

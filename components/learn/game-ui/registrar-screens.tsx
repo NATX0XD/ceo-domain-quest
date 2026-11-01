@@ -211,7 +211,7 @@ export function SearchScreen({
                       onClick={() => open(r)}
                       className="min-h-11 rounded-lg border-2 border-[#7a5a3a] bg-white px-3 text-label font-extrabold focus-visible:outline-3 focus-visible:outline-focus"
                     >
-                      เปิดดูข้อมูลชื่อนี้ (นักสืบโดเมน)
+                      ดู {r.domain}
                     </button>
                   ) : r.status === 'unknown' ? (
                     <button

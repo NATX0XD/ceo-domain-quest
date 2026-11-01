@@ -651,8 +651,14 @@ function Shift({
                   className={cn(
                     'absolute bottom-0 flex justify-center',
                     page === 'interview' && !feedback ? '-left-[12%] w-[78%]' : 'inset-x-0',
+                    page === 'stamp' && !feedback ? '-left-[8%] w-[68%]' : null,
                   )}
-                  style={{ height: feedback ? '76%' : SCENE_SPRITE_H[page] }}
+                  style={{
+                    // The stamp request card is taller than the tag hint. Keep
+                    // the customer below it so the paperwork never covers the
+                    // customer's face on the 360px layout.
+                    height: feedback ? '76%' : page === 'stamp' ? '62%' : SCENE_SPRITE_H[page],
+                  }}
                 >
                   {sprite('100%')}
                 </div>
@@ -729,7 +735,7 @@ function Shift({
                 ) : null}
 
                 {!feedback && page === 'stamp' ? (
-                  <div className="absolute inset-x-3 top-2 z-[1] pl-12">
+                  <div className="absolute top-2 right-3 z-[1] w-[62%]">
                     <RequestPaper
                       c={current}
                       tags={tags}
@@ -742,10 +748,9 @@ function Shift({
                 ) : null}
 
                 {!feedback && page === 'tag' ? (
-                  <div className="absolute inset-x-3 top-2 pl-12">
-                    <p className="rounded-xl border-2 border-[#6d4bd1] bg-[#1d1038] px-3 py-1.5 text-label font-bold text-pretty text-[#efe6ff]">
-                      <span className="whitespace-nowrap">โดเมนแต่ละชื่ออยู่หมวดไหน</span>{' '}
-                      <span className="whitespace-nowrap">แตะป้ายให้ครบ</span>
+                  <div className="absolute top-2 right-3 z-[1] max-w-[62%]">
+                    <p className="rounded-xl border-2 border-[#6d4bd1] bg-[#1d1038] px-3 py-1.5 text-label font-bold text-[#efe6ff]">
+                      แตะป้ายให้ครบ
                     </p>
                   </div>
                 ) : null}
@@ -1081,11 +1086,9 @@ function splitFloor(floor?: string): string[] {
   return m ? [m[1]!, m[2]!] : [floor]
 }
 
-function pad2(n: number) {
-  return String(n).padStart(2, '0')
-}
-
-/** แถบ HUD บนเวที: นาฬิกากะ / คิว / เหรียญแต้ม / เวลาที่ใช้ */
+/** แถบ HUD บนเวที: ช่วงกิจกรรม / คิว / เหรียญแต้ม
+ * เวลาหลักอยู่ที่แถบ session ด้านบนแล้ว จึงไม่ทำซ้ำด้วยนาฬิกาย่อยในเกม
+ */
 function ShiftHud({
   queue,
   total,
@@ -1097,17 +1100,11 @@ function ShiftHud({
   coins: number
   practice: boolean
 }) {
-  const [sec, setSec] = useState(0)
-  useEffect(() => {
-    const id = window.setInterval(() => setSec((s) => s + 1), 1000)
-    return () => window.clearInterval(id)
-  }, [])
-  const mins = 9 * 60 + 12 + Math.floor(sec / 20)
   return (
     <div className="flex shrink-0 items-center gap-1.5 px-2.5 pt-2.5">
       <HudPill className="min-w-0 flex-[1.3] justify-center px-2 whitespace-nowrap">
         <span aria-hidden="true" className="size-3.5 shrink-0 rounded-full bg-[#ffb02e] ring-2 ring-[#ff8a3d] max-[379px]:hidden" />
-        <span className="whitespace-nowrap">{practice ? 'ซ้อม' : 'กะเช้า'} {pad2(Math.floor(mins / 60))}:{pad2(mins % 60)}</span>
+        <span className="whitespace-nowrap">{practice ? 'โหมดซ้อม' : 'ช่วงเช้า'}</span>
       </HudPill>
       <HudPill className="flex-1 justify-center px-2" tone="paper">
         <span className="whitespace-nowrap tabular-nums">
@@ -1117,11 +1114,6 @@ function ShiftHud({
       <HudPill tone="gold" className="justify-center px-2">
         <span aria-hidden="true" className="size-3.5 shrink-0 rounded-full border-2 border-[#b8860b] bg-[#ffe27a]" />
         <CountUp to={coins} duration={0.6} />
-      </HudPill>
-      <HudPill tone="dark" className="justify-center px-2">
-        <span className="tabular-nums" aria-label="เวลาที่ใช้ในกะ">
-          {pad2(Math.floor(sec / 60))}:{pad2(sec % 60)}
-        </span>
       </HudPill>
     </div>
   )
@@ -1150,13 +1142,13 @@ function RequestPaper({
       animate={{ y: 0, scale: 1, rotate: 0, opacity: 1 }}
       transition={spring}
     >
-      <PixelPanel className="p-2.5">
+      <PixelPanel className={compact ? 'p-2' : 'p-2.5'}>
         <p className="text-label font-extrabold tracking-wide text-[#6b4f28]">ใบคำขอจดโดเมน</p>
         {!compact ? <p className="text-body font-extrabold">{c.business}</p> : null}
         <ul className="mt-1 flex flex-col gap-1">
           {c.domains.map((d) => (
             <li key={d.name} className="flex flex-wrap items-center gap-x-2 border-b border-dashed border-[#d9c7a0] pb-1 last:border-0">
-              <span dir="auto" className="text-body font-extrabold">
+                <span dir="auto" className={cn('font-extrabold', compact ? 'text-label' : 'text-body')}>
                 {d.label}
               </span>
               {!compact ? <span className="text-label font-semibold text-[#5c4a33]">{d.role}</span> : null}
@@ -1169,7 +1161,12 @@ function RequestPaper({
           ))}
         </ul>
         {compact ? (
-          <div className="mt-1.5 flex h-12 items-center justify-center rounded-lg border-2 border-dashed border-[#c9b68c] bg-[#fffdf3]">
+          <div
+            className={cn(
+              'mt-1.5 flex items-center justify-center rounded-lg border-2 border-dashed border-[#c9b68c] bg-[#fffdf3]',
+              compact ? 'h-9' : 'h-12',
+            )}
+          >
             <AnimatePresence>
               {ink ? (
                 <motion.span
