@@ -28,6 +28,10 @@ export function PhoneTour() {
   return (
     <div className="ld-tour-scroll" ref={box}>
       <div className="ld-tour-sticky">
+        <div className="ld-tour-head">
+          <h2 className="ld-sign">ลองดูหน้าจอจริง</h2>
+          <p className="ld-sec-sub">แตะขั้นตอนเพื่อดูทีละหน้า</p>
+        </div>
         <div className="ld-tour">
           <div className="ld-phone-wrap">
             <div className="ld-phone">
@@ -61,37 +65,36 @@ export function PhoneTour() {
             </AnimatePresence>
             <Pic className="ld-dome" src="/dome/mascot/dome-cheer.webp" alt="" width={448} height={532} />
           </div>
-        </div>
-
-        <div className="ld-step-list" role="group" aria-label="ขั้นตอนการเล่น">
-        {STEPS.map((s, i) => (
-          <motion.button
-            key={s.title}
-            type="button"
-            className="ld-step-btn"
-            aria-current={i === active}
-            onClick={() => {
-              setActive(i)
-              if (box.current && window.matchMedia('(min-width: 900px)').matches) {
-                const top = box.current.getBoundingClientRect().top + window.scrollY + (box.current.offsetHeight - window.innerHeight) * (i / (STEPS.length - 1))
-                window.scrollTo({ top, behavior: 'smooth' })
-              }
-            }}
-            onFocus={() => setActive(i)}
-            onMouseEnter={() => setActive(i)}
-            onViewportEnter={() => {
-              if (window.matchMedia('(max-width: 899px)').matches) setActive(i)
-            }}
-            viewport={{ amount: 0.65 }}
-            whileHover={{ x: 4 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <Pic src={`/icons/3d/${s.icon}.webp`} alt="" width={30} height={30} />
-            {s.title}
-            <small>{s.note}</small>
-            {i === active && <span className="ld-progress" />}
-          </motion.button>
-        ))}
+          <div className="ld-step-list" role="group" aria-label="ขั้นตอนการเล่น">
+            {STEPS.map((s, i) => (
+              <motion.button
+                key={s.title}
+                type="button"
+                className="ld-step-btn"
+                aria-current={i === active}
+                onClick={() => {
+                  setActive(i)
+                  if (box.current && window.matchMedia('(min-width: 900px)').matches) {
+                    const top = box.current.getBoundingClientRect().top + window.scrollY + (box.current.offsetHeight - window.innerHeight) * (i / (STEPS.length - 1))
+                    window.scrollTo({ top, behavior: 'smooth' })
+                  }
+                }}
+                onFocus={() => setActive(i)}
+                onMouseEnter={() => setActive(i)}
+                onViewportEnter={() => {
+                  if (window.matchMedia('(max-width: 899px)').matches) setActive(i)
+                }}
+                viewport={{ amount: 0.65 }}
+                whileHover={{ x: 4 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <Pic src={`/icons/3d/${s.icon}.webp`} alt="" width={30} height={30} />
+                {s.title}
+                <small>{s.note}</small>
+                {i === active && <span className="ld-progress" />}
+              </motion.button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -149,7 +149,6 @@ export function TourSection() {
   return (
     <section className="ld-sec ld-sec--sea" id="tour" aria-label="ตัวอย่างหน้าจอ">
       <div className="ld-wrap">
-        <Head title="ลองดูหน้าจอจริง" sub="แตะขั้นตอนเพื่อดูทีละหน้า" />
         <Reveal>
           <PhoneTour />
         </Reveal>
@@ -167,10 +166,12 @@ const TEACH = [
 export function TeacherSection() {
   const [caption, setCaption] = useState(0)
   const [isDesktop, setIsDesktop] = useState(false)
+  const [sequenceDone, setSequenceDone] = useState(false)
   const teacherRef = useRef<HTMLDivElement>(null)
   const reduce = useReducedMotion()
   const { scrollYProgress } = useScroll({ target: teacherRef, offset: ['start start', 'end end'] })
   const open = useTransform(scrollYProgress, [0, 0.28, 0.54], [-86, -86, 0])
+  const closedOpacity = useTransform(open, [-86, -48, -16], [1, 0, 0])
   const screenOpacity = useTransform(open, [-86, -18, 0], [0, 0.72, 1])
   const screenLift = useTransform(scrollYProgress, [0.28, 0.5], [36, 0])
 
@@ -180,6 +181,20 @@ export function TeacherSection() {
     sync()
     media.addEventListener('change', sync)
     return () => media.removeEventListener('change', sync)
+  }, [])
+
+  useEffect(() => {
+    const syncSequence = () => {
+      if (!teacherRef.current) return
+      setSequenceDone(teacherRef.current.getBoundingClientRect().bottom <= window.innerHeight + 12)
+    }
+    syncSequence()
+    window.addEventListener('scroll', syncSequence, { passive: true })
+    window.addEventListener('resize', syncSequence)
+    return () => {
+      window.removeEventListener('scroll', syncSequence)
+      window.removeEventListener('resize', syncSequence)
+    }
   }, [])
 
   useMotionValueEvent(scrollYProgress, 'change', (value) => {
@@ -198,16 +213,17 @@ export function TeacherSection() {
                 <motion.div className="ld-laptop-lid" style={!isDesktop || reduce ? undefined : { rotateX: open }}>
                   <div className="ld-laptop-screen">
                     <motion.div style={!isDesktop || reduce ? undefined : { opacity: screenOpacity, y: screenLift }}>
-                      <Pic src="/landing/teacher-v2.png" alt="แผงควบคุมครูเวอร์ชันใหม่" width={1440} height={900} sizes="560px" />
+                      <Pic src="/manual/teacher-captures/live.png" alt="หน้าคุมคาบสด แสดงรายชื่อนักเรียนและสถานะภารกิจ" width={1440} height={900} sizes="560px" />
                     </motion.div>
                   </div>
                 </motion.div>
+                  <motion.div className="ld-laptop-closed" aria-hidden style={!isDesktop || reduce ? undefined : { opacity: closedOpacity }}><span>CEO<br />DOMAIN QUEST</span></motion.div>
                 <div className="ld-laptop-base" />
               </motion.div>
             </Reveal>
             <div className="ld-teacher-caption" aria-live="polite">
               {TEACH.map((t, i) => (
-                <motion.div key={t.title} className={`ld-teacher-callout ld-teacher-callout--${i + 1}`} animate={{ opacity: reduce || i === caption ? 1 : 0.28, y: reduce || i === caption ? 0 : 8 }}>
+              <motion.div key={t.title} className={`ld-teacher-callout ld-teacher-callout--${i + 1}`} animate={{ opacity: reduce || i === caption ? 1 : 0, y: reduce || i === caption ? 0 : 8 }}>
                   <span className="ld-callout-line" aria-hidden />
                   <span className="ld-card-ico">{icon(t.icon, 30)}</span>
                   <span><b>{t.title}</b><small>{t.note}</small></span>
@@ -215,9 +231,9 @@ export function TeacherSection() {
               ))}
             </div>
           </div>
-          <div className="ld-feats">
+          <motion.div className="ld-feats" style={!isDesktop || reduce ? undefined : { opacity: sequenceDone ? 1 : 0, pointerEvents: sequenceDone ? 'auto' : 'none' }}>
             {TEACH.map((t) => <div key={t.title} className="ld-card"><span className="ld-card-ico">{icon(t.icon)}</span><div><h3>{t.title}</h3><p>{t.note}</p><span className="ld-mini-preview" aria-hidden><i /><i /><i /></span></div></div>)}
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
