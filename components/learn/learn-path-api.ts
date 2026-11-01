@@ -34,12 +34,18 @@ export type LearnBody =
 
 export type LearnPost<T> = { ok: true; data: T } | { ok: false; message: string }
 
+/** คำตอบปลายเปิดอาจรอชั้น AI ได้ แต่หน้าจอต้องไม่มีวันค้างโดยไม่มีทางออก */
+export const LEARN_REQUEST_TIMEOUT_MS = 20_000
+
 export async function postLearn<T>(missionId: string, body: LearnBody): Promise<LearnPost<T>> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), LEARN_REQUEST_TIMEOUT_MS)
   try {
     const res = await fetch(`/api/mission/${encodeURIComponent(missionId)}/learn`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
+      signal: controller.signal,
     })
     const data = (await res.json().catch(() => null)) as (T & { message?: string }) | null
     if (!res.ok || !data) {
@@ -48,8 +54,13 @@ export async function postLearn<T>(missionId: string, body: LearnBody): Promise<
       return { ok: false, message: data?.message ?? fallback }
     }
     return { ok: true, data }
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return { ok: false, message: 'ระบบตรวจนานเกินไป คำตอบยังอยู่ ลองอีกครั้งนะ' }
+    }
     return { ok: false, message: 'ต่อเน็ตไม่ได้ ลองใหม่อีกครั้ง' }
+  } finally {
+    clearTimeout(timeout)
   }
 }
 

@@ -26,6 +26,7 @@ export function LearnQuestions({
   onlyId,
   onReview,
   disabled,
+  grading = false,
   shakeKey = 0,
 }: {
   mode: 'watch' | 'read'
@@ -36,6 +37,7 @@ export function LearnQuestions({
   onlyId?: string | null
   onReview?: () => void
   disabled: boolean
+  grading?: boolean
   shakeKey?: number
 }) {
   const baseId = useId()
@@ -79,6 +81,12 @@ export function LearnQuestions({
           )
         })}
       </ol>
+      {grading ? (
+        <div className="flex items-center gap-2 border-t border-brand-100 bg-brand-50 px-4 py-3 text-label font-bold text-brand-700" role="status" aria-live="polite">
+          <span aria-hidden="true" className="size-2.5 animate-pulse rounded-full bg-brand-500" />
+          โดมกำลังอ่านคำตอบ…
+        </div>
+      ) : null}
       {(() => {
         const q = onlyId ? questions.find((x) => x.id === onlyId) : questions[qIdx]
         if (!q) return null

@@ -936,6 +936,7 @@ export function LearnPathClient({
                 onlyId={qPhase === 'supp' && answerResult ? (weakest(answerResult)?.id ?? null) : null}
                 onReview={qPhase === 'ask' ? () => startReview(questions[qIdx]?.review) : undefined}
                 disabled={busy || done !== null}
+                grading={busy}
                 shakeKey={retryTick}
               />
             ) : qPhase === 'help' && answerResult ? (
