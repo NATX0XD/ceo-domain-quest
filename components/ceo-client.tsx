@@ -544,6 +544,7 @@ export function CeoClient({
   if (submitted && !editingAgain) {
     return (
       <StudentShell
+        className="ceo-world-shell"
         /**
          * หลังส่งแล้ว "สิ่งที่ต้องทำต่อ" มีได้สองอย่าง ปุ่มในแถบท้ายจึงเปลี่ยนตามสถานะ
          * ครูส่งกลับมาให้แก้ = แก้แล้วส่งใหม่ · ไม่ได้ส่งกลับ = ไปขั้นต่อไป (ทบทวนตัวเอง)

@@ -1203,7 +1203,9 @@ select {
 .map-island-hotspot:focus-visible { background: rgb(255 255 255 / .12); }
 .map-progress-badge { position: absolute; display: inline-flex; min-height: 30px; align-items: center; gap: 3px; border: 2px solid #fff1d6; border-radius: 999px; background: #18334b; padding: 3px 7px; color: #fff; font-size: 14px; font-weight: 800; line-height: 1; box-shadow: 0 3px 0 rgb(65 37 15 / .55); pointer-events: none; white-space: nowrap; transform: translateY(-115%); }
 .map-progress-badge svg:first-child { color: #ffd33d; }
-.map-boss-entry { padding: 12px 16px calc(20px + var(--safe-bottom) + var(--bottom-nav-height)); background: #20a9f3; }
+/* ปุ่มบอสลอยติดเหนือแถบเมนูล่างเสมอ (nav ทับท้ายกล่องเลื่อน) — เห็นและกดได้ตั้งแต่ scroll 0
+   --bottom-nav-height รวม safe-area ไว้แล้ว */
+.map-boss-entry { position: sticky; bottom: 0; z-index: 2; padding: 12px 16px 12px; margin-bottom: var(--bottom-nav-height); background: #20a9f3; }
 .map-boss-button { display: flex; min-height: 58px; width: 100%; align-items: center; justify-content: space-between; gap: 12px; border: 3px solid #fff1d6; border-radius: 18px; background: #ffc51b; padding: 10px 16px; color: #351c0f; text-align: left; box-shadow: 0 5px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .75); cursor: pointer; transition: transform 140ms ease, filter 140ms ease; }
 .map-boss-button:active { transform: translateY(2px); }
 .map-boss-button strong { display: block; font-size: 15px; line-height: 1.35; }
