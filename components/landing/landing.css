@@ -343,6 +343,74 @@ html:has(.ld) { height: auto; overflow-y: auto; scroll-behavior: smooth; }
 body:has(.ld) { height: auto; min-height: 100dvh; overflow: visible; overscroll-behavior: auto; }
 @media (prefers-reduced-motion: reduce) { html:has(.ld) { scroll-behavior: auto; } }
 
+/* ---------- Scroll stories v3 ---------- */
+.ld-tour-scroll { position: relative; min-height: 520vh; }
+.ld-tour-sticky { position: sticky; top: 0; min-height: 100dvh; display: grid; align-items: center; }
+.ld-tour { position: relative; display: grid; grid-template-columns: minmax(260px, .9fr) minmax(360px, 1.1fr); gap: clamp(28px, 5vw, 72px); align-items: center; width: 100%; min-height: min(760px, 84dvh); }
+.ld-tour > .ld-phone-wrap { justify-self: center; }
+.ld-tour-dome { position: absolute; z-index: 4; left: 36%; bottom: 7%; width: clamp(104px, 13vw, 168px); pointer-events: none; filter: drop-shadow(0 12px 7px rgba(80,50,10,.25)); }
+.ld-tour-dome .ld-bubble { top: auto; bottom: 100%; right: -12px; left: auto; width: max-content; max-width: 170px; white-space: normal; margin-bottom: 8px; font-size: 14px; }
+.ld-tour-dome .ld-bubble::after { left: auto; right: 26px; }
+.ld-tour .ld-step-list { justify-self: stretch; width: 100%; max-width: 500px; }
+.ld-tour .ld-step-btn { min-height: 64px; padding: 9px 16px; }
+.ld-tour .ld-step-btn[aria-current="true"] { transform: translateX(7px); box-shadow: 0 5px 0 var(--ld-purple-d), 0 12px 20px rgba(77,43,160,.18); }
+.ld-tour .ld-progress { width: 100%; transform-origin: left; animation: ld-progress-in 1s ease-out both; }
+@keyframes ld-progress-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+.ld-teacher-scroll { min-height: 430vh; }
+.ld-teacher-sticky { position: sticky; top: 0; min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; padding-bottom: 16px; }
+.ld-teacher-scene { position: relative; display: grid; place-items: center; min-height: 430px; }
+.ld-laptop { position: relative; width: min(100%, 720px); margin: 0 auto; transform-style: preserve-3d; }
+.ld-laptop-lid { position: relative; z-index: 2; transform-origin: 50% 100%; transform-style: preserve-3d; backface-visibility: hidden; }
+.ld-laptop-screen { border-radius: 14px 14px 4px 4px; padding: 10px 10px 12px; background: linear-gradient(160deg, #3a3350, #1d1830); box-shadow: 0 0 0 3px #5e4a96, 0 18px 28px rgba(30,20,70,.2); }
+.ld-laptop-screen img { width: 100%; border-radius: 6px; }
+.ld-laptop-base { position: relative; z-index: 3; height: 22px; margin: 0 -4%; border-radius: 0 0 18px 18px; background: linear-gradient(180deg, #cfc6e8, #8f85b3); box-shadow: 0 10px 14px rgba(30,20,70,.3); transform: translateZ(2px); }
+.ld-teacher-caption { position: absolute; inset: 0; pointer-events: none; }
+.ld-teacher-callout { position: absolute; display: flex; align-items: center; gap: 9px; min-width: 190px; padding: 9px 13px 9px 9px; border: 3px solid var(--ld-wood-2); border-radius: 18px; background: rgba(255,250,237,.96); box-shadow: 0 5px 0 var(--ld-wood-3), 0 10px 20px rgba(90,50,10,.14); transition: opacity .25s ease; }
+.ld-teacher-callout .ld-card-ico { width: 44px; height: 44px; flex: none; }
+.ld-teacher-callout b, .ld-teacher-callout small { display: block; }
+.ld-teacher-callout b { font-family: var(--font-display-thai), sans-serif; font-size: 17px; }
+.ld-teacher-callout small { color: var(--ld-ink-2); font-size: 13px; }
+.ld-callout-line { position: absolute; width: 74px; height: 3px; background: var(--ld-purple); }
+.ld-teacher-callout--1 { left: 0; top: 16%; }
+.ld-teacher-callout--1 .ld-callout-line { right: -74px; transform: rotate(12deg); transform-origin: left; }
+.ld-teacher-callout--2 { right: 0; top: 39%; }
+.ld-teacher-callout--2 .ld-callout-line { left: -74px; transform: rotate(-12deg); transform-origin: right; }
+.ld-teacher-callout--3 { left: 4%; bottom: 8%; }
+.ld-teacher-callout--3 .ld-callout-line { right: -74px; transform: rotate(-18deg); transform-origin: left; }
+.ld-teacher-sticky .ld-feats { width: min(100%, 920px); margin: 18px auto 0; }
+
+@media (max-width: 899px) {
+  .ld-tour-scroll, .ld-teacher-scroll { min-height: 0; }
+  .ld-tour-sticky, .ld-teacher-sticky { position: static; min-height: 0; }
+  .ld-tour { grid-template-columns: 1fr; gap: 28px; min-height: 0; padding-bottom: 8px; }
+  .ld-tour > .ld-phone-wrap { width: min(66vw, 268px); }
+  .ld-tour .ld-step-list { max-width: 520px; }
+  .ld-tour .ld-step-btn { min-height: 58px; }
+  .ld-tour-dome { left: calc(50% + 38px); bottom: 42%; width: 112px; }
+  .ld-teacher-scene { min-height: 0; padding: 16px 0 0; display: block; }
+  .ld-teacher-scene .ld-laptop { width: min(100%, 620px); }
+  .ld-teacher-caption { position: static; display: grid; gap: 10px; margin: 18px auto 0; max-width: 520px; }
+  .ld-teacher-callout { position: relative; inset: auto !important; opacity: 1 !important; transform: none !important; }
+  .ld-callout-line { display: none; }
+  .ld-teacher-sticky .ld-feats { margin-top: 18px; }
+}
+
+@media (max-width: 600px) {
+  .ld-tour { gap: 20px; }
+  .ld-tour > .ld-phone-wrap { width: min(68vw, 250px); }
+  .ld-tour-dome { left: calc(50% + 34px); width: 92px; }
+  .ld-tour-dome .ld-bubble { max-width: 145px; font-size: 13px; }
+  .ld-tour .ld-step-btn small { display: block; }
+  .ld-teacher-callout b { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ld-tour-scroll, .ld-teacher-scroll { min-height: 0; }
+  .ld-tour-sticky, .ld-teacher-sticky { position: static; }
+  .ld-teacher-callout { opacity: 1 !important; transform: none !important; }
+}
+
 /* ---------- วิธีเล่น v2: ทางไม้ริมเกาะ ---------- */
 .ld-hw {
   overflow: hidden; padding-bottom: 80px;

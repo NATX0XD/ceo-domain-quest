@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'motion/react'
+import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { Countdown, useOpenState } from './countdown'
 import { PhoneTour } from './phone-tour'
@@ -165,29 +165,59 @@ const TEACH = [
 ]
 
 export function TeacherSection() {
+  const [caption, setCaption] = useState(0)
+  const [isDesktop, setIsDesktop] = useState(false)
+  const teacherRef = useRef<HTMLDivElement>(null)
+  const reduce = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: teacherRef, offset: ['start start', 'end end'] })
+  const open = useTransform(scrollYProgress, [0, 0.28, 0.54], [-86, -86, 0])
+  const screenOpacity = useTransform(open, [-86, -18, 0], [0, 0.72, 1])
+  const screenLift = useTransform(scrollYProgress, [0.28, 0.5], [36, 0])
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 900px)')
+    const sync = () => setIsDesktop(media.matches)
+    sync()
+    media.addEventListener('change', sync)
+    return () => media.removeEventListener('change', sync)
+  }, [])
+
+  useMotionValueEvent(scrollYProgress, 'change', (value) => {
+    if (reduce) return
+    setCaption(value < 0.48 ? 0 : value < 0.68 ? 1 : 2)
+  })
+
   return (
     <section className="ld-sec ld-sec--cream" id="teacher" aria-label="สำหรับครู">
-      <div className="ld-wrap">
+      <div className="ld-wrap ld-teacher-scroll" ref={teacherRef}>
         <Head title="สำหรับครู" sub="เปิดห้อง ฉายจอ ดูผลได้ในที่เดียว" />
-        <Reveal>
-          <div className="ld-laptop">
-            <div className="ld-laptop-screen">
-              <Pic src="/landing/teacher-v2.png" alt="แผงควบคุมครูเวอร์ชันใหม่" width={1440} height={900} sizes="560px" />
-            </div>
-            <div className="ld-laptop-base" />
-          </div>
-        </Reveal>
-        <div className="ld-feats">
-          {TEACH.map((t, i) => (
-            <Reveal key={t.title} delay={i * 0.1} className="ld-card">
-              <span className="ld-card-ico">{icon(t.icon)}</span>
-              <div>
-                <h3>{t.title}</h3>
-                <p>{t.note}</p>
-                <span className="ld-mini-preview" aria-hidden><i /><i /><i /></span>
-              </div>
+        <div className="ld-teacher-sticky">
+          <div className="ld-teacher-scene">
+            <Reveal>
+              <motion.div className="ld-laptop" style={!isDesktop || reduce ? undefined : { perspective: 1200 }}>
+                <motion.div className="ld-laptop-lid" style={!isDesktop || reduce ? undefined : { rotateX: open }}>
+                  <div className="ld-laptop-screen">
+                    <motion.div style={!isDesktop || reduce ? undefined : { opacity: screenOpacity, y: screenLift }}>
+                      <Pic src="/landing/teacher-v2.png" alt="แผงควบคุมครูเวอร์ชันใหม่" width={1440} height={900} sizes="560px" />
+                    </motion.div>
+                  </div>
+                </motion.div>
+                <div className="ld-laptop-base" />
+              </motion.div>
             </Reveal>
-          ))}
+            <div className="ld-teacher-caption" aria-live="polite">
+              {TEACH.map((t, i) => (
+                <motion.div key={t.title} className={`ld-teacher-callout ld-teacher-callout--${i + 1}`} animate={{ opacity: reduce || i === caption ? 1 : 0.28, y: reduce || i === caption ? 0 : 8 }}>
+                  <span className="ld-callout-line" aria-hidden />
+                  <span className="ld-card-ico">{icon(t.icon, 30)}</span>
+                  <span><b>{t.title}</b><small>{t.note}</small></span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+          <div className="ld-feats">
+            {TEACH.map((t) => <div key={t.title} className="ld-card"><span className="ld-card-ico">{icon(t.icon)}</span><div><h3>{t.title}</h3><p>{t.note}</p><span className="ld-mini-preview" aria-hidden><i /><i /><i /></span></div></div>)}
+          </div>
         </div>
       </div>
     </section>

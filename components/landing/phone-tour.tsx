@@ -1,10 +1,8 @@
 'use client'
 
-import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/react'
-import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion, useInView, useMotionValueEvent, useReducedMotion, useScroll } from 'motion/react'
+import { useRef, useState } from 'react'
 import { Pic } from './pic'
-
-const DURATION = 3400
 
 const STEPS = [
   { src: '/landing/shot-join.webp', icon: 'door', title: 'เข้าห้อง', note: 'ใส่รหัสจากครู', say: 'ใส่รหัสห้องจากครูได้เลย!' },
@@ -17,70 +15,84 @@ const STEPS = [
 
 export function PhoneTour() {
   const [active, setActive] = useState(0)
-  const [paused, setPaused] = useState(false)
   const box = useRef<HTMLDivElement>(null)
   const inView = useInView(box, { margin: '-20% 0px -20% 0px' })
   const reduce = useReducedMotion()
-  const run = inView && !paused && !reduce
-
-  useEffect(() => {
-    if (!run) return
-    const id = setTimeout(() => setActive((a) => (a + 1) % STEPS.length), DURATION)
-    return () => clearTimeout(id)
-  }, [active, run])
+  const { scrollYProgress } = useScroll({ target: box, offset: ['start start', 'end end'] })
+  useMotionValueEvent(scrollYProgress, 'change', (value) => {
+    if (reduce || !inView) return
+    setActive(Math.min(STEPS.length - 1, Math.floor(value * STEPS.length)))
+  })
 
   const step = STEPS[active] ?? STEPS[0]
   return (
-    <div className="ld-tour" ref={box} onPointerEnter={() => setPaused(true)} onPointerLeave={() => setPaused(false)}>
-      <div className="ld-phone-wrap">
-        <div className="ld-phone">
-          <div className="ld-screen">
-            {STEPS.map((s, i) => (
+    <div className="ld-tour-scroll" ref={box}>
+      <div className="ld-tour-sticky">
+        <div className="ld-tour">
+          <div className="ld-phone-wrap">
+            <div className="ld-phone">
+              <div className="ld-screen">
+                {STEPS.map((s, i) => (
+                  <motion.div
+                    key={s.src}
+                    style={{ position: 'absolute', inset: 0 }}
+                    animate={{ opacity: i === active ? 1 : 0, scale: i === active ? 1 : 1.06 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    aria-hidden={i !== active}
+                  >
+                    <Pic src={s.src} alt={`หน้าจอ: ${s.title}`} width={390} height={844} priority={i === 0} sizes="300px" />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="ld-tour-dome" aria-hidden>
+            <AnimatePresence mode="wait">
               <motion.div
-                key={s.src}
-                style={{ position: 'absolute', inset: 0 }}
-                animate={{ opacity: i === active ? 1 : 0, scale: i === active ? 1 : 1.06 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                aria-hidden={i !== active}
+                key={active}
+                className="ld-bubble"
+                initial={{ opacity: 0, scale: 0.5, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.7 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 16 }}
               >
-                <Pic src={s.src} alt={`หน้าจอ: ${s.title}`} width={390} height={844} priority={i === 0} sizes="300px" />
+                {step.say}
               </motion.div>
-            ))}
+            </AnimatePresence>
+            <Pic className="ld-dome" src="/dome/mascot/dome-cheer.webp" alt="" width={448} height={532} />
           </div>
         </div>
-        <div className="ld-tour-dome" aria-hidden>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={active}
-              className="ld-bubble"
-              initial={{ opacity: 0, scale: 0.5, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.7 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 16 }}
-            >
-              {step.say}
-            </motion.div>
-          </AnimatePresence>
-          <Pic className="ld-dome" src="/dome/mascot/dome-cheer.webp" alt="" width={448} height={532} />
-        </div>
-      </div>
 
-      <div className="ld-step-list" role="group" aria-label="ขั้นตอนการเล่น">
+        <div className="ld-step-list" role="group" aria-label="ขั้นตอนการเล่น">
         {STEPS.map((s, i) => (
           <motion.button
             key={s.title}
             type="button"
             className="ld-step-btn"
             aria-current={i === active}
-            onClick={() => setActive(i)}
+            onClick={() => {
+              setActive(i)
+              if (box.current && window.matchMedia('(min-width: 900px)').matches) {
+                const top = box.current.getBoundingClientRect().top + window.scrollY + (box.current.offsetHeight - window.innerHeight) * (i / (STEPS.length - 1))
+                window.scrollTo({ top, behavior: 'smooth' })
+              }
+            }}
+            onFocus={() => setActive(i)}
+            onMouseEnter={() => setActive(i)}
+            onViewportEnter={() => {
+              if (window.matchMedia('(max-width: 899px)').matches) setActive(i)
+            }}
+            viewport={{ amount: 0.65 }}
+            whileHover={{ x: 4 }}
             whileTap={{ scale: 0.97 }}
           >
             <Pic src={`/icons/3d/${s.icon}.webp`} alt="" width={30} height={30} />
             {s.title}
             <small>{s.note}</small>
-            {i === active && <span key={`${active}-${run}`} className="ld-progress" data-run={run} style={{ ['--ld-dur' as string]: `${DURATION}ms` }} />}
+            {i === active && <span className="ld-progress" />}
           </motion.button>
         ))}
+        </div>
       </div>
     </div>
   )
