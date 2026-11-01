@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeftIcon, CheckIcon, LockIcon, StarIcon, Toast, ToastViewport } from '@/components/ui'
 
@@ -41,12 +41,13 @@ function statusOf(mission: Mission, unlocked: boolean) {
 
 export function MapHotspots({ imageState, missions, boss }: MapHotspotsProps) {
   const [toast, setToast] = useState(false)
-  const [entering, setEntering] = useState(false)
+  const [entering, setEntering] = useState<number | null>(null)
   const router = useRouter()
+  const focusHotspot = entering === null ? null : ISLAND_HOTSPOTS[entering] ?? ISLAND_HOTSPOTS[0]
 
-  function enterMission(href: string) {
+  function enterMission(href: string, index: number) {
     router.prefetch(href)
-    setEntering(true)
+    setEntering(index)
     window.setTimeout(() => router.push(href), 720)
   }
 
@@ -56,7 +57,17 @@ export function MapHotspots({ imageState, missions, boss }: MapHotspotsProps) {
         {toast ? <Toast message="ผ่านภารกิจก่อนหน้าก่อนนะ" tone="info" onDismiss={() => setToast(false)} /> : null}
       </ToastViewport>
 
-      <div className="map-artboard">
+      <div
+        className={entering === null ? 'map-artboard' : 'map-artboard map-artboard-entering'}
+        style={
+          focusHotspot === null
+            ? undefined
+            : ({
+                '--map-focus-x': `${Number.parseFloat(focusHotspot.left) + Number.parseFloat(focusHotspot.width) / 2}%`,
+                '--map-focus-y': `${Number.parseFloat(focusHotspot.top) + Number.parseFloat(focusHotspot.height) / 2}%`,
+              } as CSSProperties)
+        }
+      >
         <img
           src={`/ui/map/state-${imageState}.webp`}
           alt="แผนที่ภารกิจ เกาะภารกิจที่ 1 ถึง 4 เชื่อมต่อกันด้วยสะพาน"
@@ -75,7 +86,7 @@ export function MapHotspots({ imageState, missions, boss }: MapHotspotsProps) {
           return (
             <div key={mission.id} className="map-hotspot-layer">
               {unlocked ? (
-                <button type="button" onClick={() => enterMission(`/mission/${mission.id}`)} aria-label={label} className="map-island-hotspot focus-ring" style={ISLAND_HOTSPOTS[index]} />
+                <button type="button" onClick={() => enterMission(`/mission/${mission.id}`, index)} aria-label={label} className="map-island-hotspot focus-ring" style={ISLAND_HOTSPOTS[index]} />
               ) : (
                 <button type="button" aria-label={label} className="map-island-hotspot focus-ring" style={ISLAND_HOTSPOTS[index]} onClick={() => setToast(true)} />
               )}
@@ -112,7 +123,7 @@ export function MapHotspots({ imageState, missions, boss }: MapHotspotsProps) {
           </button>
         )}
       </section>
-      {entering ? <div className="map-fog-transition" role="status" aria-live="polite">กำลังพาไปเกาะภารกิจ</div> : null}
+      {entering !== null ? <div className="map-fog-transition" role="status" aria-live="polite">กำลังพาไปเกาะภารกิจ</div> : null}
     </div>
   )
 }
