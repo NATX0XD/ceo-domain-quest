@@ -25,13 +25,11 @@ import {
   DomeAvatar,
   HomeIcon,
   DomeSays,
-  KnowledgeIcon,
   PauseIcon,
   PlayIcon,
   ProgressBar,
   RefreshIcon,
   StarIcon,
-  TargetIcon,
   cn,
 } from '@/components/ui'
 import {
@@ -42,6 +40,7 @@ import {
   type LearnModeId,
   type WarmupResponse,
 } from './learn-path-api'
+import { ModePopup } from './mode-popup'
 import { LearnScenePanel } from './learn-path-scene'
 import { LearnQuestions } from './learn-path-questions'
 import { HelpPanel, ResultPanel, weakest } from './learn-path-result'
@@ -63,24 +62,6 @@ import { themeFor } from './app/theme'
 type Step = 'intro' | 'warmup' | 'result' | 'watch' | 'read' | 'questions' | 'do' | 'done'
 
 const MARKERS = ['ก', 'ข', 'ค', 'ง']
-
-const MODE_INFO: Record<LearnModeId, { title: string; description: string; icon: ReactNode }> = {
-  watch: {
-    title: 'ดู',
-    description: 'ดูฉากเรื่องสั้นทีละภาพกับโดม แล้วตอบคำถาม 2 ข้อ',
-    icon: <PlayIcon width={26} height={26} aria-hidden />,
-  },
-  read: {
-    title: 'อ่าน',
-    description: 'อ่านแชตของเพื่อน ๆ ทีละข้อความ แล้วตอบคำถาม 2 ข้อ',
-    icon: <KnowledgeIcon width={26} height={26} aria-hidden />,
-  },
-  do: {
-    title: 'ลงมือทำ',
-    description: 'เล่นเกมฝึกมือจริง ทำครบแล้วไปภารกิจได้เลย',
-    icon: <TargetIcon width={26} height={26} aria-hidden />,
-  },
-}
 
 const STAGES = ['เช็กพื้นฐาน', 'เลือกวิธี', 'เรียน', 'สรุป'] as const
 
@@ -405,19 +386,7 @@ export function LearnPathClient({
       </Button>
     )
   } else if (step === 'result') {
-    footer = (
-      <Button
-        size="lg"
-        fullWidth
-        disabled={!picked || busy}
-        loading={busy}
-        loadingLabel="กำลังบันทึก"
-        onClick={submitChoose}
-        trailingIcon={busy ? undefined : <ChevronRightIcon width={22} height={22} />}
-      >
-        {picked ? `เริ่มเรียนแบบ${MODE_LABEL[picked]}` : 'เลือกวิธีเรียนก่อน'}
-      </Button>
-    )
+    footer = null // ปุ่มเริ่มอยู่ในป๊อปอัป
   } else if (step === 'watch') {
     footer = brief ? (
       <Button
@@ -719,6 +688,23 @@ export function LearnPathClient({
       flush={fullBleed}
     >
       <Confetti fire={confettiTick} />
+      {step === 'result' ? (
+        <ModePopup
+          missionNo={missionId.replace(/\D/g, '') || missionId}
+          title={missionTitle}
+          recommended={warm?.recommended ?? null}
+          reason={warm?.reason}
+          picked={picked}
+          busy={busy}
+          error={error}
+          onPick={(m) => {
+            buzz()
+            setPicked(m)
+          }}
+          onStart={submitChoose}
+          onClose={() => (mode ? go(mode) : router.push('/map'))}
+        />
+      ) : null}
       <AnimatePresence mode="wait" custom={dir} initial={false}>
         <motion.div
           key={viewKey}
@@ -750,10 +736,10 @@ export function LearnPathClient({
             </Card>
           ) : null}
 
-          {step === 'intro' ? (
+          {step === 'intro' || step === 'result' ? (
             <>
               {missionId === 'm1' ? <div className="m1-map-art" aria-hidden="true" /> : null}
-              <div className="relative z-10 flex flex-col items-center pt-2">
+              <div className={cn('relative z-10 flex flex-col items-center pt-2', step === 'result' && 'invisible')}>
                 <Float>
                   <DomeAvatar mood="greet" size={132} decorative />
                 </Float>
@@ -787,82 +773,6 @@ export function LearnPathClient({
                 setWarmAnswers((prev) => prev.map((a, i) => (i === warmIdx ? choice : a)))
               }}
             />
-          ) : null}
-
-          {step === 'result' ? (
-            <>
-              {warm ? (
-                <GlassCard dark={dark}>
-                  <p className={cn('flex items-center gap-2 text-body-lg font-bold', ink)}>
-                    <StarIcon width={24} height={24} aria-hidden className="text-reward-500" />
-                    <span>
-                      เช็กพื้นฐานได้ <CountUp value={warm.score} /> จาก {warm.total} ข้อ
-                    </span>
-                  </p>
-                  {warm.perQuestion ? (
-                    <ul className="mt-2 flex flex-col gap-1.5">
-                      {warm.perQuestion.map((ok, i) => (
-                        <li key={path.warmup[i]?.id ?? i} className={cn('flex items-start gap-2 text-label', ink)}>
-                          {ok ? (
-                            <CheckIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0 text-quest-500" />
-                          ) : (
-                            <AlertIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0 text-spark-500" />
-                          )}
-                          <span>
-                            <span className="font-bold">{ok ? 'ตอบถูก' : 'ยังไม่ใช่'}</span> ข้อ {i + 1}{' '}
-                            {path.warmup[i]?.question}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </GlassCard>
-              ) : null}
-              <DomeSays mood="cheer" avatarSize={56}>
-                {warm?.reason || 'เลือกวิธีเรียนที่อยากลองได้เลย ทุกวิธีพาไปภารกิจเดียวกัน'}
-              </DomeSays>
-              <div className="flex flex-col gap-3" role="radiogroup" aria-label="เลือกวิธีเรียน">
-                {(['watch', 'read', 'do'] as const).map((m, i) => {
-                  const info = MODE_INFO[m]
-                  const recommended = warm?.recommended === m
-                  return (
-                    <motion.div
-                      key={m}
-                      initial={reduce ? false : { opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        delay: reduce ? 0 : 0.06 * i,
-                        type: 'spring',
-                        stiffness: 340,
-                        damping: 28,
-                      }}
-                      whileTap={reduce ? undefined : { scale: 0.97 }}
-                    >
-                      <ChoiceCard
-                        icon={info.icon}
-                        selected={picked === m}
-                        onSelect={() => {
-                          buzz()
-                          setPicked(m)
-                        }}
-                        ariaLabel={`${info.title}${recommended ? ' (แนะนำ)' : ''} ${info.description}`}
-                        label={
-                          <span className="flex items-center gap-2">
-                            <span className="text-title-sm font-bold">{info.title}</span>
-                            {recommended ? (
-                              <span className="rounded-full bg-reward-100 px-2.5 py-0.5 text-label font-bold text-reward-700 ring-1 ring-reward-300">
-                                แนะนำ
-                              </span>
-                            ) : null}
-                          </span>
-                        }
-                        description={info.description}
-                      />
-                    </motion.div>
-                  )
-                })}
-              </div>
-            </>
           ) : null}
 
           {(step === 'watch' || step === 'read') && brief ? (
