@@ -102,7 +102,7 @@ export function HudPill({
       className={cn(
         'flex min-h-10 items-center gap-1.5 rounded-xl border-2 px-2.5 text-label font-extrabold shadow-[0_3px_0_rgba(0,0,0,0.25)]',
         tone === 'paper' && 'border-[#7a5a3a] bg-[#fff6dc] text-[#3a2a18]',
-        tone === 'dark' && 'border-[#6d4bd1] bg-[#241446] text-[#efe6ff]',
+        tone === 'dark' && 'border-[#7a5a3a] bg-[#f1e2c3] text-[#3a2a18]',
         tone === 'gold' && 'border-[#b8860b] bg-[#ffd96a] text-[#4a3000]',
         className,
       )}
@@ -129,7 +129,7 @@ export function PixelPanel({
       className={cn(
         'rounded-2xl border-[3px] p-3.5',
         variant === 'paper' && 'border-[#7a5a3a] bg-[#fff8e6] text-[#3a2a18] shadow-[0_5px_0_#5c4228]',
-        variant === 'dark' && 'border-[#6d4bd1] bg-[#1d1038]/95 text-[#efe6ff] shadow-[0_5px_0_#0e0720]',
+        variant === 'dark' && 'border-[#7a5a3a] bg-[#f1e2c3] text-[#3a2a18] shadow-[0_5px_0_#5c4228]',
         variant === 'glass' && 'border-white/40 bg-white/20 text-white shadow-soft-3 backdrop-blur-md',
         className,
       )}
@@ -175,10 +175,10 @@ export function GameButton({
         'inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 px-4 text-body font-extrabold',
         'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        variant === 'primary' && 'border-[#3b1d8f] bg-[#7c4dff] text-white shadow-[0_4px_0_#3b1d8f]',
+        variant === 'primary' && 'border-[#7a3a00] bg-[#ff8a3d] text-[#2e1500] shadow-[0_4px_0_#7a3a00]',
         variant === 'gold' && 'border-[#b8860b] bg-[#ffcf4a] text-[#4a3000] shadow-[0_4px_0_#b8860b]',
         variant === 'paper' && 'border-[#7a5a3a] bg-[#fff6dc] text-[#3a2a18] shadow-[0_4px_0_#5c4228]',
-        variant === 'dark' && 'border-[#6d4bd1] bg-[#2a1748] text-[#efe6ff] shadow-[0_4px_0_#0e0720]',
+        variant === 'dark' && 'border-[#7a5a3a] bg-[#f1e2c3] text-[#3a2a18] shadow-[0_4px_0_#5c4228]',
         variant === 'ghost' && 'border-transparent bg-white/10 text-white backdrop-blur-sm',
         className,
       )}

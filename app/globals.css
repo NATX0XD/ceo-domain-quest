@@ -265,6 +265,67 @@ body {
   text-shadow: none !important;
 }
 
+/* M3/M4: ใช้ฉาก pixel เป็นบรรยากาศ แต่ให้แผงครีม/ไม้และข้อความ HTML เป็นพระเอก
+   เพื่อให้ counter และ registration board อยู่ใน visual world เดียวกับ reference */
+[data-theme-id='m3'],
+[data-theme-id='m4'] {
+  color: #3a2a18;
+}
+
+[data-theme-id='m4'] > img {
+  display: none;
+}
+
+[data-theme-id='m3'] main,
+[data-theme-id='m4'] main {
+  background: linear-gradient(180deg, rgb(255 248 230 / 0.3), rgb(241 226 195 / 0.46));
+}
+
+.counter-game-shell,
+.registrar-game-shell {
+  color: #3a2a18;
+}
+
+.counter-game-shell [class*='text-[#d8c9ff]'],
+.counter-game-shell [class*='text-[#a998d9]'],
+.counter-game-shell [class*='text-[#efe6ff]'],
+.registrar-game-shell [class*='text-[#d8c9ff]'],
+.registrar-game-shell [class*='text-[#a998d9]'],
+.registrar-game-shell [class*='text-[#efe6ff]'] {
+  color: #5d4630 !important;
+}
+
+.counter-game-shell [class*='bg-[#2b1d4d]'],
+.registrar-game-shell [class*='bg-[#1b0f36]'],
+.registrar-game-shell [class*='bg-[#2a1748]'],
+.counter-game-shell [class*='bg-[#241446]'],
+.counter-game-shell [class*='bg-[#1d1038]'],
+.registrar-game-shell [class*='bg-[#241446]'],
+.registrar-game-shell [class*='bg-[#1d1038]'] {
+  background-color: rgb(255 248 230 / 0.94) !important;
+}
+
+.counter-game-shell [class*='border-[#6d4bd1]'],
+.registrar-game-shell [class*='border-[#6d4bd1]'],
+.counter-game-shell [class*='border-[#3b1d8f]'],
+.registrar-game-shell [class*='border-[#3b1d8f]'] {
+  border-color: #7a5a3a !important;
+}
+
+.counter-game-shell [class*='bg-[#7c4dff]'],
+.registrar-game-shell [class*='bg-[#7c4dff]'],
+.counter-game-shell .bg-brand-700,
+.registrar-game-shell .bg-brand-700 {
+  background-color: #ff8a3d !important;
+  color: #2e1500 !important;
+}
+
+.counter-game-shell [class*='bg-[#241446]'],
+.registrar-game-shell [class*='bg-[#241446]'],
+.registrar-game-shell [class*='bg-[#1d1038]'] {
+  background-color: #f1e2c3 !important;
+}
+
 /* ห้ามให้ภาพ/วิดีโอดันความกว้างจนเกิดแถบเลื่อนแนวนอนบนจอ 390px */
 img,
 svg,

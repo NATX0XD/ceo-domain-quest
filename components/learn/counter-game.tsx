@@ -67,7 +67,7 @@ const SCENE_SPRITE_H: Record<'queue' | 'card' | 'interview' | 'tag' | 'stamp', s
   stamp: '72%',
 }
 
-const BG_FALLBACK = 'bg-gradient-to-b from-[#6a4fb3] via-[#8b6fcf] to-[#d9a766]'
+const BG_FALLBACK = 'bg-gradient-to-b from-[#fff8e6] via-[#f1e2c3] to-[#c98948]'
 const STAMP_TONE: Record<CounterStampId, string> = {
   approve: 'border-quest-700 text-quest-700',
   suggest: 'border-brand-700 text-brand-700',
@@ -189,7 +189,7 @@ export function CounterGame({
     setStage('play')
   }
 
-  const frame = 'relative h-full min-h-[32rem] w-full flex-1 overflow-hidden bg-[#2b1d4d]'
+  const frame = 'counter-game-shell relative h-full min-h-[32rem] w-full flex-1 overflow-hidden bg-[#f3e4c4] text-[#3a2a18]'
 
   if (stage === 'report' && result) {
     return (
@@ -206,7 +206,7 @@ export function CounterGame({
   if (stage === 'drill') {
     return (
       <div className={cn(frame, 'flex flex-col')}>
-        <SceneBg src="/learn/m3/bg-pixel-office.webp" fallback={BG_FALLBACK} blur={8} dim={0.5} />
+        <SceneBg src="/learn/m3/bg-pixel-office.webp" fallback={BG_FALLBACK} blur={8} dim={0.12} />
         {/* flex-1 แทน h-full: พ่อมีแค่ min-h ทำให้ h-full ยุบ สายพานเลยแบนจนมองไม่เห็นชิ้นงาน */}
         <div className="relative flex min-h-0 flex-1 flex-col">
           <ConveyorDrill
@@ -223,7 +223,7 @@ export function CounterGame({
   if (stage === 'ready') {
     return (
       <div className={cn(frame, 'flex flex-col')}>
-        <SceneBg src="/learn/m3/bg-pixel-office.webp" fallback={BG_FALLBACK} blur={8} dim={0.5} />
+        <SceneBg src="/learn/m3/bg-pixel-office.webp" fallback={BG_FALLBACK} blur={8} dim={0.12} />
         <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-5 text-center">
           <DomeAvatar mood="cheer" size={110} decorative sparkle />
           <PixelPanel>
@@ -526,7 +526,7 @@ function Shift({
   )
 
   return (
-    <div className="relative h-full min-h-[32rem] w-full flex-1 overflow-hidden bg-[#2b1d4d]" aria-label={data.title}>
+    <div className="counter-game-shell relative h-full min-h-[32rem] w-full flex-1 overflow-hidden bg-[#f3e4c4] text-[#3a2a18]" aria-label={data.title}>
       <SceneBg
         src="/learn/m3/bg-pixel-office.webp"
         fallback={BG_FALLBACK}
@@ -1265,7 +1265,7 @@ function ResultView({
 
   return (
     <div className="relative h-full min-h-[32rem] w-full flex-1 overflow-hidden bg-[#2b1d4d]">
-      <SceneBg src="/learn/m3/bg-pixel-office.webp" fallback={BG_FALLBACK} blur={0} dim={0.12} />
+      <SceneBg src="/learn/m3/bg-pixel-office.webp" fallback={BG_FALLBACK} blur={0} dim={0.06} />
       <div className="absolute inset-0 flex flex-col">
         <div className="flex shrink-0 items-center gap-1.5 px-2.5 pt-2.5">
           <HudPill tone="dark" className="flex-1 justify-center">

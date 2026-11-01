@@ -68,8 +68,8 @@ export default async function KnowledgePage() {
   const primaryHref = nextMission ? `/mission/${nextMission.id}` : '/ceo'
   const primaryLabel = nextMission ? `กลับไปทำภารกิจ ${nextMission.title}` : 'ไปด่านบอส CEO ต่อ'
   const nowLine = nextMission
-    ? `อ่านเสร็จแล้วกดปุ่มด้านล่างกลับไปทำ "${nextMission.title}" ต่อได้เลยครับ`
-    : 'อ่านทบทวนได้ไม่จำกัด ไม่เสียดาว พร้อมแล้วกดปุ่มด้านล่างไปด่านบอสได้เลยครับ'
+    ? 'ทบทวนจุดสำคัญแล้ว พร้อมนำความรู้ไปลองใช้ในภารกิจถัดไปได้เลยครับ'
+    : 'ทบทวนได้ไม่จำกัด ไม่เสียดาว ลองสรุปสิ่งที่จำได้ก่อนออกจากหน้านี้นะครับ'
 
   return (
     <AppShell

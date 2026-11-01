@@ -763,7 +763,7 @@ export function LearnPathClient({
                 <p className={cn('text-label font-bold', dark ? 'text-brand-200' : 'text-brand-700')}>
                   เตรียมตัวก่อนภารกิจ
                 </p>
-                <h2 className={cn('mt-1 text-title font-extrabold', ink)}>{missionTitle}</h2>
+                <h2 className={cn('mt-1 text-title font-extrabold', ink)}>เป้าหมายด่านนี้</h2>
                 <p className={cn('mt-3 text-body-lg', ink)}>{path.story}</p>
                 {!singleMode ? (
                   <p className={cn('mt-3 text-body', inkMuted)}>

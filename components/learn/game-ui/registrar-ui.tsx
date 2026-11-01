@@ -11,24 +11,24 @@ import {
 } from "@/components/ui";
 import { GameButton, HudPill, SceneBg, buzz, useGameMotion } from "./index";
 
-/** ชิ้นส่วนร่วมของเกมด่านบอส m4 (R01-R11) ธีม pixel ม่วงเข้ม */
+/** ชิ้นส่วนร่วมของเกมด่านบอส m4 (R01-R11) ธีม pixel เคาน์เตอร์ครีม/ไม้ */
 
 export const BG_FALLBACK =
-  "bg-gradient-to-b from-[#1b0f36] via-[#2a1748] to-[#0e0720]";
+  "bg-gradient-to-b from-[#fff8e6] via-[#f1e2c3] to-[#c98948]";
 /** cn ไม่ merge คลาสที่ชนกัน จึงแยกชุดสีเข้ม/สว่างไว้คนละค่า ห้ามต่อสีทับกัน */
 const INPUT_BASE =
   "min-h-12 w-full rounded-xl border-2 px-3 text-body font-semibold focus-visible:outline-3 focus-visible:outline-focus disabled:opacity-70";
-export const INPUT = `${INPUT_BASE} border-[#6d4bd1] bg-[#0e0720] text-[#efe6ff] placeholder:text-[#a998d9]`;
+export const INPUT = `${INPUT_BASE} border-[#7a5a3a] bg-white text-[#3a2a18] placeholder:text-[#8a7a63]`;
 export const INPUT_LIGHT = `${INPUT_BASE} border-[#7a5a3a] bg-white text-[#3a2a18] placeholder:text-[#8a7a63]`;
 /** ข้อความที่ต้องลอยบนฉาก: วางบนพื้นทึบเสมอ ห้ามวางบนภาพพื้นหลังตรง ๆ */
 export const SCENE_NOTE =
-  "rounded-xl border-2 border-[#6d4bd1] bg-[#1b0f36]/95 px-3 py-2 text-label font-bold text-pretty";
+  "rounded-xl border-2 border-[#7a5a3a] bg-[#fff8e6]/95 px-3 py-2 text-label font-bold text-pretty text-[#3a2a18]";
 
 export function BossShell({
   children,
   blur = 3,
-  src = "/learn/m4/bg-boss-office.webp",
-  dim = 0.42,
+  src = "",
+  dim = 0.08,
 }: {
   children: ReactNode;
   blur?: number;
@@ -36,8 +36,8 @@ export function BossShell({
   dim?: number;
 }) {
   return (
-    <div className="relative flex h-full min-h-[max(32rem,calc(100dvh-7.5rem))] w-full flex-1 flex-col overflow-clip rounded-3xl bg-[#1b0f36] text-[#efe6ff]">
-      <SceneBg src={src} fallback={BG_FALLBACK} blur={blur} dim={dim} />
+    <div className="registrar-game-shell relative flex h-full min-h-[max(32rem,calc(100dvh-7.5rem))] w-full flex-1 flex-col overflow-clip rounded-3xl bg-[#f3e4c4] text-[#3a2a18]">
+      {src ? <SceneBg src={src} fallback={BG_FALLBACK} blur={blur} dim={dim} /> : <div className="absolute inset-0 bg-[#f3e4c4]" aria-hidden />}
       {/* overflow-clip (ไม่ใช่ hidden) เพื่อไม่ให้กรอบนี้เป็นตัวเลื่อน ถาดการ์ดแบบ sticky จึงติดล่างจอได้ */}
       {/* flex-1 ให้กล่องนี้สูงเต็มกรอบ แผ่นอีเมล (absolute inset-0) จึงไม่ถูกตัดตามความสูงเนื้อหา */}
       <div className="relative flex min-h-0 flex-1 flex-col">{children}</div>
@@ -133,7 +133,7 @@ export function BossSign({ className }: { className?: string }) {
           : { type: "spring", stiffness: 260, damping: 14 }
       }
       className={cn(
-        "rounded-xl border-4 border-[#ffcf4a] bg-[#3b1d8f] px-6 py-1.5 text-center text-title leading-tight font-black tracking-widest text-[#ffcf4a] shadow-[0_6px_0_#0e0720]",
+        "rounded-xl border-4 border-[#7a3a00] bg-[#ff8a3d] px-6 py-1.5 text-center text-title leading-tight font-black tracking-widest text-[#2e1500] shadow-[0_6px_0_#5c4228]",
         className,
       )}
     >

@@ -193,7 +193,7 @@ export function RegistrarGame({ data, onSubmit, onStep, card }: Props) {
   // ─── R01 เปิดด่านบอส ───
   if (view === 'intro') {
     return (
-      <BossShell blur={0} dim={0.3} src="/learn/m4/boss-door.webp">
+      <BossShell>
         <div className="relative flex min-h-0 flex-1 flex-col">
           <BossHud stage="ด่านบอส" step={0} total={total} coins={coins} coinNode={<CountUp to={coins} />} timer={clock} />
           <div className="flex min-h-0 flex-1 flex-col items-center justify-between gap-2 px-4 pb-2 text-center">

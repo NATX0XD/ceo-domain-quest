@@ -162,7 +162,6 @@ export default async function HomePage() {
               tone="quest"
             />
           </div>
-          <p className="mt-1 text-[0.875rem] text-ink-muted">{summary.shopStageLabel}</p>
         </div>
 
         {/* โดมพูดสั้น ๆ หนึ่งประโยค — ประโยคยาวทำให้จอนี้ล้น */}
