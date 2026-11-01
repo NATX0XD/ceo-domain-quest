@@ -52,6 +52,9 @@
 .teacher-signup-form button:disabled { opacity: .55; cursor: wait; }
 .teacher-signup-back { margin: 1.25rem 0 0; color: var(--t2-muted); text-align: center; font-size: .85rem; }
 .teacher-signup-back a { color: var(--t2-brand); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+.teacher-signup-success { display: grid; gap: 1rem; }
+.teacher-signup-success .t2-sub { line-height: 1.7; }
+.teacher-signup-success-link { display: inline-flex; min-height: 3rem; align-items: center; justify-content: center; border-radius: 12px; background: var(--t2-brand); color: white; font-weight: 800; text-decoration: none; }
 @media (max-width: 390px) { .teacher-signup-page { padding: 1rem .65rem; } .teacher-signup-card { border-radius: 22px; } .teacher-signup-form { margin-top: 1rem; } }
 
 .teacher-cms aside[aria-label='เมนูของครู'] {

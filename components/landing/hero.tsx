@@ -96,6 +96,13 @@ export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: 
               สำหรับครู
             </motion.a>
           </div>
+          <div className="ld-teacher-cta">
+            <div className="ld-teacher-cta-actions">
+              <a className="ld-btn" href="/teacher/signup">ลงทะเบียนครูล่วงหน้า</a>
+              <a className="ld-btn ld-btn--ghost" href="/teacher">ครูเข้าสู่ระบบ</a>
+            </div>
+            <p>ใช้รหัสเชิญจากผู้ดูแล · วันเปิดเข้าใช้ด้วยบัญชีเดิมได้เลย</p>
+          </div>
         </div>
       </div>
 

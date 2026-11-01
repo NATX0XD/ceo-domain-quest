@@ -200,6 +200,13 @@ export function FinalSection({ openAt, openLabel }: { openAt: string | null; ope
               เข้าเล่นเลย ▶
             </motion.a>
           )}
+          <div className="ld-teacher-cta">
+            <div className="ld-teacher-cta-actions">
+              <a className="ld-btn" href="/teacher/signup">ลงทะเบียนครูล่วงหน้า</a>
+              <a className="ld-btn ld-btn--ghost" href="/teacher">ครูเข้าสู่ระบบ</a>
+            </div>
+            <p>ใช้รหัสเชิญจากผู้ดูแล · วันเปิดเข้าใช้ด้วยบัญชีเดิมได้เลย</p>
+          </div>
           <p className="ld-foot">
             CEO Domain Quest · สื่อการสอนแบบเกม
             <br />

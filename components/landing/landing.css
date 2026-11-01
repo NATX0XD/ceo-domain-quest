@@ -117,6 +117,10 @@
 .ld-count-num { display: block; font-family: var(--font-display-thai), sans-serif; font-weight: 700; font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .ld-count-lab { display: block; font-size: 13px; color: var(--ld-ink-2); line-height: 1.2; }
 .ld-cta-row { display: flex; flex-direction: column; align-items: stretch; gap: 14px; width: min(100%, 320px); }
+.ld-teacher-cta { display: grid; gap: 8px; width: min(100%, 440px); text-align: center; }
+.ld-teacher-cta-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.ld-teacher-cta .ld-btn { min-height: 48px; padding-inline: 20px; font-size: 17px; }
+.ld-teacher-cta p { margin: 0; color: #fff8e6; font-size: 13px; line-height: 1.45; text-shadow: 0 1px 2px rgba(40, 20, 5, .45); }
 .ld-waves { position: absolute; left: 0; right: 0; bottom: -1px; height: 90px; z-index: 0; pointer-events: none; }
 .ld-wave { position: absolute; left: 0; bottom: 0; width: 200%; height: 100%; background-repeat: repeat-x; background-size: 50% 100%; }
 .ld-wave--1 { opacity: .55; animation: ld-wave 14s linear infinite; }
@@ -314,12 +318,14 @@
   .ld-wrap { padding: 0 28px; }
   .ld-hero { padding: 40px 0 150px; min-height: 760px; }
   .ld-hero-inner {
-    display: grid; grid-template-columns: 1.1fr .9fr; grid-template-areas: "badge dome" "logo dome" "sign dome" "count dome" "cta dome";
+    display: grid; grid-template-columns: 1.1fr .9fr; grid-template-areas: "badge dome" "logo dome" "sign dome" "count dome" "cta dome" "teacher dome";
     justify-items: start; align-content: center; column-gap: 40px; row-gap: 18px; text-align: left; min-height: 540px;
   }
   .ld-hero-inner > .ld-badge { grid-area: badge; } .ld-hero-inner > .ld-logo { grid-area: logo; width: min(100%, 520px); }
   .ld-hero-inner > .ld-sign { grid-area: sign; } .ld-hero-inner > .ld-count { grid-area: count; }
   .ld-hero-inner > .ld-cta-row { grid-area: cta; flex-direction: row; width: auto; }
+  .ld-hero-inner > .ld-teacher-cta { grid-area: teacher; justify-self: start; text-align: left; }
+  .ld-hero-inner > .ld-teacher-cta .ld-teacher-cta-actions { justify-content: flex-start; }
   .ld-hero-inner > .ld-dome-stage { grid-area: dome; justify-self: center; align-self: center; width: min(100%, 420px); }
   .ld-bubble { font-size: 18px; top: -16px; right: -6%; }
   .ld-cloud--a { width: 280px; } .ld-cloud--b { width: 240px; }
@@ -347,6 +353,8 @@
   .ld-chips { justify-content: flex-start; }
 }
 @media (max-width: 600px) {
+  .ld-teacher-cta-actions { flex-direction: column; }
+  .ld-teacher-cta .ld-btn { width: 100%; }
   .ld-final { min-height: 760px; padding-top: 62px; }
   .ld-final-bg { background-image: url('/landing/footer-bg-mobile.webp'); background-position: center center; }
   .ld-final-plaque { width: calc(100% - 20px); padding: 22px 15px 18px; }

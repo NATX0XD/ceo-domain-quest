@@ -18,15 +18,25 @@ describe('isAppOpen', () => {
 })
 
 describe('decideGate เมื่อปิด', () => {
-  it('หน้าเว็บถูก rewrite ไป /landing', async () => {
-    for (const pathname of ['/', '/join', '/teacher', '/mission/m1']) {
+  it('หน้าผู้เรียนถูก rewrite ไป /landing แต่พื้นที่ครูผ่านถึง auth ของหน้านั้น', async () => {
+    for (const pathname of ['/', '/join', '/home', '/mission/m1']) {
       expect(await decideGate({ pathname, env: prod })).toEqual({ type: 'rewrite', to: '/landing' })
     }
+    for (const pathname of ['/teacher', '/teacher/signup', '/teacher/anything']) {
+      expect(await decideGate({ pathname, env: prod })).toEqual({ type: 'next' })
+    }
   })
-  it('API ตอบ 503 not-open ยกเว้น health', async () => {
+  it('API ผู้เรียนตอบ 503 แต่ API ครูและ shared API ที่หน้า teacher ใช้ผ่าน', async () => {
     expect(await decideGate({ pathname: '/api/me', env: prod })).toEqual({ type: 'json', status: 503, body: { error: 'not-open' } })
-    expect((await decideGate({ pathname: '/api/teacher/x.json', env: prod })).type).toBe('json')
+    for (const pathname of ['/api/teacher/signup', '/api/teacher/login', '/api/teacher/x.json', '/api/plan-request', '/api/plan-request/respond', '/api/jobs/drain']) {
+      expect(await decideGate({ pathname, env: prod })).toEqual({ type: 'next' })
+    }
     expect(await decideGate({ pathname: '/api/health', env: prod })).toEqual({ type: 'next' })
+  })
+  it('ปิดอยู่ยังบล็อกเส้นนักเรียนที่สำคัญ', async () => {
+    for (const pathname of ['/api/join/resume', '/api/dome', '/api/mission/m1/learn']) {
+      expect(await decideGate({ pathname, env: prod })).toEqual({ type: 'json', status: 503, body: { error: 'not-open' } })
+    }
   })
   it('landing และ asset ผ่าน', async () => {
     for (const pathname of ['/landing', '/landing/x', '/landing/manual', '/landing/manual/teacher', '/_next/static/a.js', '/favicon.ico', '/landing/hero.webp', '/dome/mascot/dome-greet.webp', '/robots.txt']) {

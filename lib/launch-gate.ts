@@ -63,10 +63,19 @@ export async function hasValidPreviewCookie(cookie: string | undefined, previewK
 }
 
 const ALWAYS_OPEN_PAGES = ['/landing', '/landing/manual']
+const TEACHER_SHARED_APIS = ['/api/plan-request', '/api/plan-request/respond', '/api/jobs/drain']
 const STATIC_EXT = /\.[a-z0-9]{2,5}$/i
 
 function isLandingPath(p: string) {
   return ALWAYS_OPEN_PAGES.some((base) => p === base || p.startsWith(`${base}/`))
+}
+
+function isTeacherPage(p: string) {
+  return p === '/teacher' || p.startsWith('/teacher/')
+}
+
+function isTeacherApi(p: string) {
+  return p === '/api/teacher' || p.startsWith('/api/teacher/') || TEACHER_SHARED_APIS.includes(p)
 }
 
 export async function decideGate(input: {
@@ -90,6 +99,7 @@ export async function decideGate(input: {
 
   if (pathname.startsWith('/_next/') || pathname === '/favicon.ico') return { type: 'next' }
   if (isLandingPath(pathname)) return { type: 'next' }
+  if (isTeacherPage(pathname) || isTeacherApi(pathname)) return { type: 'next' }
   if (pathname === '/api/health') return { type: 'next' }
 
   if (await hasValidPreviewCookie(input.cookie, env.previewKey)) return { type: 'next' }
