@@ -576,7 +576,7 @@ export function CeoClient({
         }
       >
         <header className="flex flex-col items-center gap-2 pt-2 text-center">
-          <DomeAvatar mood={revision ? 'cheer' : 'happy'} size={112} decorative />
+          <DomeAvatar mood={revision ? 'cheer' : 'celebrate'} size={112} decorative />
           <h1 className="text-display font-extrabold text-balance text-ink">
             {revision ? 'ครูส่งงานกลับมาให้แก้' : 'ส่งใบเสนอแล้ว'}
           </h1>
@@ -616,7 +616,7 @@ export function CeoClient({
           </div>
         ) : null}
 
-        <DomeSays mood="happy" speakerName="โดม" avatarSize={72} className="mt-5">
+        <DomeSays mood="celebrate" speakerName="โดม" avatarSize={72} className="mt-5">
           {selectedMode?.instruction ?? NO_DATA}
         </DomeSays>
 

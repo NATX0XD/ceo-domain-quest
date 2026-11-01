@@ -164,7 +164,7 @@ export function HelpPanel({
         ) : null}
       </ol>
       <div className="flex flex-wrap items-center gap-2 border-t border-brand-100 bg-white/80 px-3 py-3">
-        <DomeAvatar mood="cheer" size={32} decorative />
+        <DomeAvatar mood="encourage" size={32} decorative />
         <QuickChip onClick={onReview}>{reviewLabel}</QuickChip>
         {!hintShown && wq?.hint ? <QuickChip onClick={onHint}>ขอคำใบ้</QuickChip> : null}
       </div>

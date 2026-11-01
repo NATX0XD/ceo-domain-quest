@@ -205,7 +205,7 @@ export function DomeChatClient({
 
           {busy ? (
             <div className="flex items-center gap-2" role="status" aria-live="polite">
-              <DomeAvatar mood="greet" size={48} decorative />
+              <DomeAvatar mood="think" size={48} decorative />
               <span className="flex items-center gap-1.5 rounded-3xl bg-brand-50 px-4 py-3 ring-1 ring-brand-100 ring-inset">
                 <span className="sr-only">โดมกำลังพิมพ์</span>
                 {[0, 1, 2].map((i) => (

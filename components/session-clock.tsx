@@ -143,7 +143,7 @@ export function SessionClock({ variant = 'bar' }: { variant?: 'bar' | 'pill' } =
             'fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-surface px-6 text-center',
           )}
         >
-          <DomeAvatar mood="greet" size={140} decorative />
+          <DomeAvatar mood="wait" size={140} decorative />
           <p className="text-label font-bold text-brand-700">{state.restReason}</p>
           <h2 className="text-hero font-extrabold text-balance text-ink">ดูจอหน้าห้องนะ</h2>
           <p className="max-w-[24rem] text-body text-pretty text-ink-muted">

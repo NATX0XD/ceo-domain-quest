@@ -8,18 +8,30 @@ import { cn } from './cn'
  * โดยไม่มีกล่องคำพูด และบางหน้าอยากได้กล่องคำพูดโดยไม่มีรูป
  */
 
-export type DomeMood = 'greet' | 'cheer' | 'happy'
+export type DomeMood = 'greet' | 'cheer' | 'happy' | 'think' | 'encourage' | 'explain' | 'surprised' | 'celebrate' | 'wait'
 
 const MOOD_ALT: Record<DomeMood, string> = {
   greet: 'โดมยกมือทักทาย',
   cheer: 'โดมชูกำปั้นให้กำลังใจ',
   happy: 'โดมชูสองมือดีใจ',
+  think: 'โดมกำลังคิดอย่างสงสัย',
+  encourage: 'โดมยกนิ้วให้กำลังใจ',
+  explain: 'โดมกำลังชี้อธิบาย',
+  surprised: 'โดมทำหน้าประหลาดใจพร้อมประกายเล็ก ๆ',
+  celebrate: 'โดมกระโดดฉลองพร้อมกระดาษโปรย',
+  wait: 'โดมยืนรอฟังอย่างตั้งใจ',
 }
 
 const DOME_ASSET: Record<DomeMood, string> = {
   greet: '/dome/mascot/dome-greet.webp',
   cheer: '/dome/mascot/dome-cheer.webp',
   happy: '/dome/mascot/dome-happy.webp',
+  think: '/dome/mascot/dome-think.webp',
+  encourage: '/dome/mascot/dome-encourage.webp',
+  explain: '/dome/mascot/dome-explain.webp',
+  surprised: '/dome/mascot/dome-surprised.webp',
+  celebrate: '/dome/mascot/dome-celebrate.webp',
+  wait: '/dome/mascot/dome-wait.webp',
 }
 
 export type DomeAvatarProps = {

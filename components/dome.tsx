@@ -8,7 +8,7 @@ import {
 /**
  * "โดม" เลขาส่วนตัวมอนสเตอร์สีม่วงของทีม
  *
- * ภาพตัวละครอยู่ที่ `public/dome/mascot/dome-{greet,cheer,happy}.webp`
+ * ภาพตัวละครอยู่ที่ `public/dome/mascot/dome-*.webp` และเลือกผ่าน `DomeMood`
  * ไฟล์นี้เหลือหน้าที่แค่รักษา API เดิม (`DomeAvatar` / `DomeBubble`) ให้หน้าที่เรียกอยู่แล้วไม่พัง
  * โค้ดใหม่ควรเรียก `DomeSays` / `SpeechBubble` จาก `@/components/ui` ตรง ๆ
  * เพราะเลือกอารมณ์ของโดมได้ และผูกกล่องคำพูดกับรูปให้เอง

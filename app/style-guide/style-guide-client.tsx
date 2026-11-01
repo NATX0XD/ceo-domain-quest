@@ -30,6 +30,7 @@ import {
   ToastViewport,
   stageFromPercent,
   type BottomNavItem,
+  type DomeMood,
   type ShopStage,
 } from '@/components/ui'
 
@@ -48,6 +49,18 @@ const NAV_ITEMS: BottomNavItem[] = [
   { href: '/knowledge', label: 'ความรู้', icon: 'knowledge' },
   { href: '/rewards', label: 'รางวัล', icon: 'reward' },
   { href: '/profile', label: 'โปรไฟล์', icon: 'profile' },
+]
+
+const DOME_MOODS: { mood: DomeMood; label: string }[] = [
+  { mood: 'greet', label: 'ทักทาย' },
+  { mood: 'cheer', label: 'ชูกำลังใจ' },
+  { mood: 'happy', label: 'ดีใจ' },
+  { mood: 'think', label: 'คิด' },
+  { mood: 'encourage', label: 'ยกนิ้ว' },
+  { mood: 'explain', label: 'อธิบาย' },
+  { mood: 'surprised', label: 'ว้าว' },
+  { mood: 'celebrate', label: 'ฉลอง' },
+  { mood: 'wait', label: 'รอฟัง' },
 ]
 
 const COLOR_GROUPS: { title: string; note: string; swatches: { name: string; cls: string }[] }[] = [
@@ -503,13 +516,13 @@ export function StyleGuideClient() {
         </div>
       </Section>
 
-      <Section id="dome" title="10. โดมและกล่องคำพูด" subtitle="ตัวละครหุ่นยนต์ 3 อารมณ์">
-        <div className="mb-4 flex items-end justify-around gap-2 rounded-2xl bg-brand-50 p-3">
-          {(['greet', 'cheer', 'happy'] as const).map((m) => (
-            <figure key={m} className="flex flex-col items-center">
-              <DomeAvatar mood={m} size={88} />
+      <Section id="dome" title="10. โดมและกล่องคำพูด" subtitle="ตัวละครมอนสเตอร์ 9 อารมณ์">
+        <div className="mb-4 grid grid-cols-3 gap-2 rounded-2xl bg-brand-50 p-3">
+          {DOME_MOODS.map(({ mood, label }) => (
+            <figure key={mood} className="flex flex-col items-center">
+              <DomeAvatar mood={mood} size={88} />
               <figcaption className="mt-1 text-note font-semibold text-ink-muted">
-                {m === 'greet' ? 'ทักทาย' : m === 'cheer' ? 'ให้กำลังใจ' : 'ดีใจ'}
+                {label}
               </figcaption>
             </figure>
           ))}

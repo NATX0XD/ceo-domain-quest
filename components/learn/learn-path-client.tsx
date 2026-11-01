@@ -856,7 +856,7 @@ export function LearnPathClient({
             <>
               <div className="flex flex-col items-center pt-2">
                 <Float>
-                  <DomeAvatar mood="greet" size={112} decorative />
+                  <DomeAvatar mood="explain" size={112} decorative />
                 </Float>
               </div>
               <GlassCard dark={dark}>
@@ -1145,10 +1145,10 @@ export function LearnPathClient({
             <>
               <div className="flex flex-col items-center pt-2">
                 <Float>
-                  <DomeAvatar mood="happy" size={120} decorative />
+                  <DomeAvatar mood="celebrate" size={120} decorative />
                 </Float>
               </div>
-              <DomeSays mood="happy">
+              <DomeSays mood="celebrate">
                 เก่งมาก เรียนแบบ{MODE_LABEL[done.mode]}จบแล้ว ได้ {done.score} คะแนน พร้อมลุยภารกิจจริงแล้ว
               </DomeSays>
               <GlassCard dark={dark}>

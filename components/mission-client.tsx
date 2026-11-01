@@ -556,7 +556,7 @@ export function MissionClient({
         onClick={() => setSheet('story')}
         className="flex shrink-0 items-center gap-2 rounded-2xl bg-brand-50 px-3 py-2 text-left ring-1 ring-brand-100 ring-inset focus-ring"
       >
-        <DomeAvatar mood={passed ? 'happy' : 'cheer'} size={40} decorative />
+        <DomeAvatar mood={passed ? 'celebrate' : 'cheer'} size={40} decorative />
         <span className="min-w-0 flex-1 truncate text-label text-ink">{domeLine}</span>
         <ChevronRightIcon width={18} height={18} aria-hidden className="shrink-0 text-brand-700" />
       </button>

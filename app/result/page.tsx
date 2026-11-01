@@ -172,7 +172,7 @@ export default async function ResultPage() {
         <>
           <AppFooter divider={false} className="pb-2">
             <div className="mb-2 flex items-center gap-2">
-              <DomeAvatar mood="happy" size={44} decorative />
+              <DomeAvatar mood="celebrate" size={44} decorative />
               <SpeechBubble speaker="dome" tail="left" className="min-w-0 flex-1 px-3 py-2">
                 <span className="line-clamp-2 text-label font-bold text-ink">{nowLine}</span>
               </SpeechBubble>

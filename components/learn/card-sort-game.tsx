@@ -209,7 +209,7 @@ export function CardSortGame({
             {passed ? <p className="text-label text-ink-muted">ได้คะแนนมากกว่า 60% จึงผ่านกิจกรรมนี้แล้ว</p> : null}
             <div className="flex items-start gap-3">
               <Float>
-                <DomeAvatar mood={passed ? 'happy' : 'cheer'} size={56} decorative />
+                <DomeAvatar mood={passed ? 'celebrate' : 'encourage'} size={56} decorative />
               </Float>
               <p className="rounded-2xl bg-white px-4 py-3 text-body text-ink shadow-soft-1">{detail.feedback}</p>
             </div>

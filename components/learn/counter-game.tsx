@@ -1289,7 +1289,7 @@ function ResultView({
             <div className="relative min-h-0 flex-1 overflow-hidden">
               {pageIdx < 0 ? (
                 <div className="absolute inset-x-0 bottom-0 flex h-full max-h-40 justify-center pt-3">
-                  <DomeAvatar mood={result.passed ? 'happy' : 'cheer'} size={160} decorative />
+                  <DomeAvatar mood={result.passed ? 'celebrate' : 'encourage'} size={160} decorative />
                 </div>
               ) : (
                 <div className="absolute inset-x-0 bottom-0 flex justify-center" style={{ height: '82%' }}>

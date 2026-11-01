@@ -337,7 +337,7 @@ export function ReflectClient({
             </div>
           ) : null}
 
-          <DomeTip mood="happy">{closing.messageAll}</DomeTip>
+          <DomeTip mood="celebrate">{closing.messageAll}</DomeTip>
         </div>
       </StudentShell>
     )

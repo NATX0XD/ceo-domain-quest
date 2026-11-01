@@ -340,7 +340,7 @@ className เดียวกันเลย มันเกิดจากลู
 | `ProgressBar` | `value` · `max` · `label` · `tone` · `size` | `role="progressbar"` ครบ `aria-valuenow/min/max/valuetext` · แสดง % เป็นข้อความคู่กับแถบเสมอ |
 | `ChoiceCard` | `label` · `marker` · `selected` · `state` (idle/correct/wrong/locked) | `<button aria-pressed>` · ถูก/ผิดมีไอคอน **และ** ต่อท้าย aria-label ว่า "— ตอบถูก/ตอบผิด" |
 | `BottomNav` | `items` · `activeHref` · `ariaLabel` | ไม่ฝังเมนูไว้ในตัว · ไม่ใช้ `usePathname()` จึงยังเป็น server component ได้ · `aria-current="page"` · ป้ายตัวเลขมี `sr-only` อธิบาย |
-| `SpeechBubble` · `DomeSays` · `DomeAvatar` | `speaker` · `tail` · `mood` (greet/cheer/happy) · `live` | `live` ตั้ง `role="status" aria-live="polite"` สำหรับข้อความที่ทยอยมาจาก AI |
+| `SpeechBubble` · `DomeSays` · `DomeAvatar` | `speaker` · `tail` · `mood` (greet/cheer/happy/think/encourage/explain/surprised/celebrate/wait) · `live` | `live` ตั้ง `role="status" aria-live="polite"` สำหรับข้อความที่ทยอยมาจาก AI |
 | `Chip` · `ChipSlot` | `tone` · `selected` · `draggable` · `dragValue` · `onSelect` | ลากด้วยเมาส์ใช้ไม่ได้กับนิ้วและคีย์บอร์ด ชิปจึงรองรับ **แตะเลือกแล้วแตะช่องปลายทาง** ด้วย — หน้าที่เรียกใช้ต้องรองรับทางนี้เสมอ |
 | `Toast` · `ToastViewport` | `tone` · `duration` · `onDismiss` · `action` | error ใช้ `role="alert"` (ขัดจังหวะ) · success/info ใช้ `role="status"` · ลอยอยู่ **บนจอ** เพราะล่างมีแถบเมนูและนิ้วโป้งบัง |
 | `Skeleton` · `SkeletonGroup` | `shape` · `lines` · `width` · `height` | ตัว skeleton เป็น `aria-hidden` ทั้งหมด ประกาศ "กำลังโหลด" ครั้งเดียวที่ `SkeletonGroup` · จองพื้นที่ไว้ให้ CLS = 0 |
@@ -360,6 +360,12 @@ className เดียวกันเลย มันเกิดจากลู
 | `dome/mascot/dome-greet.webp` | โดมมอนสเตอร์ยกมือทักทาย — หน้าแรก หน้าคุยกับโดม |
 | `dome/mascot/dome-cheer.webp` | โดมมอนสเตอร์ชูกำปั้นให้กำลังใจ — ตอนนักเรียนติดหรือตอบผิด |
 | `dome/mascot/dome-happy.webp` | โดมมอนสเตอร์ชูสองมือดีใจ — ตอนผ่านภารกิจ |
+| `dome/mascot/dome-think.webp` | โดมมอนสเตอร์เอามือแตะคาง คิดอย่างสงสัย — ตอนให้คำใบ้หรือรอ AI |
+| `dome/mascot/dome-encourage.webp` | โดมมอนสเตอร์ยกนิ้วพร้อมรอยยิ้มอ่อนโยน — ตอนยังไม่ครบและให้ลองอีกนิด |
+| `dome/mascot/dome-explain.webp` | โดมมอนสเตอร์ชี้ด้านข้างเพื่ออธิบาย — ตอนดูคลิป อ่านการ์ด หรือเรียนบทนำ |
+| `dome/mascot/dome-surprised.webp` | โดมมอนสเตอร์ทำหน้าว้าวพร้อมประกายเล็ก ๆ — ตอนค้นพบหรือเกิดอีเวนต์ |
+| `dome/mascot/dome-celebrate.webp` | โดมมอนสเตอร์กระโดดฉลองพร้อมกระดาษโปรย — ตอนจบภารกิจหรือรับใบประกาศ |
+| `dome/mascot/dome-wait.webp` | โดมมอนสเตอร์ยืนรอฟังอย่างสงบ — หน้าพักที่ให้ดูจอหน้าห้อง |
 | `shop/shop-stage-1..4.svg` | ร้าน isometric 4 สเตจ: ที่ดินเปล่า → ลงเสา → ผนัง+หลังคา → เปิดร้านพร้อมป้ายเว็บ |
 | `icons/nav-{home,quest,knowledge,reward,profile}.svg` | ไอคอน 5 ปุ่มเมนูล่าง |
 | `icons/star-full.svg` · `star-empty.svg` | ดาวเต็ม / ดาวว่าง |
