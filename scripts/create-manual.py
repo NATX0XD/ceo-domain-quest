@@ -67,7 +67,7 @@ def student_pair(doc, items):
         p = cell.add_paragraph(instruction); set_font(p, 10); p.paragraph_format.space_after = Pt(4)
         p = cell.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         for im in ([image] if isinstance(image, str) else image): add_picture(p, im, 6.8 if isinstance(image, str) else 3.35)
-        p = cell.add_paragraph(f'เคล็ดลับ: {tip}'); shade(cell, 'FFF8E8'); set_font(p, 9, False, '8A4A14')
+        p = cell.add_paragraph(f'คำแนะนำการเล่น: {tip}'); shade(cell, 'FFF8E8'); set_font(p, 9, False, '8A4A14')
         p = cell.add_paragraph(f'รูปที่ {n} · {title}'); p.alignment = WD_ALIGN_PARAGRAPH.CENTER; set_font(p, 9, False, '725B43')
 
 def teacher_step(doc, n, title, instruction, tip, image):
@@ -75,7 +75,7 @@ def teacher_step(doc, n, title, instruction, tip, image):
     p = doc.add_paragraph(instruction); set_font(p, 11); p.paragraph_format.space_after = Pt(4)
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER; add_picture(p, image, 13.4)
     caption(doc, n, title)
-    t = doc.add_table(rows=1, cols=1); c = t.cell(0, 0); shade(c); c.text = f'เคล็ดลับ: {tip}'; set_font(c.paragraphs[0], 10, False, '8A4A14')
+    t = doc.add_table(rows=1, cols=1); c = t.cell(0, 0); shade(c); c.text = f'คำแนะนำการเล่น: {tip}'; set_font(c.paragraphs[0], 10, False, '8A4A14')
 
 doc = Document(); sec = doc.sections[0]
 sec.page_width, sec.page_height = Cm(21), Cm(29.7)

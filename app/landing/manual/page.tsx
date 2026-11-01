@@ -39,7 +39,7 @@ function StepCard({ step, index }: { step: string[]; index: number }) {
       <span className="manual-step-no">{index + 1}</span>
       <h3>{step[0]}</h3>
       <p>{step[1]}</p>
-      <div className="manual-tip"><b>เคล็ดลับ</b> ทำตามหมายเลขบนหน้าจอ และกด <strong>ขอความช่วยเหลือ</strong> เมื่อไม่แน่ใจ</div>
+      <div className="manual-tip"><b>คำแนะนำการเล่น</b> ทำตามหมายเลขบนหน้าจอ และกด <strong>ขอความช่วยเหลือ</strong> เมื่อไม่แน่ใจ</div>
     </div>
     <figure><img src={step[2]} alt={`ภาพหน้าจอขั้นตอน ${index + 1}: ${step[0]}`} /><figcaption>รูปที่ {index + 1} · {step[0]}</figcaption></figure>
   </article>
