@@ -3,14 +3,14 @@ import { Hero } from './hero'
 import { MotionRoot } from './reveal'
 import { AiSection, FinalSection, HowSection, MissionsSection, TeacherSection, TourSection } from './sections'
 
-/** "3 พ.ย. 2569 08:00 น." — ทำฝั่งเซิร์ฟเวอร์ให้ข้อความตรงกันทุกเครื่อง */
+/** "วันอังคารที่ 3 พ.ย. 11:00 น." — ทำฝั่งเซิร์ฟเวอร์ให้ข้อความตรงกันทุกเครื่อง */
 export function formatOpenAt(iso: string | undefined): { openAt: string | null; label: string } {
   const d = iso ? new Date(iso) : null
   if (!d || Number.isNaN(d.getTime())) return { openAt: null, label: 'เร็ว ๆ นี้' }
   const label = new Intl.DateTimeFormat('th-TH', {
+    weekday: 'long',
     day: 'numeric',
     month: 'short',
-    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,

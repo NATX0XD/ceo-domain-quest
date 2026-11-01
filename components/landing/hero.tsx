@@ -31,10 +31,6 @@ export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: 
 
   return (
     <header className="ld-hero" ref={ref}>
-      <nav className="ld-nav" aria-label="เมนูหลัก">
-        <a href="/landing" className="ld-nav-brand">CEO Domain Quest</a>
-        <a href="/landing/manual" className="ld-nav-manual">คู่มือการใช้งาน ↗</a>
-      </nav>
       <motion.div className="ld-hero-bg" style={{ y: bgY }} aria-hidden>
         <Pic src="/landing/sea-bg.webp" alt="" width={720} height={1279} priority />
       </motion.div>
