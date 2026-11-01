@@ -77,11 +77,10 @@ export function HowSection() {
       <span className="ld-hw-spark ld-hw-spark--a" aria-hidden>{icon('sparkles', 44)}</span>
       <span className="ld-hw-spark ld-hw-spark--b" aria-hidden>{icon('glowing-star', 36)}</span>
       <div className="ld-wrap">
-        <div className="ld-hw-head">
-          <Head title="เล่นยังไง" sub="ใช้มือถือเครื่องเดียว ไม่ต้องติดตั้งอะไร" />
-        </div>
-        <HowPath />
-        <a className="ld-how-cta" href="/landing/manual">ดูคู่มือฉบับเต็ม <span aria-hidden>↗</span></a>
+        <HowPath
+          head={<div className="ld-hw-head"><Head title="เล่นยังไง" sub="ใช้มือถือเครื่องเดียว ไม่ต้องติดตั้งอะไร" /></div>}
+          after={<a className="ld-how-cta" href="/landing/manual">ดูคู่มือฉบับเต็ม <span aria-hidden>↗</span></a>}
+        />
       </div>
     </section>
   )

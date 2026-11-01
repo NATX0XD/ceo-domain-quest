@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useMotionValueEvent, useScroll } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
-import type { PointerEvent } from 'react'
+import type { PointerEvent, ReactNode } from 'react'
 import { Pic } from './pic'
 import { useLandingScroll } from './reveal'
 
@@ -21,7 +21,8 @@ const SAY = ['ใส่รหัสก่อนนะ!', 'อุ่นเคร�
 const PATH_D = 'M0 28 C 125 28, 125 78, 250 78 S 375 28, 500 28 S 625 78, 750 78 S 875 28, 1000 28'
 
 /** ทางไม้ + โดมเดินตามการเลื่อน: เดสก์ท็อปเดินซ้าย→ขวาบนเส้นทาง มือถือไต่ลงตามเชือก */
-export function HowPath() {
+export function HowPath({ head, after }: { head: ReactNode; after: ReactNode }) {
+  const pin = useRef<HTMLDivElement>(null)
   const track = useRef<HTMLDivElement>(null)
   const steps = useRef<HTMLOListElement>(null)
   const svg = useRef<SVGSVGElement>(null)
@@ -32,7 +33,11 @@ export function HowPath() {
   const [active, setActive] = useState(-1)
   const [back, setBack] = useState(false)
   const draw = useMotionValue(0)
-  const { scrollYProgress } = useScroll({ container: scrollRef, target: track, offset: ['start 85%', 'end 40%'] })
+  // เดสก์ท็อป: ตรึงทั้งฉากแล้วให้สกรอล์พาโดมเดิน · มือถือ: ไม่ตรึง โดมไต่ลงตามเชือกขณะเลื่อนผ่าน
+  const { scrollYProgress: pinned } = useScroll({ container: scrollRef, target: pin, offset: ['start start', 'end end'] })
+  const { scrollYProgress: flowing } = useScroll({ container: scrollRef, target: track, offset: ['start 85%', 'end 40%'] })
+  const desk = () => window.matchMedia('(min-width: 900px)').matches
+  const progress = () => (desk() ? Math.min(1, Math.max(0, (pinned.get() - 0.06) / 0.86)) : flowing.get())
 
   const place = (raw: number) => {
     const t = track.current
@@ -74,9 +79,10 @@ export function HowPath() {
     if (!reduce && p > 0) setActive(next)
   }
 
-  useMotionValueEvent(scrollYProgress, 'change', place)
+  useMotionValueEvent(pinned, 'change', () => { if (desk()) place(progress()) })
+  useMotionValueEvent(flowing, 'change', () => { if (!desk()) place(progress()) })
   useEffect(() => {
-    const sync = () => place(scrollYProgress.get())
+    const sync = () => place(progress())
     sync()
     window.addEventListener('resize', sync)
     return () => window.removeEventListener('resize', sync)
@@ -99,6 +105,9 @@ export function HowPath() {
   }
 
   return (
+    <div className="ld-hw-pin" ref={pin}>
+    <div className="ld-hw-stage">
+    {head}
     <div className="ld-hw-track" ref={track}>
       <svg className="ld-hw-path" ref={svg} viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden>
         <path className="ld-hw-path-base" d={PATH_D} vectorEffect="non-scaling-stroke" />
@@ -150,6 +159,9 @@ export function HowPath() {
           </motion.li>
         ))}
       </ol>
+    </div>
+    {after}
+    </div>
     </div>
   )
 }
