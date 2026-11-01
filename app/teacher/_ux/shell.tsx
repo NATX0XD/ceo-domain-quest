@@ -25,6 +25,7 @@ import {
  * มติเจ้าของ (รอบแก้โจทย์): หน้าครูเป็น **แดชบอร์ดเต็มรูปแบบ** ไม่ต้องยัดทุกอย่างลงจอเดียว
  * ออกแบบสำหรับจอโน้ตบุ๊ก/จอคอมเป็นหลัก · จอแคบใช้ได้แบบพอไหว
  * **กฎห้ามเลื่อนใช้กับแถบบนกับเมนูข้างเท่านั้น** ทั้งคู่อยู่กับที่เสมอ ส่วนเนื้อหาเลื่อนได้
+ * เมนู desktop แสดงทั้งไอคอนและข้อความตั้งแต่ขนาดแท็บเล็ต เพื่อไม่ให้ครูต้องเดาความหมายของไอคอน
  *
  * ── ตัวเลขที่ใช้ มาจากแบบอ้างอิงจริง (scratchpad/ref-teacher-ui.md ภาคผนวก) ──
  * - เมนูข้างกว้าง **236px** (ของดีใช้ 220-260px · Linear/Stripe/Grafana ใช้ 256px)
@@ -284,15 +285,15 @@ export function TeacherShell({
 
   return (
     <div className="flex h-dvh max-h-dvh overflow-hidden bg-surface-sunken">
-      {/* ───────── เมนูข้าง (แท็บเล็ต = ไอคอน · จอกว้าง = เต็ม) */}
+      {/* ───────── เมนูข้าง (แสดง label ตั้งแต่แท็บเล็ต เพื่อให้ปลายทางอ่านได้ทันที) */}
       <aside
         aria-label="เมนูของครู"
-        className="z-10 hidden w-[68px] shrink-0 flex-col border-r border-line bg-surface-raised md:flex xl:w-[248px]"
+        className="z-10 hidden w-[220px] shrink-0 flex-col border-r border-line bg-surface-raised md:flex xl:w-[248px]"
       >
-        {logo(true)}
-        {nav(true)}
-        <div className="border-t border-line p-2 xl:p-3">
-          <p className="hidden items-center gap-1.5 text-note text-ink-muted xl:flex">
+        {logo(false)}
+        {nav(false)}
+        <div className="border-t border-line p-3">
+          <p className="flex items-center gap-1.5 text-note text-ink-muted">
             <ProfileIcon width={16} height={16} aria-hidden className="shrink-0" />
             <span className="truncate">{teacherEmail}</span>
           </p>
@@ -301,10 +302,9 @@ export function TeacherShell({
             onClick={signOut}
             disabled={signingOut}
             title="ออกจากระบบ"
-            className="btn-base mt-0 w-full touch-manipulation bg-surface-raised px-0 text-label text-ink-muted ring-1 ring-line ring-inset hover:bg-danger-100 hover:text-danger-700 disabled:opacity-60 xl:mt-2"
+            className="btn-base mt-2 w-full touch-manipulation bg-surface-raised text-label text-ink-muted ring-1 ring-line ring-inset hover:bg-danger-100 hover:text-danger-700 disabled:opacity-60"
           >
-            <span className="xl:hidden">ออก</span>
-            <span className="hidden xl:inline">{signingOut ? 'กำลังออกจากระบบ…' : 'ออกจากระบบ'}</span>
+            {signingOut ? 'กำลังออกจากระบบ…' : 'ออกจากระบบ'}
           </button>
         </div>
       </aside>

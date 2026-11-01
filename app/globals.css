@@ -623,11 +623,11 @@ select {
   @apply btn-quest bg-quest-600 text-ink-onbrand hover:bg-quest-700;
 }
 @utility btn-go {
-  @apply btn-base min-h-14 w-full rounded-full px-6 text-body-lg font-extrabold text-[#6B2D12]
-    active:translate-y-px active:shadow-[0_4px_0_#6B2D12];
+  @apply btn-base min-h-14 w-full rounded-full px-6 text-body-lg font-extrabold text-[#4A1F0A]
+    active:translate-y-px active:shadow-[0_4px_0_#4A1F0A];
   background-image: linear-gradient(180deg, #FFC51B 0%, #FF7411 100%);
   border: 3px solid #FFF1D6;
-  box-shadow: 0 7px 0 #6B2D12, inset 0 3px 0 rgb(255 255 255 / 0.82), inset 0 -4px 0 rgb(107 45 18 / 0.2);
+  box-shadow: 0 7px 0 #4A1F0A, inset 0 3px 0 rgb(255 255 255 / 0.82), inset 0 -4px 0 rgb(74 31 10 / 0.2);
   text-shadow: 0 1px 0 rgb(255 241 214 / 0.75);
   &:hover { filter: saturate(1.08) brightness(1.04); }
   &:disabled { filter: grayscale(0.35); }
