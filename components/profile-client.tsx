@@ -12,7 +12,6 @@ import {
   ChevronRightIcon,
   ChoiceCard,
   DomeAvatar,
-  ProgressBar,
   StatBadge,
 } from '@/components/ui'
 
@@ -266,11 +265,11 @@ export function ProfileClient({
 
   return (
     <StudentShell
-      withBottomNav
-      className="flex h-full min-h-0 flex-col gap-2.5"
+      withBottomNav={false}
+      className="flex h-full min-h-0 flex-col gap-3 pb-6"
       footer={
         <AppFooter>
-          <FlowNote state={flow.state} idleText={foot.why} className="mb-2" />
+          <FlowNote state={flow.state} className="mb-2" />
           {stepKey === 'card' ? (
             <Link
               href="/mission/m1"
@@ -282,15 +281,17 @@ export function ProfileClient({
             </Link>
           ) : (
             <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => setStep((n) => Math.max(0, n - 1))}
-                disabled={step === 0 || flow.busy}
-                className="shrink-0 px-4"
-              >
-                ย้อน
-              </Button>
+              {stepKey !== 'ask' ? (
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => setStep((n) => Math.max(0, n - 1))}
+                  disabled={flow.busy}
+                  className="shrink-0 px-4"
+                >
+                  ย้อน
+                </Button>
+              ) : null}
               <Button
                 variant={foot.tone}
                 size="lg"
@@ -308,19 +309,12 @@ export function ProfileClient({
         </AppFooter>
       }
     >
-      <StageLine
-        stage={`ขั้นที่ 2 · รู้จักตัวเอง · นาทีที่ ${meta.minuteFrom}-${meta.minuteTo}`}
-        remain={`${stepNo}/${stepList.length}`}
-      />
-      <ProgressBar
-        className="shrink-0"
-        value={stepNo}
-        max={stepList.length}
-        tone="brand"
-        label={`ขั้นที่ ${stepNo} จาก ${stepList.length}`}
-        hideLabel
-        showValue={false}
-      />
+      {stepKey !== 'ask' ? (
+        <StageLine stage={`รู้จักตัวเอง · ขั้น ${stepNo} จาก ${stepList.length}`} />
+      ) : null}
+      <span className="sr-only">
+        ใช้เวลาประมาณ {meta.minuteFrom}-{meta.minuteTo} นาที
+      </span>
 
       {stepKey === 'ask' ? (
         questions.length === 0 ? (
@@ -333,7 +327,6 @@ export function ProfileClient({
           </div>
         ) : (
           <>
-            <DomeTip mood="greet">{meta.ownershipNote}</DomeTip>
             <QuizStepper
               questions={questions.map((q) => ({
                 id: q.id,
@@ -349,6 +342,7 @@ export function ProfileClient({
               }}
               index={qIndex}
               onIndexChange={setQIndex}
+              compactProgress
             />
           </>
         )

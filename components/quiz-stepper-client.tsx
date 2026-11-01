@@ -39,6 +39,8 @@ export interface QuizStepperProps {
   onIndexChange: (next: number) => void
   /** แถวความมั่นใจใต้ตัวเลือก (หน้าเช็กความพร้อมใช้) — ไม่ส่งมาก็ไม่แสดง */
   confidenceSlot?: ReactNode
+  /** ใช้เมื่อ parent เป็นเจ้าของ progress เดียวของ flow เพื่อไม่ให้ตัวชี้วัดซ้ำ */
+  compactProgress?: boolean
   className?: string
 }
 
@@ -49,12 +51,12 @@ export function QuizStepper({
   index,
   onIndexChange,
   confidenceSlot,
+  compactProgress = false,
   className,
 }: QuizStepperProps) {
   const total = questions.length
   const safeIndex = Math.min(Math.max(0, index), Math.max(0, total - 1))
   const current = questions[safeIndex]
-  const answeredCount = questions.filter((q) => answers[q.id] !== undefined).length
   /**
    * ข้อเยอะเกินกว่าจะเรียงปุ่มกระโดดให้ได้ 44 จุดภาพในจอ 390
    * คิดจากที่จริง: ปุ่มย้อน+ถัดไปกินราว 160px เหลือให้จุดราว 195px
@@ -67,24 +69,20 @@ export function QuizStepper({
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col gap-2.5', className)}>
       {/* ตัวบอกว่าอยู่ข้อไหนจากทั้งหมด — ตัวเลขคู่กับแถบ ไม่ได้ใช้สีอย่างเดียว */}
-      <div className="flex shrink-0 items-center gap-2">
-        <p aria-live="polite" className="min-w-0 flex-1 truncate text-label font-bold text-brand-700">
+      <div className="shrink-0">
+        <p aria-live="polite" className="mb-1.5 text-label font-bold text-brand-700">
           ข้อ {safeIndex + 1} จาก {total}
-          {current.topic ? ` · ${current.topic}` : ''}
+          {!compactProgress && current.topic ? ` · ${current.topic}` : ''}
         </p>
-        <p className="shrink-0 text-label font-bold tabular-nums text-ink-muted">
-          ตอบแล้ว {answeredCount}/{total}
-        </p>
+        <ProgressBar
+          value={safeIndex + 1}
+          max={total}
+          tone="brand"
+          label={`ข้อที่ ${safeIndex + 1} จาก ${total}`}
+          hideLabel
+          showValue={false}
+        />
       </div>
-      <ProgressBar
-        className="shrink-0"
-        value={safeIndex + 1}
-        max={total}
-        tone="brand"
-        label={`ข้อที่ ${safeIndex + 1} จาก ${total}`}
-        hideLabel
-        showValue={false}
-      />
 
       <h2 className="shrink-0 text-body-lg font-bold text-pretty text-ink">{current.question}</h2>
 
@@ -125,7 +123,7 @@ export function QuizStepper({
           * และถ้าย่อให้เล็กลงก็ผิดเกณฑ์พื้นที่แตะ 44 จุดภาพ
           * จึงเปลี่ยนเป็นจุดบอกตำแหน่งที่แตะไม่ได้ (อ่านอย่างเดียว) แล้วเดินด้วยปุ่มย้อน/ถัดไปแทน
           */}
-        {compact ? (
+        {compactProgress || compact ? (
           <ol aria-hidden="true" className="flex min-w-0 flex-1 justify-center gap-1">
             {questions.map((q, i) => {
               const done = answers[q.id] !== undefined

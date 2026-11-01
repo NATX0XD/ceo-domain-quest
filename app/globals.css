@@ -1144,7 +1144,7 @@ select {
   position: absolute;
   z-index: 1;
   inset: 31% 8% 0;
-  overflow-y: auto;
+  overflow: visible;
   overscroll-behavior: contain;
   border: 4px solid #6b2d12;
   border-radius: 1.55rem;
@@ -1162,22 +1162,8 @@ select {
   .join-frame-panel .h-16 { height: 3.15rem; }
 }
 @media (max-width: 370px) {
-  .join-frame-panel::before {
-    position: absolute;
-    z-index: 2;
-    top: .4rem;
-    right: .55rem;
-    border: 1px solid rgb(107 45 18 / .28);
-    border-radius: 999px;
-    background: #fff1d6;
-    padding: .08rem .45rem;
-    color: #6b2d12;
-    content: 'เลื่อนดูต่อ ↓';
-    font-size: .7rem;
-    font-weight: 800;
-    line-height: 1.4;
-    pointer-events: none;
-  }
+  .join-frame-panel { inset: 27% 7% 0; }
+  .join-frame-panel .h-16 { height: 2.9rem; }
 }
 .media-dome-shell .app-shell-main { background: #20A9F3 url('/ui/dome/bg.webp') center / cover no-repeat; }
 .media-dome-shell .app-shell-main::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(21 85 200 / .12), rgb(255 241 214 / .42)); pointer-events: none; }

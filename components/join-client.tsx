@@ -9,7 +9,6 @@ import {
   CheckIcon,
   DomeSays,
   PinInput,
-  SpeechBubble,
   TextField,
   Toast,
   ToastViewport,
@@ -47,9 +46,6 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
   const codeOk = cleanCode.length === ROOM_CODE_LENGTH
   const nameOk = cleanNickname.length > 0
   const ready = codeOk && nameOk && pinOk
-
-  // จำนวนช่องที่กรอกครบแล้ว — ใช้บอกนักเรียนว่าเหลืออีกกี่ช่อง แทนคำว่า "กรอกให้ครบ" ลอย ๆ
-  const filled = [codeOk, nameOk, pinOk].filter(Boolean).length
 
   async function submit() {
     if (!ready || busy) return
@@ -152,17 +148,16 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
             disabled={!ready}
             loading={busy}
             loadingLabel="กำลังเข้าห้องเรียน"
+            className="min-h-16 rounded-xl"
           >
-            {ready
-              ? mode === 'join'
-                ? 'เข้าห้องเรียน'
-                : 'เข้าห้องเดิม'
-              : `ยังเหลืออีก ${3 - filled} ช่อง`}
+            {mode === 'join' ? 'เข้าห้องเรียน' : 'เข้าห้องเดิม'}
           </Button>
 
           <Button
             variant="ghost"
+            size="lg"
             fullWidth
+            className="min-h-16 rounded-xl"
             onClick={() => {
               setMode(mode === 'join' ? 'resume' : 'join')
               setError(null)
@@ -179,12 +174,18 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
         </ToastViewport>
       ) : null}
 
-      <div className="media-join-main relative min-h-full px-3 pt-3 pb-4">
-      <SpeechBubble speaker="dome" speakerName="โดม" tail="none" className="relative z-10 mx-auto mb-3 max-w-[25rem] [&_.text-note]:text-[0.875rem]">
-        {mode === 'join'
-          ? 'ใส่รหัสห้อง ชื่อเล่น และตั้ง PIN 4 หลักได้เลยครับ'
-          : 'ใส่รหัสห้อง ชื่อเล่นเดิม และ PIN 4 หลักที่เคยตั้งไว้ครับ'}
-      </SpeechBubble>
+      <div className="media-join-main relative min-h-full px-3 pt-12 pb-4">
+      <Link
+        href="/"
+        className="absolute left-3 top-2 z-10 inline-flex min-h-11 items-center gap-1 rounded-full bg-[#fff1d6] px-3 text-label font-bold text-[#6b2d12] shadow-[0_3px_0_#6b2d12] focus-ring"
+      >
+        <span aria-hidden="true">←</span> หน้าแรก
+      </Link>
+
+      <header className="relative z-10 mx-auto mb-2 max-w-[25rem] text-center text-[#4a1f0a]">
+        <p className="text-title-sm font-extrabold">เข้าห้องเรียน</p>
+        <p className="text-label font-semibold">รหัสห้อง · ชื่อเล่น · PIN 4 หลัก</p>
+      </header>
 
       <section className="join-frame-stage" aria-label="แบบฟอร์มเข้าห้องเรียน">
         <img src="/ui/join/frame.webp" alt="กรอบไม้ประดับตัวละครสำหรับแบบฟอร์มเข้าห้องเรียน" aria-hidden="true" className="join-frame-art" />
@@ -216,7 +217,6 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
           placeholder="QUEST9"
           center
           valid={codeOk}
-          hint="ตัวอักษร/ตัวเลขรวม 6 ตัว ครูฉายไว้บนจอ"
           inputClassName="text-title font-extrabold tracking-[0.3em] uppercase"
         />
 
@@ -229,11 +229,6 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
           autoComplete="off"
           placeholder="ชื่อที่เพื่อนเรียก"
           valid={nameOk}
-          hint={
-            mode === 'join'
-              ? 'ชื่อไม่ซ้ำกับเพื่อน ถ้าซ้ำระบบจะเติมเลขให้'
-              : 'ต้องเป็นชื่อเดิมที่เคยใช้ในห้องนี้'
-          }
         />
 
         <PinInput
@@ -241,23 +236,10 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
           onChange={setPin}
           length={PIN_LENGTH}
           label={mode === 'join' ? 'ตั้งรหัส 4 หลักของตัวเอง' : 'รหัส 4 หลักเดิม'}
-          hint={
-            pin.length === 0
-              ? 'ใช้ตอนย้ายเครื่องหรือเข้าใหม่ จำให้ได้นะ'
-              : pinOk
-                ? 'ครบ 4 หลักแล้ว'
-                : `ใส่อีก ${PIN_LENGTH - pin.length} หลัก`
-          }
           disabled={busy}
         />
       </form>
 
-      <Link
-        href="/"
-        className="mx-auto mt-6 block w-fit min-h-11 rounded-md px-3 py-2 text-label font-bold text-brand-700 underline focus-ring"
-      >
-        กลับหน้าแรก
-      </Link>
         </div>
       </section>
       </div>
