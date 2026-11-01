@@ -1211,6 +1211,56 @@ select {
     linear-gradient(180deg, rgb(32 169 243 / .12), rgb(255 241 214 / .88)),
     url('/ui/dome/bg.webp') center / cover;
 }
+.student-world.setup-world-shell .app-shell-main,
+.student-world.profile-world-shell .app-shell-main {
+  background:
+    linear-gradient(180deg, rgb(91 203 246 / .2), rgb(255 241 214 / .97) 30%, rgb(255 241 214 / .99));
+}
+.student-world.setup-world-shell .app-shell-main > div,
+.student-world.profile-world-shell .app-shell-main > div {
+  isolation: isolate;
+}
+.student-world.setup-world-shell .app-shell-main > div::before,
+.student-world.profile-world-shell .app-shell-main > div::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: 7rem;
+  background: linear-gradient(180deg, rgb(91 203 246 / .24), transparent);
+  pointer-events: none;
+}
+.student-world.setup-world-shell .setup-preview-sticky {
+  border-radius: 1.5rem;
+}
+.student-game-screen {
+  font-family: var(--font-display), var(--font-noto-sans-thai), sans-serif;
+}
+.student-game-screen > .relative > header {
+  background: linear-gradient(180deg, #b96b2d, #7d3514) !important;
+  border-bottom: 3px solid #4a1f0a;
+  color: #fff1d6;
+  box-shadow: 0 4px 0 rgb(74 31 10 / .28);
+}
+.student-game-screen > .relative > header h1,
+.student-game-screen > .relative > header button {
+  color: #fff1d6;
+}
+.student-game-screen > .relative > header [class*='bg-brand-500'] {
+  background-color: #ffc51b;
+}
+.student-game-screen > .relative > main {
+  background: linear-gradient(180deg, rgb(32 169 243 / .18), rgb(255 241 214 / .86));
+}
+.student-game-screen > .relative > footer {
+  border-top: 3px solid #6b2d12;
+  background: rgb(255 241 214 / .97) !important;
+}
+.student-game-screen .m1-intro-copy,
+.student-game-screen .rounded-\[24px\] {
+  border-color: #6b2d12;
+  box-shadow: 0 5px 0 rgb(107 45 18 / .25);
+}
 .student-world .app-shell-header,
 .student-world .app-shell-footer {
   background: rgb(255 241 214 / .96);

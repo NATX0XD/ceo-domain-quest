@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppFooter, AppShell } from '@/components/app-shell'
-import { Button, ChevronRightIcon, DomeAvatar, cn } from '@/components/ui'
+import { Button, ChevronRightIcon, cn } from '@/components/ui'
 
 /**
  * S-02 คำแนะนำการใช้งาน — การ์ด 3 ใบ ปัด/กดดูได้ กดข้ามได้ตลอด
@@ -96,7 +96,6 @@ export function IntroCardsClient({
           <img src="/ui/welcome/dome.webp" alt="" className="intro-layer intro-layer-dome" />
         </div>
         <div className="intro-copy-panel">
-        <DomeAvatar mood="greet" size={88} decorative />
         <p className="text-label font-bold text-brand-700">
           {index + 1}/{cards.length}
         </p>

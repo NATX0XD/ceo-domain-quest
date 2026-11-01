@@ -99,6 +99,7 @@ export function SetupForm({
 
   return (
     <StudentShell
+      className="setup-world-shell"
       // ฟอร์ม 3 ข้อยาวเกินจอ ปุ่มบันทึกจึงอยู่แถบท้ายที่ไม่เลื่อน
       // ข้อความบนปุ่มบอกด้วยว่าเหลืออีกกี่ข้อ นักเรียนไม่ต้องเลื่อนขึ้นไปดูแถบความคืบหน้า
       footer={
@@ -127,7 +128,7 @@ export function SetupForm({
       <PageHeading
         eyebrow="ก่อนเริ่มภารกิจ"
         title="ตั้งค่าร้านของเรา"
-        description="เลือกภาพร้าน ตั้งชื่อ แล้วค่อยเริ่มภารกิจ ข้อมูลนี้จะถูกล็อกเมื่อเริ่มภารกิจแรก"
+        description="เลือกร้าน ตั้งชื่อ แล้วเริ่มภารกิจ"
       />
 
       <ProgressBar
@@ -177,7 +178,8 @@ export function SetupForm({
           {businessTypes.map((b) => (
             <ChoiceCard
               key={b.id}
-              label={b.label}
+              label={b.label.split('/')[0]?.trim() ?? b.label}
+              ariaLabel={`ประเภทร้าน ${b.label}`}
               icon={<img src={`/setup/${b.id}.webp`} alt="" className="size-12 rounded-xl object-cover" />}
               selected={businessTypeId === b.id}
               onSelect={() => setBusinessTypeId(b.id)}
@@ -209,13 +211,13 @@ export function SetupForm({
         >
           <ChoiceCard
             label="จดแล้ว"
-            description="ร้านเราจดทะเบียนเป็นบริษัทหรือห้างหุ้นส่วนแล้ว"
+            description="มีนิติบุคคลแล้ว"
             selected={isRegisteredCompany === true}
             onSelect={() => setIsRegisteredCompany(true)}
           />
           <ChoiceCard
             label="ยังไม่ได้จด"
-            description="ยังขายในนามตัวเองอยู่"
+            description="ร้านส่วนตัว"
             selected={isRegisteredCompany === false}
             onSelect={() => setIsRegisteredCompany(false)}
           />
@@ -226,13 +228,13 @@ export function SetupForm({
         <div role="radiogroup" aria-label="กลุ่มลูกค้าของร้าน" className="flex flex-col gap-2">
           <ChoiceCard
             label="ในไทย"
-            description="ขายให้คนไทยเป็นหลัก"
+            description="ลูกค้าหลักอยู่ในไทย"
             selected={audience === 'thai'}
             onSelect={() => setAudience('thai')}
           />
           <ChoiceCard
             label="ต่างประเทศด้วย"
-            description="อยากให้คนต่างชาติสั่งของเราได้"
+            description="มีลูกค้าต่างประเทศ"
             selected={audience === 'international'}
             onSelect={() => setAudience('international')}
           />

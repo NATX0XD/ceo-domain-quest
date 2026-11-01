@@ -732,7 +732,7 @@ function ShopPhotoScene({ src, level, kind, label, decorative, className }: Shop
       <polygon points="8,74 50,88 50,91 8,77" className="fill-quest-300" />
       <polygon points="92,74 50,88 50,91 92,77" className="fill-quest-300" />
 
-      {reveal > 0 ? (
+      {reveal > 0 || level === 0 ? (
         <image
           href={src}
           x={0}
@@ -740,7 +740,8 @@ function ShopPhotoScene({ src, level, kind, label, decorative, className }: Shop
           width={100}
           height={100}
           preserveAspectRatio="xMidYMid slice"
-          mask={reveal < 1 ? `url(#${maskId})` : undefined}
+          mask={reveal > 0 && reveal < 1 ? `url(#${maskId})` : undefined}
+          opacity={level === 0 ? 0.22 : 1}
         />
       ) : null}
 

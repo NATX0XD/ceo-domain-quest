@@ -49,7 +49,7 @@ export function AppScreen({
   return (
     <div
       className={cn(
-        'fixed inset-0 z-40 flex h-dvh w-full flex-col overflow-hidden',
+        'student-game-screen fixed inset-0 z-40 flex h-dvh w-full flex-col overflow-hidden',
         theme.id === 'm2' && 'm2-shell',
       )}
       style={style}

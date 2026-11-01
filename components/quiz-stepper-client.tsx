@@ -123,7 +123,9 @@ export function QuizStepper({
           * และถ้าย่อให้เล็กลงก็ผิดเกณฑ์พื้นที่แตะ 44 จุดภาพ
           * จึงเปลี่ยนเป็นจุดบอกตำแหน่งที่แตะไม่ได้ (อ่านอย่างเดียว) แล้วเดินด้วยปุ่มย้อน/ถัดไปแทน
           */}
-        {compactProgress || compact ? (
+        {compactProgress ? (
+          <span className="min-w-0 flex-1" aria-hidden="true" />
+        ) : compact ? (
           <ol aria-hidden="true" className="flex min-w-0 flex-1 justify-center gap-1">
             {questions.map((q, i) => {
               const done = answers[q.id] !== undefined

@@ -763,11 +763,13 @@ export function LearnPathClient({
                   เตรียมตัวก่อนภารกิจ
                 </p>
                 <h2 className={cn('mt-1 text-title font-extrabold', ink)}>เป้าหมายด่านนี้</h2>
-                <p className={cn('mt-3 text-body-lg', ink)}>{path.story}</p>
+                <p className={cn('mt-3 line-clamp-3 text-body-lg', ink)}>{path.story}</p>
+                <details className="mt-2 rounded-xl bg-white/45 px-3 py-2 text-label">
+                  <summary className="cursor-pointer font-bold text-brand-700">อ่านเรื่องเต็ม</summary>
+                  <p className={cn('mt-2 text-body', inkMuted)}>{path.story}</p>
+                </details>
                 {!singleMode ? (
-                  <p className={cn('mt-3 text-body', inkMuted)}>
-                    ก่อนเริ่ม โดมขอเช็กพื้นฐาน 3 ข้อ ไม่มีคะแนนหัก แค่ช่วยให้รู้ว่าวิธีเรียนแบบไหนเหมาะกับเราตอนนี้
-                  </p>
+                  <p className={cn('mt-3 text-label font-semibold', inkMuted)}>เช็กพื้นฐาน 3 ข้อ · ไม่หักคะแนน</p>
                 ) : null}
               </GlassCard>
             </>

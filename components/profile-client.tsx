@@ -266,7 +266,7 @@ export function ProfileClient({
   return (
     <StudentShell
       withBottomNav={false}
-      className="flex h-full min-h-0 flex-col gap-3 pb-6"
+      className="profile-world-shell flex h-full min-h-0 flex-col gap-3 pb-6"
       footer={
         <AppFooter>
           <FlowNote state={flow.state} className="mb-2" />
