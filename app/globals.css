@@ -1436,10 +1436,11 @@ select {
 /* ตัวเปิด-ปิดจริงของแผ่น: ไม่มี JavaScript มีแต่ตัวเลือก :target ของ CSS
    เขียนเป็นกฎ CSS ตรง ๆ เพราะต้องอ้างถึง "พี่น้องที่อยู่หลังตัวที่ถูก target" ซึ่ง utility ทำไม่ได้ */
 .sheet-panel:target {
-  /* Tailwind v4 emits translate-y-full through --tw-translate-y. Reset the
-     variable as well as transform so the target sheet actually enters. */
+  /* Tailwind v4 emits translate-y-full through the CSS `translate` property,
+     not only `transform`. Reset both forms so a targeted sheet enters. */
   --tw-translate-x: 0px;
   --tw-translate-y: 0px;
+  translate: 0 0;
   transform: none;
 }
 .sheet-panel:target ~ .sheet-backdrop {
