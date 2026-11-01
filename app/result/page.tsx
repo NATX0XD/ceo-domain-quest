@@ -174,7 +174,7 @@ export default async function ResultPage() {
             <div className="mb-2 flex items-center gap-2">
               <DomeAvatar mood="celebrate" size={44} decorative />
               <SpeechBubble speaker="dome" tail="left" className="min-w-0 flex-1 px-3 py-2">
-                <span className="line-clamp-2 text-label font-bold text-ink">{nowLine}</span>
+                <span className="break-words text-label font-bold text-ink">{nowLine}</span>
               </SpeechBubble>
             </div>
             {earned ? (

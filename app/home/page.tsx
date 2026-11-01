@@ -159,7 +159,7 @@ export default async function HomePage() {
         <div className="flex shrink-0 items-center gap-2">
           <DomeAvatar mood={nextMission ? 'cheer' : 'celebrate'} size={60} decorative sparkle />
           <SpeechBubble speaker="dome" tail="left" className="min-w-0 flex-1 px-4 py-2.5">
-            <span className="line-clamp-2 text-label font-bold text-ink">{domeLine}</span>
+            <span className="break-words text-label font-bold text-ink">{domeLine}</span>
           </SpeechBubble>
         </div>
 

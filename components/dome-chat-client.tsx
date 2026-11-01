@@ -51,6 +51,7 @@ export function DomeChatClient({
     { id: 0, who: 'dome', text: greeting, action: greetingAction, source: 'fallback' },
   ])
   const [replies, setReplies] = useState(quickReplies)
+  const [showReplies, setShowReplies] = useState(false)
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const nextId = useRef(1)
@@ -222,7 +223,16 @@ export function DomeChatClient({
 
           {/* คำตอบด่วนของเทิร์นล่าสุด — อยู่ต่อท้ายบทสนทนา เลื่อนตามข้อความ
               การเลื่อนอัตโนมัติ (bottomRef) พาปุ่มพวกนี้เข้ามาในจอให้เองทุกครั้งที่โดมตอบ */}
-          {replies.length > 0 && !busy ? (
+          {replies.length > 0 && !busy && !showReplies ? (
+            <button
+              type="button"
+              onClick={() => setShowReplies(true)}
+              className="card-tap flex min-h-14 items-center justify-between rounded-xl bg-surface-raised p-4 text-body font-semibold text-brand-700 shadow-soft-1 ring-2 ring-brand-100 ring-inset"
+            >
+              <span>ถามโดม</span>
+              <ChevronRightIcon width={20} height={20} aria-hidden className="shrink-0 opacity-70" />
+            </button>
+          ) : replies.length > 0 && !busy ? (
             <section aria-label="คำตอบด่วน" className="flex flex-col gap-2">
               {replies.map((r) => (
                 <button
