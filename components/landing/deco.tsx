@@ -40,3 +40,11 @@ export function DecoLayer({ scene = 'sky', tone = 'bright' }: DecoProps) {
     <img className="ld-deco-props ld-deco-props--two" data-deco-float src="/landing/deco/props-signs-palms.webp" alt="" loading="lazy" />
   </div>
 }
+
+/** ไล่สีขอบบน/ล่างของฉากให้ต่อกับฉากข้างเคียงเนียน ไม่เป็นรอยตัด */
+export function Fade({ top, bottom }: { top?: string; bottom?: string }) {
+  return <>
+    {top && <span className="ld-fade ld-fade--top" style={{ ['--fade' as string]: top }} aria-hidden />}
+    {bottom && <span className="ld-fade ld-fade--bottom" style={{ ['--fade' as string]: bottom }} aria-hidden />}
+  </>
+}
