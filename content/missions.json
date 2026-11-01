@@ -110,17 +110,20 @@
         "game": {
           "title": "ต่อชิ้นส่วนให้เป็นชื่อเว็บร้านขนมหวาน",
           "kind": "build",
-          "instruction": "ชื่อเว็บมี 3 ชิ้นต่อกัน มีจุดเป็นตัวคั่น · ชิ้นซ้ายสุดคือชื่อโฮสต์ บอกว่าเป็นส่วนไหนของเครื่องบริการ เว็บทั่วไปใช้ www · ชิ้นกลางคือชื่อโดเมน เป็นชื่อร้านที่เจ้าของตั้งเอง · ชิ้นขวาสุดคือนามสกุลโดเมน บอกประเภทกับประเทศ · ลองอ่านตัวอย่าง www.coffeethai.com แล้วชี้ให้ได้ว่าชิ้นไหนเป็นอะไร · จากนั้นใช้หลักเดียวกันวางชิ้นส่วนของร้านนี้ลงช่องให้ครบ 3 ช่อง · ในกองมีชิ้นหลอกปนอยู่ เป็นของที่เขียนติดกับชื่อเว็บแต่ไม่ได้เป็นส่วนของชื่อ อ่านให้ดีก่อนหยิบ",
+          "instruction": "ชื่อเว็บมี 3 ชิ้นต่อกัน มีจุดเป็นตัวคั่น · ฝึกดูตัวอย่าง booking.kanombanyai.com, shop.kanombanyai.com และ shop.kanombanyai.shop แล้วอ่านจากขวาไปซ้าย · ชิ้นซ้ายสุดคือส่วนนำหน้า/บริการย่อย ชิ้นกลางคือชื่อธุรกิจ และชิ้นขวาสุดคือนามสกุลโดเมน · ระวังชื่อที่สลับเป็น com.kanombanyai.shop และชิ้นหลอก playflower, order, co, .th ซึ่งไม่ใช่คำตอบของโจทย์นี้ · วางชิ้นส่วนของ booking.kanombanyai.com ลงช่องให้ครบ 3 ช่อง แล้วกดตรวจคำตอบ",
           "items": [
-            { "id": "m2-g-slot1", "type": "slot", "label": "ช่องที่ 1 ชื่อโฮสต์ (Host)" },
+            { "id": "m2-g-slot1", "type": "slot", "label": "ช่องที่ 1 ส่วนนำหน้า/บริการย่อย" },
             { "id": "m2-g-slot2", "type": "slot", "label": "ช่องที่ 2 ชื่อโดเมน (Domain)" },
             { "id": "m2-g-slot3", "type": "slot", "label": "ช่องที่ 3 นามสกุลโดเมน" },
-            { "id": "m2-g-p1", "type": "piece", "text": "www." },
-            { "id": "m2-g-p2", "type": "piece", "text": "kanomwan" },
+            { "id": "m2-g-p1", "type": "piece", "text": "booking." },
+            { "id": "m2-g-p2", "type": "piece", "text": "kanombanyai" },
             { "id": "m2-g-p3", "type": "piece", "text": ".com" },
-            { "id": "m2-g-p4", "type": "piece", "text": "https://" },
-            { "id": "m2-g-p5", "type": "piece", "text": "/product" },
-            { "id": "m2-g-p6", "type": "piece", "text": ".html" }
+            { "id": "m2-g-p4", "type": "piece", "text": "shop." },
+            { "id": "m2-g-p5", "type": "piece", "text": "playflower" },
+            { "id": "m2-g-p6", "type": "piece", "text": "order" },
+            { "id": "m2-g-p7", "type": "piece", "text": "co" },
+            { "id": "m2-g-p8", "type": "piece", "text": ".th" },
+            { "id": "m2-g-p9", "type": "piece", "text": "com." }
           ]
         },
         "buddy": {

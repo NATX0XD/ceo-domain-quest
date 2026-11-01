@@ -72,7 +72,7 @@
           { "slot": "m2-g-slot2", "piece": "m2-g-p2" },
           { "slot": "m2-g-slot3", "piece": "m2-g-p3" }
         ],
-        "distractors": ["m2-g-p4", "m2-g-p5", "m2-g-p6"]
+        "distractors": ["m2-g-p4", "m2-g-p5", "m2-g-p6", "m2-g-p7", "m2-g-p8", "m2-g-p9"]
       }
     },
     {

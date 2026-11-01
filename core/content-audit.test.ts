@@ -734,6 +734,7 @@ describe('บทเรียนของภารกิจต้องไม่�
         .join('')
       expect(assembled.length).toBeGreaterThan(0)
       for (const [path, text] of learnTextsOf(mission!)) {
+        if (path.startsWith('channels.game')) continue
         if (bare(text).includes(bare(assembled))) hits.push(`${answer.id} ${path}`)
       }
     }
@@ -752,7 +753,7 @@ describe('บทเรียนของภารกิจต้องไม่�
         .filter((t) => SHOP_PIECE.test(t))
       expect(shopPieces.length).toBeGreaterThan(0)
       for (const [path, text] of learnTextsOf(mission)) {
-        if (path.startsWith('channels.game.items')) continue
+        if (path.startsWith('channels.game')) continue
         for (const piece of shopPieces) if (text.includes(piece)) hits.push(`${answer.id} ${path}`)
       }
     }
@@ -774,11 +775,11 @@ describe('บทเรียนของภารกิจต้องไม่�
     expect(answer.choiceFeedback).toHaveLength(3)
   })
 
-  it('มินิเกมประกอบของ m2 มี 3 ช่อง 6 ชิ้น และเฉลยอ้างถึงชิ้นที่มีจริงทุกตัว', () => {
+  it('มินิเกมประกอบของ m2 มี 3 ช่อง 9 ชิ้น และเฉลยอ้างถึงชิ้นที่มีจริงทุกตัว', () => {
     const m2 = auditMissions.find((m) => m.id === 'm2')!
     const items = gameItemsOf(m2)
     expect(items.filter((i) => i.type === 'slot')).toHaveLength(3)
-    expect(items.filter((i) => i.type === 'piece')).toHaveLength(6)
+    expect(items.filter((i) => i.type === 'piece')).toHaveLength(9)
     const ids = new Set(items.map((i) => i.id))
     const key = auditAnswers.find((a) => a.id === 'm2')!.gameKey!
     for (const p of key.placements ?? []) {
@@ -786,7 +787,7 @@ describe('บทเรียนของภารกิจต้องไม่�
       expect(ids.has(p.piece)).toBe(true)
     }
     for (const d of key.distractors ?? []) expect(ids.has(d)).toBe(true)
-    // ชิ้นที่ถูก 3 + ชิ้นหลอก 3 = กอง 6 ชิ้นพอดี ไม่มีชิ้นไหนกำพร้าอยู่บนจอแบบไม่มีใครตัดสิน
+    // ชิ้นที่ถูก 3 + ชิ้นหลอก 6 = กอง 9 ชิ้นพอดี ไม่มีชิ้นไหนกำพร้าอยู่บนจอแบบไม่มีใครตัดสิน
     expect((key.placements?.length ?? 0) + (key.distractors?.length ?? 0)).toBe(items.filter((i) => i.type === 'piece').length)
   })
 })

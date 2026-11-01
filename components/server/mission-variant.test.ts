@@ -18,6 +18,9 @@ describe('รูปแบบ M2 ต่อผู้เรียน', () => {
     const pieces = game.items.filter((item) => (item as { type?: string }).type === 'piece') as { text: string }[]
 
     expect(pieces.map((piece) => piece.text).join(' ')).toContain(`${variant.slug} ${variant.suffix}`)
+    expect(pieces.map((piece) => piece.text)).toEqual(
+      expect.arrayContaining(['booking.', variant.slug, variant.suffix, 'shop.', 'playflower', 'order', 'co', '.th', 'com.']),
+    )
     expect(personalized.channels.clip.script).toContain('www.coffeethai.com')
     expect(personalized.channels.clip.script).toContain('จุด com')
     expect(personalized.channels.clip.script).not.toContain('kanomwan')
@@ -34,7 +37,7 @@ describe('รูปแบบ M2 ต่อผู้เรียน', () => {
     const base = assemblePlanOf(mission, 'student-a')!
     expect(base.slots.map((slot) => slot.id)).toEqual(['m2-g-slot1', 'm2-g-slot2', 'm2-g-slot3'])
     expect(new Set(base.pieces.map((piece) => piece.id))).toEqual(
-      new Set(['m2-g-p1', 'm2-g-p2', 'm2-g-p3', 'm2-g-p4', 'm2-g-p5', 'm2-g-p6']),
+      new Set(['m2-g-p1', 'm2-g-p2', 'm2-g-p3', 'm2-g-p4', 'm2-g-p5', 'm2-g-p6', 'm2-g-p7', 'm2-g-p8', 'm2-g-p9']),
     )
   })
 })
