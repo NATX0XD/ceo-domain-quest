@@ -18,7 +18,7 @@ const FLOW = [
 
 const SAY = ['ใส่รหัสก่อนนะ!', 'อุ่นเครื่องกัน', 'เลือกแบบที่ชอบ', 'ลุยทีละเกาะ!', 'บอสรออยู่!'] as const
 
-const PATH_D = 'M0 50 C 100 50, 100 82, 200 82 S 300 18, 400 18 S 500 82, 600 82 S 700 18, 800 18 S 900 50, 1000 50'
+const PATH_D = 'M0 28 C 125 28, 125 78, 250 78 S 375 28, 500 28 S 625 78, 750 78 S 875 28, 1000 28'
 
 /** ทางไม้ + โดมเดินตามการเลื่อน: เดสก์ท็อปเดินซ้าย→ขวาบนเส้นทาง มือถือไต่ลงตามเชือก */
 export function HowPath() {
@@ -32,7 +32,7 @@ export function HowPath() {
   const [active, setActive] = useState(-1)
   const [back, setBack] = useState(false)
   const draw = useMotionValue(0)
-  const { scrollYProgress } = useScroll({ container: scrollRef, target: track, offset: ['start 45%', 'end 85%'] })
+  const { scrollYProgress } = useScroll({ container: scrollRef, target: track, offset: ['start 85%', 'end 40%'] })
 
   const place = (raw: number) => {
     const t = track.current
@@ -47,7 +47,7 @@ export function HowPath() {
     let y = 0
     let next = -1
     if (window.matchMedia('(min-width: 900px)').matches && path.current && svg.current) {
-      const at = 0.05 + 0.9 * p
+      const at = p
       const pt = path.current.getPointAtLength(path.current.getTotalLength() * at)
       const s = svg.current.getBoundingClientRect()
       x = s.left - box.left + (pt.x / 1000) * s.width
@@ -88,8 +88,10 @@ export function HowPath() {
     if (e.pointerType !== 'mouse') return
     const el = e.currentTarget
     const r = el.getBoundingClientRect()
-    el.style.setProperty('--rx', `${((e.clientY - r.top) / r.height - 0.5) * -10}deg`)
-    el.style.setProperty('--ry', `${((e.clientX - r.left) / r.width - 0.5) * 12}deg`)
+    el.style.setProperty('--rx', `${((e.clientY - r.top) / r.height - 0.5) * -16}deg`)
+    el.style.setProperty('--ry', `${((e.clientX - r.left) / r.width - 0.5) * 22}deg`)
+    el.style.setProperty('--gx', `${((e.clientX - r.left) / r.width) * 100}%`)
+    el.style.setProperty('--gy', `${((e.clientY - r.top) / r.height) * 100}%`)
   }
   const untilt = (e: PointerEvent<HTMLAnchorElement>) => {
     e.currentTarget.style.removeProperty('--rx')

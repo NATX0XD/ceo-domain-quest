@@ -234,57 +234,6 @@
 /* ---------- ครู ---------- */
 
 /* ---------- AI ---------- */
-.ld-ai { display: grid; gap: 28px; justify-items: center; align-items: end; position: relative; }
-.ld-ai::before { content: ''; position: absolute; inset: -40px -12px; border-radius: 44px; background: radial-gradient(circle at 18% 35%, rgba(255,255,255,.72), transparent 19%), radial-gradient(circle at 78% 78%, rgba(141,103,255,.22), transparent 35%); pointer-events: none; }
-.ld-ai::after { content: '✦  ✧  ✦'; position: absolute; top: 2%; right: 4%; color: #ffd75b; font-size: 22px; letter-spacing: 14px; transform: rotate(-9deg); animation: ld-twinkle 2.6s ease-in-out infinite; pointer-events: none; }
-.ld-chat-window { position: relative; z-index: 1; display: flex; flex-direction: column; width: min(100%, 520px); min-height: 548px; overflow: hidden; border: 4px solid #4a347f; border-radius: 28px; background: rgba(253,250,246,.96); box-shadow: 0 12px 0 rgba(46,25,87,.3), 0 24px 36px rgba(45,24,93,.22); }
-.ld-chat-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: linear-gradient(135deg, #fffdf7, #f0e7ff); border-bottom: 2px solid #e4d5fb; }
-.ld-chat-profile { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.ld-chat-profile > span:last-child { display: grid; gap: 1px; }
-.ld-chat-profile b { font-family: var(--font-display-thai), sans-serif; font-size: 19px; color: var(--ld-ink); }
-.ld-chat-profile small { display: flex; align-items: center; gap: 5px; color: #4c8b57; font-size: 12px; font-weight: 700; }
-.ld-chat-profile small i { width: 8px; height: 8px; border-radius: 50%; background: #46b95e; box-shadow: 0 0 0 3px rgba(70,185,94,.16); }
-.ld-chat-lock { display: inline-flex; align-items: center; gap: 5px; flex: none; padding: 6px 9px; border: 2px solid #d0baf1; border-radius: 10px; background: #fff; color: var(--ld-purple-d); font-size: 12px; font-weight: 700; white-space: nowrap; }
-.ld-chat-lock img { width: 16px; height: 16px; }
-.ld-chat-thread { display: grid; align-content: start; gap: 12px; flex: 1; padding: 18px 16px 12px; background: linear-gradient(180deg, rgba(255,248,239,.72), rgba(245,238,255,.74)); }
-.ld-chat-avatar { display: grid; place-items: center; flex: none; width: 38px; height: 38px; overflow: hidden; border: 2px solid #fff; border-radius: 13px; box-shadow: 0 3px 0 rgba(64,37,114,.18); }
-.ld-chat-avatar--dome { background: linear-gradient(145deg, #f8dbff, #a69bf5); }
-.ld-chat-avatar--user { background: linear-gradient(145deg, #ffe1a2, #f59e67); }
-.ld-chat-avatar img { width: 100%; height: 100%; object-fit: contain; }
-.ld-msg-row { display: flex; align-items: flex-end; gap: 8px; max-width: 94%; opacity: 0; animation: ld-chat-reveal .48s cubic-bezier(.22,1,.36,1) forwards; }
-.ld-msg-row[data-chat-index="0"] { order: 0; animation-delay: .25s; }
-.ld-msg-row[data-chat-index="1"] { order: 2; animation-delay: 1.95s; }
-.ld-msg-row[data-chat-index="2"] { order: 4; animation-delay: 4.55s; }
-.ld-msg-row[data-chat-index="3"] { order: 6; animation-delay: 6.35s; }
-.ld-typing-row { max-width: 94%; }
-.ld-typing-row--one { order: 1; animation: ld-chat-typing 1.15s ease-in-out .95s both; }
-.ld-typing-row--two { order: 5; animation: ld-chat-typing 1.15s ease-in-out 5.35s both; }
-.ld-msg-row--me { justify-self: end; }
-.ld-msg-row--dome { justify-self: start; }
-.ld-msg { max-width: calc(100% - 46px); padding: 9px 12px 8px; border-radius: 17px; font-size: 15px; line-height: 1.48; overflow-wrap: anywhere; box-shadow: 0 4px 0 rgba(90,50,170,.12); }
-.ld-msg--me { background: var(--ld-purple); color: #fff; border-bottom-right-radius: 5px; }
-.ld-msg--dome { background: #fff; border: 2px solid #e1d2f7; color: var(--ld-ink); border-bottom-left-radius: 5px; }
-.ld-msg-meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
-.ld-msg-meta b { font-family: var(--font-display-thai), sans-serif; font-size: 12px; opacity: .82; }
-.ld-msg-meta time { font-size: 10px; opacity: .62; }
-.ld-msg p { margin: 0; }
-.ld-msg-row[data-chat-index="1"] .ld-msg p { clip-path: inset(0 100% 0 0); animation: ld-chat-type 1.18s steps(28, end) 2.18s forwards; }
-.ld-msg-row[data-chat-index="3"] .ld-msg p { clip-path: inset(0 100% 0 0); animation: ld-chat-type 1.24s steps(32, end) 6.58s forwards; }
-.ld-lock { display: flex; align-items: center; gap: 5px; margin-top: 7px; padding-top: 6px; border-top: 1px solid #eadff8; font-size: 12px; font-weight: 700; color: var(--ld-purple-d); }
-.ld-lock img { width: 17px; height: 17px; }
-.ld-typing { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border: 2px solid #e1d2f7; border-radius: 17px 17px 17px 5px; background: #fff; box-shadow: 0 4px 0 rgba(90,50,170,.12); }
-.ld-typing > span { display: flex; gap: 4px; }
-.ld-typing i { display: block; width: 6px; height: 6px; border-radius: 50%; background: #8765d2; animation: ld-typing 1s ease-in-out infinite; }
-.ld-typing i:nth-child(2) { animation-delay: .15s; } .ld-typing i:nth-child(3) { animation-delay: .3s; }
-.ld-typing small { color: var(--ld-ink-2); font-size: 11px; }
-.ld-suggestions { display: flex; flex-wrap: wrap; gap: 7px; padding: 10px 14px 12px; border-top: 1px solid #eadff8; background: #fbf8ff; }
-.ld-suggestions button { padding: 6px 9px; border: 2px solid #cbb4ef; border-radius: 9px; background: #fff; color: var(--ld-purple-d); cursor: pointer; font: 600 12px var(--font-noto-sans-thai), sans-serif; transition: background .2s, transform .2s; }
-.ld-suggestions button:hover { background: #f1e8ff; transform: translateY(-2px); }
-.ld-chat-input { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-top: 2px solid #e4d5fb; background: #fffdf9; }
-.ld-chat-input input { min-width: 0; flex: 1; height: 42px; padding: 0 13px; border: 2px solid #b9a8cf; border-radius: 14px; outline: 0; color: var(--ld-ink); background: #fff; font: 500 14px var(--font-noto-sans-thai), sans-serif; }
-.ld-chat-input input:focus { border-color: var(--ld-purple); box-shadow: 0 0 0 3px rgba(122,79,208,.2); }
-.ld-chat-input button { display: grid; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 13px; cursor: pointer; color: #fff; background: var(--ld-purple); box-shadow: 0 4px 0 var(--ld-purple-d); font-size: 22px; transition: transform .2s, filter .2s; }
-.ld-chat-input button:hover { filter: brightness(1.08); transform: translateY(-2px); }
 
 /* ---------- ปิดท้าย ---------- */
 .ld-final { position: relative; isolation: isolate; overflow: hidden; min-height: 700px; padding: 74px 0 58px; text-align: center; background: #f8d5a0; color: #fff; }
@@ -340,8 +289,6 @@
   .ld-tour { grid-template-columns: 1fr 1fr; gap: 72px; justify-items: center; }
   .ld-phone-wrap { width: 300px; }
   .ld-step-list { justify-self: start; width: 100%; max-width: 460px; }
-  .ld-ai { grid-template-columns: 250px minmax(0, 520px); gap: 56px; justify-content: center; }
-  .ld-ai::before { inset: -56px -42px; }
   .ld-final-dome { width: 200px; }
   .ld-final { padding-bottom: 72px; }
 }
@@ -414,44 +361,15 @@ body:has(.ld) { height: 100%; min-height: 100dvh; overflow: hidden; overscroll-b
   .ld-tour-dome { left: calc(50% + 34px); width: 92px; }
   .ld-tour-dome .ld-bubble { max-width: 145px; font-size: 13px; }
   .ld-tour .ld-step-btn small { display: block; }
-  .ld-ai { padding-inline: 4px; }
-  .ld-chat-window { min-height: 548px; }
-  .ld-msg { max-width: calc(100% - 46px); }
 }
 
-@keyframes ld-typing { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
-@keyframes ld-chat-reveal { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
-@keyframes ld-chat-typing { 0%, 12%, 88%, 100% { opacity: 0; transform: translateY(6px); } 18%, 76% { opacity: 1; transform: translateY(0); } }
-@keyframes ld-chat-type { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 
-@media (max-width: 899px) {
-  .ld-chat-window { width: min(100%, 430px); border-radius: 30px; box-shadow: 0 10px 0 rgba(46,25,87,.28), 0 20px 28px rgba(45,24,93,.18); }
-  .ld-chat-header { padding: 13px 12px; }
-  .ld-chat-lock { padding: 5px 7px; font-size: 11px; }
-  .ld-chat-thread { min-height: 300px; padding: 15px 11px 10px; }
-  .ld-chat-input { padding: 10px 11px 12px; }
-  .ld-chat-input input { height: 40px; font-size: 13px; }
-  .ld-chat-input button { width: 40px; height: 40px; }
-}
 
-@media (max-width: 430px) {
-  .ld-chat-window { width: min(100%, 356px); min-height: 530px; border-width: 3px; border-radius: 26px; }
-  .ld-chat-profile b { font-size: 17px; }
-  .ld-chat-lock { max-width: 138px; overflow: hidden; text-overflow: ellipsis; }
-  .ld-chat-thread { gap: 9px; min-height: 286px; }
-  .ld-msg { font-size: 13px; }
-  .ld-suggestions { gap: 5px; padding-inline: 9px; }
-  .ld-suggestions button { font-size: 11px; padding: 5px 6px; }
-}
 
-#ai .ld-sec-sub { display: inline-flex; align-items: center; justify-content: center; padding: 6px 14px; border: 2px solid rgba(255,255,255,.38); border-radius: 999px; background: rgba(42,18,82,.72); color: #fff8e8; box-shadow: 0 4px 0 rgba(42,18,82,.2); }
 
 @media (prefers-reduced-motion: reduce) {
   .ld-tour-scroll { min-height: 0; }
   .ld-tour-sticky { position: static; }
-  .ld-chat-thread .ld-msg-row { opacity: 1; animation: none !important; transform: none !important; }
-  .ld-chat-thread .ld-msg p { clip-path: none !important; animation: none !important; }
-  .ld-chat-thread .ld-typing-row { display: none; }
 }
 
 /* ---------- วิธีเล่น v2: ทางไม้ริมเกาะ ---------- */
@@ -590,8 +508,8 @@ body:has(.ld) { height: 100%; min-height: 100dvh; overflow: hidden; overscroll-b
 .ld-tch-head { text-align: center; }
 .ld-tch-head .ld-sec-sub { margin-top: 8px; }
 .ld-tch-body {
-  --lw: clamp(520px, min(58vw, (100dvh - 290px) * 1.26), 880px);
-  --dw: calc(var(--lw) * 1.14);
+  --lw: clamp(480px, min(60vw, (100dvh - 290px) * 1.3, (100vw - 480px) / 1.03), 900px);
+  --dw: calc(var(--lw) * 1.03);
   --lh: calc(var(--lw) * .655);
   --dd: calc(var(--lw) * .5);
   --tilt: -9deg;
@@ -599,12 +517,12 @@ body:has(.ld) { height: 100%; min-height: 100dvh; overflow: hidden; overscroll-b
   display: flex; align-items: center; justify-content: center; gap: var(--gap);
 }
 .ld-tch-device { position: relative; flex: none; width: var(--dw); padding-bottom: calc(var(--dd) * .2 + 18px); transform: translate(calc(var(--slide, 0) * (var(--cw) + var(--gap)) / 2), calc(var(--rise, 0) * var(--lh) * -.34)); will-change: transform; }
-.ld-lt { position: relative; perspective: 4200px; perspective-origin: 50% 40%; }
+.ld-lt { position: relative; perspective: 6000px; perspective-origin: 50% 40%; }
 .ld-lt-body { position: relative; height: var(--lh); transform-style: preserve-3d; transform: rotateX(var(--tilt)); transform-origin: 50% 100%; }
 /* ตัวเครื่อง: แผ่นคีย์บอร์ดนอนราบ หันหน้าขึ้น */
 .ld-lt-deck { position: absolute; left: 0; top: 100%; width: var(--dw); height: var(--dd); transform-origin: 50% 0; transform: rotateX(90deg); transform-style: preserve-3d; border-radius: 6px 6px 26px 26px;
   background: linear-gradient(180deg, #d9d0f3 0%, #c6b8ec 55%, #b3a2e2 100%); box-shadow: inset 0 0 0 2px rgba(255,255,255,.55), inset 0 -6px 14px rgba(80,50,150,.18); }
-.ld-lt-keys { position: absolute; left: 10%; right: 10%; top: 11%; height: 42%; border-radius: 10px; background:
+.ld-lt-keys { position: absolute; left: 7%; right: 7%; top: 11%; height: 42%; border-radius: 10px; background:
   repeating-linear-gradient(90deg, transparent 0 1.2%, rgba(255,255,255,.0) 1.2% 1.4%),
   linear-gradient(#6a58a6, #5a4895); opacity: .6;
   -webkit-mask: repeating-linear-gradient(90deg, #000 0 calc(6.25% - 3px), transparent calc(6.25% - 3px) 6.25%), repeating-linear-gradient(180deg, #000 0 calc(16.66% - 3px), transparent calc(16.66% - 3px) 16.66%);
@@ -634,7 +552,7 @@ body:has(.ld) { height: 100%; min-height: 100dvh; overflow: hidden; overscroll-b
 .ld-tch-hint i { width: 16px; height: 22px; border: 2px solid currentColor; border-radius: 9px; position: relative; }
 .ld-tch-hint i::after { content: ''; position: absolute; left: 50%; top: 4px; width: 3px; height: 5px; margin-left: -1.5px; border-radius: 2px; background: currentColor; animation: ld-hint 1.4s ease-in-out infinite; }
 @keyframes ld-hint { 60% { transform: translateY(6px); opacity: 0; } }
-.ld-lt-hinge { position: absolute; left: 7%; right: 7%; top: 0; height: 2.6%; border-radius: 0 0 10px 10px; background: linear-gradient(180deg, #3a2c66, #6c58b0); }
+.ld-lt-hinge { position: absolute; left: 4%; right: 4%; top: 0; height: 2.6%; border-radius: 0 0 10px 10px; background: linear-gradient(180deg, #3a2c66, #6c58b0); }
 /* คำอธิบาย 3 ขั้น — อยู่ข้างเครื่อง ไม่ทับจอ */
 .ld-tch-steps { list-style: none; margin: 0; padding: 0; flex: none; width: var(--cw); display: grid; gap: 14px; }
 .ld-tch-step { opacity: 0; transform: translateX(28px); transition: opacity .45s ease, transform .55s cubic-bezier(.22,1,.36,1); }
@@ -652,14 +570,14 @@ body:has(.ld) { height: 100%; min-height: 100dvh; overflow: hidden; overscroll-b
 .ld-tch-copy small { font-size: 15px; font-weight: 600; color: var(--ld-purple-d); }
 .ld-tch-copy em { font-style: normal; font-size: 14px; line-height: 1.45; color: var(--ld-ink-2); }
 @media (min-width: 900px) and (max-width: 1180px) {
-  .ld-tch-body { --cw: 290px; --gap: 32px; --lw: clamp(480px, min(calc(100vw - 420px), (100dvh - 330px) * 1.45), 900px); }
+  .ld-tch-body { --cw: 290px; --gap: 32px; --lw: clamp(440px, min((100vw - 400px) / 1.03, (100dvh - 290px) * 1.3), 900px); }
   .ld-tch-copy b { font-size: 18px; } .ld-tch-copy em { font-size: 13px; }
 }
 @media (max-width: 899px) {
   .ld-tch { padding: 56px 0 64px; }
   .ld-tch-track { min-height: 0; }
   .ld-tch-stage { position: static; height: auto; padding: 0; gap: 22px; }
-  .ld-tch-body { --lw: min(calc((100vw - 44px) / 1.14), 500px); --tilt: -9deg; --cw: min(100%, 460px); flex-direction: column; gap: 26px; }
+  .ld-tch-body { --lw: min(calc((100vw - 40px) / 1.03), 520px); --tilt: -9deg; --cw: min(100%, 460px); flex-direction: column; gap: 26px; }
   .ld-tch-device { transform: none; }
   .ld-tch-hint { display: none; }
   .ld-tch-steps { gap: 16px; }
@@ -727,3 +645,123 @@ body:has(.ld) { height: 100%; min-height: 100dvh; overflow: hidden; overscroll-b
   .ld-hw-card:hover .ld-hw-shot img { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .ld-confetti { display: none; } }
+
+/* หัวข้อรองใต้ป้ายไม้: แผ่นครีมตัวเข้ม อ่านได้ทุกพื้นหลัง */
+.ld .ld-sec-sub { display: block; width: fit-content; max-width: 100%; margin: 12px auto 0; padding: 6px 16px; border-radius: 999px; background: rgba(255,250,236,.94); border: 2px solid rgba(138,85,36,.26); color: var(--ld-ink); font-weight: 600; font-size: 15px; line-height: 1.45; text-align: center; box-shadow: 0 3px 0 rgba(90,50,10,.14), 0 8px 18px rgba(40,20,60,.12); }
+
+/* เล่นยังไง: เส้นทางเริ่ม-จบตรงการ์ด 1 และ 5, การ์ดเอียงตามเมาส์ชัด + แสงสะท้อน + ลอยเบา ๆ */
+@media (min-width: 900px) {
+  .ld-hw-track { padding-top: 120px; }
+  .ld-hw-path { left: 9%; right: auto; width: 82%; top: 76px; height: 128px; z-index: 0; }
+  .ld-hw-steps { position: relative; z-index: 1; }
+}
+.ld-hw-card { transform-style: preserve-3d; animation: ld-hw-idle 4.2s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -.8s); transition: transform .14s ease-out, box-shadow .25s ease; }
+@keyframes ld-hw-idle { 50% { translate: 0 -5px; } }
+.ld-hw-card::after { content: ''; position: absolute; z-index: 4; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .25s;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 20%), rgba(255,255,255,.55), rgba(255,255,255,0) 55%); mix-blend-mode: soft-light; }
+.ld-hw-card:hover { transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-12px) scale(1.04); box-shadow: 0 16px 0 var(--ld-wood-3), 0 30px 40px rgba(90,50,10,.32); z-index: 5; }
+.ld-hw-card:hover::after { opacity: 1; }
+.ld-hw-card:hover .ld-hw-no { transform: translateZ(30px) scale(1.12); }
+.ld-hw-card:hover .ld-hw-ico { translate: 0 -8px; scale: 1.12; }
+
+/* ---------- โดม ผู้ช่วย AI v6: แชตเล่นได้จริง โดมโผล่หลังหน้าต่าง ---------- */
+.ld-ai2 { position: relative; display: grid; justify-items: center; width: min(100%, 880px); margin: 0 auto; }
+.ld-ai2-dome { position: relative; z-index: 0; width: 170px; height: 150px; margin-bottom: -46px; }
+.ld-ai2-pose { position: absolute; inset: 0 0 auto 0; }
+.ld-ai2-pose img { width: 100%; height: auto; animation: none; filter: drop-shadow(0 12px 14px rgba(20,10,60,.35)); }
+.ld-ai2-thought { position: absolute; top: 4px; right: -46px; display: flex; gap: 4px; padding: 9px 12px; border-radius: 18px; background: #fff; box-shadow: 0 6px 16px rgba(40,20,90,.25); }
+.ld-ai2-thought::after { content: ''; position: absolute; left: -6px; bottom: -6px; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
+.ld-ai2-thought i, .ld-cw-dots i { width: 7px; height: 7px; border-radius: 50%; background: #8765d2; animation: ld-dot 1s ease-in-out infinite; }
+.ld-ai2-thought i:nth-child(2), .ld-cw-dots i:nth-child(2) { animation-delay: .15s; } .ld-ai2-thought i:nth-child(3), .ld-cw-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes ld-dot { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
+.ld-cw { position: relative; z-index: 1; display: flex; flex-direction: column; width: min(100%, 540px); overflow: hidden; border-radius: 28px; background: #fdfaff; border: 3px solid rgba(255,255,255,.7);
+  box-shadow: 0 0 0 4px #4a347f, 0 14px 0 4px rgba(46,25,87,.35), 0 30px 60px rgba(30,12,70,.45); }
+.ld-cw-head { display: flex; align-items: center; gap: 11px; padding: 13px 16px; color: #fff; background: radial-gradient(120% 140% at 0% 0%, #a585f2 0%, #7a4fd0 45%, #5b34ab 100%); }
+.ld-cw-who { display: grid; flex: 1; min-width: 0; }
+.ld-cw-who b { font: 700 19px/1.2 var(--font-display-thai), sans-serif; }
+.ld-cw-who small { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; opacity: .92; }
+.ld-cw-who small i { width: 8px; height: 8px; border-radius: 50%; background: #5ff08a; box-shadow: 0 0 0 3px rgba(95,240,138,.25); }
+.ld-cw-who small.is-typing i { background: #ffd15c; box-shadow: 0 0 0 3px rgba(255,209,92,.3); animation: ld-dot 1s ease-in-out infinite; }
+.ld-cw-lock { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.ld-cw-lock img { width: 15px; height: 15px; }
+.ld-cw-avatar { flex: none; display: grid; place-items: center; width: 34px; height: 34px; overflow: hidden; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(64,37,114,.2); }
+.ld-cw-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.ld-cw-avatar--lg { width: 46px; height: 46px; box-shadow: 0 0 0 3px rgba(255,255,255,.35); }
+.ld-cw-avatar--dome { background: linear-gradient(145deg, #f8dbff, #a69bf5); }
+.ld-cw-avatar--me { background: linear-gradient(145deg, #ffc56b, #f5793a); color: #fff; font: 700 11px var(--font-display-thai), sans-serif; text-shadow: 0 1px 0 rgba(150,60,0,.4); }
+.ld-cw-thread { display: flex; flex-direction: column; gap: 10px; height: 360px; overflow-y: auto; padding: 14px 16px 16px; scrollbar-width: none;
+  background: radial-gradient(circle at 12% 18%, rgba(196,170,255,.18), transparent 40%), linear-gradient(180deg, #fbf7ff, #f6f0ff); }
+.ld-cw-thread::-webkit-scrollbar { display: none; }
+.ld-cw-day { align-self: center; margin-bottom: auto; padding: 3px 10px; border-radius: 999px; background: rgba(122,79,208,.1); color: #6a52a6; font-size: 11px; font-weight: 700; }
+.ld-cw-row { display: flex; align-items: flex-end; gap: 8px; max-width: 88%; }
+.ld-cw-row--me { align-self: flex-end; flex-direction: row-reverse; transform-origin: 100% 100%; }
+.ld-cw-row--dome { align-self: flex-start; transform-origin: 0 100%; }
+.ld-cw-msg { position: relative; padding: 8px 12px 6px; border-radius: 18px; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.ld-cw-msg p { margin: 0; }
+.ld-cw-msg time { display: block; margin-top: 1px; font-size: 10px; text-align: right; opacity: .6; }
+.ld-cw-msg--me { color: #fff; background: linear-gradient(160deg, #946cf0, #7045cc); border-bottom-right-radius: 6px; box-shadow: 0 4px 10px rgba(90,50,170,.25); }
+.ld-cw-msg--dome { color: var(--ld-ink); background: #fff; border: 1.5px solid #e6dafa; border-bottom-left-radius: 6px; box-shadow: 0 4px 10px rgba(90,50,170,.08); }
+.ld-cw-lockline { display: flex; align-items: center; gap: 5px; margin-top: 6px; padding-top: 5px; border-top: 1px dashed #e3d6f8; color: var(--ld-purple-d); font-size: 12px; font-weight: 700; }
+.ld-cw-lockline img { width: 14px; height: 14px; }
+.ld-cw-dots { display: flex; gap: 5px; padding: 12px 14px; }
+.ld-cw-chips { display: flex; gap: 8px; overflow-x: auto; padding: 10px 16px; border-top: 1px solid #ece3fa; background: #fff; scrollbar-width: none; }
+.ld-cw-chips::-webkit-scrollbar { display: none; }
+.ld-cw-chips button { flex: none; padding: 7px 12px; border-radius: 999px; border: 1.5px solid #cdb8f2; background: #f7f2ff; color: var(--ld-purple-d); font: 600 13px var(--font-noto-sans-thai), sans-serif; cursor: pointer; transition: transform .15s, background .15s; }
+.ld-cw-chips button:hover { background: #ece0ff; transform: translateY(-2px); }
+.ld-cw-input { display: flex; gap: 8px; align-items: center; padding: 4px 16px 14px; background: #fff; }
+.ld-cw-input input { flex: 1; min-width: 0; height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid #d9cbef; background: #faf7ff; color: var(--ld-ink); outline: 0; font: 500 14px var(--font-noto-sans-thai), sans-serif; }
+.ld-cw-input input:focus { border-color: var(--ld-purple); box-shadow: 0 0 0 3px rgba(122,79,208,.18); }
+.ld-cw-input button { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; color: #fff; font-size: 17px; cursor: pointer; background: linear-gradient(160deg, #946cf0, #6a40c6); box-shadow: 0 4px 0 var(--ld-purple-d); transition: transform .15s; }
+.ld-cw-input button:hover { transform: translateY(-2px) rotate(-8deg); }
+@media (min-width: 900px) {
+  .ld-ai2 { grid-template-columns: 300px 540px; justify-content: center; align-items: end; }
+  .ld-ai2-dome { width: 330px; height: 370px; margin: 0 -58px 30px 0; justify-self: end; }
+  .ld-ai2-pose { inset: auto 0 0 0; }
+  .ld-ai2-thought { top: 30px; right: 90px; }
+  .ld-cw-thread { height: 380px; }
+}
+@media (max-width: 420px) {
+  .ld-cw-msg { font-size: 14px; }
+  .ld-cw-thread { height: 340px; padding-inline: 12px; }
+  .ld-cw-head, .ld-cw-chips { padding-inline: 12px; }
+  .ld-cw-input { padding-inline: 12px; }
+}
+
+/* ---------- ทัวร์มือถือ v6: รายละเอียดรอบเครื่อง + ขั้นตอนมีสถานะ ---------- */
+.ld-phone { z-index: 1; }
+.ld-phone-shadow { position: absolute; z-index: 0; left: 8%; right: 8%; bottom: -26px; height: 40px; border-radius: 50%; background: radial-gradient(closest-side, rgba(30,20,70,.45), transparent); filter: blur(6px); }
+.ld-screen-glare { position: absolute; z-index: 2; inset: 0; pointer-events: none; background: linear-gradient(118deg, rgba(255,255,255,.22) 0 16%, rgba(255,255,255,0) 30%); }
+.ld-tour-count { position: absolute; z-index: 3; top: -14px; left: 50%; translate: -50% 0; padding: 4px 12px; border-radius: 999px; background: linear-gradient(180deg, #ffcf4a, #f59d12); color: #fff; font: 700 14px var(--font-display-thai), sans-serif; text-shadow: 0 1px 0 rgba(150,80,0,.5); box-shadow: 0 3px 0 #b86a00; }
+.ld-tour-prop { position: absolute; z-index: 2; pointer-events: none; animation: ld-hw-float 4s ease-in-out infinite; filter: drop-shadow(0 6px 6px rgba(40,20,80,.25)); }
+.ld-tour-prop--a { left: -46px; top: 12%; }
+.ld-tour-prop--b { right: -40px; top: 38%; animation-delay: -1.4s; }
+.ld-tour-prop--c { left: -30px; bottom: 18%; animation-delay: -2.6s; }
+.ld-tstep-no { position: static; display: grid; border: 0; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; background: #f1e6cf; color: var(--ld-ink-2); font: 700 13px var(--font-display-thai), sans-serif; transition: background .3s, color .3s, transform .3s; }
+.ld-tstep-no[data-done="true"] { background: #3fae5a; color: #fff; }
+.ld-step-btn[aria-current="true"] .ld-tstep-no { background: var(--ld-purple); color: #fff; transform: scale(1.12); box-shadow: 0 0 0 4px rgba(122,79,208,.2); }
+.ld-step-btn[aria-current="true"] { background: linear-gradient(90deg, #fff, #f4edff); }
+.ld-step-btn[aria-current="true"] img { animation: ld-hw-bob 1.6s ease-in-out infinite; }
+@media (max-width: 899px) { .ld-tour-prop--a { left: -30px; } .ld-tour-prop--b { right: -26px; } .ld-tour-prop--c { display: none; } }
+
+/* ---------- Hero v6: แผงเปิดตัว (นับถอยหลัง + ปุ่มนักเรียน + โซนครู) ---------- */
+.ld-launch { display: grid; gap: 12px; width: min(100%, 380px); padding: 16px; border-radius: 26px; text-align: center;
+  background: rgba(255,248,226,.92); border: 4px solid var(--ld-wood-2); box-shadow: 0 7px 0 rgba(60,32,10,.32), 0 18px 30px rgba(20,60,110,.25); backdrop-filter: blur(4px); }
+.ld-launch-count { display: grid; gap: 6px; justify-items: center; }
+.ld-launch-label { font: 700 14px var(--font-display-thai), sans-serif; color: var(--ld-ink-2); }
+.ld-launch .ld-count { gap: 6px; }
+.ld-launch .ld-count-cell { width: 60px; box-shadow: 0 3px 0 rgba(60,32,10,.28); }
+.ld-launch-main { width: 100%; }
+.ld-launch-teacher { display: grid; gap: 8px; padding-top: 12px; border-top: 2px dashed rgba(138,85,36,.3); }
+.ld-launch-thead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ld-launch-thead b { font: 700 17px var(--font-display-thai), sans-serif; color: var(--ld-purple-d); }
+.ld-launch-thead a { font-size: 13px; font-weight: 700; color: var(--ld-ink-2); text-underline-offset: 3px; }
+.ld-launch-tbtns { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.ld-launch-tbtns .ld-btn { min-height: 48px; padding-inline: 14px; font-size: 17px; }
+.ld-btn--light { color: var(--ld-purple-d); text-shadow: none; background: linear-gradient(180deg, #fff, #f1e9ff); box-shadow: 0 5px 0 #c9b5ee, 0 10px 18px rgba(60,30,140,.15), inset 0 0 0 2px #d8c8f5; }
+.ld-launch-teacher p { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--ld-ink-2); }
+@media (min-width: 900px) {
+  .ld-hero-inner { grid-template-areas: "badge dome" "logo dome" "sign dome" "cta dome"; row-gap: 16px; }
+  .ld-hero-inner > .ld-launch { grid-area: cta; width: min(100%, 470px); padding: 18px 20px; text-align: left; }
+  .ld-launch-count { grid-template-columns: auto 1fr; align-items: center; justify-items: start; gap: 14px; }
+  .ld-launch-tbtns { grid-template-columns: 1fr 1fr; }
+}

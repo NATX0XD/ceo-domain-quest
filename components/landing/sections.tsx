@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
+import { AiChat } from './ai-chat'
 import { Countdown, useOpenState } from './countdown'
 import { DecoLayer, Fade } from './deco'
 import { HowPath } from './how-path'
@@ -111,57 +112,14 @@ export function TeacherSection() {
   )
 }
 
-const CHAT = [
-  { who: 'me', text: 'โดเมนคืออะไร', time: '10:41' },
-  { who: 'dome', text: 'เหมือนที่อยู่ของเว็บ ให้คนหาร้านเธอเจอครับ', time: '10:41' },
-  { who: 'me', text: 'ช่วยทำการบ้านวิชาอื่นหน่อย', time: '10:42' },
-  { who: 'dome', text: 'โดมช่วยเรื่องบทเรียนนี้นะครับ ลองถามเรื่องโดเมนดูไหม', time: '10:42', lock: true },
-] as const
-
-const SUGGESTIONS = ['โดเมนคืออะไร', '.com กับ .th ต่างกันยังไง', 'DNS ทำงานยังไง']
-
 export function AiSection() {
-  const ref = useRef<HTMLDivElement>(null)
   return (
     <section className="ld-sec ld-sec--sea" id="ai" aria-label="ผู้ช่วย AI">
       <DecoLayer scene="night" tone="purple" />
       <Fade top="#b79ae0" bottom="#43357f" />
       <div className="ld-wrap">
         <Head title="โดม ผู้ช่วย AI" sub="ตอบเฉพาะเรื่องที่กำลังเรียน" />
-        <div className="ld-ai" ref={ref}>
-          <Reveal>
-            <Pic className="ld-dome" src="/dome/mascot/dome-explain.webp" alt="โดมกำลังอธิบาย" width={482} height={532} sizes="300px" style={{ width: 240 }} />
-          </Reveal>
-          <div className="ld-chat-window" aria-label="ตัวอย่างบทสนทนากับโดม">
-            <header className="ld-chat-header">
-              <div className="ld-chat-profile">
-                <span className="ld-chat-avatar ld-chat-avatar--dome"><Pic src="/dome/mascot/dome-greet.webp" alt="" width={56} height={56} /></span>
-                <span><b>น้องโดม</b><small><i aria-hidden />ออนไลน์</small></span>
-              </div>
-              <span className="ld-chat-lock">{icon('locked', 16)} ล็อกเฉพาะบทเรียน</span>
-            </header>
-            <div className="ld-chat-thread">
-            {CHAT.map((m, i) => (
-                <div key={i} data-chat-index={i} className={`ld-msg-row ld-msg-row--${m.who}`}>
-                  {m.who === 'dome' && <span className="ld-chat-avatar ld-chat-avatar--dome"><Pic src="/dome/mascot/dome-greet.webp" alt="" width={38} height={38} /></span>}
-                  <div className={`ld-msg ld-msg--${m.who}`}>
-                    <div className="ld-msg-meta"><b>{m.who === 'dome' ? 'น้องโดม' : 'คุณ'}</b><time>{m.time}</time></div>
-                    <p>{m.text}</p>
-                    {'lock' in m && <span className="ld-lock">{icon('locked', 17)} ล็อกไว้เฉพาะบทเรียน</span>}
-                  </div>
-                  {m.who === 'me' && <span className="ld-chat-avatar ld-chat-avatar--user"><Pic src="/icons/3d/bust-in-silhouette.webp" alt="" width={38} height={38} /></span>}
-                </div>
-            ))}
-            <div className="ld-msg-row ld-msg-row--dome ld-typing-row ld-typing-row--one" aria-hidden><span className="ld-chat-avatar ld-chat-avatar--dome"><Pic src="/dome/mascot/dome-greet.webp" alt="" width={38} height={38} /></span><div className="ld-typing"><span><i /><i /><i /></span><small>น้องโดมกำลังพิมพ์</small></div></div>
-            <div className="ld-msg-row ld-msg-row--dome ld-typing-row ld-typing-row--two" aria-hidden><span className="ld-chat-avatar ld-chat-avatar--dome"><Pic src="/dome/mascot/dome-greet.webp" alt="" width={38} height={38} /></span><div className="ld-typing"><span><i /><i /><i /></span><small>น้องโดมกำลังพิมพ์</small></div></div>
-            </div>
-            <div className="ld-suggestions" aria-label="คำถามแนะนำ">{SUGGESTIONS.map((suggestion) => <button type="button" key={suggestion}>{suggestion}</button>)}</div>
-            <form className="ld-chat-input" onSubmit={(event) => event.preventDefault()}>
-              <input aria-label="ถามโดมเรื่องบทเรียน" placeholder="ถามโดมเรื่องบทเรียน…" />
-              <button type="submit" aria-label="ส่งข้อความ"><span aria-hidden>↗</span></button>
-            </form>
-          </div>
-        </div>
+        <AiChat />
       </div>
     </section>
   )

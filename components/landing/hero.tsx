@@ -80,28 +80,33 @@ export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: 
 
           <p className="ld-sign ld-sign--sm">สร้างร้านในฝัน เรียนรู้โดเมนอย่างสนุก</p>
 
-          <Countdown openAt={openAt} />
-
-          <div className="ld-cta-row">
+          <div className="ld-launch">
+            {openAt && !open && (
+              <div className="ld-launch-count">
+                <span className="ld-launch-label">เปิดให้เล่นในอีก</span>
+                <Countdown openAt={openAt} />
+              </div>
+            )}
             {open ? (
-              <motion.a className="ld-btn" href="/join" whileTap={{ scale: 0.94 }}>
+              <motion.a className="ld-btn ld-launch-main" href="/join" whileTap={{ scale: 0.94 }}>
                 เข้าเล่นเลย ▶
               </motion.a>
             ) : (
-              <motion.a className="ld-btn" href="#how" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.94 }}>
+              <motion.a className="ld-btn ld-launch-main" href="#how" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.94 }}>
                 ดูวิธีเล่น ▶
               </motion.a>
             )}
-            <motion.a className="ld-btn ld-btn--ghost" href="#teacher" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.94 }}>
-              สำหรับครู
-            </motion.a>
-          </div>
-          <div className="ld-teacher-cta">
-            <div className="ld-teacher-cta-actions">
-              <a className="ld-btn" href="/teacher/signup">ลงทะเบียนครูล่วงหน้า</a>
-              <a className="ld-btn ld-btn--ghost" href="/teacher">ครูเข้าสู่ระบบ</a>
+            <div className="ld-launch-teacher">
+              <div className="ld-launch-thead">
+                <b>สำหรับครู</b>
+                <a href="#teacher">ครูทำอะไรได้บ้าง ↓</a>
+              </div>
+              <div className="ld-launch-tbtns">
+                <motion.a className="ld-btn ld-btn--ghost" href="/teacher/signup" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.94 }}>ลงทะเบียนครูล่วงหน้า</motion.a>
+                <motion.a className="ld-btn ld-btn--light" href="/teacher" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.94 }}>ครูเข้าสู่ระบบ</motion.a>
+              </div>
+              <p>ใช้รหัสเชิญจากผู้ดูแล · วันเปิดเข้าใช้ด้วยบัญชีเดิมได้เลย</p>
             </div>
-            <p>ใช้รหัสเชิญจากผู้ดูแล · วันเปิดเข้าใช้ด้วยบัญชีเดิมได้เลย</p>
           </div>
         </div>
       </div>

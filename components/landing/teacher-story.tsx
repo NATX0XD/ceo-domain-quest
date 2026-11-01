@@ -44,7 +44,7 @@ export function TeacherStory() {
     lid.set(LID_CLOSED + (LID_OPEN - LID_CLOSED) * open)
     rise.set(1 - open)
     slide.set(1 - ease(clamp01((p - OPEN_END * 0.7) / (STEP_AT[0] - OPEN_END * 0.7))))
-    setStep(STEP_AT.filter((at) => p >= at).length)
+    setStep(window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 4 : STEP_AT.filter((at) => p >= at).length)
   }
 
   useEffect(() => {

@@ -6,12 +6,12 @@ import { Pic } from './pic'
 import { useLandingScroll } from './reveal'
 
 const STEPS = [
-  { src: '/landing/shot-join.webp', icon: 'door', title: 'เข้าห้อง', note: 'ใส่รหัสจากครู', say: 'ใส่รหัสห้องจากครูได้เลย!' },
-  { src: '/landing/shot-home.webp', icon: 'school', title: 'ร้านของเรา', note: 'ดูความคืบหน้า', say: 'นี่คือร้านของเธอนะ' },
-  { src: '/landing/shot-map.webp', icon: 'bullseye', title: 'แผนที่เกาะ', note: 'เลือกภารกิจ', say: 'เลือกเกาะที่อยากไป' },
-  { src: '/landing/shot-choose.webp', icon: 'eyes', title: 'เลือกวิธีเรียน', note: 'ดู อ่าน ลงมือทำ', say: 'ชอบแบบไหน เลือกเลย' },
-  { src: '/landing/shot-play.webp', icon: 'gear', title: 'ลงมือทำ', note: 'เล่นเกมฝึก', say: 'ลองทำจริงสนุกกว่าเยอะ' },
-  { src: '/landing/shot-dome.webp', icon: 'speech-balloon', title: 'ถามโดม', note: 'ผู้ช่วย AI', say: 'ติดตรงไหน ถามโดมได้!' },
+  { src: '/landing/shot-join.webp', pose: 'greet', icon: 'door', title: 'เข้าห้อง', note: 'ใส่รหัสจากครู', say: 'ใส่รหัสห้องจากครูได้เลย!' },
+  { src: '/landing/shot-home.webp', pose: 'happy', icon: 'school', title: 'ร้านของเรา', note: 'ดูความคืบหน้า', say: 'นี่คือร้านของเธอนะ' },
+  { src: '/landing/shot-map.webp', pose: 'explain', icon: 'bullseye', title: 'แผนที่เกาะ', note: 'เลือกภารกิจ', say: 'เลือกเกาะที่อยากไป' },
+  { src: '/landing/shot-choose.webp', pose: 'think', icon: 'eyes', title: 'เลือกวิธีเรียน', note: 'ดู อ่าน ลงมือทำ', say: 'ชอบแบบไหน เลือกเลย' },
+  { src: '/landing/shot-play.webp', pose: 'cheer', icon: 'gear', title: 'ลงมือทำ', note: 'เล่นเกมฝึก', say: 'ลองทำจริงสนุกกว่าเยอะ' },
+  { src: '/landing/shot-dome.webp', pose: 'celebrate', icon: 'speech-balloon', title: 'ถามโดม', note: 'ผู้ช่วย AI', say: 'ติดตรงไหน ถามโดมได้!' },
 ] as const
 
 export function PhoneTour() {
@@ -36,6 +36,11 @@ export function PhoneTour() {
         </div>
         <div className="ld-tour">
           <div className="ld-phone-wrap">
+            <span className="ld-tour-prop ld-tour-prop--a" aria-hidden><Pic src="/icons/3d/glowing-star.webp" alt="" width={44} height={44} /></span>
+            <span className="ld-tour-prop ld-tour-prop--b" aria-hidden><Pic src="/icons/3d/sparkles.webp" alt="" width={40} height={40} /></span>
+            <span className="ld-tour-prop ld-tour-prop--c" aria-hidden><Pic src="/icons/3d/star.webp" alt="" width={30} height={30} /></span>
+            <span className="ld-phone-shadow" aria-hidden />
+            <span className="ld-tour-count" aria-hidden>{active + 1}/{STEPS.length}</span>
             <div className="ld-phone">
               <div className="ld-screen">
                 {STEPS.map((s, i) => (
@@ -49,6 +54,7 @@ export function PhoneTour() {
                     <Pic src={s.src} alt={`หน้าจอ: ${s.title}`} width={390} height={844} priority={i === 0} sizes="300px" />
                   </motion.div>
                 ))}
+                <span className="ld-screen-glare" aria-hidden />
               </div>
             </div>
           </div>
@@ -65,7 +71,11 @@ export function PhoneTour() {
                 {step.say}
               </motion.div>
             </AnimatePresence>
-            <Pic className="ld-dome" src="/dome/mascot/dome-cheer.webp" alt="" width={448} height={532} />
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.div key={step.pose} initial={{ opacity: 0, scale: 0.7, rotate: -8 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ type: 'spring', stiffness: 300, damping: 15 }}>
+                <Pic className="ld-dome" src={`/dome/mascot/dome-${step.pose}.webp`} alt="" width={448} height={532} />
+              </motion.div>
+            </AnimatePresence>
           </div>
           <div className="ld-step-list" role="group" aria-label="ขั้นตอนการเล่น">
             {STEPS.map((s, i) => (
@@ -90,6 +100,7 @@ export function PhoneTour() {
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.97 }}
               >
+                <span className="ld-tstep-no" data-done={i < active}>{i < active ? '✓' : i + 1}</span>
                 <Pic src={`/icons/3d/${s.icon}.webp`} alt="" width={30} height={30} />
                 {s.title}
                 <small>{s.note}</small>
