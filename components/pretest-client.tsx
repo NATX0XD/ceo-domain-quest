@@ -201,7 +201,7 @@ export function PretestClient({
 
   return (
     <StudentShell
-      className="flex h-full min-h-0 flex-col gap-2.5"
+        className="quiz-world-shell flex h-full min-h-0 flex-col gap-2.5"
       footer={
         <AppFooter>
           <FlowNote
@@ -223,15 +223,15 @@ export function PretestClient({
             loadingLabel="กำลังตรวจคำตอบ"
             leadingIcon={ready && !flow.busy ? <SendIcon width={22} height={22} /> : undefined}
           >
-            {ready ? 'ส่งคำตอบ' : `ตอบแล้ว ${answered}/${questions.length} ข้อ`}
+            ส่งคำตอบ
           </Button>
         </AppFooter>
       }
     >
       <StageLine stage="ก่อนคาบเรียน · แบบทดสอบก่อนเรียน" remain={`${questions.length} ข้อ`} />
-      <DomeTip mood="greet">
-        ตอบเท่าที่รู้ได้เลยครับ ไม่รู้ก็เดาได้ ไม่มีผลกับคะแนนเก็บ ใช้เทียบกับหลังเรียนเฉย ๆ
-      </DomeTip>
+      <p className="shrink-0 truncate text-note font-semibold text-ink-muted">
+        ตอบเท่าที่รู้ได้เลย · ไม่รู้ก็เดาได้
+      </p>
 
       <QuizStepper
         questions={questions}

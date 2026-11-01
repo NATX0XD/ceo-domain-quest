@@ -172,8 +172,8 @@ export function DomeTip({ children, mood = 'greet', onClick, className }: DomeTi
   const inner = (
     <>
       <DomeAvatar mood={mood} size={40} decorative />
-      <span className="min-w-0 flex-1 text-label text-pretty text-ink">
-        <span className="line-clamp-2">{children}</span>
+        <span className="min-w-0 flex-1 text-label text-pretty break-words text-ink">
+        <span>{children}</span>
       </span>
     </>
   )

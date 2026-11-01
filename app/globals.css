@@ -1211,6 +1211,12 @@ select {
     linear-gradient(180deg, rgb(32 169 243 / .12), rgb(255 241 214 / .88)),
     url('/ui/dome/bg.webp') center / cover;
 }
+.student-world.quiz-world-shell .app-shell-main {
+  background: #fff1d6;
+}
+.student-world.quiz-world-shell .app-shell-main > div {
+  background: #fff1d6;
+}
 .student-world.setup-world-shell .app-shell-main,
 .student-world.profile-world-shell .app-shell-main,
 .student-world.ceo-world-shell .app-shell-main {
@@ -1309,6 +1315,10 @@ select {
   border: 2px solid rgb(107 45 18 / .18);
   background: rgb(255 249 231 / .95);
   box-shadow: 0 3px 0 rgb(107 45 18 / .12);
+}
+.student-world .quiz-choice > span:nth-of-type(2) > span:first-child {
+  font-size: 0.875rem;
+  line-height: 1.3;
 }
 .student-world .sheet-panel {
   border: 4px solid #6b2d12;

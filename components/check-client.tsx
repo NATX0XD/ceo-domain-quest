@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { StudentShell } from '@/components/student-shell'
 import { AppFooter } from '@/components/app-shell'
 import { QuizStepper } from '@/components/quiz-stepper-client'
-import { DomeTip, FlowNote, StageLine, useFlowFeedback } from '@/components/flow-feedback-client'
+import { FlowNote, StageLine, useFlowFeedback } from '@/components/flow-feedback-client'
 import {
   Button,
   ChevronRightIcon,
@@ -157,7 +157,7 @@ export function CheckClient({
 
   return (
     <StudentShell
-      className="flex h-full min-h-0 flex-col gap-2.5"
+      className="quiz-world-shell flex h-full min-h-0 flex-col gap-2.5"
       footer={
         <AppFooter>
           {/* กฎข้อ 3 + 6: บอกสถานะทุกครั้ง และบอกล่วงหน้าว่าทำไมปุ่มยังกดไม่ได้ */}
@@ -176,7 +176,7 @@ export function CheckClient({
             loadingLabel="กำลังส่งคำตอบ"
             leadingIcon={<SendIcon width={22} height={22} />}
           >
-            {ready ? 'ส่งคำตอบ' : `ตอบแล้ว ${answered} จาก ${questions.length} ข้อ`}
+            ส่งคำตอบ
           </Button>
         </AppFooter>
       }
@@ -184,7 +184,9 @@ export function CheckClient({
       <StageLine stage={title} remain={`${questions.length} ข้อ`} />
 
       {/* บรรทัดเดียวบอกว่าตอนนี้ต้องทำอะไร — ข้อความมาจากไฟล์เนื้อหา ไม่ได้พิมพ์เอง */}
-      <DomeTip mood="greet">{intro}</DomeTip>
+      <p className="shrink-0 truncate text-note font-semibold text-ink-muted" title={intro}>
+        {intro}
+      </p>
 
       <QuizStepper
         questions={questions}
@@ -193,7 +195,7 @@ export function CheckClient({
         index={index}
         onIndexChange={setIndex}
         confidenceSlot={
-          currentQuestion ? (
+          currentQuestion && answers[currentQuestion.id] !== undefined ? (
             <fieldset className="shrink-0">
               <legend className="sr-only">มั่นใจแค่ไหนกับข้อนี้</legend>
               <div className="flex gap-1.5">

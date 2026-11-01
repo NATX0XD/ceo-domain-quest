@@ -89,16 +89,20 @@ export function QuizStepper({
       <ul
         role="radiogroup"
         aria-label={`ตัวเลือกของข้อ ${safeIndex + 1}`}
-        className="flex min-h-0 flex-1 flex-col gap-2"
+        className={cn(
+          'min-h-0 flex-1 gap-2 overflow-y-auto overscroll-contain pr-0.5',
+          'flex flex-col',
+        )}
       >
         {current.choices.map((choice, i) => (
-            <li key={choice}>
+            <li key={choice} className="min-w-0">
             <ChoiceCard
               marker={CHOICE_MARKERS[i] ?? String(i + 1)}
               label={choice}
               selected={answers[current.id] === i}
               ariaLabel={`ตัวเลือก ${CHOICE_MARKERS[i] ?? i + 1} ${choice}`}
               onSelect={() => onAnswer(current.id, i)}
+              className="quiz-choice min-h-14 p-2.5"
             />
           </li>
         ))}
