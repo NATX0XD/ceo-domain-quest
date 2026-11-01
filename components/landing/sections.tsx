@@ -34,7 +34,7 @@ export function MissionsSection() {
         <div className="ld-world">
           <Reveal>
             <motion.div className="ld-map-frame" whileHover={{ rotate: -1.5, scale: 1.02 }} transition={{ type: 'spring', stiffness: 200, damping: 14 }}>
-              <Pic src="/UI/m1/map.webp" alt="แผนที่เกาะภารกิจ 4 เกาะ" width={941} height={1672} sizes="380px" />
+              <Pic src="/landing/map-sharp.svg" alt="แผนที่เกาะภารกิจ 4 เกาะ" width={941} height={1672} sizes="380px" />
               <span className={`ld-map-ring ld-map-ring--${selectedMission}`} aria-hidden />
             </motion.div>
           </Reveal>
@@ -50,7 +50,8 @@ export function MissionsSection() {
                 </div>
               </Reveal>
             ))}
-            <Reveal as="li" delay={0.36} className="ld-card ld-card--boss">
+            <Reveal as="li" delay={0.36} className={`ld-card ld-card--boss ${selectedMission === 'boss' ? 'is-selected' : ''}`}>
+              <button className="ld-card-hit" type="button" aria-label="ไฮไลต์ด่านบอส CEO" onMouseEnter={() => setSelectedMission('boss')} onFocus={() => setSelectedMission('boss')} onClick={() => setSelectedMission('boss')} />
               <span className="ld-card-no">★</span>
               <span className="ld-card-ico">{icon('crown')}</span>
               <div>
@@ -136,7 +137,7 @@ export function TeacherSection() {
         <Reveal>
           <div className="ld-laptop">
             <div className="ld-laptop-screen">
-              <Pic src="/landing/shot-teacher.webp" alt="แผงควบคุมของครู" width={1100} height={688} sizes="560px" />
+              <Pic src="/landing/teacher-v2.png" alt="แผงควบคุมครูเวอร์ชันใหม่" width={1440} height={900} sizes="560px" />
             </div>
             <div className="ld-laptop-base" />
           </div>
@@ -171,9 +172,26 @@ export function AiSection() {
   const [typed, setTyped] = useState<number[]>([0])
   useEffect(() => {
     if (!ref.current) return
-    const observer = new IntersectionObserver(([entry]) => entry?.isIntersecting && setSeen(true), { rootMargin: '0px 0px -20% 0px' })
+    if (!('IntersectionObserver' in window)) {
+      setSeen(true)
+      setTyped(CHAT.map((_, i) => i))
+      return
+    }
+    const fallback = window.setTimeout(() => {
+      setSeen(true)
+      setTyped(CHAT.map((_, i) => i))
+    }, 4200)
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) return
+      setSeen(true)
+      observer.disconnect()
+      window.clearTimeout(fallback)
+    }, { rootMargin: '0px 0px -20% 0px' })
     observer.observe(ref.current)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      window.clearTimeout(fallback)
+    }
   }, [])
   useEffect(() => {
     if (!seen) return
@@ -182,6 +200,7 @@ export function AiSection() {
       const i = offset + 1
       timers.push(setTimeout(() => setTyped((current) => [...current, i]), 650 + offset * 1150))
     })
+    timers.push(setTimeout(() => setTyped(CHAT.map((_, i) => i)), 3900))
     return () => timers.forEach(clearTimeout)
   }, [seen])
   return (
@@ -235,7 +254,7 @@ export function FinalSection({ openAt, openLabel }: { openAt: string | null; ope
       <div className="ld-final-islands" aria-hidden><span /><span /><span /></div>
       <div className={`ld-confetti ${seen ? 'is-live' : ''}`} aria-hidden>{confetti.map((i) => <i key={i} style={{ ['--i' as string]: i }} />)}</div>
       <div className="ld-wrap ld-final-inner">
-        <motion.div animate={seen ? { y: [0, -24, 0], rotate: [0, -3, 3, 0] } : {}} transition={{ duration: 1.1, type: 'spring', bounce: .55 }}>
+        <motion.div animate={seen ? { y: [0, -24, 0], rotate: [0, -3, 3, 0] } : {}} transition={{ duration: 1.1, type: 'tween', ease: [0.22, 1, 0.36, 1] }}>
           <Pic className="ld-final-dome ld-dome" src="/dome/mascot/dome-celebrate.webp" alt="" width={499} height={532} />
         </motion.div>
         <h2 className="ld-sign">พร้อมออกผจญภัย</h2>
