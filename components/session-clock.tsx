@@ -85,8 +85,8 @@ export function SessionClock({ variant = 'bar' }: { variant?: 'bar' | 'pill' } =
   if (!state?.active) return <PresenceHeartbeat />
 
   const showRest = state.restMode === true && !dismissedRest
-  // หมดเวลาแล้วไม่ใช่ข้อมูลที่ช่วยตัดสินใจเด็ก — ซ่อนป้าย 00:00 แทนการทิ้ง chrome ไว้บนทุกหน้า
-  const showTime = state.showClock === true && seconds !== null && seconds > 0
+  // เวลาไม่เดิน (หมดแล้ว หรือครูหยุดไว้) ไม่ช่วยเด็กตัดสินใจ — ซ่อนแถบทั้งหมด ไม่ทิ้ง 00:00 ไว้รกจอ
+  const showTime = state.showClock === true && !state.paused && seconds !== null && seconds > 0
 
   return (
     <>
