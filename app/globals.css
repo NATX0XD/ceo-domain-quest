@@ -176,6 +176,300 @@
   }
 }
 
+/* ==========================================================================
+   Teacher CMS visual system
+   Scoped to .teacher-cms so the student experience keeps its existing world.
+   ========================================================================== */
+
+.teacher-cms {
+  --teacher-ink: #252321;
+  --teacher-muted: #625f5b;
+  --teacher-line: #dedbd5;
+  --teacher-canvas: #f5f3ef;
+  --teacher-surface: #fffefa;
+  --teacher-accent: #3e315e;
+  --teacher-accent-soft: #eeeaf7;
+  --teacher-good: #2f6b4f;
+  --teacher-warn: #8c5c1d;
+  --teacher-danger: #a33a38;
+  color: var(--teacher-ink);
+  background: var(--teacher-canvas);
+  font-size: 0.9375rem;
+}
+
+.teacher-cms,
+.teacher-cms * {
+  box-sizing: border-box;
+}
+
+.teacher-cms :where(button, a, input, select, textarea) {
+  min-width: 0;
+}
+
+.teacher-cms :where(button, a) {
+  overflow-wrap: anywhere;
+}
+
+.teacher-cms aside[aria-label='เมนูของครู'] {
+  width: 236px;
+  border-color: var(--teacher-line);
+  background: var(--teacher-surface);
+}
+
+.teacher-cms aside[aria-label='เมนูของครู'] a {
+  border-radius: 7px;
+}
+
+.teacher-cms aside[aria-label='เมนูของครู'] a[aria-current='page'] {
+  background: var(--teacher-accent-soft);
+  color: var(--teacher-accent);
+  box-shadow: inset 3px 0 0 var(--teacher-accent);
+}
+
+.teacher-cms header {
+  min-width: 0;
+  border-color: var(--teacher-line);
+  background: var(--teacher-surface);
+}
+
+.teacher-cms header input,
+.teacher-cms header select {
+  border-color: var(--teacher-line);
+  background: var(--teacher-canvas);
+  color: var(--teacher-ink);
+}
+
+.teacher-cms header select {
+  max-width: 11rem;
+}
+
+.teacher-cms-main {
+  background: var(--teacher-canvas);
+}
+
+.teacher-page-body {
+  max-width: 1440px;
+  padding-bottom: 3rem;
+}
+
+.teacher-page-body > :first-child,
+.teacher-page-body > .mb-4 {
+  border-bottom: 1px solid var(--teacher-line);
+  padding-bottom: 1rem;
+}
+
+.teacher-cms :where([class*='rounded-xl'], [class*='rounded-2xl'], [class*='rounded-3xl']) {
+  border-radius: 10px;
+}
+
+.teacher-cms :where([class*='shadow-soft-1'], [class*='shadow-soft-2'], [class*='shadow-soft-3']) {
+  box-shadow: 0 1px 2px rgb(37 35 33 / 0.04), 0 5px 16px rgb(37 35 33 / 0.035);
+}
+
+.teacher-cms :where(.bg-surface-raised, .bg-white) {
+  background-color: var(--teacher-surface);
+}
+
+.teacher-cms :where([class*='ring-line'], [class*='border-line']) {
+  --tw-ring-color: var(--teacher-line);
+  border-color: var(--teacher-line);
+}
+
+.teacher-cms :where(.btn-base) {
+  min-height: 2.75rem;
+  border-radius: 6px;
+  line-height: 1.35;
+  white-space: normal;
+  text-align: center;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.teacher-cms :where(.bg-brand-600, .bg-brand-700) {
+  background-color: var(--teacher-accent);
+}
+
+.teacher-cms :where(.text-brand-700, .text-brand-600) {
+  color: var(--teacher-accent);
+}
+
+.teacher-cms :where(.bg-danger-100, .bg-spark-100, .bg-quest-100) {
+  background-color: var(--teacher-surface);
+}
+
+.teacher-cms :where([class*='ring-danger-300'][class*='bg-danger-100'], [class*='ring-spark-300'][class*='bg-spark-100']) {
+  background-color: var(--teacher-surface);
+}
+
+.teacher-cms :where(.text-danger-700) { color: var(--teacher-danger); }
+.teacher-cms :where(.text-spark-700) { color: var(--teacher-warn); }
+.teacher-cms :where(.text-quest-700) { color: var(--teacher-good); }
+
+.teacher-cockpit {
+  min-width: 0;
+  padding-bottom: 1rem;
+}
+
+.teacher-cockpit > section[aria-label='ช่วงของคาบและเวลาที่เหลือ'] {
+  background: var(--teacher-accent);
+  border: 1px solid rgb(62 49 94 / 0.25);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.teacher-cockpit > section[aria-label='ช่วงของคาบและเวลาที่เหลือ'] [class*='bg-surface-raised/'] {
+  background-color: rgb(255 255 255 / 0.14);
+}
+
+.teacher-cockpit > section[aria-label='ช่วงของคาบและเวลาที่เหลือ'] .text-display {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.teacher-cockpit > :where([class*='bg-danger-100'], [class*='bg-spark-100'], [class*='bg-quest-100']) {
+  border: 1px solid var(--teacher-line);
+  box-shadow: none;
+}
+
+.teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] {
+  min-width: 0;
+  border: 1px solid var(--teacher-line);
+  box-shadow: none;
+}
+
+.teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] ul {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] li,
+.teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] li > button {
+  min-width: 0;
+}
+
+.teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] li > button {
+  min-height: 4.25rem;
+  align-items: flex-start;
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+
+.teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] li > button > span:nth-child(2) {
+  overflow: visible;
+}
+
+.teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] li > button > span:nth-child(2) > span:first-child,
+.teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] li > button > span:nth-child(2) > span:last-child,
+.teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] li > button > span:nth-child(2) > span:last-child > span {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+.teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] li > button > span:nth-child(2) > span:first-child,
+.teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] li > button > span:nth-child(2) > span:last-child {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.teacher-cockpit > .grid.min-h-0 {
+  min-height: 24rem;
+}
+
+.teacher-cockpit > .grid.min-h-0 > aside {
+  min-width: 0;
+}
+
+.teacher-cockpit > .grid.min-h-0 > aside a {
+  min-height: 3rem;
+  padding-inline: 0.75rem;
+  white-space: normal;
+  text-align: left;
+}
+
+.teacher-action-bar {
+  flex-wrap: wrap;
+  align-items: stretch;
+  padding-top: 0.25rem;
+}
+
+.teacher-action-bar > * {
+  min-width: 9rem;
+  flex: 0 1 auto;
+}
+
+.teacher-action-bar > :first-child {
+  min-width: min(18rem, 100%);
+  flex: 1 1 18rem;
+}
+
+.teacher-cms :where(table) {
+  max-width: 100%;
+}
+
+.teacher-cms :where(.overflow-x-auto) {
+  max-width: 100%;
+  overscroll-behavior-inline: contain;
+}
+
+.teacher-cms :where(h1, h2, h3, p, li, td, th, label) {
+  overflow-wrap: anywhere;
+}
+
+.teacher-cms :where(input, select, textarea):focus-visible,
+.teacher-cms :where(button, a):focus-visible {
+  outline: 3px solid rgb(62 49 94 / 0.35);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1279px) {
+  .teacher-cms header .relative.hidden.w-56 {
+    display: none;
+  }
+
+  .teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .teacher-cms aside[aria-label='เมนูของครู'] { width: 220px; }
+  .teacher-cms header { padding-inline: 0.5rem; }
+  .teacher-cms header select { width: 7.5rem; max-width: 7.5rem; }
+  .teacher-cms header > div:first-of-type { min-width: 0; }
+  .teacher-cms header .text-label { font-size: 0.875rem; }
+  .teacher-page-body { padding: 1rem; padding-bottom: 3rem; }
+  .teacher-page-body > :first-child,
+  .teacher-page-body > .mb-4 { align-items: stretch; }
+  .teacher-page-body > :first-child > :last-child,
+  .teacher-page-body > .mb-4 > :last-child { width: 100%; }
+  .teacher-page-body > :first-child > :last-child > *,
+  .teacher-page-body > .mb-4 > :last-child > * { width: 100%; }
+  .teacher-cockpit { padding-inline: 0.75rem; }
+  .teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] ul { grid-template-columns: 1fr; }
+  .teacher-cockpit > .grid.min-h-0 { min-height: 20rem; }
+  .teacher-action-bar > * { min-width: calc(50% - 0.25rem); }
+  .teacher-action-bar > :first-child { min-width: 100%; }
+}
+
+@media (max-width: 430px) {
+  .teacher-cms header select { width: 6.5rem; max-width: 6.5rem; }
+  .teacher-cms header .teacher-cms-main { min-width: 0; }
+  .teacher-cockpit { gap: 0.75rem; padding-inline: 0.625rem; }
+  .teacher-cockpit > section[aria-label='ช่วงของคาบและเวลาที่เหลือ'] { padding: 0.875rem; }
+  .teacher-cockpit [aria-label='สถานะนักเรียนรายคน'] { padding: 0.75rem; }
+  .teacher-action-bar > * { min-width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teacher-cms *,
+  .teacher-cms *::before,
+  .teacher-cms *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* ============================================================================
    ฐานของเอกสาร
    ============================================================================ */

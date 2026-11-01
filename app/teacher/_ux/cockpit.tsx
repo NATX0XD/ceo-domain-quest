@@ -585,7 +585,7 @@ export function TeacherCockpit({
   }[stepTone]
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 px-3 pt-3 pb-3 sm:gap-4 sm:px-5">
+    <div className="teacher-cockpit flex h-full min-h-0 flex-col gap-3 px-3 pt-3 pb-3 sm:gap-4 sm:px-5">
       {alertsSlot}
 
       {/* ───────── ของที่ครูมองบ่อยที่สุด: ช่วงของคาบ + นาฬิกา */}
@@ -925,7 +925,7 @@ export function TeacherCockpit({
       </div>
 
       {/* ───────── แถวคำสั่งหลัก อยู่ล่างสุดในระยะนิ้วโป้ง ไม่ขยับไปไหน */}
-      <div className="flex shrink-0 gap-2">
+      <div className="teacher-action-bar flex shrink-0 gap-2">
         {nextPhase ? (
           <button
             type="button"

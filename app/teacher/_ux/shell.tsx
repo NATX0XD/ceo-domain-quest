@@ -284,7 +284,7 @@ export function TeacherShell({
   )
 
   return (
-    <div className="flex h-dvh max-h-dvh overflow-hidden bg-surface-sunken">
+    <div className="teacher-cms flex h-dvh max-h-dvh overflow-hidden bg-surface-sunken">
       {/* ───────── เมนูข้าง (แสดง label ตั้งแต่แท็บเล็ต เพื่อให้ปลายทางอ่านได้ทันที) */}
       <aside
         aria-label="เมนูของครู"
@@ -460,7 +460,7 @@ export function TeacherShell({
         </header>
 
         {/* ───────── เนื้อหา — ชั้นเดียวที่เลื่อนได้ */}
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
+        <main className="teacher-cms-main min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
 
         {/**
          * ตัวปลุกคิวตรวจงาน AI — ระบบไม่มี cron ถ้าไม่มีหน้าครูเปิดค้างไว้ คิวจะไม่เดินเลย (bus T77)
