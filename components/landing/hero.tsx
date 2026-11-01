@@ -80,6 +80,7 @@ export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: 
 
           <p className="ld-sign ld-sign--sm">สร้างร้านในฝัน เรียนรู้โดเมนอย่างสนุก</p>
 
+          {(open || (openAt && !open)) && (
           <div className="ld-launch">
             {openAt && !open && (
               <div className="ld-launch-count">
@@ -91,23 +92,9 @@ export function Hero({ openAt, openLabel }: { openAt: string | null; openLabel: 
               <motion.a className="ld-btn ld-launch-main" href="/join" whileTap={{ scale: 0.94 }}>
                 เข้าเล่นเลย ▶
               </motion.a>
-            ) : (
-              <motion.a className="ld-btn ld-launch-main" href="#how" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.94 }}>
-                ดูวิธีเล่น ▶
-              </motion.a>
-            )}
-            <div className="ld-launch-teacher">
-              <div className="ld-launch-thead">
-                <b>สำหรับครู</b>
-                <a href="#teacher">ครูทำอะไรได้บ้าง ↓</a>
-              </div>
-              <div className="ld-launch-tbtns">
-                <motion.a className="ld-btn ld-btn--ghost" href="/teacher/signup" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.94 }}>ลงทะเบียนครูล่วงหน้า</motion.a>
-                <motion.a className="ld-btn ld-btn--light" href="/teacher" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.94 }}>ครูเข้าสู่ระบบ</motion.a>
-              </div>
-              <p>ใช้รหัสเชิญจากผู้ดูแล · วันเปิดเข้าใช้ด้วยบัญชีเดิมได้เลย</p>
-            </div>
+            ) : null}
           </div>
+          )}
         </div>
       </div>
 
