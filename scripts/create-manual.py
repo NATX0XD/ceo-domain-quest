@@ -43,8 +43,12 @@ def style_font(style, size, color='342014', bold=False):
     style._element.get_or_add_rPr().rFonts.set(qn('w:cs'), FONT)
 
 def add_page_field(paragraph):
-    run = paragraph.add_run()
-    fld = OxmlElement('w:fldSimple'); fld.set(qn('w:instr'), 'PAGE'); run._r.append(fld); set_font(run, 9)
+    fld = OxmlElement('w:fldSimple'); fld.set(qn('w:instr'), ' PAGE ')
+    r = OxmlElement('w:r'); rpr = OxmlElement('w:rPr'); sz = OxmlElement('w:sz'); sz.set(qn('w:val'), '18'); rpr.append(sz)
+    rf = OxmlElement('w:rFonts')
+    for a in ('ascii', 'hAnsi', 'eastAsia', 'cs'): rf.set(qn(f'w:{a}'), FONT)
+    rpr.insert(0, rf); r.append(rpr)
+    t = OxmlElement('w:t'); t.text = '1'; r.append(t); fld.append(r); paragraph._p.append(fld)
 
 def add_picture(paragraph, image, width_cm):
     path = ROOT / 'public' / image.lstrip('/')
@@ -61,14 +65,15 @@ def student_pair(doc, items):
         cell.width = Cm(8.0); cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.TOP
         p = cell.paragraphs[0]; r = p.add_run(f'{n}. {title}'); set_font(r, 14, True, '7F4B22')
         p = cell.add_paragraph(instruction); set_font(p, 10); p.paragraph_format.space_after = Pt(4)
-        p = cell.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER; add_picture(p, image, 6.8)
+        p = cell.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        for im in ([image] if isinstance(image, str) else image): add_picture(p, im, 6.8 if isinstance(image, str) else 3.35)
         p = cell.add_paragraph(f'เคล็ดลับ: {tip}'); shade(cell, 'FFF8E8'); set_font(p, 9, False, '8A4A14')
         p = cell.add_paragraph(f'รูปที่ {n} · {title}'); p.alignment = WD_ALIGN_PARAGRAPH.CENTER; set_font(p, 9, False, '725B43')
 
 def teacher_step(doc, n, title, instruction, tip, image):
-    p = doc.add_paragraph(); r = p.add_run(f'{n}. {title}'); set_font(r, 17, True, '7F4B22')
+    p = doc.add_paragraph(); p.paragraph_format.page_break_before = n > 13 and (n - 13) % 2 == 0; r = p.add_run(f'{n}. {title}'); set_font(r, 17, True, '7F4B22')
     p = doc.add_paragraph(instruction); set_font(p, 11); p.paragraph_format.space_after = Pt(4)
-    p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER; add_picture(p, image, 15.6)
+    p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER; add_picture(p, image, 13.4)
     caption(doc, n, title)
     t = doc.add_table(rows=1, cols=1); c = t.cell(0, 0); shade(c); c.text = f'เคล็ดลับ: {tip}'; set_font(c.paragraphs[0], 10, False, '8A4A14')
 
@@ -117,8 +122,8 @@ student = [
 ('M3 Pixel Counter','จับคู่ลูกค้า/คำขอกับชนิดโดเมน แล้วตรวจผลในเกม','สังเกต .com, .org และ .net','/manual/m3-gameplay.png'),
 ('M4 Registrar','ค้นหาชื่อโดเมน กรอกข้อมูลนายทะเบียน และตรวจเอกสาร','ทำทีละขั้น: ค้นหา → กรอก → ตรวจ → ยืนยัน','/manual/m4-gameplay.png'),
 ('บอส CEO และรางวัล','ใช้ความรู้ทั้งหมดส่งคำตอบบอส แล้วดูผล รางวัล และโปรไฟล์','ตรวจคำตอบก่อนกดยืนยัน','/manual/ceo-boss.png'),
-('ย้ายเครื่อง','เปิดลิงก์เดิม กด “เคยเข้าแล้ว ย้ายเครื่อง” แล้วใส่ชื่อเดิมกับ PIN เดิม','ใช้ชื่อเล่นเดิมเพื่อรักษาความคืบหน้า','/manual/student-join.png'),
-('ขอความช่วยเหลือ','กดขอความช่วยเหลือ เลือกหัวข้อ และเขียนสิ่งที่ติดอยู่','บอกสิ่งที่ลองทำแล้ว ครูจะช่วยได้เร็วขึ้น','/manual/shot-dome.png'),
+('ย้ายเครื่อง','เปิดลิงก์เดิม กด “เคยเข้าแล้ว ย้ายเครื่อง” แล้วใส่ชื่อเดิมกับ PIN เดิม','ใช้ชื่อเล่นเดิมเพื่อรักษาความคืบหน้า',['/manual/student-move-start.png','/manual/student-move-form.png']),
+('ขอความช่วยเหลือ','ในภารกิจ กด “ถามโดม” เพื่อขอคำใบ้ หรือกด “ตัวช่วย” แล้วเลือก “ขอให้ครูช่วย” เมื่อติดจริง','บอกสิ่งที่ลองทำแล้ว ครูจะช่วยได้เร็วขึ้น','/manual/m3-gameplay.png'),
 ]
 for start in range(0, len(student), 2):
     if start: doc.add_page_break()
@@ -137,7 +142,6 @@ teacher = [
 ('Settings / Demo / AI','เปิดการทดสอบก่อนเรียน ตั้งค่าห้อง และสลับ AI ช่วยคิดตามบริบท','ทดสอบสวิตช์ก่อนเริ่มคาบจริง','/manual/teacher-captures/settings.png'),
 ]
 for n, data in enumerate(teacher, 13):
-    if n > 13: doc.add_page_break()
     teacher_step(doc, n, *data)
 
 doc.save(DOCX)

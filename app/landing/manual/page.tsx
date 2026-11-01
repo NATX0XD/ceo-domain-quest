@@ -48,7 +48,7 @@ function StepCard({ step, index }: { step: string[]; index: number }) {
 export default function ManualPage() {
   return <main className="manual-page">
     <header className="manual-hero">
-      <nav className="manual-nav"><a href="/landing">← กลับหน้าแรก</a><a href="/manual/คู่มือการใช้งาน-CEO-Domain-Quest.docx" download>ดาวน์โหลด Word</a></nav>
+      <nav className="manual-nav"><a href="/landing">← กลับหน้าแรก</a></nav>
       <div className="manual-hero-inner">
         <img src="/landing/logo.webp" alt="CEO Domain Quest" className="manual-logo" />
         <img src="/landing/dome-wave.webp" alt="โดม" className="manual-dome" />
@@ -58,7 +58,7 @@ export default function ManualPage() {
       </div>
     </header>
     <div className="manual-layout">
-      <aside className="manual-toc"><b>สารบัญย่อ</b><a href="#overview">ภาพรวมระบบ</a><a href="#student">นักเรียน</a><a href="#teacher">ครู</a><a href="#help">ขอความช่วยเหลือ</a><a className="manual-download" href="/คู่มือการใช้งาน-CEO-Domain-Quest.pdf" download>ดาวน์โหลด PDF ↓</a></aside>
+      <aside className="manual-toc"><b>สารบัญย่อ</b><a href="#overview">ภาพรวมระบบ</a><a href="#student">นักเรียน</a><a href="#teacher">ครู</a><a href="#help">ขอความช่วยเหลือ</a></aside>
       <div className="manual-content">
         <section id="overview" className="manual-overview"><span className="manual-kicker">START HERE</span><h1>ออกเดินทางจากชื่อร้าน<br />ไปสู่โดเมนที่ใช่</h1><p>CEO Domain Quest คือเกมการเรียนรู้ที่พานักเรียนสำรวจโดเมน ตั้งร้าน ทดลองทำภารกิจ และสรุปความรู้ร่วมกับครูในห้องเรียนเดียวกัน</p><div className="manual-overview-grid"><div><b>1 ห้องเรียน</b><span>รหัสห้องเดียว เข้าพร้อมกันทั้งชั้น</span></div><div><b>4 ภารกิจ</b><span>ดู อ่าน ลงมือทำ ได้ตามจังหวะตัวเอง</span></div><div><b>1 บอส CEO</b><span>นำความรู้ไปตัดสินใจจริง</span></div></div></section>
         <section id="student" className="manual-section"><div className="manual-section-head"><span className="manual-kicker">PART 01</span><h2>สำหรับนักเรียน</h2><p>ใช้มือถือหรือแท็บเล็ต เปิดลิงก์จากครู แล้วเดินทางตามเกาะทีละขั้น</p></div><div className="manual-steps">{studentSteps.map((step, i) => <StepCard key={step[0]} step={step} index={i} />)}</div></section>
