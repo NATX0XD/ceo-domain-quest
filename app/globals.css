@@ -1212,16 +1212,19 @@ select {
     url('/ui/dome/bg.webp') center / cover;
 }
 .student-world.setup-world-shell .app-shell-main,
-.student-world.profile-world-shell .app-shell-main {
+.student-world.profile-world-shell .app-shell-main,
+.student-world.ceo-world-shell .app-shell-main {
   background:
     linear-gradient(180deg, rgb(91 203 246 / .2), rgb(255 241 214 / .97) 30%, rgb(255 241 214 / .99));
 }
 .student-world.setup-world-shell .app-shell-main > div,
-.student-world.profile-world-shell .app-shell-main > div {
+.student-world.profile-world-shell .app-shell-main > div,
+.student-world.ceo-world-shell .app-shell-main > div {
   isolation: isolate;
 }
 .student-world.setup-world-shell .app-shell-main > div::before,
-.student-world.profile-world-shell .app-shell-main > div::before {
+.student-world.profile-world-shell .app-shell-main > div::before,
+.student-world.ceo-world-shell .app-shell-main > div::before {
   content: '';
   position: absolute;
   inset: 0 0 auto;

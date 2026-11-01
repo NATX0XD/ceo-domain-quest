@@ -848,7 +848,7 @@ export function CeoClient({
 
   return (
     <StudentShell
-      className="flex h-full min-h-0 flex-col gap-2.5"
+      className="ceo-world-shell flex h-full min-h-0 flex-col gap-2.5"
       footer={
         <AppFooter>
           <div className="flex gap-2">
@@ -926,7 +926,7 @@ export function CeoClient({
       <div className="flex min-h-0 flex-1 flex-col gap-2.5">
         {stepMeta?.kind === 'speak' ? (
           <>
-            <h1 className="shrink-0 text-title-sm font-extrabold text-balance text-ink">
+            <h1 className="shrink-0 line-clamp-3 text-title-sm font-extrabold text-balance text-ink">
               {objective}
             </h1>
 

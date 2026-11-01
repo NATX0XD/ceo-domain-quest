@@ -9,6 +9,7 @@
 | P-03 | `/profile` step 1 | Quiz dots duplicated the single progress bar. | fixed: compact profile step keeps the bar and nav pair only. |
 | M-05 | `/mission/m1` intro | Goal story and warmup explanation formed a text wall before the first action. | fixed: three-line teaser, expandable full story, one-line warmup note. |
 | W-01 | `/mission/m1–m4` learn shell | Learn screens used a separate flat app skin instead of the approved island-world language. | fixed: shared learn shell now uses wood header, cream dock, sea tint, and wood-edged cards. |
+| C-01 | `/ceo` speak step | The boss objective occupied too much of the hero and inherited the flat student shell. | fixed: objective is capped to three lines and the boss flow uses the same sea/cream world surface. |
 
 ## Automated checks
 
@@ -25,6 +26,7 @@
 - `/setup` at 390 and 360 keeps the heading, one progress bar, preview, name field, and next action legible without an inner scroll container.
 - `/profile` step 1 keeps the question and four choices as the hero; the duplicate dots are gone.
 - `/mission/m1` warmup uses the same wood/cream/sea language as `/map`; full story remains available behind an explicit disclosure.
+- `/ceo` keeps the speaking task as the hero and leaves the recording action in the thumb zone.
 - `/knowledge` card titles may wrap inside topic cards by design; primary back/next CTAs remain short and single-line.
 
 ## Gate status
