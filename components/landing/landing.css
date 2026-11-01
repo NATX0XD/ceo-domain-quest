@@ -26,6 +26,11 @@
 .ld-display { font-family: var(--font-display-thai), var(--font-noto-sans-thai), sans-serif; }
 .ld-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .ld-wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+.ld-nav { position: absolute; z-index: 5; top: 14px; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+.ld-nav-brand, .ld-nav-manual { color: #fff8e6; text-decoration: none; font-family: var(--font-display-thai), sans-serif; font-weight: 700; text-shadow: 0 2px 0 var(--ld-wood-3); }
+.ld-nav-brand { font-size: 16px; }
+.ld-nav-manual { padding: 8px 14px; border: 2px solid rgba(255,248,230,.9); border-radius: 999px; background: rgba(91,52,171,.72); font-size: 15px; box-shadow: 0 3px 0 rgba(60,32,10,.25); }
+.ld-nav-manual:hover, .ld-foot-link:hover { filter: brightness(1.12); }
 
 /* ---------- ป้ายไม้ ---------- */
 .ld-sign {
@@ -271,6 +276,7 @@
 .ld-final-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .ld-final-dome { width: 150px; }
 .ld-foot { margin-top: 28px; font-size: 14px; color: #e4f6ff; line-height: 1.6; }
+.ld-foot-link { color: #fff; font-weight: 700; text-underline-offset: 3px; }
 .ld-final-inner { position: relative; z-index: 1; }
 
 /* ---------- Keyframes ---------- */
@@ -288,6 +294,7 @@
 /* ---------- Desktop ---------- */
 @media (min-width: 900px) {
   .ld-wrap { padding: 0 28px; }
+  .ld-nav { padding: 0 28px; }
   .ld-hero { padding: 40px 0 150px; min-height: 760px; }
   .ld-hero-inner {
     display: grid; grid-template-columns: 1.1fr .9fr; grid-template-areas: "badge dome" "logo dome" "sign dome" "count dome" "cta dome";

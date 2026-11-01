@@ -29,7 +29,7 @@ describe('decideGate เมื่อปิด', () => {
     expect(await decideGate({ pathname: '/api/health', env: prod })).toEqual({ type: 'next' })
   })
   it('landing และ asset ผ่าน', async () => {
-    for (const pathname of ['/landing', '/landing/x', '/_next/static/a.js', '/favicon.ico', '/landing/hero.webp', '/dome/mascot/dome-greet.webp', '/robots.txt']) {
+    for (const pathname of ['/landing', '/landing/x', '/landing/manual', '/landing/manual/teacher', '/_next/static/a.js', '/favicon.ico', '/landing/hero.webp', '/dome/mascot/dome-greet.webp', '/robots.txt']) {
       expect(await decideGate({ pathname, env: prod })).toEqual({ type: 'next' })
     }
   })

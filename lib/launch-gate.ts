@@ -62,7 +62,7 @@ export async function hasValidPreviewCookie(cookie: string | undefined, previewK
   return constantTimeEqual(await previewCookieValue(previewKey), cookie)
 }
 
-const ALWAYS_OPEN_PAGES = ['/landing']
+const ALWAYS_OPEN_PAGES = ['/landing', '/landing/manual']
 const STATIC_EXT = /\.[a-z0-9]{2,5}$/i
 
 function isLandingPath(p: string) {

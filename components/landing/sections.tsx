@@ -272,6 +272,8 @@ export function FinalSection({ openAt, openLabel }: { openAt: string | null; ope
           CEO Domain Quest · สื่อการสอนแบบเกม
           <br />
           วิชา 21910-2002 อินเทอร์เน็ตในงานธุรกิจดิจิทัล
+          <br />
+          <a href="/landing/manual" className="ld-foot-link">เปิดคู่มือการใช้งาน</a>
         </p>
       </div>
     </footer>
