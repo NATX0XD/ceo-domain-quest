@@ -75,7 +75,7 @@ describe('ทุก operation บอกได้ว่าใครเรีย�
 
   it('เส้นที่ยิงได้โดยไม่ต้องล็อกอิน มีแค่ 4 เส้นที่ตั้งใจไว้', () => {
     const open = OPS.filter((o) => o.op.security.length === 0).map((o) => o.key).sort()
-    expect(open).toEqual(['GET /api/health', 'POST /api/join', 'POST /api/join/resume', 'POST /api/teacher/login'])
+    expect(open).toEqual(['GET /api/health', 'POST /api/join', 'POST /api/join/resume', 'POST /api/teacher/login', 'POST /api/teacher/signup'])
   })
 
   it('ทุก operation มีคำตอบกรณีสำเร็จ (2xx) และทุก response มีคำอธิบาย', () => {

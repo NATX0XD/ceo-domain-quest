@@ -98,6 +98,40 @@ access token ของ Supabase **ไม่ถูกส่งกลับไป�
     }),
   },
 
+  '/api/teacher/signup': {
+    post: op({
+      id: 'teacherSignup',
+      summary: 'สมัครบัญชีครูด้วยรหัสเชิญ',
+      tags: [TEACHER],
+      security: ANYONE,
+      description: `สร้างบัญชีครูใน Supabase Auth พร้อมห้องเรียนเริ่มต้น 1 ห้อง
+รหัสเชิญตรวจเทียบฝั่งเซิร์ฟเวอร์กับ \`TEACHER_INVITE_CODE\` แบบเวลาคงที่
+เมื่อสำเร็จจะตั้งคุกกี้ \`dbq_teacher\` แบบ \`httpOnly\` และ redirect ไป \`/teacher\` · ต้องเปิดรับสมัครด้วย env นี้ก่อน`,
+      requestBody: jsonBody(
+        obj(
+          {
+            displayName: str('ชื่อที่แสดง'),
+            email: str('อีเมลที่ใช้เข้าสู่ระบบ'),
+            password: str('รหัสผ่านอย่างน้อย 10 ตัวอักษร'),
+            confirmPassword: str('ยืนยันรหัสผ่าน'),
+            inviteCode: str('รหัสเชิญครู'),
+          },
+          { required: ['displayName', 'email', 'password', 'confirmPassword', 'inviteCode'] },
+        ),
+        { displayName: 'ครูผู้สอน', email: 'teacher@example.ac.th', password: 'ตัวอย่างรหัสผ่าน 10 ตัว', confirmPassword: 'ตัวอย่างรหัสผ่าน 10 ตัว', inviteCode: 'รหัสเชิญจากผู้ดูแล' },
+      ),
+      responses: {
+        ...ok('สมัครสำเร็จ — ตั้งคุกกี้แล้วและ redirect ไป `/teacher`', obj({ ok: bool('สำเร็จ') }), { ok: true }),
+        ...failures(
+          [400, ['bad-request']],
+          [403, ['signup-disabled', 'invalid-invite']],
+          [409, ['signup-failed']],
+          [429, ['rate-limited']],
+        ),
+      },
+    }),
+  },
+
   '/api/teacher/logout': {
     post: op({
       id: 'teacherLogout',

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { AlertIcon, Button, InfoIcon, LockIcon, TextField } from '@/components/ui'
 import { AppFooter, AppShell } from '@/components/app-shell'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 /** ผูกปุ่มเข้าสู่ระบบที่อยู่ในแถบท้าย เข้ากับฟอร์มที่อยู่ในส่วนเลื่อนได้ */
 const FORM_ID = 'teacher-login-form'
@@ -127,6 +128,9 @@ export function TeacherLoginClient() {
           ลืมรหัสผ่าน หรือยังไม่มีบัญชี ให้ติดต่อผู้ดูแลระบบของวิทยาลัยเพื่อตั้งรหัสใหม่ให้
           หน้านี้ไม่มีการส่งลิงก์รีเซ็ตทางอีเมล
         </span>
+      </p>
+      <p className="mt-4 text-center text-label font-semibold text-brand-700">
+        <Link href="/teacher/signup" className="underline underline-offset-4">มีรหัสเชิญ? สมัครครู</Link>
       </p>
       </div>
     </AppShell>

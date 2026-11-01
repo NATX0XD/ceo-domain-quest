@@ -36,6 +36,24 @@
   background: var(--t2-canvas);
 }
 
+.teacher-signup-page { min-height: 100dvh; display: grid; place-items: center; padding: 2rem 1rem; }
+.teacher-signup-card { width: min(100%, 34rem); padding: clamp(1.25rem, 4vw, 2.5rem); background: var(--t2-card); border: 1px solid var(--t2-line); border-radius: 28px; box-shadow: var(--t2-shadow); }
+.teacher-signup-mark { width: 4.5rem; height: 4.5rem; display: grid; place-items: center; border-radius: 1.4rem; background: var(--t2-lilac); margin-bottom: 1rem; }
+.teacher-signup-kicker { margin: 0 0 .35rem; color: var(--t2-brand); font-size: .8rem; font-weight: 800; letter-spacing: .04em; }
+.teacher-signup-form { display: grid; gap: .9rem; margin-top: 1.5rem; }
+.teacher-signup-form label { display: grid; gap: .35rem; color: var(--t2-ink); font-size: .88rem; font-weight: 750; }
+.teacher-signup-form input { width: 100%; min-height: 2.9rem; padding: .65rem .8rem; border: 1px solid var(--t2-line); border-radius: 12px; background: #fffdf8; color: var(--t2-ink); font: inherit; outline: none; }
+.teacher-signup-form input:focus { border-color: var(--t2-purple); box-shadow: 0 0 0 3px rgb(143 123 232 / .16); }
+.teacher-password-strength { display: grid; grid-template-columns: 7rem 1fr; align-items: center; gap: .55rem; color: var(--t2-muted); font-size: .75rem; }
+.teacher-password-strength > span { height: .35rem; overflow: hidden; border-radius: 99px; background: var(--t2-track); }
+.teacher-password-strength i { display: block; height: 100%; border-radius: inherit; background: var(--t2-green); transition: width 160ms ease; }
+.teacher-signup-error { margin: .2rem 0 0; padding: .7rem .85rem; border-radius: 12px; background: var(--t2-peach); color: var(--t2-red); font-size: .85rem; font-weight: 700; }
+.teacher-signup-form button { min-height: 3rem; margin-top: .35rem; border: 0; border-radius: 12px; background: var(--t2-brand); color: white; font: inherit; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.teacher-signup-form button:disabled { opacity: .55; cursor: wait; }
+.teacher-signup-back { margin: 1.25rem 0 0; color: var(--t2-muted); text-align: center; font-size: .85rem; }
+.teacher-signup-back a { color: var(--t2-brand); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 390px) { .teacher-signup-page { padding: 1rem .65rem; } .teacher-signup-card { border-radius: 22px; } .teacher-signup-form { margin-top: 1rem; } }
+
 .teacher-cms aside[aria-label='เมนูของครู'] {
   background: #fffdf8;
   border-color: var(--t2-line);
