@@ -23,18 +23,37 @@ const MOOD_ALT: Record<DomeMood, string> = {
   wait: 'โดมยืนรอฟังอย่างตั้งใจ',
 }
 
-const DOME_ASSET: Record<DomeMood, string> = {
-  greet: '/dome/mascot/dome-greet.webp',
-  cheer: '/dome/mascot/dome-cheer.webp',
-  happy: '/dome/mascot/dome-happy.webp',
-  think: '/dome/mascot/dome-think.webp',
-  tired: '/dome/mascot/dome-tired.webp',
-  // ชีตทางการไม่มี pose แยกสำหรับสองอารมณ์นี้ จึงใช้ pose ทางการที่ใกล้ที่สุด
-  encourage: '/dome/mascot/dome-cheer.webp',
-  explain: '/dome/mascot/dome-explain.webp',
-  surprised: '/dome/mascot/dome-surprised.webp',
-  celebrate: '/dome/mascot/dome-celebrate.webp',
-  wait: '/dome/mascot/dome-think.webp',
+type DomeSet = 'official' | 'alt'
+
+const DOME_SET: DomeSet = process.env.NEXT_PUBLIC_DOME_SET === 'alt' ? 'alt' : 'official'
+
+const DOME_ASSET: Record<DomeSet, Record<DomeMood, string>> = {
+  official: {
+    greet: '/dome/mascot/dome-greet.webp',
+    cheer: '/dome/mascot/dome-cheer.webp',
+    happy: '/dome/mascot/dome-happy.webp',
+    think: '/dome/mascot/dome-think.webp',
+    tired: '/dome/mascot/dome-tired.webp',
+    // ชีตทางการไม่มี pose แยกสำหรับสองอารมณ์นี้ จึงใช้ pose ทางการที่ใกล้ที่สุด
+    encourage: '/dome/mascot/dome-cheer.webp',
+    explain: '/dome/mascot/dome-explain.webp',
+    surprised: '/dome/mascot/dome-surprised.webp',
+    celebrate: '/dome/mascot/dome-celebrate.webp',
+    wait: '/dome/mascot/dome-think.webp',
+  },
+  alt: {
+    greet: '/dome/mascot/alt/dome-greet.webp',
+    cheer: '/dome/mascot/alt/dome-cheer.webp',
+    happy: '/dome/mascot/alt/dome-happy.webp',
+    think: '/dome/mascot/alt/dome-think.webp',
+    // ชุดตัวเลือกเดิมไม่มี pose tired จึงใช้ pose think ที่ใกล้ที่สุด
+    tired: '/dome/mascot/alt/dome-think.webp',
+    encourage: '/dome/mascot/alt/dome-encourage.webp',
+    explain: '/dome/mascot/alt/dome-explain.webp',
+    surprised: '/dome/mascot/alt/dome-surprised.webp',
+    celebrate: '/dome/mascot/alt/dome-celebrate.webp',
+    wait: '/dome/mascot/alt/dome-wait.webp',
+  },
 }
 
 export type DomeAvatarProps = {
@@ -70,7 +89,7 @@ export function DomeAvatar({
   const img = (
     // eslint-disable-next-line @next/next/no-img-element -- mascot เป็นไฟล์สถิตในโฟลเดอร์ public ไม่ต้องผ่านตัวปรับขนาดภาพ
     <img
-      src={DOME_ASSET[mood]}
+      src={DOME_ASSET[DOME_SET][mood]}
       alt={decorative ? '' : MOOD_ALT[mood]}
       aria-hidden={decorative || undefined}
       width={size}

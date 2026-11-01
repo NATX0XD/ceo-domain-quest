@@ -370,7 +370,16 @@ className เดียวกันเลย มันเกิดจากลู
 | `icons/star-full.svg` · `star-empty.svg` | ดาวเต็ม / ดาวว่าง |
 | `icons/badge-certificate.svg` | ตราเกียรติบัตร |
 
-มาสคอตชุดนี้ตัดจากชีตทางการของทีมใน `UI/mascot/dome-sheet-official.jpg` และเป็น canonical runtime art (พื้นหลังโปร่งใส WebP ใน `public/dome/mascot/`); `encourage` ใช้ pose `cheer` และ `wait` ใช้ pose `think` เพราะชีตไม่มี pose แยก. ห้ามใช้ `tired` กับ feedback คำตอบผิด — ใช้ได้เฉพาะพัก/พักก่อนหรือ network-error screen. ภาพแผนที่เกาะใน `UI/03 คุยกับโดม/*.png` ยังเป็นงาน teammate รุ่นผมเก่าและจงใจคงไว้ ไม่ใช่ runtime mascot set.
+มาสคอตชุดทางการของทีมใน `UI/mascot/dome-sheet-official.jpg` คือ **ชุดที่ใช้จริง** (พื้นหลังโปร่งใส WebP ใน `public/dome/mascot/`). `encourage` ใช้ pose `cheer` และ `wait` ใช้ pose `think` เพราะชีตทางการไม่มี pose แยก. ห้ามใช้ `tired` กับ feedback คำตอบผิด — ใช้ได้เฉพาะพัก/พักก่อนหรือ network-error screen. ภาพแผนที่เกาะใน `UI/03 คุยกับโดม/*.png` ยังเป็นงาน teammate รุ่นผมเก่าและจงใจคงไว้ ไม่ใช่ runtime mascot set.
+
+ชุดมาสคอตที่ Codex สร้างไว้ก่อนหน้าเก็บเป็น **ตัวเลือกเท่านั้น** ใน `public/dome/mascot/alt/` และไม่ถูกใช้โดยค่าเริ่มต้น หากต้องการสลับทั้งแอป ให้ตั้ง environment variable ก่อนรันหรือ build:
+
+```bash
+NEXT_PUBLIC_DOME_SET=official # ค่าเริ่มต้น — ชุดของเพื่อน (ใช้จริง)
+NEXT_PUBLIC_DOME_SET=alt       # ชุดที่ Codex สร้าง (ตัวเลือก)
+```
+
+ค่าที่ไม่ใช่ `alt` จะถูกตีความเป็น `official`. ในชุด `alt` mood `tired` ไม่มีไฟล์ต้นฉบับ จึง fallback ไปที่ `think`; ในชุดทางการ `encourage` → `cheer` และ `wait` → `think` ตาม pose ที่ใกล้ที่สุด.
 
 > **ไอคอนมี 2 ที่โดยตั้งใจ** — `components/ui/icons.tsx` เป็น inline SVG ใช้ `currentColor` จึงเปลี่ยนสีตามสถานะ active ได้ (`<img>` ทำไม่ได้) ส่วนไฟล์ใน `public/icons/` เป็นภาพชุดเดียวกันไว้ใช้ตอนต้องการไฟล์จริง เช่น og-image, PDF เกียรติบัตร, ส่งให้ฝ่ายสื่อ **แก้ที่ไหนต้องแก้ทั้งสองที่**
 
