@@ -92,7 +92,7 @@ export function ModePopup({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[60] flex items-end justify-center overflow-y-auto bg-[#1d0f3a]/60 px-3 pb-4 pt-6 sm:items-center"
+      className="fixed inset-0 z-[60] flex items-end justify-center overflow-y-auto bg-[#1d0f3a]/85 backdrop-blur-xl px-3 pb-4 pt-6 sm:items-center"
       initial={reduce ? { opacity: 0 } : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: reduce ? 0.01 : 0.2 }}
@@ -114,15 +114,20 @@ export function ModePopup({
           animate={{ y: 0, opacity: 1 }}
           transition={reduce ? { duration: 0.01 } : { ...spring, delay: 0.12 }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element -- ภาพตัดจากดีไซน์ */}
-          <img
-            src="/ui/mode/dome.webp"
-            alt=""
-            aria-hidden="true"
-            className="relative -mb-[2px] shrink-0 select-none"
-            style={{ marginLeft: '-1%', height: DOME_H, width: 'auto' }}
-            draggable={false}
-          />
+          <div
+            className="relative shrink-0 overflow-hidden"
+            style={{ height: DOME_H, width: `calc(${DOME_H} * 0.8)`, marginLeft: '2%' }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- มาสคอตทางการ โผล่แค่ครึ่งบนเหนือขอบการ์ด */}
+            <img
+              src="/dome/mascot/dome-greet.webp"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className="absolute left-0 top-0 max-w-none select-none"
+              style={{ height: `calc(${DOME_H} * 1.62)`, width: 'auto' }}
+            />
+          </div>
           <div className="relative mb-[22%] ml-[-9%] min-w-0 flex-1 self-center sm:mb-[14%]">
             <motion.p
               className="relative rounded-[28px] border-2 border-[#c9b6f0] bg-[#f4edff] px-3 py-2 text-center text-[clamp(12px,3.6vw,18px)] font-extrabold leading-snug text-[#3a1a6e] shadow-[0_6px_14px_rgba(60,30,110,0.22)]"
@@ -188,7 +193,7 @@ export function ModePopup({
                   animate={{ opacity: 1, y: 0 }}
                   transition={reduce ? { duration: 0.01 } : { ...spring, delay: 0.2 + i * 0.06 }}
                   whileTap={reduce ? undefined : { scale: 0.96 }}
-                  className="relative flex min-w-0 flex-col items-center rounded-[20px] px-1 pb-2.5 pt-3.5 text-center outline-none transition-shadow focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/50"
+                  className="relative flex h-full min-w-0 flex-col items-center rounded-[20px] px-1 pb-2.5 pt-3.5 text-center outline-none transition-shadow focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/50"
                   style={{
                     backgroundColor: m.tint,
                     boxShadow: on
@@ -206,25 +211,28 @@ export function ModePopup({
                     </span>
                   ) : null}
                   {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D ตัดจากดีไซน์ */}
-                  <img
-                    src={m.icon}
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                    className="h-auto w-[86%] max-w-[120px] select-none"
-                    style={{ WebkitMaskImage: FADE_EDGES, maskImage: FADE_EDGES }}
-                  />
+                  <span className="flex h-[clamp(52px,16vw,84px)] w-full items-center justify-center">
+                    <img
+                      src={m.icon}
+                      alt=""
+                      aria-hidden="true"
+                      draggable={false}
+                      className="h-full w-auto max-w-full select-none object-contain"
+                      style={{ WebkitMaskImage: FADE_EDGES, maskImage: FADE_EDGES }}
+                    />
+                  </span>
                   <span className="mt-0.5 font-display text-[clamp(18px,5.6vw,28px)] font-extrabold leading-tight">
                     {m.title}
                   </span>
-                  <span className="mt-0.5 text-[clamp(10px,2.9vw,14px)] font-medium leading-snug opacity-85">
+                  <span className="mt-0.5 min-h-[2.7em] text-[clamp(10px,2.9vw,14px)] font-medium leading-snug opacity-85">
                     {m.lines[0]}
                     <br />
                     {m.lines[1]}
                   </span>
+                  <span className="h-2 shrink-0" aria-hidden="true" />
                   <span
                     aria-hidden="true"
-                    className="mt-2 grid size-[clamp(22px,6.5vw,30px)] place-items-center rounded-full border-[3px] bg-white"
+                    className="mt-auto grid size-[clamp(22px,6.5vw,30px)] place-items-center rounded-full border-[3px] bg-white"
                     style={{ borderColor: on ? m.ring : '#b9b4c4' }}
                   >
                     {on ? <span className="size-[55%] rounded-full" style={{ backgroundColor: m.ring }} /> : null}
