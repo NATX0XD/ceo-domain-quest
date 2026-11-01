@@ -137,11 +137,6 @@ export function AppShell({
 
   return (
     <div className="student-stage">
-      <div className="student-stage-deco" aria-hidden="true">
-        <img className="student-stage-prop student-stage-prop--one" src="/landing/deco/props-signs-palms.webp" alt="" />
-        <img className="student-stage-prop student-stage-prop--two" src="/landing/deco/props-coins-boat.webp" alt="" />
-        <img className="student-stage-prop student-stage-prop--three" src="/landing/deco/sky-beach.webp" alt="" />
-      </div>
       {shell}
     </div>
   )
