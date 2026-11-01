@@ -152,7 +152,7 @@ export function LearnScenePanel({
     >
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={image} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover" />
+        <img src={image} alt="" aria-hidden className="absolute inset-0 h-full w-full object-contain p-1" />
       ) : m2 ? (
         // ภาพเป็นฉากประกอบเท่านั้น; ข้อความและปุ่มยัง render เป็น HTML ด้านนอกภาพ
         // eslint-disable-next-line @next/next/no-img-element

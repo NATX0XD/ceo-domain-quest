@@ -28,7 +28,6 @@ import {
   QuestIcon,
   RefreshIcon,
   SkipIcon,
-  StarIcon,
   StatBadge,
   UsersIcon,
   type IconProps,
@@ -51,10 +50,10 @@ const CHANNEL_LABELS: Record<
   ChannelId,
   { label: string; Icon: (props: IconProps) => ReactNode }
 > = {
-  clip: { label: 'ดูคลิป', Icon: PlayIcon },
-  card: { label: 'อ่านการ์ด', Icon: BookmarkIcon },
-  game: { label: 'เล่นมินิเกม', Icon: QuestIcon },
-  buddy: { label: 'คุยกับคู่หู', Icon: UsersIcon },
+  clip: { label: 'ดู', Icon: PlayIcon },
+  card: { label: 'อ่าน', Icon: BookmarkIcon },
+  game: { label: 'ลงมือทำ', Icon: QuestIcon },
+  buddy: { label: 'คุยคู่หู', Icon: UsersIcon },
 }
 
 /** ตัวอักษรนำหน้าตัวเลือก ให้ครูอ้างถึงข้อได้ตอนพูดหน้าห้อง */
@@ -570,19 +569,16 @@ export function MissionClient({
         */}
       <div className="min-h-0 flex-1">
         {passed ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 rounded-2xl bg-surface-raised p-4 text-center ring-1 ring-line ring-inset">
-            <span
-              aria-hidden="true"
-              className="grid size-14 place-items-center rounded-full bg-quest-100 text-quest-700"
-            >
-              <StarIcon width={32} height={32} />
-            </span>
-            <p className="text-body font-bold text-pretty text-ink">
-              เก็บภารกิจนี้ครบแล้ว ได้ {myStars} จาก 3 ดาว
-            </p>
-            <p className="text-label text-pretty text-ink-muted">
-              อยากทบทวนเนื้อหาของภารกิจนี้ กดปุ่ม &ldquo;ความรู้เพิ่มเติม&rdquo; ข้างล่างได้ตลอด ไม่เสียดาว
-            </p>
+        <div className="flex h-full flex-col justify-center gap-3 rounded-2xl bg-surface-raised p-4 ring-1 ring-line ring-inset">
+            <DomeSays mood="celebrate" speakerName="โดม" avatarSize={56}>
+              ผ่านแล้ว! เก็บได้ {myStars} จาก 3 ดาว
+            </DomeSays>
+            <p className="text-center text-label font-semibold text-ink-muted">เลือกว่าจะทำอะไรต่อ</p>
+            <div className="grid grid-cols-3 gap-2">
+              <Link href="/knowledge" className="btn-base min-h-12 rounded-xl bg-brand-100 px-2 text-note font-bold text-brand-700">ทบทวน</Link>
+              <Link href={`/mission/${mission.id}`} className="btn-base min-h-12 rounded-xl bg-spark-100 px-2 text-note font-bold text-spark-700">ตอบเสริม</Link>
+              <Link href={nextStep.primary.href} className="btn-base min-h-12 rounded-xl bg-quest-100 px-2 text-note font-bold text-quest-700">ไปต่อ</Link>
+            </div>
           </div>
         ) : assemble ? (
           <div className="flex h-full flex-col gap-2">
@@ -722,7 +718,7 @@ export function MissionClient({
           icon={<KnowledgeIcon width={18} height={18} />}
           onClick={() => setSheet('learn')}
         >
-          ความรู้เพิ่มเติม
+          เลือกวิธีเรียน
         </SheetChip>
         {/* ผ่านแล้วซ่อนสองปุ่มนี้ไปเลย ของเดิมเป็นสีปกติแต่กดไม่ได้และไม่บอกเหตุผล (FLOW-1 ข้อ 25) */}
         {passed ? null : (

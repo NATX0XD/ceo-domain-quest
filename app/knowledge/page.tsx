@@ -66,7 +66,7 @@ export default async function KnowledgePage() {
   const summary = await lessonSummary(session.studentId)
   const nextMission = summary.missions.find((m) => !m.passed) ?? null
   const primaryHref = nextMission ? `/mission/${nextMission.id}` : '/ceo'
-  const primaryLabel = nextMission ? `กลับไปทำภารกิจ ${nextMission.title}` : 'ไปด่านบอส CEO ต่อ'
+  const primaryLabel = nextMission ? 'กลับไปภารกิจ' : 'ไปด่านบอส'
   const nowLine = nextMission
     ? 'ทบทวนจุดสำคัญแล้ว พร้อมนำความรู้ไปลองใช้ในภารกิจถัดไปได้เลยครับ'
     : 'ทบทวนได้ไม่จำกัด ไม่เสียดาว ลองสรุปสิ่งที่จำได้ก่อนออกจากหน้านี้นะครับ'
