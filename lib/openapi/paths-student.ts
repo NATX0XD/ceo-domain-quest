@@ -140,6 +140,19 @@ export const studentPaths: Record<string, PathItemObject> = {
     }),
   },
 
+  '/api/health': {
+    get: op({
+      id: 'health',
+      summary: 'ตรวจว่าเซิร์ฟเวอร์ตอบอยู่ (ผ่านประตูเปิดตัวได้แม้ยังปิด)',
+      tags: [JOIN],
+      security: ANYONE,
+      description: 'ไม่แตะฐานข้อมูล ใช้ให้ตัวเฝ้าระวังยิงเช็ก ประตูเปิดตัว (`proxy.ts`) ปล่อยผ่านเส้นนี้เส้นเดียวตอนที่ API อื่นตอบ 503',
+      responses: {
+        ...ok('เซิร์ฟเวอร์ปกติ', obj({ ok: bool('true เสมอ') })),
+      },
+    }),
+  },
+
   '/api/me': {
     get: op({
       id: 'me',
