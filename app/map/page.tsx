@@ -21,7 +21,7 @@ export default async function MapPage() {
   const mapState = Math.min(data.summary.done + 1, 4)
 
   return (
-    <AppShell className="media-shell student-display" mainLabel="แผนที่ภารกิจ" footer={<BottomNav />}>
+    <AppShell className="media-shell student-display student-world" mainLabel="แผนที่ภารกิจ" footer={<BottomNav />}>
       <MapHotspots
         imageState={mapState}
         missions={data.missions.map((mission) => ({

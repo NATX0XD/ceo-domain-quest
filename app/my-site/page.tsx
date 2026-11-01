@@ -41,6 +41,7 @@ export default async function MySitePage() {
   return (
     <AppShell
       // ยังไม่มีชื่อเว็บ = เนื้อหาสั้นมาก ถ้าไม่จัดกลางแนวตั้งจะเหลือพื้นที่ว่างครึ่งจอ
+      className="student-world student-display media-shell"
       mainClassName={domain === null ? 'grid place-items-center' : undefined}
       header={
         <AppHeader>

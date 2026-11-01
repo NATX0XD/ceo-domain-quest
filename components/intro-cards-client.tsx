@@ -52,6 +52,7 @@ export function IntroCardsClient({
 
   return (
     <AppShell
+      className="student-world student-display media-shell"
       mainClassName="flex flex-col"
       footer={
         <AppFooter className="flex flex-col gap-2">
@@ -88,8 +89,14 @@ export function IntroCardsClient({
         </AppFooter>
       }
     >
-      <div className="flex min-h-full flex-col items-center justify-center gap-4 px-4 py-6 text-center">
-        <DomeAvatar mood="greet" size={120} decorative />
+      <div className="intro-world-scene flex min-h-full flex-col items-center justify-center gap-4 px-4 py-6 text-center">
+        <div className="intro-world-layers" aria-hidden="true">
+          <img src="/intro/sky.webp" alt="" className="intro-layer intro-layer-sky" />
+          <img src="/intro/shop.webp" alt="" className="intro-layer intro-layer-shop" />
+          <img src="/ui/welcome/dome.webp" alt="" className="intro-layer intro-layer-dome" />
+        </div>
+        <div className="intro-copy-panel">
+        <DomeAvatar mood="greet" size={88} decorative />
         <p className="text-label font-bold text-brand-700">
           {index + 1}/{cards.length}
         </p>
@@ -103,6 +110,7 @@ export function IntroCardsClient({
               {line}
             </p>
           ))}
+        </div>
         </div>
       </div>
     </AppShell>

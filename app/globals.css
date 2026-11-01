@@ -1202,6 +1202,110 @@ select {
   .m1-intro-copy { margin-top: 0; }
 }
 
+/* Student world v2: map art is the visual anchor for every student state. */
+.student-world {
+  background: #20a9f3;
+}
+.student-world .app-shell-main {
+  background:
+    linear-gradient(180deg, rgb(32 169 243 / .12), rgb(255 241 214 / .88)),
+    url('/ui/dome/bg.webp') center / cover;
+}
+.student-world .app-shell-header,
+.student-world .app-shell-footer {
+  background: rgb(255 241 214 / .96);
+  border-color: rgb(107 45 18 / .22);
+}
+.student-world .app-shell-header h1,
+.student-world .app-shell-footer h1 {
+  color: #5b250f;
+}
+.student-world .app-shell-main > div:not(.map-page):not(.intro-world-scene) {
+  position: relative;
+  z-index: 1;
+}
+.student-world .student-world-card,
+.student-world .bg-surface-raised {
+  border-color: rgb(107 45 18 / .18);
+}
+.student-world .btn-base,
+.student-world .btn-go,
+.student-world button[class*='rounded-xl'],
+.student-world a[class*='rounded-xl'] {
+  white-space: nowrap;
+  text-wrap: nowrap;
+}
+.student-world .btn-go {
+  border-color: #fff1d6;
+  background: #ffbf20;
+  color: #4b250e;
+  box-shadow: 0 5px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .75);
+}
+.student-world .eyebrow-chip {
+  background: #8a4a21;
+  color: #fff1d6;
+}
+.student-world .scene-sky {
+  background: linear-gradient(180deg, rgb(91 203 246 / .8), rgb(255 241 214 / .92));
+  border: 3px solid #fff1d6;
+  box-shadow: 0 5px 0 rgb(107 45 18 / .26);
+}
+.student-world .choice-card,
+.student-world [role='radiogroup'] > button,
+.student-world [role='radiogroup'] li > button {
+  border: 2px solid rgb(107 45 18 / .18);
+  background: rgb(255 249 231 / .95);
+  box-shadow: 0 3px 0 rgb(107 45 18 / .12);
+}
+.setup-preview-art {
+  border: 4px solid #fff1d6;
+  box-shadow: 0 5px 0 #6b2d12;
+}
+.setup-preview-sign {
+  max-width: 52%;
+  transform: translateX(-50%) scale(.88);
+  transform-origin: center bottom;
+}
+.intro-world-scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #20a9f3;
+}
+.intro-world-layers,
+.intro-layer { position: absolute; inset: 0; pointer-events: none; }
+.intro-world-layers { z-index: -1; overflow: hidden; }
+.intro-layer { width: 100%; height: 100%; object-fit: cover; }
+.intro-layer-sky { object-position: center; opacity: .98; }
+.intro-layer-shop { object-fit: contain; object-position: center bottom; transform: scale(1.04); }
+.intro-layer-dome { width: 35%; height: 35%; inset: auto 6% 7% auto; object-fit: contain; filter: drop-shadow(0 8px 0 rgb(107 45 18 / .25)); }
+.intro-copy-panel {
+  width: min(100%, 27rem);
+  padding: 1rem 1rem 1.25rem;
+  border: 4px solid #6b2d12;
+  border-radius: 1.75rem;
+  background: rgb(255 241 214 / .94);
+  box-shadow: 0 7px 0 #6b2d12, inset 0 2px 0 #fff;
+  backdrop-filter: blur(5px);
+}
+.map-fog-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at center, rgb(255 250 229 / .78), #86dcf2 72%);
+  color: #5b250f;
+  font-size: 1.125rem;
+  font-weight: 900;
+  animation: map-fog-in .72s ease both;
+}
+@keyframes map-fog-in { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) {
+  .map-fog-transition { animation-duration: .12s; }
+  .intro-layer { transform: none; }
+}
+
 /* แถวชิปปุ่มรอง — แทนกล่องใหญ่ซ้อนกันหลายกล่อง กินที่น้อยกว่ามากและกวาดตาเจอเร็วกว่า */
 @utility chip-row {
   @apply flex flex-wrap items-center gap-2;

@@ -6,7 +6,7 @@ import { SignInGate } from '@/components/student-shell'
 import { SessionClock } from '@/components/session-clock'
 import { BottomNav } from '@/components/bottom-nav'
 import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
-import { ChevronRightIcon, DomeAvatar, ProgressBar, SpeechBubble, StarIcon } from '@/components/ui'
+import { ChevronRightIcon, DomeAvatar, SpeechBubble, StarIcon } from '@/components/ui'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
@@ -56,7 +56,7 @@ export default async function HomePage() {
   /** ขั้นของคาบที่เด็กเห็น = ภารกิจย่อยทุกอัน + ด่านบอสอีก 1 ขั้น (คำนวณจากข้อมูลจริงเสมอ) */
   const stepTotal = summary.missions.length + 1
   const stepNow = Math.min(stepTotal, (nextMission ? summary.missions.indexOf(nextMission) : summary.missions.length) + 1)
-  const stepsLeft = stepTotal - (summary.summary.done + (standing.eligible ? 1 : 0))
+  const stepsLeft = Math.max(0, stepTotal - stepNow)
 
   /**
    * ประโยคของโดม — **ต้องตรงกับสถานะจริงเดียวกับปุ่ม** (FLOW-1 ข้อ 1)
@@ -96,7 +96,6 @@ export default async function HomePage() {
         <AppHeader className="pb-2">
           <SessionClock />
           <div className="mt-1 flex items-center gap-3">
-            <DomeAvatar mood="greet" size={44} decorative />
             <div className="min-w-0 flex-1">
               <p className="truncate text-title-sm font-extrabold text-ink">{nickname}</p>
             </div>
@@ -153,15 +152,7 @@ export default async function HomePage() {
           <p className="min-w-0 truncate text-body-lg font-extrabold text-ink">
             {profile?.shopName ?? 'ยังไม่ได้ตั้งชื่อร้าน'}
           </p>
-          <div className="mt-2">
-            <ProgressBar
-              value={summary.stagesCleared}
-              max={summary.stagesTotal}
-              label={`ความคืบหน้าการสร้างร้าน: ${summary.shopStageLabel}`}
-              hideLabel
-              tone="quest"
-            />
-          </div>
+          <p className="mt-1 text-note font-semibold text-ink-muted">{summary.shopStageLabel}</p>
         </div>
 
         {/* โดมพูดสั้น ๆ หนึ่งประโยค — ประโยคยาวทำให้จอนี้ล้น */}

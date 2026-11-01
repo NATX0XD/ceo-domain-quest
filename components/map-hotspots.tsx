@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ArrowLeftIcon, CheckIcon, LockIcon, StarIcon, Toast, ToastViewport } from '@/components/ui'
 
 type Mission = {
@@ -40,6 +41,14 @@ function statusOf(mission: Mission, unlocked: boolean) {
 
 export function MapHotspots({ imageState, missions, boss }: MapHotspotsProps) {
   const [toast, setToast] = useState(false)
+  const [entering, setEntering] = useState(false)
+  const router = useRouter()
+
+  function enterMission(href: string) {
+    router.prefetch(href)
+    setEntering(true)
+    window.setTimeout(() => router.push(href), 720)
+  }
 
   return (
     <div className="map-page">
@@ -66,7 +75,7 @@ export function MapHotspots({ imageState, missions, boss }: MapHotspotsProps) {
           return (
             <div key={mission.id} className="map-hotspot-layer">
               {unlocked ? (
-                <Link href={`/mission/${mission.id}`} aria-label={label} className="map-island-hotspot focus-ring" style={ISLAND_HOTSPOTS[index]} />
+                <button type="button" onClick={() => enterMission(`/mission/${mission.id}`)} aria-label={label} className="map-island-hotspot focus-ring" style={ISLAND_HOTSPOTS[index]} />
               ) : (
                 <button type="button" aria-label={label} className="map-island-hotspot focus-ring" style={ISLAND_HOTSPOTS[index]} onClick={() => setToast(true)} />
               )}
@@ -103,6 +112,7 @@ export function MapHotspots({ imageState, missions, boss }: MapHotspotsProps) {
           </button>
         )}
       </section>
+      {entering ? <div className="map-fog-transition" role="status" aria-live="polite">กำลังพาไปเกาะภารกิจ</div> : null}
     </div>
   )
 }

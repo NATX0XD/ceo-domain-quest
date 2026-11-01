@@ -228,7 +228,7 @@ export function ProfileClient({
   function footerFor(): { label: string; onClick: () => void; why: string | null; tone: 'primary' | 'success' } {
     if (stepKey === 'ask') {
       return {
-        label: allAnswered ? 'ดูว่าระบบเสนอเส้นทางไหน' : `ตอบแล้ว ${answeredCount}/${questions.length} ข้อ`,
+        label: 'ดูเส้นทางต่อ',
         onClick: () => void askSuggestion().then(() => setStep(1)),
         why: allAnswered ? null : `ยังเหลืออีก ${questions.length - answeredCount} ข้อถึงจะดูข้อเสนอได้`,
         tone: 'primary',

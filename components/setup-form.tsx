@@ -113,7 +113,7 @@ export function SetupForm({
             loadingLabel="กำลังบันทึกข้อมูลร้าน"
             leadingIcon={ready && !saving ? <CheckIcon width={22} height={22} /> : undefined}
           >
-            {ready ? 'บันทึกแล้วไปคุยกับโดม' : `ตอบแล้ว ${filledCount} จาก 5 ข้อ`}
+            {ready ? 'เริ่มคุยกับโดม' : 'ถัดไป'}
           </Button>
         </AppFooter>
       }
@@ -149,8 +149,8 @@ export function SetupForm({
         </div>
         <p className="setup-preview-caption">
           {businessTypeId
-            ? `${selectedBusiness?.label ?? 'ร้านของเรา'} กำลังรอชื่อของคุณ`
-            : 'เริ่มจากเลือกประเภทร้าน ภาพร้านจะค่อย ๆ ปรากฏ'}
+            ? `${selectedBusiness?.label ?? 'ร้านของเรา'}${trimmedName ? ` · ${trimmedName}` : ' · รอชื่อร้าน'}`
+            : 'เลือกประเภทร้าน แล้วตั้งชื่อให้ร้านของเรา'}
         </p>
       </div>
 
@@ -172,12 +172,13 @@ export function SetupForm({
         <div
           role="radiogroup"
           aria-label="ประเภทของร้าน"
-          className="mt-3 flex flex-col gap-2"
+          className="mt-3 grid grid-cols-2 gap-2"
         >
           {businessTypes.map((b) => (
             <ChoiceCard
               key={b.id}
               label={b.label}
+              icon={<img src={`/setup/${b.id}.webp`} alt="" className="size-12 rounded-xl object-cover" />}
               selected={businessTypeId === b.id}
               onSelect={() => setBusinessTypeId(b.id)}
             />

@@ -70,6 +70,7 @@ export default async function RewardsPage() {
   return (
     <AppShell
       fit
+      className="student-world student-display media-shell"
       header={
         <AppHeader className="pb-2">
           <div className="flex items-center gap-3">

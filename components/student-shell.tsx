@@ -35,6 +35,7 @@ export function StudentShell({
 }: StudentShellProps) {
   return (
     <AppShell
+      className={cn('student-world student-display', className)}
       header={
         <>
           {/* S-11 แถบช่วงกิจกรรม + หน้าพัก "ดูจอหน้าห้อง" — อยู่ทุกหน้าของนักเรียน
@@ -132,6 +133,7 @@ export function SignInGate({
 }: SignInGateProps) {
   return (
     <AppShell
+      className="student-world student-display media-shell"
       mainClassName="grid place-items-center"
       footer={
         <AppFooter className="flex flex-col items-center gap-1">

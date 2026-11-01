@@ -387,7 +387,9 @@ NEXT_PUBLIC_DOME_SET=alt       # ชุดที่ Codex สร้าง (ต�
 
 ## 11. กติกาที่ห้ามละเมิด
 
-1. ห้าม emoji เป็นไอคอน UI — ใช้ SVG จาก `components/ui/icons.tsx` (emoji เรนเดอร์ต่างกันทุกเครื่องและโปรแกรมอ่านหน้าจออ่านชื่อยูนิโค้ดออกมาดิบ ๆ)
+1. ห้าม emoji เป็นไอคอน UI — ใช้ SVG จาก `components/ui/icons.tsx` หรือไฟล์ภาพที่คัดลอกไว้ใน `public/icons/3d/` (emoji เรนเดอร์ต่างกันทุกเครื่องและโปรแกรมอ่านหน้าจออ่านชื่อยูนิโค้ดออกมาดิบ ๆ)
+
+ไฟล์ 3D ใน `public/icons/3d/` คัดจาก Microsoft Fluent Emoji ภายใต้ MIT License; ดู upstream license ได้ที่ https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE.
 2. ห้าม fixed width เป็น px — ใช้ `w-full` + `max-w-*` เสมอ (ตรวจแล้ว: ทั้งระบบไม่มี `w-[Npx]` เลย ค่า `max-w` ที่ใช้มีแค่ 18/20/26/30rem และคู่กับ `w-full` ทุกจุด)
 3. ห้ามสีเป็นตัวสื่อความหมายอย่างเดียว — ต้องมีไอคอนหรือข้อความคู่เสมอ
 4. ห้ามปุ่ม `primary` เกิน 1 ปุ่มต่อหน้า
