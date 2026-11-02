@@ -21,8 +21,9 @@ import {
 import { SelfAssessPanel } from '@/components/self-assess/self-assess-panel'
 import { ResultGradePoll } from '@/components/result-grade-poll'
 import { CertificatePreview } from '@/components/certificate-preview'
+import { TeacherNote } from '@/components/teacher-note'
 import { gameCertificateContent } from '@/lib/certificate/game'
-import { certArtPresence } from '@/lib/certificate/art'
+import { certArtPresence, resolveCertTheme } from '@/lib/certificate/art'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { loadShopProfile, loadSelfProfileDb } from '@/components/server/game-state'
@@ -87,7 +88,13 @@ function thaiDate(iso: string | null | undefined): string | null {
  *    **ห้ามใช้คำว่าตก/ไม่ผ่านเด็ดขาด** ต้องบอกว่าเหลืออะไรและทำอะไรต่อ
  *    เงื่อนไขจริงตัดสินที่ `/api/certificate` หน้านี้แค่แสดงผล เดา URL ก็ไม่ได้ใบ
  */
-export default async function ResultPage() {
+export default async function ResultPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  // ?theme=domain = ลองดูเกียรติบัตรธีมโดเมน (ค่าเริ่มต้นยังเป็นธีมเดิม รอเจ้าของเลือก)
+  const certTheme = resolveCertTheme((await searchParams).theme)
   const session = await readStudentSession()
   if (!session) return <SignInGate />
 
@@ -131,7 +138,6 @@ export default async function ResultPage() {
   }
 
   const earned = standing.eligible
-  const joinedOn = thaiDate(student?.created_at)
   // วันที่ออกใบ = วันที่เปิดหน้านี้ (หน้า force-dynamic จึงเป็นวันจริงเสมอ ไม่ใช่วันที่ build)
   const issuedOn = thaiDate(new Date().toISOString())
 
@@ -150,7 +156,8 @@ export default async function ResultPage() {
         issuedAt: Date.now(),
       })
     : null
-  const certArt = certContent ? certArtPresence() : null
+  const certArt = certContent ? certArtPresence(certTheme) : null
+  const certHref = certTheme === 'classic' ? '/api/certificate' : `/api/certificate?theme=${certTheme}`
   const grading = score?.grading === true
   const revise = standing.status === 'keep-going'
 
@@ -212,8 +219,8 @@ export default async function ResultPage() {
             )}
             {earned ? (
               <>
-                <a href="/api/certificate" download className="btn-confirm">
-                  <DownloadIcon width={22} height={22} aria-hidden />
+                <a href={certHref} download className="btn-confirm whitespace-nowrap">
+                  <DownloadIcon width={22} height={22} aria-hidden className="shrink-0" />
                   ดาวน์โหลดเกียรติบัตร (PDF)
                 </a>
                 <Link
@@ -278,7 +285,7 @@ export default async function ResultPage() {
           {certContent && certArt ? (
             /* ได้ใบแล้ว = โชว์เกียรติบัตรจริงเต็มพื้นที่ (ย่อตามความสูงที่เหลือ ไม่ล้นจอ) */
             <div className="result-cert-fit">
-              <CertificatePreview content={certContent} art={certArt} />
+              <CertificatePreview content={certContent} art={certArt} theme={certTheme} />
             </div>
           ) : (
             <>
@@ -288,9 +295,10 @@ export default async function ResultPage() {
             </>
           )}
           {standing.teacherNote ? (
-            <p className="mt-1 line-clamp-2 w-full text-label text-pretty text-ink">
+            /* บนการ์ดโชว์บรรทัดเดียว (ไม่กินที่เกียรติบัตร) อ่านเต็มในแผ่น "เกียรติบัตร" */
+            <a href="#sheet-cert" className="mt-1 line-clamp-1 w-full text-left text-label text-ink">
               <span className="font-extrabold text-brand-700">ครูเขียนถึงเรา: </span>“{standing.teacherNote}”
-            </p>
+            </a>
           ) : score ? (
             <p className="mt-1 text-note text-balance text-ink-subtle">
               {score.source === 'teacher'
@@ -324,23 +332,20 @@ export default async function ResultPage() {
             title={earned ? 'เกียรติบัตรของฉัน' : 'สิ่งที่ยังเหลืออยู่'}
           >
             {earned ? (
-              <div className="text-center">
-                {certContent && certArt ? <CertificatePreview content={certContent} art={certArt} /> : null}
-                {joinedOn ? <p className="mt-3 text-label text-ink-muted">วันที่เข้าร่วม {joinedOn} · ออกใบ {issuedOn}</p> : null}
+              <div className="flex flex-col gap-4 text-center">
+                {certContent && certArt ? <CertificatePreview content={certContent} art={certArt} theme={certTheme} /> : null}
+                {issuedOn ? <p className="text-label whitespace-nowrap text-ink-muted">ออกใบ {issuedOn}</p> : null}
                 {standing.teacherNote ? (
-                  <p className="mt-3 rounded-lg bg-surface-sunken p-3 text-left text-body text-pretty text-ink">
-                    <span className="font-extrabold text-brand-700">ครูเขียนถึงเรา: </span>
-                    {standing.teacherNote}
-                  </p>
+                  <TeacherNote note={standing.teacherNote} className="rounded-xl bg-surface-sunken p-3" />
                 ) : null}
                 {revise ? (
-                  <p className="mt-3 rounded-lg bg-surface-sunken p-2 text-label text-pretty text-ink">
+                  <p className="rounded-xl bg-surface-sunken p-3 text-label text-pretty text-ink">
                     {standing.message}
                   </p>
                 ) : null}
-                <a href="/api/certificate" download className="btn-confirm mt-4">
-                  <DownloadIcon width={22} height={22} aria-hidden />
-                  ดาวน์โหลดเกียรติบัตร (PDF)
+                <a href={certHref} download className="btn-confirm whitespace-nowrap">
+                  <DownloadIcon width={22} height={22} aria-hidden className="shrink-0" />
+                  ดาวน์โหลด PDF
                 </a>
               </div>
             ) : (

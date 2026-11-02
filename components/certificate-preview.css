@@ -34,9 +34,8 @@
 .cert-star { width: 2.9cqw; height: 2.9cqw; background: #ecdec4; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
 .cert-star.on { background: #d69e24; }
 
-.cert-dome { position: absolute; left: 8.1%; top: 61%; width: 14.8cqw; height: 18.9cqw; object-fit: contain; max-width: none !important; }
-.cert-dome-fallback { background: radial-gradient(circle at 50% 55%, #966edc 0 36%, transparent 37%); }
-.cert-seal { position: absolute; right: 8.8%; top: 62.8%; width: 14.8cqw; height: 14.8cqw; object-fit: contain; max-width: none !important; }
+.cert-dome { position: absolute; object-fit: contain; max-width: none !important; }
+.cert-seal { position: absolute; object-fit: contain; max-width: none !important; }
 .cert-seal-fallback {
   display: grid; place-items: center; border-radius: 50%;
   background: radial-gradient(circle, #d69e24 0 60%, #a06812 61% 64%, #d69e24 65%);
@@ -50,4 +49,6 @@
 .result-chip-scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; justify-content: safe center; }
 .result-chip-scroll::-webkit-scrollbar { display: none; }
 .result-chip-scroll > * { flex-shrink: 0; }
-.cert-dome-fallback { display: none; }
+
+/* ธีม domain: ชื่อเขียนบนป้ายไม้ที่อยู่ในพื้นหลัง */
+.cert-plank-title { color: #5c3416; font-family: var(--font-display), var(--font-sans); font-weight: 900; }

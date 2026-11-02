@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { certificateData, studentReport, type MissionInput } from '@/core/report'
 import { certificateFileName } from '@/lib/certificate/render'
 import { renderGameCertificatePdf } from '@/lib/certificate/game'
-import { loadCertArt } from '@/lib/certificate/art'
+import { loadCertArt, resolveCertTheme } from '@/lib/certificate/art'
 import { missions as missionList } from '@/components/missions'
 import { loadThaiFonts, type ThaiFontSet } from '@/lib/certificate/font'
 import { getProfile, getStudent, listMissionProgress, listSubmissions } from '@/lib/db/repo'
@@ -44,7 +44,9 @@ function contentDisposition(fileName: string): string {
   return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  // ?theme=domain = ธีมลายโดเมน (ค่าเริ่มต้นยังเป็นธีมเดิม) — ไม่ใช่ตัวระบุตัวตน studentId ยังมาจากคุกกี้เท่านั้น
+  const theme = resolveCertTheme(new URL(request.url).searchParams.get('theme'))
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง')
 
@@ -119,7 +121,7 @@ export async function GET() {
 
   // เกียรติบัตรแบบเกม — ภาพจาก public/ui/cert/ (ไม่มีรูปไหนก็วาดรูปทรงแทน)
   const passedIds = new Set(missionRows.filter((row) => row.passed_at !== null).map((row) => row.mission_id))
-  const [fonts, art] = await Promise.all([serverFonts(), loadCertArt()])
+  const [fonts, art] = await Promise.all([serverFonts(), loadCertArt(theme)])
   const pdf = renderGameCertificatePdf(
     {
       nickname: data.nickname,
@@ -136,6 +138,7 @@ export async function GET() {
     },
     fonts,
     art,
+    theme,
   )
 
   return new NextResponse(pdf as unknown as BodyInit, {

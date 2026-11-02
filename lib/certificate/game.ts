@@ -7,7 +7,7 @@
 import { jsPDF } from 'jspdf'
 import { DEFAULT_COURSE_NAME, DEFAULT_SCHOOL_NAME, PAGE_HEIGHT_MM, PAGE_WIDTH_MM, thaiDate } from './data'
 import { THAI_FONT_NAME, type ThaiFontSet } from './font'
-import type { CertArt, CertImage } from './art'
+import type { CertArt, CertImage, CertTheme } from './art'
 
 export interface GameCertificateInput {
   nickname: string
@@ -269,10 +269,17 @@ function centered(doc: jsPDF, text: string, y: number, size: number, maxWidth: n
   doc.text(text, CX, y, { align: 'center' })
 }
 
+/** ตำแหน่งโดม/ตรา (มม.) ต่อธีม — พรีวิว HTML ใช้ค่าชุดเดียวกัน */
+export const DECOR_POS = {
+  classic: { dome: { x: 30, y: 124, w: 42, h: 52 }, seal: { x: W - 74, y: 126, size: 44 } },
+  domain: { dome: { x: 60, y: 136, w: 36, h: 42 }, seal: { x: W - 94, y: 137, size: 36 } },
+} as const satisfies Record<CertTheme, unknown>
+
 export function renderGameCertificatePdf(
   input: GameCertificateInput,
   fonts: ThaiFontSet,
   art: CertArt = {},
+  theme: CertTheme = 'classic',
 ): Uint8Array {
   if (!fonts?.regularBase64 || !fonts?.boldBase64) {
     throw new Error('ต้องโหลดฟอนต์ไทยก่อนวาดใบประกาศ ไม่งั้นข้อความไทยจะหายทั้งใบ')
@@ -286,7 +293,15 @@ export function renderGameCertificatePdf(
   doc.setProperties({ title: `${c.title} ${c.nickname} — ${c.product}` })
 
   drawBackground(doc, art)
-  drawRibbon(doc, art, c.title)
+  if (theme === 'domain' && art.bg) {
+    // พื้นหลังธีมโดเมนมีป้ายไม้ว่างด้านบนอยู่แล้ว เขียนชื่อลงป้ายตรง ๆ
+    doc.setFont(THAI_FONT_NAME, 'bold')
+    doc.setFontSize(28)
+    color(doc, BROWN)
+    doc.text(c.title, CX, 31, { align: 'center' })
+  } else {
+    drawRibbon(doc, art, c.title)
+  }
 
   const textW = 170
   centered(doc, c.product, 59, 16, textW, true, GOLD_DARK)
@@ -307,8 +322,10 @@ export function renderGameCertificatePdf(
   centered(doc, c.school, 159, 11, textW, false, MUTED)
   centered(doc, c.date, 168, 12, textW, false, INK)
 
-  drawDome(doc, art, 30, 124, 42, 52)
-  drawSeal(doc, art, W - 74, 126, 44)
+  // ธีมโดเมนมีลาย DNS/ร้านโดเมนที่มุมล่าง — ขยับโดมกับตราเข้าในกระดาษ ไม่ให้ทับกัน
+  const pos = DECOR_POS[theme]
+  drawDome(doc, art, pos.dome.x, pos.dome.y, pos.dome.w, pos.dome.h)
+  drawSeal(doc, art, pos.seal.x, pos.seal.y, pos.seal.size)
 
   return new Uint8Array(doc.output('arraybuffer') as ArrayBuffer)
 }
