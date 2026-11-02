@@ -8,6 +8,7 @@ import { StudentAccountPanel } from '@/components/student-account-panel'
 import { AppFooter } from '@/components/app-shell'
 import { QuizStepper } from '@/components/quiz-stepper-client'
 import { DomeTip, FlowNote, StageLine, useFlowFeedback } from '@/components/flow-feedback-client'
+import './profile-v3.css'
 import {
   ArrowLeftIcon,
   Button,
@@ -69,10 +70,6 @@ const LEVEL_LABELS: Record<LevelId, { title: string; detail: string }> = {
   3: { title: 'ระดับ 3 ไม่เปิดป้ายช่วย', detail: 'ลองเองล้วน ๆ ขอตัวช่วยเพิ่มได้ตลอดถ้าอยากได้' },
 }
 
-/** ป้ายข้อความในการ์ดตัวตน — ไม่ใช่ปุ่ม จึงเป็น span ไม่ใช่ Chip ที่กดได้ */
-const ID_TAG_CLASS =
-  'mt-0.5 inline-flex w-fit items-center rounded-full border border-[rgb(107_45_18/.3)] bg-[#ffe9b0] px-2 py-px text-note font-bold text-[#6b2d12]'
-
 /** ไอคอน 3D ของแต่ละเส้นทาง (public/icons/3d) */
 const ROUTE_ICON: Record<RouteId, string> = {
   clip: 'television',
@@ -81,19 +78,33 @@ const ROUTE_ICON: Record<RouteId, string> = {
   buddy: 'busts-in-silhouette',
 }
 
-/** ช่องค่าสถานะหนึ่งช่องบนการ์ดตัวตน: ไอคอน 3D + หัวข้อเล็ก + ค่า */
-function IdentityStat({ icon, label, children }: { icon: string; label: string; children: ReactNode }) {
+function ChoiceArt({ icon, className = 'size-14' }: { icon: string; className?: string }) {
   return (
-    <div
-      className="flex min-w-0 items-start gap-2 rounded-xl border-2 border-[rgb(107_45_18/.18)] px-2 py-1"
-      style={{ background: 'linear-gradient(180deg, #fffdf3, #fff1d6)' }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D ไฟล์สถิต */}
-      <img src={`/icons/3d/${icon}.webp`} alt="" className="mt-0.5 size-8 shrink-0" draggable={false} />
-      <div className="flex min-w-0 flex-1 flex-col items-start text-label leading-snug text-[#4b260f]">
-        <p className="text-note font-bold text-[#8a5a35]">{label}</p>
-        {children}
-      </div>
+    // eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D ไฟล์สถิตของโลกเกม
+    <img src={`/icons/3d/${icon}.webp`} alt="" className={className} draggable={false} />
+  )
+}
+
+/** หน่วยสถิติ 3 ช่องบนการ์ดตัวตน — ใช้ภาพนำสายตาแทนกล่องข้อมูลซ้อนกัน */
+function IdentityMedallion({
+  icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: string
+  label: string
+  value: ReactNode
+  detail?: ReactNode
+}) {
+  return (
+    <div className="profile-v3-medallion">
+      <span className="profile-v3-medallion-art" aria-hidden="true">
+        <ChoiceArt icon={icon} className="size-9" />
+      </span>
+      <span className="profile-v3-medallion-label">{label}</span>
+      <span className="profile-v3-medallion-value">{value}</span>
+      {detail ? <span className="profile-v3-medallion-detail">{detail}</span> : null}
     </div>
   )
 }
@@ -315,7 +326,7 @@ export function ProfileClient({
     <StudentShell
       withBottomNav={false}
       backHref="/home"
-      className="profile-world-shell flex h-full min-h-0 flex-col gap-3 pb-6"
+      className="profile-world-shell profile-v3-world-shell flex h-full min-h-0 flex-col gap-3 pb-6"
       footer={
         <AppFooter>
           {flow.state.kind !== 'done' ? <FlowNote state={flow.state} className="mb-2" /> : null}
@@ -373,13 +384,21 @@ export function ProfileClient({
         </AppFooter>
       }
     >
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="profile-v3-topline flex shrink-0 items-center gap-2">
         <StageLine
           stage={`รู้จักตัวเอง · ขั้น ${stepNo} จาก ${stepList.length}`}
           className="min-w-0 flex-1"
         />
         <StudentAccountPanel initialNickname={initial.nickname} />
       </div>
+      <ol className="profile-v3-step-rail" aria-label="ขั้นตอนรู้จักตัวเอง">
+        {stepList.map((item, index) => (
+          <li key={item.key} className={index === step ? 'is-current' : item.ready ? 'is-ready' : ''}>
+            <span aria-hidden="true">{index + 1}</span>
+            <span className="sr-only">{item.label}{index === step ? ' · กำลังทำอยู่' : ''}</span>
+          </li>
+        ))}
+      </ol>
       <span className="sr-only">
         ใช้เวลาประมาณ {meta.minuteFrom}-{meta.minuteTo} นาที
       </span>
@@ -396,6 +415,7 @@ export function ProfileClient({
         ) : (
           <>
             <QuizStepper
+              className="profile-v3-quiz"
               questions={questions.map((q) => ({
                 id: q.id,
                 question: q.question,
@@ -429,15 +449,15 @@ export function ProfileClient({
           <ul
             role="radiogroup"
             aria-label="เส้นทางการเรียนทั้งหมด"
-            className="flex min-h-0 flex-1 flex-col gap-2"
+            className="profile-v3-choice-grid profile-v3-route-grid min-h-0 flex-1"
           >
             {channels.map((c) => (
               <li key={c.id}>
                 <ChoiceCard
+                  icon={<ChoiceArt icon={ROUTE_ICON[c.id]} />}
+                  layout="tile"
                   label={c.name}
-                  description={
-                    c.id === suggestion?.suggestedRoute ? `${c.description} · ระบบเสนออันนี้` : c.description
-                  }
+                  description={c.id === suggestion?.suggestedRoute ? 'ระบบเสนออันนี้' : c.goodFor}
                   ariaLabel={`${c.name} — ${c.description}`}
                   selected={route === c.id}
                   disabled={flow.busy}
@@ -462,12 +482,13 @@ export function ProfileClient({
           <ul
             role="radiogroup"
             aria-label="ระดับตัวช่วย"
-            className="flex min-h-0 flex-1 flex-col gap-2"
+            className="profile-v3-choice-grid profile-v3-level-grid min-h-0 flex-1"
           >
             {([1, 2, 3] as const).map((n) => (
               <li key={n}>
                 <ChoiceCard
-                  marker={String(n)}
+                  icon={<span className="profile-v3-level-number">{n}</span>}
+                  layout="tile"
                   label={LEVEL_LABELS[n].title}
                   description={`${LEVEL_LABELS[n].detail}${
                     n === suggestion?.suggestedLevel ? ' · ระบบเสนออันนี้' : ''
@@ -497,15 +518,17 @@ export function ProfileClient({
               แต่เป้าที่ต่ำกว่าล็อกไว้ ถ้าอยากลดเป้าให้ยกมือบอกครู
             </p>
           ) : null}
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2">
+          <div className="profile-v3-goal-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2">
           <ul
             role="radiogroup"
             aria-label="เป้าหมายดาวของฉัน"
-            className="flex flex-col gap-2"
+            className="profile-v3-choice-grid profile-v3-goal-grid"
           >
             {goals.map((g) => (
               <li key={g.id}>
                 <ChoiceCard
+                  icon={<span className="profile-v3-star-cluster" aria-hidden="true">{'★'.repeat(Math.min(g.starTarget, 3))}</span>}
+                  layout="tile"
                   label={
                     <span className="flex flex-wrap items-center gap-2">
                       {g.name}
@@ -526,99 +549,75 @@ export function ProfileClient({
             ))}
           </ul>
           {goalNote ? <FlowNote state={{ kind: 'failed', text: goalNote }} /> : null}
-          {goalForm}
+          {goalForm ? <div className="profile-v3-own-goal">{goalForm}</div> : null}
           </div>
         </>
       ) : null}
 
       {stepKey === 'card' ? (
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pb-1">
-          {/* การ์ดตัวตนแบบการ์ดสะสมในเกม: กรอบทอง แถบหัวสีม่วงฟ้า โดม + ป้ายระดับ แล้วค่อยเป็นค่าสถานะ */}
-          <article
-            aria-labelledby="identity-card-title"
-            className="relative isolate my-auto shrink-0 rounded-[1.6rem] border-[3px] border-[#6b2d12] p-1.5 shadow-[0_6px_0_#4a1f0a,0_16px_30px_rgb(74_31_10/.28)]"
-            style={{ background: 'linear-gradient(155deg, #ffe58a 0%, #ffb11b 45%, #e0711c 100%)' }}
-          >
-            <div className="overflow-hidden rounded-[1.2rem] border-2 border-[#8a4a21]" style={{ background: '#fff8e7' }}>
-              <header
-                className="relative flex items-center gap-3 px-3 py-2.5"
-                style={{
-                  background:
-                    "url('/ui/kit/fx/light-rays.webp') center / cover no-repeat, linear-gradient(140deg, #6c43bb 0%, #a36ef0 50%, #20a9f3 100%)",
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  className="relative grid size-16 shrink-0 place-items-center rounded-full border-[3px] border-[#fff1d6] shadow-[0_4px_0_rgb(40_20_60/.45)]"
-                  style={{ background: 'radial-gradient(circle at 50% 40%, #fff6c4 0%, #ffd64f 55%, #ff9a1f 100%)' }}
-                >
-                  <DomeAvatar mood="cheer" size={56} decorative />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="inline-flex items-center gap-1 rounded-full bg-[rgb(255_255_255/.22)] px-2 py-0.5 text-note font-bold text-white">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D ไฟล์สถิต */}
-                    <img src="/icons/3d/crown.webp" alt="" className="size-4" draggable={false} />
-                    {identity.subtitle}
-                  </p>
-                  <h1
-                    id="identity-card-title"
-                    className="mt-1 pr-10 text-body-lg leading-tight font-extrabold text-balance break-words text-white [text-shadow:0_2px_0_rgb(40_20_60/.55)]"
-                  >
-                    {identity.title}
-                  </h1>
-                </div>
-                {level ? (
-                  <span
-                    className="absolute top-2 right-2 grid size-11 place-items-center rounded-full border-2 border-[#6b2d12] text-center leading-none font-extrabold text-[#4a1f0a] shadow-[0_3px_0_#4a1f0a]"
-                    style={{ background: 'linear-gradient(180deg, #fff6c4, #ffc51b)' }}
-                    aria-label={`ระดับตัวช่วย ${level}`}
-                  >
-                    <span className="text-[0.6rem]">LV</span>
-                    <span className="text-body-lg -mt-1">{level}</span>
-                  </span>
-                ) : null}
-              </header>
-
-              <div className="flex flex-col gap-1.5 p-2.5">
-                {talent ? (
-                  <IdentityStat icon="sparkles" label={identity.talentLabel}>
-                    <span className="font-extrabold">{talent.name}</span>
-                    <span className="text-note leading-snug font-semibold text-[#7a4a25]">{talent.cardLine}</span>
-                  </IdentityStat>
-                ) : null}
-                <div className="grid grid-cols-2 gap-1.5">
-                  <IdentityStat icon={ROUTE_ICON[route ?? 'card']} label="เส้นทางที่ฉันใช้">
-                    <span className="font-extrabold">{chosenChannel?.name ?? '—'}</span>
-                    <span className={ID_TAG_CLASS}>{routeChosenBy === 'student' ? 'ฉันเลือกเอง' : 'ตามที่ระบบเสนอ'}</span>
-                  </IdentityStat>
-                  <IdentityStat icon="glowing-star" label="เป้าหมายดาว">
-                    <span className="font-extrabold">{chosenGoal?.name ?? '—'}</span>
-                    {chosenGoal ? (
-                      <span className={ID_TAG_CLASS} aria-label={`${identity.goalLabel} ${chosenGoal.starTarget} ดาว`}>
-                        ★ {chosenGoal.starTarget} ดาว
-                      </span>
-                    ) : null}
-                  </IdentityStat>
-                </div>
-                <IdentityStat icon="light-bulb" label="ระดับตัวช่วย">
-                  <span className="font-extrabold">{level ? LEVEL_LABELS[level].title : '—'}</span>
-                </IdentityStat>
-                {weakNames.length > 0 ? (
-                  <IdentityStat icon="bullseye" label={identity.focusLabel}>
-                    <span className="mt-0.5 flex flex-wrap gap-1">
-                      {weakNames.map((n) => (
-                        <span key={n} className={ID_TAG_CLASS}>
-                          {n}
-                        </span>
-                      ))}
-                    </span>
-                  </IdentityStat>
-                ) : null}
+        <div className="profile-v3-card-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain pb-1">
+          <article aria-labelledby="identity-card-title" className="profile-v3-identity-card">
+            <div className="profile-v3-card-header">
+              <div className="profile-v3-card-copy">
+                <p className="profile-v3-card-kicker">
+                  <ChoiceArt icon="crown" className="size-5" />
+                  {identity.subtitle}
+                </p>
+                <h1 id="identity-card-title">{identity.title}</h1>
+                {level ? <span className="profile-v3-level-stamp" aria-label={`ระดับตัวช่วย ${level}`}>LV {level}</span> : null}
               </div>
-              <p className="border-t-2 border-dashed border-[rgb(107_45_18/.25)] px-3 py-1.5 text-center text-note font-bold text-pretty text-[#7a4a25]">
-                {identity.encouragement}
-              </p>
+              <div className="profile-v3-card-portrait" aria-hidden="true">
+                <DomeAvatar mood="happy" size={148} decorative sparkle />
+              </div>
             </div>
+
+            {talent ? (
+              <div className="profile-v3-trait-hero">
+                <span className="profile-v3-trait-icon" aria-hidden="true">
+                  <ChoiceArt icon="sparkles" className="size-9" />
+                </span>
+                <div className="min-w-0">
+                  <p className="profile-v3-eyebrow">{identity.talentLabel}</p>
+                  <p className="profile-v3-trait-name">{talent.name}</p>
+                  <p className="profile-v3-trait-line">{talent.cardLine}</p>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="profile-v3-stat-grid" aria-label="ค่าสถานะสำคัญ">
+              <IdentityMedallion
+                icon={ROUTE_ICON[route ?? 'card']}
+                label="เส้นทาง"
+                value={chosenChannel?.shortName ?? chosenChannel?.name ?? '—'}
+                detail={routeChosenBy === 'student' ? 'เลือกเอง' : 'ระบบเสนอ'}
+              />
+              <IdentityMedallion
+                icon="glowing-star"
+                label="เป้าหมาย"
+                value={chosenGoal ? `${chosenGoal.starTarget} ดาว` : '—'}
+                detail={chosenGoal?.name}
+              />
+              <IdentityMedallion
+                icon="light-bulb"
+                label="ตัวช่วย"
+                value={level ? `ระดับ ${level}` : '—'}
+                detail={level ? LEVEL_LABELS[level].title.replace(/^ระดับ \d+ /, '') : undefined}
+              />
+            </div>
+
+            {weakNames.length > 0 ? (
+              <div className="profile-v3-focus-row">
+                <div className="profile-v3-focus-heading">
+                  <ChoiceArt icon="bullseye" className="size-6" />
+                  <span>{identity.focusLabel}</span>
+                </div>
+                <div className="profile-v3-focus-chips">
+                  {weakNames.map((name) => <span key={name}>{name}</span>)}
+                </div>
+              </div>
+            ) : null}
+
+            <p className="profile-v3-encouragement">{identity.encouragement}</p>
           </article>
         </div>
       ) : null}
