@@ -1454,7 +1454,17 @@ select {
 .welcome-shell .app-shell-main,
 .welcome-shell .app-shell-footer { background: transparent; }
 .welcome-shell .surface-veil { background: transparent; backdrop-filter: none; border-color: transparent; }
+/* แถบปุ่มล่างไม่ต้องมีพื้นเบลอแยก — ภาพฉากต่อเนื่องถึงขอบล่าง ใช้ไล่เงาอ่อน ๆ ช่วยให้ตัวหนังสืออ่านง่ายแทน */
+.welcome-shell .app-shell-footer {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 0;
+  box-shadow: none;
+  background: linear-gradient(180deg, transparent, rgb(40 24 10 / .28));
+}
 .welcome-main { gap: .35rem; }
+/* ใช้ภาพฉากของ shell ชั้นเดียวทั้งจอ ไม่ซ้อนภาพเดิมอีกขนาดหนึ่งที่ทำให้เห็นรอยต่อเหนือปุ่ม */
+.welcome-shell .welcome-main { background: transparent; }
 .welcome-main::before,
 .welcome-main::after {
   content: '';

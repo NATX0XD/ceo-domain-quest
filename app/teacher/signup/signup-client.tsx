@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { CreamCard, GameButton, WoodSign } from '@/components/ui'
-import { Icon3d } from '../_ux/v2'
 
 function strength(password: string): { label: string; score: number } {
   let score = 0
@@ -55,7 +54,6 @@ export default function SignupClient({ openLabel }: { openLabel: string }) {
         <img src="/dome/mascot/dome-greet.webp" alt="" className="teacher-auth-dome" />
       </div>
       <CreamCard className="teacher-signup-card" aria-labelledby="teacher-signup-title">
-        <div className="teacher-signup-mark"><Icon3d name="graduation-cap" size={52} /></div>
         <WoodSign id="teacher-signup-title" title={succeeded ? 'สมัครสำเร็จ' : 'สมัครบัญชีครู'}>
           ใช้รหัสเชิญเพื่อเริ่มห้องเรียนของคุณ
         </WoodSign>
