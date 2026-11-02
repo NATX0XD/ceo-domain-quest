@@ -119,7 +119,7 @@
 .kit-sign,
 .wood-sign,
 .student-world .page-heading-sign,
-.student-stage > .app-shell .app-shell-header h1:not(.gf-sign h1) {
+.student-stage > .app-shell .app-shell-header h1:not(.gf-sign h1):not(.game-header-sign) {
   display: inline-block;
   box-sizing: border-box;
   width: fit-content;
@@ -145,7 +145,7 @@
 .student-world .page-heading-sign { display: block; text-wrap: balance; word-break: keep-all; }
 .student-world .eyebrow-chip.eyebrow-chip { display: flex; }
 .student-world .page-heading-sign { font-size: clamp(1.2rem, 5.6vw, 1.6rem); }
-.student-stage > .app-shell .app-shell-header h1:not(.gf-sign h1) { font-size: 1.125rem; }
+.student-stage > .app-shell .app-shell-header h1:not(.gf-sign h1):not(.game-header-sign) { font-size: 1.125rem; }
 .kit-sign--wide {
   display: block;
   width: 100%;

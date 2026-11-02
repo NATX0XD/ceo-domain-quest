@@ -48,7 +48,10 @@
   margin: 0;
   display: grid;
   place-items: center;
+  justify-self: center;
+  box-sizing: border-box;
   padding: 4px 22px 0;
+  text-align: center;
   background: url('/ui/kit2/sign-wide.webp') center / 100% 100% no-repeat;
   font-family: var(--font-display), var(--font-noto-sans-thai), sans-serif;
   font-size: clamp(1.15rem, 5.4vw, 1.45rem);

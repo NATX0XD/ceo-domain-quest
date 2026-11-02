@@ -1505,7 +1505,7 @@ select {
   background: rgb(255 241 214 / .96);
   border-color: rgb(107 45 18 / .22);
 }
-.student-world .app-shell-header h1,
+.student-world .app-shell-header h1:not(.game-header-sign),
 .student-world .app-shell-footer h1 {
   color: #5b250f;
 }
@@ -1892,7 +1892,7 @@ select {
   border-color: rgb(107 45 18 / .24);
   box-shadow: 0 4px 16px rgb(74 31 10 / .1);
 }
-.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .app-shell-header h1:not(.gf-sign h1) {
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .app-shell-header h1:not(.gf-sign h1):not(.game-header-sign) {
   /* page-title sign art lives in app/kit2.css (.kit-sign) */
   color: #5a2412;
   text-shadow: 0 1px 0 rgb(255 246 222 / .9);
