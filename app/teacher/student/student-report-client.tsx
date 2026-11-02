@@ -137,6 +137,10 @@ export function StudentReportClient({
   const [error, setError] = useState<string | null>(null)
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [removing, setRemoving] = useState(false)
+  const [certificateNameOpen, setCertificateNameOpen] = useState(false)
+  const [certificateNameDraft, setCertificateNameDraft] = useState('')
+  const [certificateNameBusy, setCertificateNameBusy] = useState(false)
+  const [certificateNameNotice, setCertificateNameNotice] = useState<string | null>(null)
 
   // รายชื่อในห้องมาจากแผงห้องเรียน (endpoint เดิม ไม่ได้เพิ่มของใหม่)
   useEffect(() => {
@@ -185,6 +189,12 @@ export function StudentReportClient({
     void load()
   }, [load])
 
+  useEffect(() => {
+    setCertificateNameDraft(str(report?.profile?.certificate_display_name) ?? '')
+    setCertificateNameOpen(false)
+    setCertificateNameNotice(null)
+  }, [report?.student.id])
+
   const remove = async () => {
     if (!selected || !classroomId) return
     setRemoving(true)
@@ -208,6 +218,35 @@ export function StudentReportClient({
     } finally {
       setRemoving(false)
       setConfirmRemove(false)
+    }
+  }
+
+  const saveCertificateName = async (nextValue = certificateNameDraft) => {
+    if (!selected || certificateNameBusy) return
+    setCertificateNameBusy(true)
+    setCertificateNameNotice(null)
+    const displayName = nextValue.trim()
+    try {
+      const res = await fetch('/api/teacher/student', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'certificate-name', studentId: selected, displayName }),
+      })
+      const data = (await res.json().catch(() => null)) as { message?: string; certificateDisplayName?: string | null } | null
+      if (!res.ok) {
+        setCertificateNameNotice(data?.message ?? 'บันทึกชื่อไม่สำเร็จ ลองอีกครั้ง')
+        return
+      }
+      setReport((current) => current
+        ? { ...current, profile: { ...(current.profile ?? {}), certificate_display_name: data?.certificateDisplayName ?? null } }
+        : current)
+      setCertificateNameDraft(data?.certificateDisplayName ?? '')
+      setCertificateNameOpen(false)
+      setCertificateNameNotice(displayName ? 'บันทึกชื่อบนเกียรติบัตรแล้ว' : 'ล้างชื่อแล้ว นักเรียนจะตั้งชื่อใหม่เองได้')
+    } catch {
+      setCertificateNameNotice('เชื่อมต่อไม่ได้ ลองอีกครั้ง')
+    } finally {
+      setCertificateNameBusy(false)
     }
   }
 
@@ -289,6 +328,47 @@ export function StudentReportClient({
                 ลบออกจากห้อง
               </button>
             </div>
+          </section>
+
+          <section className="t2-card flex flex-wrap items-start justify-between gap-3" aria-label="ชื่อบนเกียรติบัตร">
+            <div className="min-w-[15rem] flex-1">
+              <p className="text-note font-extrabold uppercase tracking-[0.12em] text-brand-700">เกียรติบัตร</p>
+              <h2 className="mt-1 text-body-lg font-black text-ink">ชื่อบนเกียรติบัตร</h2>
+              <p className="mt-1 text-label font-bold text-ink">
+                {str(profile?.certificate_display_name) ?? 'ยังไม่ได้ตั้งชื่อจริง'}
+              </p>
+              <p className="mt-1 text-note text-ink-muted">
+                {str(profile?.certificate_display_name) ? 'นักเรียนตั้งไว้แล้ว ครูแก้หรือล้างเพื่อให้ตั้งใหม่ได้' : 'นักเรียนจะถูกขอชื่อจริงเมื่อได้เกียรติบัตร'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setCertificateNameOpen((open) => !open); setCertificateNameNotice(null) }}
+              className="t2-btn focus-ring"
+            >
+              แก้ชื่อบนเกียรติบัตร
+            </button>
+            {certificateNameOpen ? (
+              <div className="w-full rounded-2xl bg-[#fffdf8] p-3 ring-1 ring-line ring-inset">
+                <label htmlFor="teacher-certificate-name" className="text-label font-extrabold text-ink">ชื่อใหม่ หรือเว้นว่างเพื่อล้าง</label>
+                <input
+                  id="teacher-certificate-name"
+                  value={certificateNameDraft}
+                  onChange={(event) => setCertificateNameDraft(event.target.value)}
+                  maxLength={60}
+                  className="mt-1 min-h-11 w-full rounded-xl bg-white px-3 text-label font-bold text-ink ring-1 ring-line outline-none focus:ring-2 focus:ring-brand-500"
+                />
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => void saveCertificateName()} disabled={certificateNameBusy} className="t2-btn" data-kind="primary">
+                    {certificateNameBusy ? 'กำลังบันทึก…' : 'บันทึกชื่อ'}
+                  </button>
+                  <button type="button" onClick={() => { setCertificateNameDraft(''); void saveCertificateName('') }} disabled={certificateNameBusy || !str(profile?.certificate_display_name)} className="t2-btn" data-kind="danger">
+                    ล้างชื่อให้นักเรียนตั้งใหม่
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            {certificateNameNotice ? <p role="status" className="w-full text-note font-bold text-brand-700">{certificateNameNotice}</p> : null}
           </section>
 
           <KpiGrid>

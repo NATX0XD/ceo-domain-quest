@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   moderateJoinNickname: vi.fn(),
   verifyPin: vi.fn(),
   hashPin: vi.fn(),
+  certificateEligibility: vi.fn(),
 }))
 
 vi.mock('../../_lib/session-cookie', () => ({
@@ -27,6 +28,7 @@ vi.mock('../../../../lib/db/repo', () => ({
 }))
 vi.mock('../../../../components/server/moderation', () => ({ moderateJoinNickname: mocks.moderateJoinNickname }))
 vi.mock('../../../../lib/pin', () => ({ verifyPin: mocks.verifyPin, hashPin: mocks.hashPin }))
+vi.mock('../../../../components/server/certificate-eligibility', () => ({ certificateEligibility: mocks.certificateEligibility }))
 
 const student = { id: 'student-1', classroom_id: 'room-1', nickname: 'เดิม', pin_hash: 'hash' }
 const request = (body: Record<string, string>) => new Request('http://localhost/api/profile/account', {
@@ -45,6 +47,7 @@ describe('/api/profile/account', () => {
     mocks.verifyPin.mockResolvedValue(true)
     mocks.hashPin.mockResolvedValue('new-hash')
     mocks.updateStudentPin.mockResolvedValue(student)
+    mocks.certificateEligibility.mockResolvedValue({ eligible: false })
   })
 
   it('rejects missing session and invalid nickname', async () => {

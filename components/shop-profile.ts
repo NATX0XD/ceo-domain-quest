@@ -20,6 +20,7 @@ export const ShopProfileSchema = z.object({
   domainName: z.string().trim().min(1).max(60),
   isRegisteredCompany: z.boolean(),
   audience: z.enum(['thai', 'international']),
+  certificateDisplayName: z.string().trim().min(1).max(60),
 })
 
 export type ScaffoldLevel = 1 | 2 | 3

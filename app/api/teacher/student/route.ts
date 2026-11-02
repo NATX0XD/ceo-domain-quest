@@ -22,6 +22,9 @@ import {
   teacherUnlockBusiness,
 } from '@/lib/db/repo'
 import { teacherSkipMissionNow } from '@/components/server/mission-skip'
+import { reviewStudentText } from '@/core/content-filter'
+import { setTeacherCertificateDisplayName, certificateDisplayNameFromProfile } from '@/lib/certificate/profile'
+import { logEvent } from '@/lib/db/repo'
 import { errorResponse, readJsonBody, readTeacherSession, unauthorized } from '../../_lib/session-cookie'
 
 /**
@@ -71,6 +74,7 @@ const ActionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('boss-template'), studentId, templateId: z.string().trim().min(1).max(60), reason, note }),
   z.object({ action: z.literal('open-boss'), studentId, reason, note }),
   z.object({ action: z.literal('reset-pin'), studentId, reason, note }),
+  z.object({ action: z.literal('certificate-name'), studentId, displayName: z.string().trim().max(60) }),
   z.object({
     action: z.literal('note'),
     studentId,
@@ -130,6 +134,36 @@ export async function POST(request: Request) {
   const teacherId = session.teacherId
 
   switch (body.action) {
+    case 'certificate-name': {
+      // อ่านรายงานผ่าน RPC ที่ตรวจ classroom ownership ก่อน จึงไม่เปิดช่องให้ครูข้ามห้อง
+      const report = await getStudentReport(teacherId, body.studentId)
+      if (!report) return errorResponse('not-found', NOT_FOUND, 404)
+
+      const displayName = body.displayName.trim()
+      if (displayName) {
+        const verdict = reviewStudentText(displayName, {
+          field: 'teacher-certificate-name',
+          studentId: body.studentId,
+        })
+        if (!verdict.accepted) {
+          return errorResponse('content-flagged', verdict.studentMessage ?? 'ลองใช้ชื่อที่สุภาพขึ้นนะ', 422, {
+            field: 'displayName',
+            original: verdict.result.original,
+          })
+        }
+      }
+
+      const before = certificateDisplayNameFromProfile(report.profile)
+      if (!(await setTeacherCertificateDisplayName(body.studentId, displayName || null))) {
+        return errorResponse('save-failed', 'บันทึกชื่อบนเกียรติบัตรไม่สำเร็จ', 500)
+      }
+      await logEvent(body.studentId, 'teacher-certificate-name', {
+        teacherId,
+        before: before ?? null,
+        after: displayName || null,
+      })
+      return NextResponse.json({ ok: true, certificateDisplayName: displayName || null })
+    }
     case 'mission-level': {
       const row = await teacherSetMissionLevel(
         teacherId, body.studentId, body.missionId, body.level, body.reason, body.note,

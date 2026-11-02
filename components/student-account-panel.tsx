@@ -8,10 +8,12 @@ type Notice = { kind: 'success' | 'error'; text: string } | null
 
 export function StudentAccountPanel({
   initialNickname,
+  nicknameLocked,
   roomCode,
   certificateNameForm,
 }: {
   initialNickname: string
+  nicknameLocked?: boolean
   /** รหัสห้องของนักเรียน — โชว์ในกล่องยืนยันออกจากระบบให้จดไว้ใช้กลับเข้ามา */
   roomCode?: string | null
   certificateNameForm?: ReactNode
@@ -171,12 +173,15 @@ export function StudentAccountPanel({
             onChange={(event) => setNewNickname(event.target.value)}
             maxLength={40}
             required
+            disabled={nicknameLocked}
             className="mt-1 min-h-11 w-full rounded-xl bg-surface-raised px-3 text-label text-ink ring-1 ring-line outline-none focus:ring-2 focus:ring-brand-500"
           />
-          <p className="mt-2 text-note font-semibold text-brand-700">ใช้ชื่อใหม่นี้ตอนเข้าห้องครั้งถัดไป</p>
+          <p className="mt-2 text-note font-semibold text-brand-700">
+            {nicknameLocked ? 'ได้เกียรติบัตรแล้ว ชื่อเล่นจึงล็อกไว้เพื่อไม่ให้ชื่อบนผลงานเปลี่ยน' : 'ใช้ชื่อใหม่นี้ตอนเข้าห้องครั้งถัดไป'}
+          </p>
           <button
             type="submit"
-            disabled={busy !== null || newNickname.trim() === nickname}
+            disabled={nicknameLocked || busy !== null || newNickname.trim() === nickname}
             className="btn-base mt-3 w-full rounded-xl bg-brand-600 text-label font-bold text-ink-onbrand hover:bg-brand-700 disabled:opacity-50"
           >
             {busy === 'nickname' ? 'กำลังบันทึก…' : 'บันทึกชื่อเล่น'}

@@ -27,6 +27,7 @@ import { certificateProgressOf } from '@/lib/certificate/progress'
 import { CERT_THEME, certArtPresence, resolveCertTheme } from '@/lib/certificate/art'
 import { certificateDomain } from '@/components/server/showcase-safety'
 import { certificateDisplayNameFor, certificateDisplayNameFromProfile } from '@/lib/certificate/profile'
+import { CertificateNamePrompt } from '@/components/certificate-name-prompt'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { loadShopProfile, loadSelfProfileDb } from '@/components/server/game-state'
@@ -246,6 +247,7 @@ export default async function ResultPage({
       }
     >
       <div className="relative isolate flex h-full min-h-0 flex-col gap-2 scene-sky px-4 pt-2 pb-1">
+        {earned && !certificateDisplayNameFromProfile(profileRow) ? <CertificateNamePrompt /> : null}
         <SceneDecor density="light" />
         {/* ตัวเลขสองตัวที่ต้องอ่านได้จากไกล — ดาวที่เก็บได้ และด้านที่ครูยืนยัน
             ⚠️ ช่องขวาไม่โชว์ "0 จาก 4" ตอนครูยังไม่ตรวจ เลขศูนย์ตรงนั้นอ่านเป็น "ทำไม่ได้เลย" */}

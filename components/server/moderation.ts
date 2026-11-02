@@ -21,6 +21,7 @@ export type ModerationContext =
   | 'peer-feedback'
   | 'dome-chat'
   | 'self-goal'
+  | 'certificate-name'
   | 'survey-open'
 
 export interface ModerationVerdict {

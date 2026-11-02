@@ -29,8 +29,10 @@ type Audience = 'thai' | 'international'
 
 export function SetupForm({
   businessTypes,
+  initialCertificateDisplayName = '',
 }: {
   businessTypes: { id: string; label: string; icon: string; art?: string }[]
+  initialCertificateDisplayName?: string
 }) {
   const router = useRouter()
   const [shopName, setShopName] = useState('')
@@ -38,6 +40,7 @@ export function SetupForm({
   const [domainName, setDomainName] = useState('')
   const [isRegisteredCompany, setIsRegisteredCompany] = useState<boolean | null>(null)
   const [audience, setAudience] = useState<Audience | null>(null)
+  const [certificateDisplayName, setCertificateDisplayName] = useState(initialCertificateDisplayName)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -47,7 +50,8 @@ export function SetupForm({
     businessTypeId.length > 0 &&
     domainName.trim().length > 0 &&
     isRegisteredCompany !== null &&
-    audience !== null
+    audience !== null &&
+    certificateDisplayName.trim().length > 0
 
   const selectedBusiness = useMemo(
     () => businessTypes.find((business) => business.id === businessTypeId),
@@ -72,6 +76,7 @@ export function SetupForm({
           domainName: domainName.trim(),
           isRegisteredCompany,
           audience,
+          certificateDisplayName: certificateDisplayName.trim(),
         }),
       })
       if (!res.ok) {
@@ -143,7 +148,23 @@ export function SetupForm({
         </p>
       </div>
 
-      <Section className="setup-panel" title="1. ร้านของเราชื่ออะไร" description="พิมพ์ภาษาไทยหรืออังกฤษก็ได้">
+      <Section className="setup-panel" title="1. ชื่อจริงบนเกียรติบัตร" description="ชื่อ-นามสกุลจริง จะพิมพ์บนใบประกาศและตั้งได้ครั้งเดียว">
+        <TextField
+          label="ชื่อ-นามสกุลจริง"
+          value={certificateDisplayName}
+          onChange={(e) => setCertificateDisplayName(e.target.value)}
+          type="text"
+          inputMode="text"
+          autoComplete="name"
+          placeholder="เช่น อาร์ม ใจดี"
+          valid={certificateDisplayName.trim().length > 0}
+          hint="ตรวจตัวสะกดให้เรียบร้อยก่อนกดเริ่มนะ"
+          inputClassName="text-body-lg font-bold"
+          readOnly={initialCertificateDisplayName.length > 0}
+        />
+      </Section>
+
+      <Section className="setup-panel" title="2. ร้านของเราชื่ออะไร" description="พิมพ์ภาษาไทยหรืออังกฤษก็ได้">
         <TextField
           label="ชื่อร้าน"
           value={shopName}
@@ -159,7 +180,7 @@ export function SetupForm({
 
       </Section>
 
-      <Section className="setup-panel" title="2. ร้านของเราขายอะไร">
+      <Section className="setup-panel" title="3. ร้านของเราขายอะไร">
         <div
           role="radiogroup"
           aria-label="ประเภทของร้าน"
@@ -179,7 +200,7 @@ export function SetupForm({
         </div>
       </Section>
 
-      <Section className="setup-panel" title="3. ชื่อเว็บของร้าน" description="ใช้ชื่อสั้น ๆ ภาษาอังกฤษหรือตัวเลขก็ได้">
+      <Section className="setup-panel" title="4. ชื่อเว็บของร้าน" description="ใช้ชื่อสั้น ๆ ภาษาอังกฤษหรือตัวเลขก็ได้">
         <TextField
           label="ชื่อโดเมนชั่วคราว"
           value={domainName}
@@ -194,7 +215,7 @@ export function SetupForm({
         />
       </Section>
 
-      <Section className="setup-panel" title="4. จดทะเบียนนิติบุคคลแล้วหรือยัง">
+      <Section className="setup-panel" title="5. จดทะเบียนนิติบุคคลแล้วหรือยัง">
         <div
           role="radiogroup"
           aria-label="สถานะการจดทะเบียนนิติบุคคล"
@@ -215,7 +236,7 @@ export function SetupForm({
         </div>
       </Section>
 
-      <Section className="setup-panel" title="5. ลูกค้าของเราอยู่ที่ไหน">
+      <Section className="setup-panel" title="6. ลูกค้าของเราอยู่ที่ไหน">
         <div role="radiogroup" aria-label="กลุ่มลูกค้าของร้าน" className="flex flex-col gap-2">
           <ChoiceCard
             label="ในไทย"

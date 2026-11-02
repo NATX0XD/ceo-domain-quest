@@ -13,6 +13,7 @@ import {
 import { loadSelfProfileDb, saveOwnGoalTextDb } from '@/components/server/game-state'
 import { moderateStudentText } from '@/components/server/moderation'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
+import { certificateEligibility } from '@/components/server/certificate-eligibility'
 
 export const metadata: Metadata = { title: 'รู้จักตัวเอง — CEO Domain Quest' }
 
@@ -114,6 +115,7 @@ async function saveCertificateName(formData: FormData) {
   if (!session) return
 
   const original = String(formData.get('certificateDisplayName') ?? '').trim()
+  const confirmed = formData.get('confirmCertificateName') === 'on'
   const jar = await cookies()
   const noticeOptions = {
     httpOnly: true,
@@ -134,6 +136,15 @@ async function saveCertificateName(formData: FormData) {
 
   if (!original) {
     jar.set(CERTIFICATE_NAME_NOTICE_COOKIE, encodeNotice({ ok: false, message: 'พิมพ์ชื่อก่อนกดบันทึก', original }), noticeOptions)
+    return
+  }
+
+  if (!confirmed) {
+    jar.set(
+      CERTIFICATE_NAME_NOTICE_COOKIE,
+      encodeNotice({ ok: false, message: 'ติ๊กยืนยันว่าตรวจตัวสะกดแล้วก่อนบันทึกนะ', original }),
+      noticeOptions,
+    )
     return
   }
 
@@ -179,10 +190,11 @@ export default async function ProfilePage() {
     return <SignInGate message="ใส่รหัสห้อง 6 ตัวกับรหัส 4 หลักที่ครูให้ก่อน แล้วโดมจะช่วยหาเส้นทางที่เหมาะกับเรา" />
   }
 
-  const [state, student, profile] = await Promise.all([
+  const [state, student, profile, certificate] = await Promise.all([
     loadSelfProfileDb(session.studentId),
     getStudent(session.studentId),
     getProfile(session.studentId),
+    certificateEligibility(session.studentId),
   ])
 
   /**
@@ -247,6 +259,7 @@ export default async function ProfilePage() {
           level: state.routeChosenBy ? (state.scaffoldLevel as LevelId) : null,
           goalId: state.goalId,
           finished: state.goalId !== null && state.route !== null,
+          nicknameLocked: certificate.eligible,
         }}
         certificateNameForm={
           lockedCertificateName ? (
@@ -269,6 +282,10 @@ export default async function ProfilePage() {
               placeholder="เช่น อาร์ม ใจดี"
               className="mt-1 min-h-11 w-full rounded-xl bg-surface-raised px-3 text-label text-ink ring-1 ring-line outline-none focus:ring-2 focus:ring-brand-500"
             />
+            <label className="mt-2 flex items-start gap-2 text-note font-semibold text-ink">
+              <input type="checkbox" name="confirmCertificateName" className="mt-0.5 size-4 accent-[var(--color-brand-600)]" />
+              <span>ตรวจตัวสะกดแล้ว ชื่อนี้จะใช้บนเกียรติบัตรและแก้เองไม่ได้</span>
+            </label>
             {certificateNameNotice ? (
               <p
                 role="status"

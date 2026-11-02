@@ -12,6 +12,8 @@ import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { resolveShopArt } from '@/components/server/shop-art-file'
 import { shopArtFallbackSrc } from '@/components/shop-art'
 import { ShopArtImg } from '@/components/shop-art-img'
+import { certificateDisplayNameFromProfile } from '@/lib/certificate/profile'
+import { getProfile } from '@/lib/db/repo'
 
 export const metadata: Metadata = { title: 'ตั้งค่าร้าน — CEO Domain Quest' }
 
@@ -27,9 +29,10 @@ export default async function SetupPage() {
     return <SignInGate message="ใส่รหัสห้อง 6 ตัวกับรหัส 4 หลักที่ครูให้ก่อน แล้วค่อยตั้งค่าร้าน" />
   }
 
-  const [profile, locked] = await Promise.all([
+  const [profile, locked, dbProfile] = await Promise.all([
     loadShopProfile(session.studentId),
     isShopProfileLocked(session.studentId),
+    getProfile(session.studentId),
   ])
 
   if (locked) {
@@ -72,5 +75,10 @@ export default async function SetupPage() {
 
   // ภาพตัวอย่างร้านขั้น 1 ของแต่ละประเภท — เช็กไฟล์ที่เซิร์ฟเวอร์ ประเภทที่ยังไม่มีภาพได้ภาพกลาง
   const options = businessTypes.map((b) => ({ id: b.id, label: b.label, icon: b.icon, art: resolveShopArt(b.id, 1) }))
-  return <SetupForm businessTypes={options} />
+  return (
+    <SetupForm
+      businessTypes={options}
+      initialCertificateDisplayName={certificateDisplayNameFromProfile(dbProfile) ?? ''}
+    />
+  )
 }

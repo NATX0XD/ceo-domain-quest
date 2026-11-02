@@ -163,6 +163,7 @@ export function ProfileClient({
     level: LevelId | null
     goalId: string | null
     finished: boolean
+    nicknameLocked: boolean
   }
 }) {
   const router = useRouter()
@@ -373,6 +374,7 @@ export function ProfileClient({
         />
         <StudentAccountPanel
           initialNickname={initial.nickname}
+          nicknameLocked={initial.nicknameLocked}
           roomCode={initial.roomCode}
           certificateNameForm={certificateNameForm}
         />

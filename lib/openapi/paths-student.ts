@@ -55,6 +55,26 @@ export const studentPaths: Record<string, PathItemObject> = {
       },
     }),
   },
+  '/api/profile/certificate-name': {
+    post: op({
+      id: 'studentCertificateName',
+      summary: 'ตั้งชื่อจริงบนเกียรติบัตรครั้งเดียว',
+      tags: [BEFORE],
+      security: STUDENT_ONLY,
+      description: 'ใช้เมื่อได้เกียรติบัตรแล้วและยังไม่มีชื่อจริง ชื่อต้องผ่านตัวกรองเนื้อหาและยืนยันว่าตรวจตัวสะกดแล้ว',
+      requestBody: jsonBody(
+        obj({
+          certificateDisplayName: str('ชื่อ-นามสกุลจริงบนเกียรติบัตร', { minLength: 1, maxLength: 60 }),
+          confirmed: bool('ยืนยันว่าตรวจตัวสะกดแล้ว'),
+        }, { required: ['certificateDisplayName', 'confirmed'] }),
+        { certificateDisplayName: 'อาร์ม ใจดี', confirmed: true },
+      ),
+      responses: {
+        ...ok('บันทึกชื่อบนเกียรติบัตรแล้ว', obj({ ok: bool('สำเร็จ'), certificateDisplayName: str('ชื่อที่บันทึก') })),
+        ...failures([400, ['bad-request']], [401, ['unauthorized']], [409, ['certificate-name-locked']], [422, ['content-flagged']]),
+      },
+    }),
+  },
   '/api/join': {
     post: op({
       id: 'join',

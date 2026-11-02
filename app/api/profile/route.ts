@@ -3,6 +3,7 @@ import { ShopProfileSchema } from '@/components/shop-profile'
 import { checkDomainAvailability } from '@/components/server/domain-registry'
 import { isShopProfileLocked, loadShopProfile, saveShopProfile } from '@/components/server/game-state'
 import { moderateStudentText } from '@/components/server/moderation'
+import { saveCertificateDisplayName } from '@/lib/certificate/profile'
 import { buildStoryInput } from '@/app/api/story/_lib/input'
 import { drainStoriesInBackground, enqueueStory } from '@/app/api/story/_lib/runner'
 import { errorResponse, readJsonBody, readStudentSession, unauthorized } from '../_lib/session-cookie'
@@ -33,6 +34,18 @@ export async function POST(request: Request) {
   const parsed = ShopProfileSchema.safeParse(await readJsonBody(request))
   if (!parsed.success) {
     return errorResponse('bad-request', 'ข้อมูลร้านไม่ครบหรือรูปแบบไม่ถูกต้อง', 400)
+  }
+
+  const nameVerdict = await moderateStudentText(
+    session.studentId,
+    'certificate-name',
+    parsed.data.certificateDisplayName,
+  )
+  if (!nameVerdict.ok) {
+    return errorResponse('content-flagged', nameVerdict.message ?? 'ลองใช้ชื่อที่สุภาพขึ้นนะ', 422, {
+      field: 'certificateDisplayName',
+      original: nameVerdict.original,
+    })
   }
 
   /**
@@ -76,6 +89,12 @@ export async function POST(request: Request) {
       status: domain.status,
       takenByNickname: domain.takenByNickname,
       suggestions: domain.suggestions,
+    })
+  }
+
+  if (!(await saveCertificateDisplayName(session.studentId, parsed.data.certificateDisplayName))) {
+    return errorResponse('certificate-name-locked', 'ชื่อนี้ถูกตั้งไว้แล้ว ถ้าต้องการแก้ให้บอกครู', 409, {
+      field: 'certificateDisplayName',
     })
   }
 

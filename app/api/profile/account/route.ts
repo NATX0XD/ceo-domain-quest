@@ -9,6 +9,7 @@ import {
   updateStudentPin,
 } from '../../../../lib/db/repo'
 import { moderateJoinNickname } from '../../../../components/server/moderation'
+import { certificateEligibility } from '../../../../components/server/certificate-eligibility'
 import { errorResponse, readJsonBody, readStudentSession, unauthorized } from '../../_lib/session-cookie'
 
 export const runtime = 'nodejs'
@@ -37,6 +38,10 @@ export async function PATCH(request: Request) {
   if ('nickname' in body) {
     if (body.nickname === student.nickname) {
       return NextResponse.json({ ok: true, nickname: student.nickname, message: 'ชื่อเล่นยังเหมือนเดิม' })
+    }
+
+    if ((await certificateEligibility(session.studentId)).eligible) {
+      return errorResponse('nickname-locked', 'ได้เกียรติบัตรแล้ว จึงเปลี่ยนชื่อเล่นไม่ได้เพื่อคงชื่อบนผลงาน', 409)
     }
 
     if (await findStudentByNickname(session.classroomId, body.nickname)) {
