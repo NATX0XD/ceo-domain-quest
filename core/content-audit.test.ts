@@ -810,12 +810,12 @@ describe('เนื้อหาเส้นทางเรียน (learn-*) �
     expect(JSON.stringify(learnPathsJson.paths.find((p) => p.missionId === 'm4')?.warmup)).toContain('m4-w1')
   })
 
-  it('m1-wq1 ย้อนดูหลักฐานตั้งแต่การกรอกชื่อเว็บถึงการค้นหาที่อยู่', () => {
+  it('m1-wq1 ย้อนดูฉาก 3 ที่พูดถึงชื่อเว็บ (สเปก OBJ01 ดูวิดีโอ)', () => {
     const m1 = learnPathsJson.paths.find((path) => path.missionId === 'm1')!
     const question = m1.watch.questions.find((item) => item.id === 'm1-wq1') as unknown as {
       review: { from: number; to: number }
     }
-    expect(question.review).toEqual({ from: 3, to: 4 })
+    expect(question.review).toEqual({ from: 3, to: 3 })
   })
 
   it('เกมเคาน์เตอร์ด่าน 3 มี 4 เคส และเฉลยมี 4 เคสรหัสตรงกัน', () => {

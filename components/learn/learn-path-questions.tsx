@@ -1,6 +1,7 @@
 'use client'
 
-import { useId } from 'react'
+import { useEffect, useId, useRef } from 'react'
+import { useReducedMotion } from 'motion/react'
 import { cn } from '@/components/ui'
 import { Bubble, ChatFrame, QuickChip } from './app/chat-reader'
 import { Shake } from './app/fx'
@@ -41,14 +42,20 @@ export function LearnQuestions({
   shakeKey?: number
 }) {
   const baseId = useId()
+  const reduce = useReducedMotion()
+  const endRef = useRef<HTMLDivElement>(null)
+  // ข้อใหม่ขึ้นมา = เลื่อนให้เห็นคำถามกับช่องตอบเสมอ
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'end' })
+  }, [qIdx, onlyId, reduce])
   const intro =
     mode === 'watch'
       ? 'ดูเรื่องของมีนจบแล้วนะครับ ลองตอบตามความเข้าใจของตัวเอง 2 ข้อ ไม่ต้องตอบเหมือนในคลิปก็ได้ครับ'
-      : 'อ่านเรื่องของมีนกับฟ้าจบแล้วนะครับ ลองตอบตามความเข้าใจของตัวเอง 2 ข้อ ไม่ต้องตอบเหมือนข้อความในแชตก็ได้ครับ'
+      : 'มาเริ่มข้อแรกกันเลยครับ ตอบสั้น ๆ ตามที่เข้าใจได้เลย'
   const shown = onlyId ? questions.filter((q) => q.id === onlyId) : questions.slice(0, qIdx + 1)
 
   return (
-    <ChatFrame title="โดม" subtitle="กำลังรอคำตอบของเรา">
+    <ChatFrame title="คุยกับโดม" subtitle={`คำถาม ${Math.min(qIdx + 1, questions.length)} จาก ${questions.length} · ตอบด้วยคำของตัวเอง`}>
       <ol className="flex flex-1 flex-col gap-2.5 px-3 py-4">
         {!onlyId ? (
           <Bubble name="โดม" side="left" tone="dome">
@@ -73,7 +80,7 @@ export function LearnQuestions({
                     {answers[q.id]}
                   </Bubble>
                   <Bubble name="โดม" side="left" tone="dome">
-                    โดมได้รับคำตอบแล้วครับ ไปคำถามต่อไปกันเลย
+                    {mode === 'watch' ? 'โดมได้รับคำตอบแล้วครับ ไปคำถามต่อไปกันเลย' : 'ได้รับคำตอบแล้วครับ ไปข้อถัดไปกัน'}
                   </Bubble>
                 </>
               ) : null}
@@ -91,7 +98,7 @@ export function LearnQuestions({
         const q = onlyId ? questions.find((x) => x.id === onlyId) : questions[qIdx]
         if (!q) return null
         return (
-          <Shake trigger={shakeKey} className="flex flex-col gap-2 border-t border-brand-100 bg-white/80 px-3 py-3">
+          <Shake trigger={shakeKey} className="flex flex-col gap-2 border-t-2 border-[#e6cfa6] bg-[#fff6e4] px-3 py-3">
             <label htmlFor={`${baseId}-${q.id}`} className="sr-only">
               ข้อ {questions.findIndex((x) => x.id === q.id) + 1}. {q.prompt}
             </label>
@@ -105,8 +112,8 @@ export function LearnQuestions({
               onChange={(e) => onChange(q.id, e.target.value)}
               className={cn(
                 'min-h-24 w-full resize-none rounded-2xl bg-white px-4 py-3 text-body text-ink',
-                'ring-2 ring-inset ring-brand-200 outline-none transition-[box-shadow] duration-200',
-                'placeholder:text-ink-subtle focus:ring-brand-500',
+                'ring-2 ring-inset ring-[#d9b98a] outline-none transition-[box-shadow] duration-200',
+                'placeholder:text-ink-subtle focus:ring-[#f18b20]',
                 'focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus',
                 'disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:opacity-60',
               )}
@@ -119,6 +126,7 @@ export function LearnQuestions({
           </Shake>
         )
       })()}
+      <div ref={endRef} aria-hidden />
     </ChatFrame>
   )
 }

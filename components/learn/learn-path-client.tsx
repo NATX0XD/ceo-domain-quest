@@ -47,6 +47,8 @@ import { useExitConfirm } from '@/components/student-navigation'
 import { ChatReader, QuickChip } from './app/chat-reader'
 import { Confetti, Float, Shake, buzz } from './app/fx'
 import { themeFor } from './app/theme'
+import { DomeSays, M1Button, M1Shell, useM1Sound, type M1Scene } from './m1/m1-shell'
+import { M1Handoff, M1ModeChooser, M1ReadBrief, M1WatchBrief } from './m1/m1-screens'
 
 /**
  * เส้นทางเรียนก่อนเข้าภารกิจ (ดู / อ่าน / ลงมือทำ) — สเปก docs/learn-path-spec.md
@@ -57,9 +59,12 @@ import { themeFor } from './app/theme'
  * จบแล้ว router.refresh() ให้หน้าเซิร์ฟเวอร์เห็น learn-done แล้วแสดงจอภารกิจเดิม
  */
 
-type Step = 'intro' | 'result' | 'watch' | 'read' | 'questions' | 'do' | 'done'
+type Step = 'intro' | 'result' | 'watch' | 'read' | 'read-handoff' | 'questions' | 'do' | 'done'
 
 const STAGES = ['เลือกวิธี', 'เรียน', 'สรุป'] as const
+
+/** วินาทีเริ่มของฉาก 1–8 ในคลิปภารกิจ 1 (ตามคำบรรยาย public/captions/m1-watch.th.vtt) ใช้ย้อนดูเฉพาะช่วง */
+const M1_SCENE_AT = [0, 2.9, 8.2, 13.6, 13.6, 19.7, 23.9, 27.5]
 
 /** สรุปสั้น ๆ บนจอเรียนจบ (เฉพาะภารกิจที่มีข้อสรุปกลาง) */
 const LEARN_RECAP: Record<string, string[]> = {
@@ -100,6 +105,8 @@ export function LearnPathClient({
   recommendedMode = null,
 }: LearnPathClientProps) {
   const router = useRouter()
+  const isM1 = missionId === 'm1'
+  const sound = useM1Sound()
   const singleMode = path.modes.length === 1 && path.modes[0] === 'do'
 
   // กลับมาเปิดหน้าใหม่ = ทำต่อจากจุดเดิมที่บันทึกไว้
@@ -111,11 +118,17 @@ export function LearnPathClient({
 
   const [sceneIdx, setSceneIdx] = useState(0)
   const [autoPlay, setAutoPlay] = useState(true)
-  const [chatShown, setChatShown] = useState(1)
+  const [chatShown, setChatShown] = useState(() => {
+    const firstBreak = isM1 ? (path.read.parts ?? []).map((p) => p.start).find((n) => n > 1) : undefined
+    return firstBreak ? firstBreak - 1 : 1
+  })
   // คลิปจริง (watch.video) — กดดูภาพนิ่งแทนได้ เล่นไม่ได้ = สลับไปภาพนิ่งเอง
   const [videoEnded, setVideoEnded] = useState(false)
   const [preferStills, setPreferStills] = useState(false)
   const [videoFailed, setVideoFailed] = useState(false)
+  const [videoProgress, setVideoProgress] = useState(0)
+  const [videoDuration, setVideoDuration] = useState(0)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [answerResult, setAnswerResult] = useState<AnswerResponse | null>(null)
@@ -162,10 +175,10 @@ export function LearnPathClient({
       const saved = raw ? (JSON.parse(raw) as Record<string, unknown>) : null
       if (saved && !state.done) {
         const savedMode = saved.mode === 'watch' || saved.mode === 'read' || saved.mode === 'do' ? saved.mode : null
-        const steps: Step[] = ['intro', 'result', 'watch', 'read', 'questions', 'do']
+        const steps: Step[] = ['intro', 'result', 'watch', 'read', 'read-handoff', 'questions', 'do']
         const savedStep = steps.find((x) => x === saved.step)
         const needsMode =
-          savedStep === 'watch' || savedStep === 'read' || savedStep === 'questions' || savedStep === 'do'
+          savedStep === 'watch' || savedStep === 'read' || savedStep === 'read-handoff' || savedStep === 'questions' || savedStep === 'do'
         const usableSavedStep = singleMode
           ? savedStep === 'intro' || savedStep === 'do'
             ? savedStep
@@ -211,6 +224,14 @@ export function LearnPathClient({
     return () => clearTimeout(t)
   }, [step, showVideo, autoPlay, sceneIdx, lastScene, scenes])
 
+  // ภารกิจ 1: เปลี่ยนจอ = เริ่มอ่านจากบนสุด (จอถาม-ตอบเลื่อนไปที่ช่องตอบเอง)
+  useEffect(() => {
+    if (!isM1) return
+    if (step === 'questions' && (qPhase === 'ask' || qPhase === 'supp')) return
+    if (step === 'read' && !brief && !reviewing) return
+    document.querySelector('.m1-content')?.scrollTo({ top: 0 })
+  }, [isM1, step, qPhase, brief, reviewing])
+
   function go(next: Step) {
     setError(null)
     if (next === 'questions') setReviewing(null)
@@ -232,7 +253,9 @@ export function LearnPathClient({
       setAutoPlay(true)
       go('watch')
     } else if (m === 'read') {
-      setChatShown(1)
+      // ภารกิจ 1: แสดงทีละช่วงของเรื่องทันที ไม่หน่วงเวลา (R02)
+      const firstBreak = isM1 ? (path.read.parts ?? []).map((p) => p.start).find((n) => n > 1) : undefined
+      setChatShown(firstBreak ? firstBreak - 1 : 1)
       go('read')
     } else {
       go('do')
@@ -297,8 +320,13 @@ export function LearnPathClient({
     }
     setDoResult(res.data)
     if (res.data.passed) {
-      setDone({ mode: 'do', score: res.data.score })
-      setConfettiTick((t) => t + 1)
+      // D&D keeps its own D05 result screen visible so the learner can inspect
+      // evidence before choosing the next-objective action.
+      const isCardSort = typeof payload === 'object' && payload !== null && 'placements' in payload
+      if (!isCardSort) {
+        setDone({ mode: 'do', score: res.data.score })
+        setConfettiTick((t) => t + 1)
+      }
     } else {
       setRetryTick((t) => t + 1)
     }
@@ -335,6 +363,16 @@ export function LearnPathClient({
       setChatShown(chat.length)
       go('read')
     }
+  }
+
+  /** ภารกิจ 1 ผ่านแล้ว = กลับหน้าภารกิจ (เซิร์ฟเวอร์เห็นว่าเรียนจบ แล้วแสดงคำถามท้ายภารกิจ) */
+  function finishM1() {
+    try {
+      sessionStorage.removeItem(storeKey)
+    } catch {
+      /* ข้าม */
+    }
+    router.refresh()
   }
 
   /* ------------------------------------------------------------ ปุ่มล่าง */
@@ -450,10 +488,21 @@ export function LearnPathClient({
       <Button
         size="lg"
         fullWidth
+        onClick={() => go('read-handoff')}
+        trailingIcon={<ChevronRightIcon width={22} height={22} />}
+      >
+        อ่านจบแล้ว
+      </Button>
+    )
+  } else if (step === 'read-handoff') {
+    footer = (
+      <Button
+        size="lg"
+        fullWidth
         onClick={() => go('questions')}
         trailingIcon={<ChevronRightIcon width={22} height={22} />}
       >
-        อ่านจบแล้ว ไปคุยกับโดม
+        เริ่มตอบคำถาม
       </Button>
     )
   } else if (step === 'do' && brief && path.do.kind === 'game') {
@@ -550,15 +599,169 @@ export function LearnPathClient({
         onClick={() => router.refresh()}
         trailingIcon={<ChevronRightIcon width={22} height={22} />}
       >
-        ไปด่านหลัก
+        ไปต่อ
       </Button>
     )
   }
+  /* ---------------------------------------------- ปุ่มล่างภารกิจ 1 (สตอรี่บอร์ดทีม) */
+  if (isM1) {
+    const chev = <ChevronRightIcon width={22} height={22} />
+    const toMap = (
+      <M1Button variant="secondary" size="md" fullWidth onClick={() => router.push('/map')}>
+        กลับแผนภารกิจ
+      </M1Button>
+    )
+    const nextPart = (() => {
+      const starts = (path.read.parts ?? []).map((p) => p.start).filter((n) => n - 1 > chatShown)
+      return starts.length > 0 ? Math.min(chat.length, starts[0]! - 1) : chat.length
+    })()
+    const cur = questions[qIdx]
+    const weakId = answerResult ? weakest(answerResult)?.id : undefined
+    const suppQ = questions.find((q) => q.id === weakId)
+    if (step === 'result') {
+      footer = (
+        <M1Button fullWidth disabled={!picked || busy} loading={busy} loadingLabel="กำลังเริ่ม" onClick={submitChoose} trailingIcon={chev}>
+          เริ่มภารกิจที่ 1
+        </M1Button>
+      )
+    } else if (step === 'watch') {
+      footer = brief ? (
+        <>
+          <M1Button fullWidth onClick={() => setBrief(false)} trailingIcon={chev}>
+            เริ่มดูวิดีโอ
+          </M1Button>
+          {toMap}
+        </>
+      ) : reviewing ? (
+        <M1Button fullWidth onClick={() => go('questions')} trailingIcon={chev}>
+          กลับไปตอบโดม
+        </M1Button>
+      ) : showVideo ? (
+        <M1Button variant={videoEnded ? 'success' : 'primary'} fullWidth disabled={!videoEnded} onClick={() => go('questions')} trailingIcon={chev}>
+          {videoEnded ? 'คุยกับโดม' : 'ดูให้จบก่อน แล้วคุยกับโดม'}
+        </M1Button>
+      ) : sceneIdx < lastScene ? (
+        <M1Button fullWidth onClick={() => setSceneIdx((i) => Math.min(lastScene, i + 1))} trailingIcon={chev}>
+          ฉากต่อไป
+        </M1Button>
+      ) : (
+        <M1Button variant="success" fullWidth onClick={() => go('questions')} trailingIcon={chev}>
+          คุยกับโดม
+        </M1Button>
+      )
+    } else if (step === 'read') {
+      footer = brief ? (
+        <>
+          <M1Button fullWidth onClick={() => setBrief(false)} trailingIcon={chev}>
+            เริ่มอ่านแชต
+          </M1Button>
+          {toMap}
+        </>
+      ) : reviewing ? (
+        <M1Button fullWidth onClick={() => go('questions')} trailingIcon={chev}>
+          กลับไปตอบโดม
+        </M1Button>
+      ) : chatShown < chat.length ? (
+        <div className="m1-dock-row">
+          <M1Button variant="secondary" size="md" onClick={() => setChatShown(chat.length)}>
+            แสดงทั้งหมด
+          </M1Button>
+          <M1Button size="md" onClick={() => setChatShown(nextPart)} trailingIcon={chev}>
+            อ่านต่อ
+          </M1Button>
+        </div>
+      ) : (
+        <M1Button variant="success" fullWidth onClick={() => go('read-handoff')} trailingIcon={chev}>
+          อ่านจบแล้ว
+        </M1Button>
+      )
+    } else if (step === 'read-handoff') {
+      footer = (
+        <M1Button fullWidth onClick={() => go('questions')} trailingIcon={chev}>
+          เริ่มตอบคำถาม
+        </M1Button>
+      )
+    } else if (step === 'questions') {
+      footer = done ? (
+        <>
+          <M1Button variant="success" fullWidth onClick={finishM1} trailingIcon={chev}>
+            ไปต่อ: คำถามท้ายภารกิจ
+          </M1Button>
+          <M1Button variant="secondary" size="md" fullWidth onClick={() => startReview()}>
+            {askMode === 'watch' ? 'ทบทวนด้วยตนเอง' : 'อ่านแชตอีกครั้ง'}
+          </M1Button>
+        </>
+      ) : qPhase === 'ask' ? (
+        <M1Button
+          variant="success"
+          fullWidth
+          disabled={busy || !(cur && (answers[cur.id] ?? '').trim())}
+          loading={busy}
+          loadingLabel="โดมกำลังอ่านคำตอบ"
+          onClick={() => (qIdx >= questions.length - 1 ? submitAnswers() : setQIdx((i) => i + 1))}
+          trailingIcon={chev}
+        >
+          ส่งคำตอบ
+        </M1Button>
+      ) : qPhase === 'result' ? (
+        suppTried >= 1 ? (
+          <>
+            <M1Button fullWidth onClick={() => openMode(askMode)}>
+              {askMode === 'watch' ? 'ย้อนดูคลิป' : 'อ่านแชตอีกครั้ง'}
+            </M1Button>
+            <div className="m1-dock-row">
+              <M1Button variant="secondary" size="md" onClick={() => go('result')}>
+                ลองวิธีอื่น
+              </M1Button>
+              <M1Button variant="secondary" size="md" onClick={() => router.push('/home')}>
+                ลองใหม่ภายหลัง
+              </M1Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <M1Button fullWidth onClick={() => setQPhase('help')} trailingIcon={chev}>
+              ทบทวนเฉพาะจุด
+            </M1Button>
+            <div className="m1-dock-row">
+              <M1Button variant="secondary" size="md" onClick={() => setQPhase('supp')}>
+                ลองตอบเสริม
+              </M1Button>
+              <M1Button variant="secondary" size="md" onClick={() => router.push('/map')}>
+                กลับแผนภารกิจ
+              </M1Button>
+            </div>
+          </>
+        )
+      ) : qPhase === 'help' ? (
+        <M1Button fullWidth onClick={() => setQPhase('supp')} trailingIcon={chev}>
+          ลองตอบเสริม
+        </M1Button>
+      ) : (
+        <M1Button
+          variant="success"
+          fullWidth
+          disabled={busy || !(suppQ && (answers[suppQ.id] ?? '').trim())}
+          loading={busy}
+          loadingLabel="โดมกำลังอ่านคำตอบ"
+          onClick={submitAnswers}
+        >
+          ส่งคำตอบเสริม
+        </M1Button>
+      )
+    } else if (step === 'do' || step === 'intro' || step === 'done') {
+      footer = step === 'done' ? (
+        <M1Button variant="success" fullWidth onClick={finishM1} trailingIcon={chev}>
+          ไปต่อ: คำถามท้ายภารกิจ
+        </M1Button>
+      ) : null
+    }
+  }
   /* --------------------------------------------------------------- เนื้อหา */
 
-  const stage = singleMode ? 0 : stageOf(step)
+  const stage = singleMode ? 0 : isM1 && step === 'questions' && answerResult ? 2 : stageOf(step)
   const stageLabels = singleMode ? (['เกม'] as const) : STAGES
-  const canSwitch = !singleMode && (step === 'watch' || step === 'read' || step === 'questions' || step === 'do') && !done
+  const canSwitch = !singleMode && (step === 'watch' || step === 'read' || step === 'read-handoff' || step === 'questions' || step === 'do') && !done
   const dark = theme.dark
   const doBrief = step === 'do' && brief && path.do.kind === 'game'
   /** ด่าน 2: ใช้ชื่อส่วนให้ตรงกับแชต (TLD / SLD / Subdomain) */
@@ -586,6 +789,7 @@ export function LearnPathClient({
     result: 0,
     watch: 1,
     read: 1,
+    'read-handoff': 1,
     do: 1,
     questions: 2,
     done: 2,
@@ -624,21 +828,33 @@ export function LearnPathClient({
     exit: (d: number) => ({ x: reduce ? 0 : d * -44, opacity: 0 }),
   }
 
-  return (
+  const m1Pill: Record<Step, string> = {
+    intro: 'ภารกิจที่ 1',
+    result: 'เลือกวิธีเรียนที่ชอบ',
+    watch: brief ? 'รับภารกิจ · ดูวิดีโอ' : reviewing ? 'ย้อนดูช่วงที่โดมชี้' : 'ดูคลิปสถานการณ์',
+    read: brief ? 'รับภารกิจ · อ่านแชต' : 'แชตเพื่อน: มีน × ฟ้า',
+    'read-handoff': 'คุยกับโดม',
+    questions: answerResult && qPhase !== 'supp' ? (qPhase === 'help' ? 'โดมช่วยเฉพาะจุด' : 'สรุปผลความเข้าใจ') : 'คุยกับโดม',
+    do: 'ลงมือทำ · จับคู่ความหมาย',
+    done: 'สรุปผล',
+  }
+  const m1Scene: M1Scene =
+    step === 'read-handoff' ? 'room' : step === 'result' || ((step === 'watch' || step === 'read') && brief) ? 'sky' : 'bakery'
+  const m1Back =
+    step === 'done' || done
+      ? undefined
+      : (step === 'watch' || step === 'read') && brief
+        ? () => go('result')
+        : step === 'result' || step === 'intro'
+          ? exit.request
+          : step === 'questions' && qPhase === 'ask' && qIdx > 0
+            ? () => setQIdx((i) => i - 1)
+            : exit.request
+
+  const body = (
     <>
-      <AppScreen
-      theme={theme}
-      title={missionTitle}
-      onBack={step === 'done' ? undefined : exit.request}
-      score={score}
-      stage={stage}
-      stageCount={stageLabels.length}
-      menu={menu}
-      dock={footer}
-      flush={fullBleed}
-    >
       <Confetti fire={confettiTick} />
-      {step === 'result' ? (
+      {step === 'result' && !isM1 ? (
         <ModePopup
           missionNo={missionId.replace(/\D/g, '') || missionId}
           title={missionTitle}
@@ -654,6 +870,17 @@ export function LearnPathClient({
           onStart={submitChoose}
           onClose={() => (mode ? go(mode) : router.push('/map'))}
           presentation="drawer"
+        />
+      ) : null}
+      {step === 'result' && isM1 ? (
+        <M1ModeChooser
+          recommended={recommendedMode ?? 'do'}
+          picked={picked}
+          error={error}
+          onPick={(m) => {
+            buzz()
+            setPicked(m)
+          }}
         />
       ) : null}
       <AnimatePresence mode="wait" custom={dir} initial={false}>
@@ -678,7 +905,7 @@ export function LearnPathClient({
             ))}
           </span>
 
-          {error ? (
+          {error && !(isM1 && step === 'result') ? (
             <Card tone="danger" padding="sm" role="alert">
               <p className="flex items-center gap-2 text-label font-bold text-danger-700">
                 <AlertIcon width={20} height={20} aria-hidden />
@@ -687,10 +914,10 @@ export function LearnPathClient({
             </Card>
           ) : null}
 
-          {step === 'intro' || step === 'result' ? (
+          {step === 'intro' ? (
             <>
               {missionId === 'm1' ? <div className="m1-map-art" aria-hidden="true" /> : null}
-              <div className={cn('relative z-10 flex flex-col items-center pt-2', step === 'result' && 'invisible')}>
+              <div className="relative z-10 flex flex-col items-center pt-2">
                 <Float>
                   <DomeAvatar mood="greet" size={132} decorative />
                 </Float>
@@ -712,7 +939,20 @@ export function LearnPathClient({
             </>
           ) : null}
 
-          {(step === 'watch' || step === 'read') && brief ? (
+          {isM1 && step === 'watch' && brief ? (
+            <M1WatchBrief
+              title={path.watch.brief?.title ?? path.watch.title}
+              situation={path.watch.brief?.situation ?? path.story}
+              tip={path.watch.brief?.tip ?? 'ดูเรื่องราวให้จบ แล้วตอบคำถามโดม 2 ข้อด้วยคำของตนเอง'}
+            />
+          ) : null}
+          {isM1 && step === 'read' && brief ? (
+            <M1ReadBrief
+              title={path.read.brief?.title ?? path.read.title}
+              tip={path.read.brief?.tip ?? 'อ่านจบแล้วโดมจะถามคำถาม 2 ข้อ ตอบด้วยคำของตัวเองได้เลย'}
+            />
+          ) : null}
+          {!isM1 && (step === 'watch' || step === 'read') && brief ? (
             <>
               <div className="flex flex-col items-center pt-2">
                 <Float>
@@ -731,11 +971,118 @@ export function LearnPathClient({
                   {(step === 'watch' ? path.watch.brief?.tip : path.read.brief?.tip) ??
                     'ดูให้จบ แล้วตอบคำถามโดม 2 ข้อด้วยคำของตนเอง'}
                 </p>
+                {step === 'watch' ? (
+                  <img className="m1-brief-art mt-3" src="/learn/m1/watch-s1.webp" alt="มีนกำลังช่วยลูกค้าที่ร้านขนม" />
+                ) : (
+                  <div className="m1-character-pair mt-3" aria-label="ตัวละครในแชต">
+                    <figure className="m1-character-card">
+                      <img src="/learn/m1/watch-s1.webp" alt="มีน" />
+                      <figcaption>มีน</figcaption>
+                    </figure>
+                    <figure className="m1-character-card m1-character-card--fah">
+                      <img src="/learn/m1/watch-s2.webp" alt="ฟ้า" />
+                      <figcaption>ฟ้า</figcaption>
+                    </figure>
+                  </div>
+                )}
               </GlassCard>
             </>
           ) : null}
 
-          {step === 'watch' && !brief ? (
+          {step === 'read-handoff' && isM1 ? <M1Handoff mode="read" /> : null}
+          {step === 'read-handoff' && !isM1 ? (
+            <section className="m1-handoff" aria-labelledby="m1-handoff-title">
+              <img src="/learn/m1/dome-room.webp" alt="โดมพร้อมช่วยตอบคำถาม" className="m1-handoff-art" />
+              <GlassCard>
+                <p className="m1-eyebrow">อ่านครบแล้ว</p>
+                <h2 id="m1-handoff-title" className="mt-1 text-title-sm font-extrabold text-ink">ส่งต่อให้โดมช่วยสรุป</h2>
+                <p className="mt-3 text-body-lg text-ink">อ่านเรื่องของมีนกับฟ้าจบแล้วนะครับ ลองตอบตามความเข้าใจของตัวเอง 2 ข้อ ไม่ต้องตอบเหมือนข้อความในแชตก็ได้ครับ</p>
+              </GlassCard>
+            </section>
+          ) : null}
+
+          {isM1 && step === 'watch' && !brief && showVideo ? (
+            <section className="m1-stack" aria-label={path.watch.title}>
+              {reviewing ? (
+                <p className="m1-review-note" role="status">
+                  โดมพาย้อนมาที่ช่วงฉากที่ {reviewing.from}
+                  {reviewing.to > reviewing.from ? `–${reviewing.to}` : ''} แล้ว กดเล่นดูอีกครั้ง แล้วกลับไปตอบต่อได้เลย
+                </p>
+              ) : null}
+              <div className="m1-video-frame">
+                <video
+                  ref={videoRef}
+                  key={video}
+                  src={video}
+                  poster={path.watch.poster}
+                  controls
+                  playsInline
+                  muted={!sound.on}
+                  preload="metadata"
+                  title={path.watch.title}
+                  aria-label={path.watch.title}
+                  onEnded={() => setVideoEnded(true)}
+                  onError={() => setVideoFailed(true)}
+                  onLoadedMetadata={(event) => {
+                    setVideoDuration(event.currentTarget.duration)
+                    if (reviewing) event.currentTarget.currentTime = M1_SCENE_AT[Math.max(0, reviewing.from - 1)] ?? 0
+                  }}
+                  onTimeUpdate={(event) => {
+                    const t = event.currentTarget.currentTime
+                    setVideoProgress(t)
+                    if (videoDuration && t >= videoDuration - 0.4) setVideoEnded(true)
+                  }}
+                >
+                  {path.watch.captions ? <track kind="captions" srcLang="th" label="คำบรรยายภาษาไทย" src={path.watch.captions} /> : null}
+                </video>
+              </div>
+              <div className="m1-video-bar">
+                <button
+                  type="button"
+                  className="m1-round-sm"
+                  aria-label="เล่นซ้ำตั้งแต่ต้น"
+                  onClick={() => {
+                    const v = videoRef.current
+                    if (!v) return
+                    v.currentTime = 0
+                    setVideoProgress(0)
+                    void v.play()
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนชุดภารกิจ */}
+                  <img src="/learn/m1/kit/icon_replay.webp" alt="" />
+                </button>
+                <div
+                  className="m1-video-track"
+                  role="progressbar"
+                  aria-label="ความคืบหน้าการดูคลิป"
+                  aria-valuemin={0}
+                  aria-valuemax={Math.ceil(videoDuration || 0)}
+                  aria-valuenow={Math.floor(videoProgress)}
+                >
+                  <span className="m1-video-fill" style={{ width: `${videoDuration ? Math.min(100, (videoProgress / videoDuration) * 100) : 0}%` }} />
+                </div>
+                <span className="m1-video-time">
+                  {fmtTime(videoProgress)} / {fmtTime(videoDuration)}
+                </span>
+              </div>
+              <p className={cn('m1-video-lock', videoEnded && 'is-open')} role="status">
+                {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D */}
+                <img src={videoEnded ? '/icons/3d/check-mark-button.webp' : '/icons/3d/locked.webp'} alt="" aria-hidden />
+                {videoEnded ? 'ดูครบแล้ว! ปุ่มคุยกับโดมพร้อมแล้ว' : 'ดูคลิปให้จบ ปุ่มคุยกับโดมจะปลดล็อก'}
+              </p>
+              <DomeSays mood={videoEnded ? 'cheer' : 'think'} size={84}>
+                {videoEnded
+                  ? 'เก่งมากครับ! มาเล่าให้ผมฟังหน่อยว่าเข้าใจอะไรบ้าง'
+                  : 'ลองสังเกตว่าลูกค้าพิมพ์ชื่อเว็บแล้ว ระบบช่วยหาอะไรให้ จากนั้นมาคุยกับผมนะครับ'}
+              </DomeSays>
+              <button type="button" className="m1-link-chip self-start" onClick={() => setPreferStills(true)}>
+                เน็ตช้า? ดูแบบภาพนิ่งแทน
+              </button>
+            </section>
+          ) : null}
+
+          {step === 'watch' && !brief && !(isM1 && showVideo) ? (
             <section className="flex flex-col gap-3" aria-label={path.watch.title}>
               <GlassCard dark={dark} className="px-4 py-3">
                 <h2 className={cn('text-title-sm font-extrabold text-pretty', ink)}>{path.watch.title}</h2>
@@ -765,6 +1112,7 @@ export function LearnPathClient({
               ) : null}
               {showVideo ? (
                 <video
+                  ref={videoRef}
                   key={video}
                   src={video}
                   poster={path.watch.poster}
@@ -775,9 +1123,10 @@ export function LearnPathClient({
                   aria-label={path.watch.title}
                   onEnded={() => setVideoEnded(true)}
                   onError={() => setVideoFailed(true)}
+                  onLoadedMetadata={(event) => setVideoDuration(event.currentTarget.duration)}
+                  onTimeUpdate={(event) => setVideoProgress(event.currentTarget.currentTime)}
                   className="media-video aspect-video w-full rounded-[24px]"
                 >
-                  {path.watch.captions ? <track kind="captions" srcLang="th" label="คำบรรยายภาษาไทย (ฉบับร่าง)" src={path.watch.captions} default /> : null}
                 </video>
               ) : (
                 <>
@@ -831,6 +1180,31 @@ export function LearnPathClient({
                   </AnimatePresence>
                 </>
               )}
+              {showVideo ? (
+                <div className="m1-video-meta">
+                  <ProgressBar
+                    value={videoProgress}
+                    max={videoDuration || 1}
+                    label={`ดูแล้ว ${Math.floor(videoProgress)} จาก ${Math.ceil(videoDuration || 0)} วินาที`}
+                    showValue={false}
+                    tone="brand"
+                    size="sm"
+                  />
+                  <button
+                    type="button"
+                    className="m1-replay-button"
+                    onClick={() => {
+                      if (!videoRef.current) return
+                      videoRef.current.currentTime = 0
+                      setVideoProgress(0)
+                      setVideoEnded(false)
+                      void videoRef.current.play()
+                    }}
+                  >
+                    เล่นซ้ำ
+                  </button>
+                </div>
+              ) : null}
             </section>
           ) : null}
 
@@ -851,6 +1225,10 @@ export function LearnPathClient({
                 quick={path.read.quick}
                 highlight={reviewing}
                 title={theme.id === 'm2' ? 'CEO Domain Quest' : 'แชตเพื่อน: มีน × ฟ้า'}
+                primaryRight={isM1}
+                avatars={isM1 ? { มีน: '/learn/m1/avatar-meen.webp', ฟ้า: '/learn/m1/avatar-fah.webp' } : undefined}
+                instant={isM1}
+                hideControls={isM1}
                 onNext={() => setChatShown((n) => Math.min(chat.length, n + 1))}
                 onAll={() => setChatShown(chat.length)}
               />
@@ -883,7 +1261,7 @@ export function LearnPathClient({
                 hintShown={hintShown}
                 onHint={() => setHintShown(true)}
                 onReview={() => startReview(questions.find((q) => q.id === weakest(answerResult)?.id)?.review)}
-                reviewLabel={askMode === 'watch' ? 'ย้อนดูช่วงนี้' : 'ย้อนอ่านช่วงนี้'}
+                reviewLabel={askMode === 'watch' ? 'ย้อนดูช่วงที่เกี่ยวข้อง' : 'ทบทวนช่วงที่เกี่ยวข้อง'}
               />
             ) : answerResult ? (
               <Shake trigger={answerResult.passed ? 0 : retryTick}>
@@ -892,7 +1270,7 @@ export function LearnPathClient({
                   passScore={passScore}
                   questions={questions}
                   extra={
-                    !answerResult.passed && suppTried >= 1 ? (
+                    !isM1 && !answerResult.passed && suppTried >= 1 ? (
                       <Card tone="spark" padding="sm">
                         <p className="text-body font-bold text-ink">ยังมีบางจุดที่ควรทบทวนครับ</p>
                         <div className="mt-2 flex flex-wrap gap-2">
@@ -951,7 +1329,14 @@ export function LearnPathClient({
                   onSubmit={submitDo}
                   onChangeMode={() => go('result')}
                   onLater={() => router.push('/home')}
-                  onPassed={() => go('done')}
+                  onPassed={(res) => {
+                    setDone({ mode: 'do', score: res.score })
+                    if (isM1) finishM1()
+                    else {
+                      setConfettiTick((t) => t + 1)
+                      go('done')
+                    }
+                  }}
                 />
               ) : path.do.kind === 'counter' && counterData ? (
                 <CounterGame
@@ -1014,8 +1399,46 @@ export function LearnPathClient({
           ) : null}
         </motion.div>
       </AnimatePresence>
-      </AppScreen>
+    </>
+  )
+
+  return (
+    <>
+      {isM1 ? (
+        <M1Shell
+          sign="ภารกิจที่ 1"
+          pill={m1Pill[step]}
+          onBack={m1Back}
+          sound={sound.on}
+          onSound={sound.toggle}
+          stage={stage}
+          stages={STAGES}
+          scene={m1Scene}
+          dock={footer}
+        >
+          {body}
+        </M1Shell>
+      ) : (
+        <AppScreen
+          theme={theme}
+          title={missionTitle}
+          onBack={step === 'done' ? undefined : exit.request}
+          score={score}
+          stage={stage}
+          stageCount={stageLabels.length}
+          menu={menu}
+          dock={footer}
+          flush={fullBleed}
+        >
+          {body}
+        </AppScreen>
+      )}
       {exit.dialog}
     </>
   )
+}
+
+function fmtTime(sec: number): string {
+  const t = Math.max(0, Math.floor(sec || 0))
+  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`
 }

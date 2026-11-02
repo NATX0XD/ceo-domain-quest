@@ -1,15 +1,17 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { motion, useReducedMotion } from 'motion/react'
-import { AlertIcon, Button, CheckIcon, DomeAvatar, LightbulbIcon, RefreshIcon, StarIcon, cn } from '@/components/ui'
-import { Confetti, CountUp, Float, Shake, buzz } from './app/fx'
+/* eslint-disable @next/next/no-img-element -- ภาพสถิตจาก public/ */
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AlertIcon, CheckIcon, ChevronRightIcon, LightbulbIcon, RefreshIcon, cn } from '@/components/ui'
+import { Confetti, CountUp, Shake, buzz } from './app/fx'
+import { DomeSays, M1Board, M1Button } from './m1/m1-shell'
 import './card-sort-game.css'
 import type { DoResponse } from './learn-path-api'
 
 /**
  * ภารกิจจับคู่ความหมาย (do.kind cards) — docs/teammates/OBJ01_Do_DragDrop_Learning_Flow.md
- * D01 รับภารกิจ · D03 ลาก/แตะจัดการ์ดลงช่อง · D04 ตรวจ (เซิร์ฟเวอร์) · D05 ผ่าน · D06 โดมช่วยเฉพาะจุด
+ * D01+D02 รับภารกิจ+วิธีเล่น · D03 ลาก/แตะจัดการ์ดลงช่อง · D04 ตรวจ (เซิร์ฟเวอร์) · D05 ผ่าน · D06 โดมช่วยเฉพาะจุด
  * ⚠️ ไม่มีเฉลยในไฟล์นี้ ระหว่างจัดไม่บอกถูกผิด เซิร์ฟเวอร์ตรวจแล้วบอกเฉพาะ "ใบไหนยังไม่ใช่"
  */
 
@@ -36,6 +38,8 @@ function shuffle<T>(items: T[]): T[] {
   return a
 }
 
+const ZONE_TONE: Record<string, string> = { ZONE_DOMAIN: 'is-a', ZONE_DNS: 'is-b' }
+
 export function CardSortGame({
   data,
   mission,
@@ -52,26 +56,34 @@ export function CardSortGame({
   onSubmit: (payload: unknown) => Promise<DoResponse>
   onChangeMode: () => void
   onLater: () => void
-  /** มีให้ = ผ่านแล้วส่งต่อให้หน้าสรุปรวมของเส้นทางเรียน ไม่แสดงจอผลซ้ำในเกม */
+  /** ผ่านแล้วกดไปต่อ = ส่งต่อให้เส้นทางเรียน */
   onPassed?: (res: DoResponse) => void
 }) {
   const reduce = useReducedMotion()
-  const order = useMemo(() => shuffle(data.cards), [data.cards])
+  const [order, setOrder] = useState(data.cards)
   const [phase, setPhase] = useState<Phase>('intro')
   const [placed, setPlaced] = useState<Record<string, string>>({})
   const [selected, setSelected] = useState<string | null>(null)
+  const [hover, setHover] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [sendError, setSendError] = useState(false)
   const [result, setResult] = useState<DoResponse | null>(null)
   const [attempt, setAttempt] = useState(1)
+  const [lastWrong, setLastWrong] = useState<string[]>([])
   const [hintOpen, setHintOpen] = useState(false)
   const [hintUsed, setHintUsed] = useState(false)
+  const [playHint, setPlayHint] = useState(false)
   const [shake, setShake] = useState(0)
   const [fire, setFire] = useState(0)
   const [showReview, setShowReview] = useState(false)
   const [restored, setRestored] = useState(false)
   const [bump, setBump] = useState<Record<string, number>>({})
   const zoneRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  // สุ่มลำดับการ์ดหลังเปิดหน้า (ไม่สุ่มตอนเรนเดอร์ฝั่งเซิร์ฟเวอร์ จะได้ไม่ขึ้นเตือน hydration)
+  useEffect(() => {
+    setOrder(shuffle(data.cards))
+  }, [data.cards])
 
   useEffect(() => {
     if (!storageKey) return
@@ -124,8 +136,8 @@ export function CardSortGame({
     setSelected(null)
   }
 
-  /** ปล่อยการ์ด: อยู่ในช่องไหนก็ลงช่องนั้น ไม่เป๊ะก็ดูดเข้าช่องที่ใกล้ในระยะ 90px */
-  function drop(cardId: string, x: number, y: number) {
+  /** หาช่องที่อยู่ใต้นิ้ว ไม่เป๊ะก็ดูดเข้าช่องที่ใกล้ในระยะ 90px */
+  function zoneAt(x: number, y: number): string | null {
     let best: { id: string; d: number } | null = null
     for (const z of data.zones) {
       const r = zoneRefs.current[z.id]?.getBoundingClientRect()
@@ -135,7 +147,12 @@ export function CardSortGame({
       const d = Math.hypot(dx, dy)
       if (!best || d < best.d) best = { id: z.id, d }
     }
-    if (best && best.d <= 90) put(cardId, best.id)
+    return best && best.d <= 90 ? best.id : null
+  }
+  function drop(cardId: string, x: number, y: number) {
+    setHover(null)
+    const z = zoneAt(x, y)
+    if (z) put(cardId, z)
   }
 
   async function check() {
@@ -144,12 +161,11 @@ export function CardSortGame({
     try {
       const res = await onSubmit({ placements: placed })
       setResult(res)
+      setLastWrong(((res.detail ?? null) as CardDetail | null)?.wrong ?? [])
       setPhase('result')
       setHintOpen(false)
-      if (res.passed) {
-        setFire((f) => f + 1)
-        onPassed?.(res)
-      } else setShake((s) => s + 1)
+      if (res.passed) setFire((f) => f + 1)
+      else setShake((s) => s + 1)
     } catch {
       setSendError(true)
     } finally {
@@ -170,377 +186,348 @@ export function CardSortGame({
     setSelected(null)
   }
 
+  /* ---------------------------------------------------------- D01 + D02 */
   if (phase === 'intro') {
     return (
-      <div className="cs-intro relative flex flex-col items-center gap-3 overflow-hidden rounded-[28px] p-5 text-center">
-        <Float className="relative z-10">
-          {/* eslint-disable-next-line @next/next/no-img-element -- มาสคอตทางการ */}
-          <img src="/dome/mascot/dome-cheer.webp" alt="" aria-hidden="true" draggable={false} className="select-none" style={{ height: 112, width: 'auto', maxWidth: 'none' }} />
-        </Float>
-        <p className="relative z-10 rounded-full bg-white/80 px-3 py-0.5 text-label font-extrabold text-[#7a4b00]">ลงมือทำ · เกมจับคู่</p>
-        <h3 className="relative z-10 font-display text-[1.6rem] font-extrabold leading-tight text-[#3a1a6e]">จับคู่ความหมาย</h3>
-        <p className="relative z-10 text-body text-[#4a3a2a]">ช่วยมีนนำการ์ดคำอธิบายไปวางในกล่องคำศัพท์ที่ถูกต้อง</p>
-        <div className="relative z-10 grid w-full grid-cols-2 gap-2">
-          {data.zones.map((z, i) => {
-            const t = zoneTheme(z.id, i)
-            return (
-              <div key={z.id} className="flex flex-col items-center gap-1 rounded-2xl px-2 py-2.5" style={{ backgroundColor: t.bg, boxShadow: `inset 0 0 0 2px ${t.ring}55` }}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D */}
-                <img src={t.icon} alt="" aria-hidden="true" className="size-11" draggable={false} />
-                <span className="text-label font-extrabold leading-tight" style={{ color: t.ink }}>{z.title}</span>
-              </div>
-            )
-          })}
+      <div className="m1-stack" data-mission={mission}>
+        <M1Board className="cs-brief">
+          <p className="m1-kicker">ด่านที่ 1 · ลงมือทำ</p>
+          <h2 className="m1-board-title">ภารกิจจับคู่ความหมาย</h2>
+          <div className="m1-art cs-brief-art">
+            <img src="/learn/m1/watch-s1.webp" alt="มีนกำลังเตรียมการ์ดคำอธิบายในร้านขนมบ้านยาย" draggable={false} />
+            <span className="cs-float-card cs-fc-1" aria-hidden />
+            <span className="cs-float-card cs-fc-2" aria-hidden />
+            <span className="cs-float-card cs-fc-3" aria-hidden />
+            <span className="m1-art-tag">มีนถือการ์ดคำอธิบาย</span>
+          </div>
+          <p className="m1-lead">ช่วยมีนนำคำอธิบายไปวางใต้คำศัพท์ที่ถูกต้อง</p>
+          <div className="cs-howto" aria-label="วิธีเล่น">
+            <div className="cs-howto-demo" aria-hidden>
+              <span className="cs-demo-zone">
+                <b>โดเมนเนม</b>
+              </span>
+              <span className="cs-demo-zone is-b">
+                <b>DNS</b>
+              </span>
+              <span className="cs-demo-card" />
+              <span className="cs-demo-hand">👆</span>
+            </div>
+            <p>แตะหรือจับการ์ดแล้วนำไปวางในกลุ่ม <b>โดเมนเนม</b> หรือ <b>DNS</b> จนครบ 4 ใบครับ</p>
+          </div>
+          <div className="m1-chip-row">
+            <span className="m1-chip">
+              <img src="/icons/3d/package.webp" alt="" aria-hidden />
+              มี {total} การ์ด • ไม่จับเวลา
+            </span>
+            <span className="m1-chip is-purple">
+              <img src="/icons/3d/trophy.webp" alt="" aria-hidden />
+              เกิน 60% ผ่าน
+            </span>
+          </div>
+        </M1Board>
+        <DomeSays mood="cheer" size={88}>
+          พร้อมช่วยมีนจัดการ์ดไหมครับ? ลากหรือแตะจัดคำอธิบายให้ตรงกับโดเมนเนมและ DNS ได้เลย
+        </DomeSays>
+        <div className="cs-actions">
+          <M1Button fullWidth onClick={() => setPhase('play')} trailingIcon={<ChevronRightIcon width={22} height={22} />}>
+            เริ่มภารกิจ
+          </M1Button>
+          <M1Button variant="secondary" size="md" fullWidth onClick={onChangeMode}>
+            ย้อนกลับ
+          </M1Button>
         </div>
-        <p className="relative z-10 flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-label font-bold text-[#5a3d00] shadow-soft-1">
-          {total} การ์ด · ไม่จับเวลา · ผิดได้ แก้ได้
-        </p>
-        <Button size="lg" fullWidth onClick={() => setPhase('play')} className="relative z-10">
-          เริ่มเล่น
-        </Button>
       </div>
     )
   }
 
+  /* ---------------------------------------------------------- D05 / D06 */
   if (phase === 'result' && detail && result) {
     const wrongSet = new Set(detail.wrong)
     const passed = result.passed
     return (
-      <div className="relative flex flex-col gap-3">
+      <div className="m1-stack" data-mission={mission}>
         <Confetti fire={fire} />
         <Shake trigger={passed ? 0 : shake}>
-          <div
-            className={cn(
-              'flex flex-col gap-3 rounded-[24px] p-5 shadow-soft-2 ring-1 backdrop-blur-xl',
-              passed ? 'bg-quest-50/95 ring-quest-200' : 'bg-spark-50/95 ring-spark-200',
-            )}
-            role="status"
-          >
-            <p className="flex items-center gap-2 text-body-lg font-extrabold text-ink">
-              {passed ? (
-                <CheckIcon width={24} height={24} aria-hidden className="text-quest-700" />
-              ) : (
-                <AlertIcon width={24} height={24} aria-hidden className="text-spark-700" />
-              )}
-              {passed ? 'ผ่านภารกิจแล้ว' : 'ยังไม่ครบ ลองอีกครั้งนะ'}
-            </p>
-            <p className="flex items-center gap-2 text-title font-extrabold text-ink">
-              <StarIcon width={28} height={28} aria-hidden className="text-reward-500" />
-              คะแนนของฉัน <CountUp value={result.score} />%
-            </p>
-            {passed ? <p className="text-label text-ink-muted">ได้คะแนนมากกว่า 60% จึงผ่านกิจกรรมนี้แล้ว</p> : null}
-            <div className="flex items-start gap-3">
-              <Float>
-                <DomeAvatar mood={passed ? 'celebrate' : 'encourage'} size={56} decorative />
-              </Float>
-              <p className="rounded-2xl bg-white px-4 py-3 text-body text-ink shadow-soft-1">{detail.feedback}</p>
+          <div className={cn('lr-score', passed ? 'is-pass' : 'is-retry')} role="status">
+            <div className="lr-ring" style={{ ['--p' as string]: `${result.score}` }}>
+              <span>
+                <CountUp value={result.score} />%
+              </span>
             </div>
-            {passed ? (
-              <ul className="flex flex-col gap-1 rounded-2xl bg-white px-4 py-3 text-label text-ink">
-                <li>โดเมนเนม = ชื่อที่ใช้ระบุ/เข้าเว็บไซต์</li>
-                <li>DNS = ระบบช่วยค้นหาที่อยู่ IP จากชื่อโดเมน</li>
-              </ul>
-            ) : (
-              <ul className="flex flex-col gap-2" aria-label="การ์ดที่ควรทบทวน">
-                {data.cards
-                  .filter((c) => wrongSet.has(c.id))
-                  .map((c) => (
-                    <li key={c.id} className="rounded-2xl bg-white px-4 py-3 text-body text-ink ring-2 ring-spark-400">
-                      {c.text}
-                    </li>
-                  ))}
-              </ul>
-            )}
-            {!passed && hintOpen ? (
-              <p className="flex items-start gap-2 rounded-2xl bg-reward-100 px-4 py-3 text-body text-ink">
-                <LightbulbIcon width={22} height={22} aria-hidden className="mt-0.5 shrink-0 text-reward-700" />
+            <div className="min-w-0">
+              <p className="lr-label">คะแนนของฉัน</p>
+              <p className="lr-status">
+                {passed ? <CheckIcon width={22} height={22} aria-hidden /> : <AlertIcon width={22} height={22} aria-hidden />}
+                {passed ? 'ผ่านภารกิจแล้ว' : 'ยังไม่ผ่าน ลองอีกครั้งนะ'}
+              </p>
+              <p className="lr-note">
+                {passed ? 'ได้คะแนนมากกว่า 60% จึงผ่านกิจกรรมนี้แล้ว' : attempt === 1 ? 'แก้การจับคู่ได้อีก 1 รอบ' : 'ใช้รอบแก้ครบแล้ว'}
+              </p>
+            </div>
+          </div>
+        </Shake>
+        <div className="lr-dome">
+          <img
+            src={`/dome/mascot/dome-${passed ? 'celebrate' : 'think'}.webp`}
+            alt=""
+            aria-hidden
+            style={{ width: 72, height: 'auto', maxWidth: 'none' }}
+          />
+          <p className="lr-bubble">{detail.feedback}</p>
+        </div>
+        {passed ? (
+          <M1Board className="cs-recap" kicker="สรุปสั้น ๆ">
+            <ul>
+              <li>
+                <b>โดเมนเนม</b> = ชื่อที่ใช้ระบุ/เข้าเว็บไซต์
+              </li>
+              <li>
+                <b>DNS</b> = ระบบช่วยค้นหาที่อยู่ IP จากชื่อโดเมน
+              </li>
+            </ul>
+          </M1Board>
+        ) : (
+          <M1Board className="cs-wrong" kicker="การ์ดที่ควรย้าย">
+            <ul aria-label="การ์ดที่ควรทบทวน">
+              {data.cards
+                .filter((c) => wrongSet.has(c.id))
+                .map((c) => (
+                  <li key={c.id}>{c.text}</li>
+                ))}
+            </ul>
+            {hintOpen ? (
+              <p className="cs-hint">
+                <LightbulbIcon width={22} height={22} aria-hidden />
                 {detail.hint}
               </p>
             ) : null}
-            {passed && detail.wrong.length > 0 ? (
-              <div className="flex flex-col gap-2" aria-label="การ์ดที่ยังวางไม่ตรง">
-                <p className="text-label font-bold text-ink">การ์ดที่ยังวางไม่ตรง ลองทบทวนอีกนิดนะ</p>
-                <ul className="flex flex-col gap-2">
-                  {data.cards
-                    .filter((c) => wrongSet.has(c.id))
-                    .map((c) => (
-                      <li
-                        key={c.id}
-                        className="rounded-2xl bg-white px-4 py-3 text-body text-ink ring-2 ring-spark-400"
-                      >
-                        <span className="mb-1 block w-fit rounded-full bg-spark-100 px-2.5 py-0.5 text-label font-bold text-spark-700">
-                          ควรทบทวน
-                        </span>
-                        {c.text}
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            ) : null}
-            {passed ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowReview((v) => !v)}
-                  className="min-h-11 self-start rounded-full bg-white px-4 text-label font-bold text-brand-700 transition-transform active:scale-95 focus-ring"
-                >
-                  {showReview ? 'ซ่อนการจับคู่' : 'ดูการจับคู่และคำแนะนำ'}
-                </button>
-                {showReview ? (
-                  <ul className="flex flex-col gap-2">
-                    {data.zones.map((z) => (
-                      <li key={z.id} className="rounded-2xl bg-white px-4 py-3">
-                        <p className="text-label font-extrabold text-brand-700">{z.title}</p>
-                        <ul className="mt-1 list-disc pl-5 text-label text-ink">
-                          {data.cards
-                            .filter((c) => placed[c.id] === z.id)
-                            .map((c) => (
-                              <li key={c.id} className={wrongSet.has(c.id) ? 'font-bold text-spark-700' : undefined}>
-                                {c.text}
-                                {wrongSet.has(c.id) ? ' (ควรทบทวน)' : ''}
-                              </li>
-                            ))}
-                        </ul>
-                      </li>
-                    ))}
+          </M1Board>
+        )}
+        {passed && detail.wrong.length > 0 ? (
+          <p className="m1-review-note">ยังวางไม่ตรง {detail.wrong.length} ใบ ไม่ต้องแก้ก็ผ่านแล้ว ดูการจับคู่ด้านล่างเพื่อทบทวนได้</p>
+        ) : null}
+        {passed && showReview ? (
+          <M1Board kicker="การจับคู่ของฉัน">
+            <ul className="cs-review">
+              {data.zones.map((z) => (
+                <li key={z.id}>
+                  <b>{z.title}</b>
+                  <ul>
+                    {data.cards
+                      .filter((c) => placed[c.id] === z.id)
+                      .map((c) => (
+                        <li key={c.id} className={wrongSet.has(c.id) ? 'is-wrong' : undefined}>
+                          {c.text}
+                          {wrongSet.has(c.id) ? ' (ควรทบทวน)' : ''}
+                        </li>
+                      ))}
                   </ul>
-                ) : null}
-              </>
-            ) : attempt === 1 ? (
-              <div className="flex flex-col gap-2">
-                <Button size="lg" fullWidth onClick={retry} leadingIcon={<RefreshIcon width={22} height={22} />}>
-                  แก้การจับคู่
-                </Button>
-                {!hintUsed ? (
-                  <Button
-                    variant="secondary"
-                    size="md"
-                    onClick={() => {
-                      setHintOpen(true)
-                      setHintUsed(true)
-                    }}
-                  >
-                    ขอคำใบ้
-                  </Button>
-                ) : null}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <p className="text-body font-bold text-ink">ยังมีบางจุดที่ควรทบทวนครับ</p>
-                <Button size="md" fullWidth onClick={onChangeMode}>
-                  ลองเส้นทางดูหรืออ่าน
-                </Button>
-                <Button variant="secondary" size="md" fullWidth onClick={onChangeMode}>
-                  กลับไปทบทวนเรื่องนี้
-                </Button>
-                <Button variant="ghost" size="md" fullWidth onClick={onLater}>
-                  บันทึกไว้เรียนต่อ
-                </Button>
-              </div>
-            )}
-          </div>
-        </Shake>
+                </li>
+              ))}
+            </ul>
+          </M1Board>
+        ) : null}
+        <div className="cs-actions">
+          {passed ? (
+            <>
+              {onPassed ? (
+                <M1Button variant="success" fullWidth onClick={() => onPassed(result)} trailingIcon={<ChevronRightIcon width={22} height={22} />}>
+                  ไปต่อ: คำถามท้ายภารกิจ
+                </M1Button>
+              ) : null}
+              <M1Button variant="secondary" size="md" fullWidth onClick={() => setShowReview((v) => !v)}>
+                {showReview ? 'ซ่อนการจับคู่' : 'ดูการจับคู่และคำแนะนำ'}
+              </M1Button>
+            </>
+          ) : attempt === 1 ? (
+            <>
+              <M1Button fullWidth onClick={retry} leadingIcon={<RefreshIcon width={22} height={22} />}>
+                แก้การจับคู่
+              </M1Button>
+              {!hintUsed ? (
+                <M1Button
+                  variant="secondary"
+                  size="md"
+                  fullWidth
+                  onClick={() => {
+                    setHintOpen(true)
+                    setHintUsed(true)
+                  }}
+                >
+                  ขอคำใบ้
+                </M1Button>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <p className="cs-stop">ยังมีบางจุดที่ควรทบทวนครับ</p>
+              <M1Button fullWidth onClick={onChangeMode}>
+                ลองเส้นทางดูหรืออ่าน
+              </M1Button>
+              <M1Button variant="secondary" size="md" fullWidth onClick={onLater}>
+                บันทึกไว้เรียนต่อ
+              </M1Button>
+            </>
+          )}
+        </div>
       </div>
     )
   }
 
-  const markWrong = attempt === 2 && detail ? new Set(detail.wrong) : new Set<string>()
+  /* ---------------------------------------------------------------- D03 */
+  const markWrong = attempt === 2 ? new Set(lastWrong) : new Set<string>()
   const pct = total ? Math.round((count / total) * 100) : 0
 
   return (
-    <div className="flex flex-col gap-3" data-mission={mission}>
-      <div className="cs-head rounded-[22px] px-4 py-3">
+    <div className="m1-stack cs-play" data-mission={mission}>
+      <M1Board className="cs-head">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="min-w-0 text-title-sm font-extrabold text-[#3a1a6e]">จับคู่ความหมายให้ถูกต้อง</h3>
-          <motion.span
-            key={count}
-            initial={reduce ? false : { scale: 1.35 }}
-            animate={{ scale: 1 }}
-            className="shrink-0 rounded-full bg-[#7c4dd6] px-3 py-1 text-label font-extrabold whitespace-nowrap text-white tabular-nums shadow-[0_3px_0_#5a2fb0]"
+          <h2 className="m1-board-title cs-head-title">จับคู่ความหมายให้ถูกต้อง</h2>
+          <button
+            type="button"
+            className="cs-hint-btn"
+            onClick={() => setPlayHint((v) => !v)}
+            aria-expanded={playHint}
           >
-            {count}/{total} ใบ
-          </motion.span>
+            <img src="/learn/m1/kit/icon_hint.webp" alt="" aria-hidden />
+            ขอคำใบ้
+          </button>
         </div>
-        <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#ece3fb]" aria-hidden="true">
-          <motion.div className="h-full rounded-full bg-gradient-to-r from-[#ffb21e] to-[#f26b1d]" animate={{ width: `${pct}%` }} transition={{ type: 'spring', stiffness: 200, damping: 24 }} />
-        </div>
-        <p className="mt-1.5 text-label font-semibold text-[#5b4a82]">
-          {selected ? 'แตะกล่องที่ใช่ เพื่อวางการ์ดที่เลือก' : 'แตะการ์ดด้านล่าง แล้วแตะกล่องที่ใช่ (หรือลากไปวาง)'}
+        <p className="cs-help">
+          {selected ? 'เลือกการ์ดแล้ว แตะกลุ่มที่ใช่เพื่อวาง' : 'ลากการ์ดหรือแตะเพื่อเลือกกลุ่ม'}
         </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3">
-        {data.zones.map((z, zi) => {
-          const inside = data.cards.filter((c) => placed[c.id] === z.id)
-          const t = zoneTheme(z.id, zi)
-          return (
-            <motion.div
-              key={z.id}
-              ref={(el) => {
-                zoneRefs.current[z.id] = el
-              }}
-              data-zone-id={z.id}
-              role="group"
-              aria-label={z.title}
-              onClick={() => selected && put(selected, z.id)}
-              className={cn('cs-zone relative flex min-h-28 flex-col gap-2 rounded-[24px] p-3', selected && 'cs-zone-target')}
-              style={{ backgroundColor: t.bg, ['--cs-ring' as string]: t.ring }}
+        <AnimatePresence initial={false}>
+          {playHint ? (
+            <motion.p
+              className="cs-hint"
+              initial={reduce ? false : { height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={reduce ? undefined : { height: 0, opacity: 0 }}
             >
-              {bump[z.id] && !reduce ? (
-                <motion.span
-                  key={bump[z.id]}
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 rounded-[24px]"
-                  style={{ boxShadow: `0 0 0 4px ${t.ring}, 0 0 26px ${t.ring}` }}
-                  initial={{ opacity: 0.9 }}
-                  animate={{ opacity: 0 }}
-                  transition={{ duration: 0.7 }}
-                />
-              ) : null}
-              <div className="flex items-center gap-2.5">
-                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/85 shadow-[0_3px_0_rgba(0,0,0,0.08)]">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D */}
-                  <img src={t.icon} alt="" aria-hidden="true" className="size-9" draggable={false} />
-                </span>
-                <span className="min-w-0 flex-1 text-body-lg font-extrabold leading-tight text-pretty" style={{ color: t.ink }}>
-                  {z.title}
-                </span>
-                <motion.span
-                  key={inside.length}
-                  initial={reduce ? false : { scale: 1.5 }}
-                  animate={{ scale: 1 }}
-                  className="grid size-9 shrink-0 place-items-center rounded-full text-body font-extrabold text-white tabular-nums"
-                  style={{ backgroundColor: t.ring }}
-                  aria-label={`${inside.length} ใบ`}
-                >
-                  {inside.length}
-                </motion.span>
-              </div>
-              {inside.length === 0 ? (
-                <p className="rounded-2xl border-2 border-dashed px-3 py-3 text-center text-label font-bold" style={{ borderColor: `${t.ring}66`, color: t.ink }}>
-                  {selected ? 'แตะที่นี่เพื่อวาง' : 'ยังว่าง วางการ์ดที่นี่'}
-                </p>
-              ) : null}
-              {inside.map((c) => (
-                <CardChip
-                  key={c.id}
-                  text={c.text}
-                  warn={markWrong.has(c.id)}
-                  selected={selected === c.id}
-                  reduce={!!reduce}
-                  tone={t}
-                  onTap={() => (selected === c.id ? setSelected(null) : setSelected(c.id))}
-                  onDrop={(x, y) => drop(c.id, x, y)}
-                  action={{ label: 'ย้ายกลับ', onClick: () => back(c.id) }}
-                />
-              ))}
-            </motion.div>
-          )
-        })}
-      </div>
+              <LightbulbIcon width={20} height={20} aria-hidden />
+              ลองดูว่าการ์ดไหนพูดถึง <b>ชื่อ</b> และใบไหนพูดถึง <b>ระบบค้นหาที่อยู่</b> ครับ
+            </motion.p>
+          ) : null}
+        </AnimatePresence>
+        <div className="cs-progress" aria-hidden="true">
+          <motion.span animate={{ width: `${pct}%` }} transition={{ type: 'spring', stiffness: 200, damping: 24 }} />
+        </div>
+        <p className="cs-count" aria-live="polite">
+          จัดแล้ว <b>{count}/{total}</b> ใบ
+        </p>
+      </M1Board>
 
-      <div className="cs-tray flex flex-col gap-2 rounded-[24px] p-3">
-        <p className="flex items-center gap-2 text-label font-extrabold text-[#5a3d00]">
-          {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D */}
-          <img src="/icons/3d/package.webp" alt="" aria-hidden="true" className="size-6" />
+      {data.zones.map((z) => {
+        const inside = data.cards.filter((c) => placed[c.id] === z.id)
+        return (
+          <div
+            key={z.id}
+            ref={(el) => {
+              zoneRefs.current[z.id] = el
+            }}
+            data-zone-id={z.id}
+            role="group"
+            aria-label={`${z.title} มี ${inside.length} ใบ`}
+            onClick={() => selected && put(selected, z.id)}
+            className={cn('cs-zone', ZONE_TONE[z.id] ?? 'is-a', selected && 'is-target', hover === z.id && 'is-hover')}
+          >
+            {bump[z.id] && !reduce ? <span key={bump[z.id]} className="cs-zone-flash" aria-hidden /> : null}
+            <div className="cs-zone-head">
+              <span className="cs-zone-title">{z.title}</span>
+              <span className="cs-zone-count">{inside.length} ใบ</span>
+            </div>
+            {inside.length === 0 ? (
+              <p className="cs-zone-empty">{selected ? 'แตะที่นี่เพื่อวาง' : 'วางการ์ดที่นี่'}</p>
+            ) : null}
+            {inside.map((c) => (
+              <CardChip
+                key={c.id}
+                text={c.text}
+                warn={markWrong.has(c.id)}
+                selected={selected === c.id}
+                reduce={!!reduce}
+                onTap={() => setSelected((v) => (v === c.id ? null : c.id))}
+                onMove={(x, y) => setHover(zoneAt(x, y))}
+                onDrop={(x, y) => drop(c.id, x, y)}
+                action={{ label: 'ย้ายกลับ', onClick: () => back(c.id) }}
+              />
+            ))}
+          </div>
+        )
+      })}
+
+      <div className="cs-tray">
+        <p className="cs-tray-title">
+          <img src="/icons/3d/package.webp" alt="" aria-hidden />
           การ์ดรอจัด {tray.length > 0 ? `(${tray.length})` : ''}
         </p>
         {tray.length === 0 ? (
-          <p className="flex items-center justify-center gap-2 py-2 text-center text-label font-bold text-[#12633a]">
-            {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D */}
-            <img src="/icons/3d/check-mark-button.webp" alt="" aria-hidden="true" className="size-6" />
+          <p className="cs-tray-done">
+            <img src="/icons/3d/check-mark-button.webp" alt="" aria-hidden />
             จัดครบทุกใบแล้ว กดตรวจคำตอบได้เลย
           </p>
         ) : null}
-        {tray.map((c, i) => (
+        {tray.map((c) => (
           <CardChip
             key={c.id}
             text={c.text}
             selected={selected === c.id}
             reduce={!!reduce}
-            tone={TRAY_TONES[i % TRAY_TONES.length]!}
-            onTap={() => (selected === c.id ? setSelected(null) : setSelected(c.id))}
+            onTap={() => setSelected((v) => (v === c.id ? null : c.id))}
+            onMove={(x, y) => setHover(zoneAt(x, y))}
             onDrop={(x, y) => drop(c.id, x, y)}
           />
         ))}
         {selected ? (
-          <div className="grid grid-cols-2 gap-2 pt-1" role="group" aria-label="เลือกกลุ่มให้การ์ด">
-            {data.zones.map((z, zi) => {
-              const t = zoneTheme(z.id, zi)
-              return (
-                <button
-                  key={z.id}
-                  type="button"
-                  onClick={() => put(selected, z.id)}
-                  className="flex min-h-12 items-center justify-center gap-1.5 rounded-2xl px-2 text-label font-extrabold text-white transition-transform active:translate-y-[2px]"
-                  style={{ backgroundColor: t.ring, boxShadow: `0 4px 0 ${t.ink}` }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D */}
-                  <img src={t.icon} alt="" aria-hidden="true" className="size-6" />
-                  <span className="min-w-0 truncate">{z.title}</span>
-                </button>
-              )
-            })}
+          <div className="cs-pick" role="group" aria-label="เลือกกลุ่มให้การ์ด">
+            {data.zones.map((z) => (
+              <button key={z.id} type="button" onClick={() => put(selected, z.id)} className={cn('cs-pick-btn', ZONE_TONE[z.id] ?? 'is-a')}>
+                วางใน {z.title}
+              </button>
+            ))}
           </div>
         ) : null}
       </div>
 
       {sendError ? (
-        <p role="alert" className="flex items-center gap-2 text-label font-bold text-danger-700">
-          <AlertIcon width={20} height={20} aria-hidden />
+        <p role="alert" className="m1-error">
           ส่งไม่สำเร็จ ลองกดตรวจคำตอบอีกครั้ง
         </p>
       ) : null}
-      <div className="flex gap-2">
-        <Button variant="ghost" size="lg" className="bg-white shadow-soft-1" onClick={reset} disabled={count === 0 || busy}>
+      {busy ? (
+        <p className="cs-checking" role="status">
+          <span className="m1-btn-spin" aria-hidden />
+          โดมกำลังสรุปคำแนะนำ...
+        </p>
+      ) : null}
+      <div className="cs-actions cs-actions-row">
+        <M1Button variant="secondary" size="md" onClick={reset} disabled={count === 0 || busy}>
           เริ่มใหม่
-        </Button>
-        <Button
-          size="lg"
+        </M1Button>
+        <M1Button
+          variant={count < total ? 'primary' : 'success'}
+          size="md"
           className="flex-1"
           disabled={count < total || busy}
           loading={busy}
           loadingLabel="กำลังตรวจ"
           onClick={check}
-          leadingIcon={busy ? undefined : <CheckIcon width={22} height={22} />}
+          leadingIcon={<CheckIcon width={20} height={20} />}
         >
           {count < total ? `จัดอีก ${total - count} ใบ` : 'ตรวจคำตอบ'}
-        </Button>
+        </M1Button>
       </div>
     </div>
   )
 }
-
-interface Tone {
-  bg: string
-  ring: string
-  ink: string
-  icon: string
-}
-
-const ZONE_TONES: Tone[] = [
-  { bg: '#e2f1ff', ring: '#2f7de1', ink: '#123f7a', icon: '/icons/3d/memo.webp' },
-  { bg: '#e3f8e8', ring: '#1f9d55', ink: '#0f5132', icon: '/icons/3d/magnifying-glass-tilted-left.webp' },
-  { bg: '#fdeedd', ring: '#e07a1f', ink: '#6b3606', icon: '/icons/3d/bullseye.webp' },
-]
-const ZONE_BY_ID: Record<string, number> = { ZONE_DOMAIN: 0, ZONE_DNS: 1 }
-function zoneTheme(id: string, index: number): Tone {
-  return ZONE_TONES[ZONE_BY_ID[id] ?? index % ZONE_TONES.length]!
-}
-const TRAY_TONES: Tone[] = [
-  { bg: '#fff6d6', ring: '#f2b705', ink: '#5a3d00', icon: '' },
-  { bg: '#fde7f1', ring: '#e2588f', ink: '#6b1238', icon: '' },
-  { bg: '#efe6ff', ring: '#8a5cf0', ink: '#3a1a6e', icon: '' },
-  { bg: '#ddf6f4', ring: '#16a3a0', ink: '#0b4f4d', icon: '' },
-]
 
 function CardChip({
   text,
   selected,
   warn,
   reduce,
-  tone,
   onTap,
+  onMove,
   onDrop,
   action,
 }: {
@@ -548,59 +535,77 @@ function CardChip({
   selected: boolean
   warn?: boolean
   reduce: boolean
-  tone: Tone
   onTap: () => void
+  onMove: (x: number, y: number) => void
   onDrop: (x: number, y: number) => void
   action?: { label: string; onClick: () => void }
 }) {
   const [dragging, setDragging] = useState(false)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const pointerRef = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null)
+
+  function end(event: ReactPointerEvent<HTMLButtonElement>, cancel = false) {
+    const p = pointerRef.current
+    if (!p || p.id !== event.pointerId) return
+    pointerRef.current = null
+    setDragging(false)
+    setOffset({ x: 0, y: 0 })
+    if (cancel) return
+    if (p.moved) onDrop(event.clientX, event.clientY)
+    else onTap()
+  }
+
   return (
     <motion.div
-      className="flex items-stretch gap-2"
+      className="cs-card-row"
       layout={!reduce}
-      initial={reduce ? false : { opacity: 0, scale: 0.9 }}
+      initial={reduce ? false : { opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+      style={{ zIndex: dragging ? 30 : undefined, position: 'relative' }}
     >
-      <motion.button
+      <button
         type="button"
-        drag
-        dragSnapToOrigin
-        dragElastic={0.2}
-        whileTap={reduce ? undefined : { scale: 0.97 }}
-        whileDrag={{ scale: 1.05, rotate: -2, zIndex: 20 }}
-        animate={reduce ? undefined : { y: selected ? -3 : 0 }}
-        onDragStart={() => setDragging(true)}
-        onDragEnd={(e) => {
-          setDragging(false)
-          const p = e as PointerEvent
-          const pt = 'clientX' in p ? p : (e as unknown as TouchEvent).changedTouches?.[0]
-          if (pt) onDrop(pt.clientX, pt.clientY)
+        onPointerDown={(event) => {
+          if (event.button !== 0) return
+          event.currentTarget.setPointerCapture(event.pointerId)
+          pointerRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: false }
         }}
-        onTap={onTap}
+        onPointerMove={(event) => {
+          const p = pointerRef.current
+          if (!p || p.id !== event.pointerId) return
+          const x = event.clientX - p.x
+          const y = event.clientY - p.y
+          if (!p.moved && Math.hypot(x, y) > 6) {
+            p.moved = true
+            setDragging(true)
+          }
+          if (p.moved) {
+            setOffset({ x, y })
+            onMove(event.clientX, event.clientY)
+          }
+        }}
+        onPointerUp={(event) => end(event)}
+        onPointerCancel={(event) => end(event, true)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            onTap()
+          }
+        }}
+        onClick={(event) => event.stopPropagation()}
         aria-pressed={selected}
-        className={cn(
-          'relative min-h-14 flex-1 touch-none overflow-hidden rounded-2xl py-3 pl-5 pr-4 text-left text-body font-bold select-none',
-          dragging && 'shadow-soft-3',
-        )}
-        style={{
-          backgroundColor: selected ? '#fff' : tone.bg,
-          color: tone.ink,
-          boxShadow: selected
-            ? '0 0 0 4px #f26b1d, 0 8px 18px rgba(242,107,29,0.35)'
-            : warn
-              ? '0 0 0 3px #f59e0b, 0 3px 0 rgba(0,0,0,0.08)'
-              : `0 0 0 2px ${tone.ring}55, 0 3px 0 ${tone.ring}66`,
-        }}
+        className={cn('cs-card', selected && 'is-selected', warn && 'is-warn', dragging && 'is-dragging')}
+        style={dragging ? { transform: `translate(${offset.x}px, ${offset.y}px) rotate(-2deg) scale(1.04)` } : undefined}
       >
-        <span aria-hidden="true" className="absolute inset-y-0 left-0 w-2" style={{ backgroundColor: selected ? '#f26b1d' : tone.ring }} />
-        {selected ? (
-          <span className="mb-0.5 block text-label font-extrabold text-[#c2410c]">เลือกอยู่ · แตะกล่องที่ใช่</span>
-        ) : warn ? (
-          <span className="mb-0.5 block text-label font-extrabold text-[#b45309]">ลองย้ายใบนี้ดู</span>
-        ) : null}
-        {text}
-      </motion.button>
+        <span className="cs-card-grip" aria-hidden>
+          ⋮⋮
+        </span>
+        <span className="cs-card-text">
+          {selected ? <span className="cs-card-flag">เลือกอยู่ · แตะกลุ่มที่ใช่</span> : warn ? <span className="cs-card-flag is-warn">ลองย้ายใบนี้ดู</span> : null}
+          {text}
+        </span>
+      </button>
       {action ? (
         <button
           type="button"
@@ -609,9 +614,10 @@ function CardChip({
             action.onClick()
           }}
           aria-label={`${action.label} ${text}`}
-          className="min-h-11 shrink-0 rounded-2xl bg-white/70 px-2.5 text-label font-bold text-[#5b4a82] transition-transform active:scale-95 focus-ring"
+          className="cs-card-back"
         >
-          {action.label}
+          ↩︎
+          <span>{action.label}</span>
         </button>
       ) : null}
     </motion.div>

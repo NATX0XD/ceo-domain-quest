@@ -1,7 +1,8 @@
 'use client'
 
 import { motion, useReducedMotion } from 'motion/react'
-import { AlertIcon, Card, CheckIcon, DomeAvatar, LightbulbIcon, cn } from '@/components/ui'
+import { AlertIcon, CheckIcon, DomeAvatar, LightbulbIcon, cn } from '@/components/ui'
+import './learn-path-result.css'
 import type { AnswerResponse } from './learn-path-api'
 import { Bubble, ChatFrame, QuickChip } from './app/chat-reader'
 import { CountUp } from './app/fx'
@@ -37,81 +38,72 @@ export function ResultPanel({
   extra?: React.ReactNode
 }) {
   const reduce = useReducedMotion()
+  const sorted = [...result.perQuestion].sort((a, b) => b.score - a.score)
+  const best = sorted[0]
+  const weak = sorted[sorted.length - 1]
+  const bestQ = best ? questions.findIndex((q) => q.id === best.id) + 1 : 0
+  const weakQ = weak ? questions.findIndex((q) => q.id === weak.id) + 1 : 0
+  const good = best && best.score > 0 ? best.feedback : null
+  const improve = weak && (weak.missing.length > 0 || weak.score < 100) ? (weak.missing[0] ?? weak.feedback) : null
   return (
     <div className="flex flex-col gap-3">
       <motion.div
         initial={reduce ? false : { scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-        className={cn(
-          'flex items-center gap-4 rounded-[24px] p-5 shadow-soft-2 ring-1',
-          result.passed ? 'bg-quest-50 ring-quest-200' : 'bg-spark-50 ring-spark-200',
-        )}
+        className={cn('lr-score', result.passed ? 'is-pass' : 'is-retry')}
         role="status"
       >
-        <div
-          className={cn(
-            'grid size-20 shrink-0 place-items-center rounded-full text-title font-extrabold text-ink-onbrand',
-            result.passed ? 'bg-quest-600' : 'bg-spark-600',
-          )}
-        >
+        <div className="lr-ring" style={{ ['--p' as string]: `${result.score}` }}>
           <span>
             <CountUp value={result.score} />%
           </span>
         </div>
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-body-lg font-extrabold text-ink">
+          <p className="lr-label">ผลความเข้าใจ</p>
+          <p className="lr-status">
             {result.passed ? (
-              <CheckIcon width={22} height={22} aria-hidden className="text-quest-700" />
+              <CheckIcon width={22} height={22} aria-hidden />
             ) : (
-              <AlertIcon width={22} height={22} aria-hidden className="text-spark-700" />
+              <AlertIcon width={22} height={22} aria-hidden />
             )}
-            {result.passed ? 'ตอบผ่านแล้ว' : 'ยังไม่ครบ ลองอีกนิด'}
+            {result.passed ? 'ผ่านภารกิจแล้ว' : 'ยังไม่ผ่าน ลองเสริมอีกนิด'}
           </p>
-          <p className="text-label text-ink-muted">
+          <p className="lr-note">
             {result.passed
-              ? `ครบแล้ว รวม ${result.score} คะแนน`
-              : `ยังไม่ครบ ลองอีกนิด รวม ${result.score} คะแนน ต้องเกิน ${passScore}`}
+              ? 'ได้คะแนนมากกว่า 60% จึงไปต่อได้ทันที'
+              : `ต้องได้มากกว่า ${passScore}% ถึงจะผ่าน ตอบเสริมเฉพาะจุดได้ 1 ครั้ง`}
           </p>
         </div>
       </motion.div>
 
-      <ChatFrame title="โดม" subtitle="สรุปผลให้นักเรียน">
-        <ol className="flex flex-col gap-2.5 px-3 py-4">
-          <Bubble name="โดม" side="left" tone="dome">
-            {bandMessage(result.score, result.passed)}
-          </Bubble>
-        </ol>
-      </ChatFrame>
+      <div className="lr-dome">
+        <DomeAvatar mood={result.passed ? 'celebrate' : 'encourage'} size={64} decorative />
+        <p className="lr-bubble">{bandMessage(result.score, result.passed)}</p>
+      </div>
 
-      {result.perQuestion.map((r, i) => {
-        const ok = r.score > passScore
-        const q = questions.find((x) => x.id === r.id)
-        return (
-          <Card key={r.id} tone={ok ? 'quest' : 'spark'} padding="sm" role="status">
-            <p className="flex items-center gap-2 text-label font-bold text-ink">
-              {ok ? (
-                <CheckIcon width={20} height={20} aria-hidden className="text-quest-700" />
-              ) : (
-                <AlertIcon width={20} height={20} aria-hidden className="text-spark-700" />
-              )}
-              ข้อ {i + 1} {ok ? `ครบแล้ว ได้ ${r.score} คะแนน` : `ยังไม่ครบ ลองอีกนิด ได้ ${r.score} คะแนน`}
-            </p>
-            {q ? <p className="mt-1 text-label text-ink-muted">{q.prompt}</p> : null}
-            <p className="mt-1 text-body text-ink">{r.feedback}</p>
-            {r.missing.length > 0 ? (
-              <div className="mt-2">
-                <p className="text-label font-bold text-ink-muted">ลองเติมเรื่องนี้</p>
-                <ul className="mt-1 list-disc pl-5 text-label text-ink">
-                  {r.missing.map((m) => (
-                    <li key={m}>{m}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </Card>
-        )
-      })}
+      <div className="lr-points">
+        {good ? (
+          <div className="lr-point is-good">
+            <span className="lr-point-icon" aria-hidden>
+              ✓
+            </span>
+            <div>
+              <p className="lr-point-title">สิ่งที่ทำได้ดี{bestQ ? ` (ข้อ ${bestQ})` : ''}</p>
+              <p className="lr-point-text">{good}</p>
+            </div>
+          </div>
+        ) : null}
+        {improve ? (
+          <div className="lr-point is-more">
+            <LightbulbIcon width={26} height={26} aria-hidden className="lr-point-icon-svg" />
+            <div>
+              <p className="lr-point-title">สิ่งที่ควรเสริม{weakQ ? ` (ข้อ ${weakQ})` : ''}</p>
+              <p className="lr-point-text">{weak?.missing[0] ? `ลองเติมเรื่อง ${weak.missing[0]}` : improve}</p>
+            </div>
+          </div>
+        ) : null}
+      </div>
       {extra}
     </div>
   )

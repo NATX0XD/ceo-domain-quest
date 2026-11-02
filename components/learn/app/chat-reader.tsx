@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { DomeAvatar, cn } from '@/components/ui'
 import { TypingDots, buzz } from './fx'
+import './chat-reader.css'
 
 export interface ChatMsg {
   who: 'a' | 'b' | 'dome' | string
@@ -17,20 +18,34 @@ export function ChatFrame({
   subtitle = 'ออนไลน์',
   children,
   footer,
+  avatars,
 }: {
   title?: string
   subtitle?: string
   children: ReactNode
   footer?: ReactNode
+  /** รูปโปรไฟล์ของคนในแชต (ไม่ใส่ = โดม) */
+  avatars?: string[]
 }) {
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-md flex-col overflow-hidden rounded-[24px] bg-[#f4f0fb] shadow-soft-2 ring-1 ring-brand-100">
-      <div className="flex items-center gap-3 bg-gradient-to-r from-brand-700 to-brand-600 px-4 py-3 text-ink-onbrand">
-        <DomeAvatar mood="greet" size={40} decorative />
+    <div className="chat-frame mx-auto flex min-h-full w-full max-w-md flex-col overflow-hidden">
+      <div className="chat-frame-head flex items-center gap-3 px-3 py-2">
+        {avatars && avatars.length > 0 ? (
+          <span className="flex shrink-0 -space-x-3" aria-hidden>
+            {avatars.map((a) => (
+              // eslint-disable-next-line @next/next/no-img-element -- รูปโปรไฟล์ในแชต
+              <img key={a} src={a} alt="" className="chat-avatar" style={{ width: 40, height: 40 }} />
+            ))}
+          </span>
+        ) : (
+          <span className="chat-avatar chat-avatar-dome grid shrink-0 place-items-center" aria-hidden style={{ width: 42, height: 42 }}>
+            <DomeAvatar mood="greet" size={36} decorative />
+          </span>
+        )}
         <div className="min-w-0">
-          <p className="truncate text-body font-bold">{title}</p>
-          <p className="flex items-center gap-1.5 text-label">
-            <span className="size-2 rounded-full bg-quest-300" aria-hidden />
+          <p className="truncate text-body font-extrabold">{title}</p>
+          <p className="flex items-center gap-1.5 text-label font-bold opacity-80">
+            <span className="size-2 rounded-full bg-quest-500" aria-hidden />
             {subtitle}
           </p>
         </div>
@@ -50,7 +65,9 @@ export function Bubble({
   highlight = false,
   animate = true,
   liRef,
+  avatar,
 }: {
+  avatar?: string | null
   name?: string
   side: 'left' | 'right'
   tone: 'dome' | 'friend' | 'me'
@@ -66,19 +83,30 @@ export function Bubble({
       initial={reduce || !animate ? false : { opacity: 0, y: 14, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-      className={cn('flex max-w-[88%] flex-col', side === 'right' ? 'items-end self-end' : 'items-start self-start')}
+      className={cn('flex max-w-[90%] items-end gap-1.5', side === 'right' ? 'flex-row-reverse self-end' : 'self-start')}
     >
-      {name ? <span className="px-1 pb-0.5 text-label font-bold text-ink-muted">{name}</span> : null}
-      <div
-        className={cn(
-          'px-4 py-2.5 text-body leading-relaxed whitespace-pre-line shadow-soft-1',
-          tone === 'me' && 'rounded-[20px] rounded-br-md bg-brand-600 text-ink-onbrand',
-          tone === 'dome' && 'rounded-[20px] rounded-bl-md bg-white text-ink ring-1 ring-brand-100',
-          tone === 'friend' && 'rounded-[20px] rounded-bl-md bg-spark-100 text-ink',
-          highlight && 'ring-2 ring-spark-500',
-        )}
-      >
-        {children}
+      {avatar !== null ? (
+        tone === 'dome' && !avatar ? (
+          <span className="chat-avatar chat-avatar-dome grid shrink-0 place-items-center" aria-hidden style={{ width: 36, height: 36 }}>
+            <DomeAvatar mood="happy" size={30} decorative />
+          </span>
+        ) : avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element -- รูปโปรไฟล์ในแชต
+          <img src={avatar} alt="" aria-hidden className="chat-avatar shrink-0" style={{ width: 36, height: 36 }} />
+        ) : null
+      ) : null}
+      <div className={cn('flex min-w-0 flex-col', side === 'right' ? 'items-end' : 'items-start')}>
+        {name ? <span className="px-1 pb-0.5 text-label font-extrabold text-[#6b4a2c]">{name}</span> : null}
+        <div
+          className={cn(
+            'chat-bubble px-4 py-2.5 text-body leading-relaxed whitespace-pre-line',
+            `chat-bubble--${tone}`,
+            side === 'right' ? 'rounded-[20px] rounded-br-md' : 'rounded-[20px] rounded-bl-md',
+            highlight && 'chat-bubble--hi',
+          )}
+        >
+          {children}
+        </div>
       </div>
     </motion.li>
   )
@@ -103,6 +131,10 @@ export function ChatReader({
   highlight,
   title,
   quick,
+  primaryRight = false,
+  avatars,
+  instant = false,
+  hideControls = false,
 }: {
   chat: ChatMsg[]
   shown: number
@@ -114,10 +146,18 @@ export function ChatReader({
   highlight?: { from: number; to: number } | null
   title?: string
   quick?: { prompt: string; choices: { text: string; reply: string; ok?: boolean }[] }
+  /** m1 storyboard puts Meen (who=a) on the right and Fah (who=b) on the left. */
+  primaryRight?: boolean
+  /** รูปโปรไฟล์ตามชื่อผู้พูด */
+  avatars?: Record<string, string>
+  /** แสดงข้อความทันที ไม่มีจุดกำลังพิมพ์ (สเปกเส้นทางอ่าน R02) */
+  instant?: boolean
+  /** ปุ่มต่อเลย/แสดงทั้งหมดอยู่ที่แถบล่างของหน้าแล้ว */
+  hideControls?: boolean
 }) {
   const [picked, setPicked] = useState<number | null>(null)
   const reduce = useReducedMotion()
-  const [visible, setVisible] = useState(shown > 1 ? shown : Math.min(1, shown))
+  const [visible, setVisible] = useState(shown > 1 || instant ? shown : Math.min(1, shown))
   const endRef = useRef<HTMLDivElement>(null)
   const firstHi = useRef<HTMLLIElement>(null)
   const quickEnd = useRef<HTMLDivElement>(null)
@@ -126,6 +166,10 @@ export function ChatReader({
 
   useEffect(() => {
     if (visible >= shown) return
+    if (instant) {
+      setVisible(shown)
+      return
+    }
     const t = setTimeout(() => setVisible((v) => Math.min(shown, v + 1)), reduce ? 0 : 650)
     return () => clearTimeout(t)
   }, [visible, shown, reduce])
@@ -141,8 +185,10 @@ export function ChatReader({
   return (
     <ChatFrame
       title={title}
+      subtitle={avatars ? 'แชตที่เตรียมไว้ · อ่านอย่างเดียว' : undefined}
+      avatars={avatars ? Object.values(avatars) : undefined}
       footer={
-        !finished ? (
+        !finished && !hideControls ? (
           <div className="flex flex-wrap gap-2 border-t border-brand-100 bg-white/70 px-3 py-3">
             <QuickChip
               onClick={() => {
@@ -169,18 +215,20 @@ export function ChatReader({
         {chat.slice(0, visible).map((msg, i) => {
           const part = parts?.find((p) => p.start === i + 1)
           const hi = highlight ? i + 1 >= highlight.from && i + 1 <= highlight.to : false
+          const right = primaryRight ? msg.who === 'a' : msg.who === 'b'
           return (
             <div key={i} className="contents">
               {part ? (
-                <li className="my-1 self-center rounded-full bg-brand-100 px-4 py-1.5 text-center text-label font-bold text-brand-700">
+                <li className="chat-part my-1 self-center rounded-full px-4 py-1.5 text-center text-label font-bold">
                   {part.title}
                 </li>
               ) : null}
               <Bubble
                 liRef={hi && i + 1 === highlight?.from ? firstHi : undefined}
                 name={msg.name}
-                side={msg.who === 'b' ? 'right' : 'left'}
-                tone={msg.who === 'b' ? 'me' : msg.who === 'dome' ? 'dome' : 'friend'}
+                side={right ? 'right' : 'left'}
+                avatar={avatars?.[msg.name]}
+                tone={right ? 'me' : msg.who === 'dome' ? 'dome' : 'friend'}
                 highlight={hi}
               >
                 {msg.text}
@@ -189,7 +237,7 @@ export function ChatReader({
           )
         })}
         {typing && next ? (
-          <li className={cn('flex flex-col', next.who === 'b' ? 'items-end self-end' : 'items-start self-start')}>
+          <li className={cn('flex flex-col', (primaryRight ? next.who === 'a' : next.who === 'b') ? 'items-end self-end' : 'items-start self-start')}>
             <span className="px-1 pb-0.5 text-label font-bold text-ink-muted">{next.name}</span>
             <div className="rounded-[20px] bg-white px-4 py-3 shadow-soft-1 ring-1 ring-brand-100">
               <TypingDots />
@@ -317,7 +365,7 @@ export function QuickChip({
           ? 'bg-quest-100 text-quest-700 ring-quest-500'
           : tone === 'no'
             ? 'bg-spark-100 text-spark-700 ring-spark-500'
-            : 'bg-white text-brand-700 ring-brand-300',
+            : 'bg-[#fffaf0] text-[#5a3214] ring-[#c99a5e] shadow-[0_3px_0_rgba(116,67,29,0.35)]',
       )}
     >
       {children}

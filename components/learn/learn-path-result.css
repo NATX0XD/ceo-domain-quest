@@ -1,0 +1,70 @@
+/* Learn result (W6 / R06) — cream board, score ring, Dome bubble, good point + improvement. */
+.lr-score {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 3px solid #74431d;
+  border-radius: 24px;
+  background: rgb(255 251 237 / 0.97);
+  padding: 14px;
+  box-shadow: 0 6px 0 rgb(94 51 20 / 0.28);
+}
+.lr-ring {
+  --c: #2f9e55;
+  display: grid;
+  width: 92px;
+  height: 92px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(var(--c) calc(var(--p) * 1%), #efe2c8 0);
+}
+.is-retry .lr-ring { --c: #f08a1c; }
+.lr-ring > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #fff;
+  color: #3b2412;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lr-label { color: #7a5a40; font-size: 13px; font-weight: 800; }
+.lr-status { display: flex; align-items: center; gap: 6px; color: #1f6b30; font-family: var(--font-display); font-size: 20px; font-weight: 900; line-height: 1.25; }
+.is-retry .lr-status { color: #b4530b; }
+.lr-note { margin-top: 2px; color: #5e4630; font-size: 14px; font-weight: 600; line-height: 1.45; }
+.lr-dome { display: flex; align-items: flex-end; gap: 6px; }
+.lr-bubble {
+  position: relative;
+  flex: 1;
+  margin-bottom: 12px;
+  border: 3px solid #4a2d16;
+  border-radius: 20px;
+  background: #fff;
+  padding: 10px 13px;
+  color: #2c1c10;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.lr-points { display: grid; gap: 8px; }
+.lr-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 2px solid #9fd8a8;
+  border-radius: 18px;
+  background: #effbef;
+  padding: 10px 12px;
+}
+.lr-point.is-more { border-color: #f1c46a; background: #fff6dc; }
+.lr-point-icon { display: grid; width: 26px; height: 26px; flex: none; place-items: center; border-radius: 50%; background: #2f9e55; color: #fff; font-weight: 900; }
+.lr-point-icon-svg { flex: none; color: #c27c0e; }
+.lr-point-title { color: #3b2412; font-size: 14px; font-weight: 900; }
+.lr-point-text { margin-top: 2px; color: #3b2412; font-size: 15px; line-height: 1.5; }

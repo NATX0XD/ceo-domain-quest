@@ -1,0 +1,29 @@
+/* Chat skin (Mission 1 storyboard: UI/03 คุยกับโดม) — cream paper, wood header, round avatars. */
+.chat-frame {
+  border: 3px solid #74431d;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #fffaf0, #fbf1de);
+  box-shadow: 0 6px 0 rgb(94 51 20 / 0.3), 0 12px 22px rgb(60 30 8 / 0.15);
+}
+.chat-frame-head {
+  border-bottom: 3px solid #74431d;
+  background: linear-gradient(180deg, #ffd98c, #e7aa5c);
+  color: #4b2810;
+}
+.chat-avatar {
+  max-width: none;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #f3ecff;
+  object-fit: cover;
+  box-shadow: 0 2px 5px rgb(60 30 8 / 0.25);
+}
+.chat-avatar-dome { overflow: hidden; background: linear-gradient(180deg, #efe4ff, #d9c6ff); }
+.chat-bubble { box-shadow: 0 2px 0 rgb(94 51 20 / 0.12); color: #2c1c10; }
+.chat-bubble--me { background: #d6ebff; border: 2px solid #9cc8f2; }
+.chat-bubble--friend { background: #dcf5d3; border: 2px solid #a5d993; }
+.chat-bubble--dome { background: #fff; border: 2px solid #c99a5e; font-weight: 600; }
+.chat-bubble--hi { outline: 3px solid #f18b20; outline-offset: 2px; animation: chat-hi 1.4s ease-in-out 2; }
+@keyframes chat-hi { 50% { outline-color: #ffd36b; } }
+.chat-part { border: 2px solid #e0b77a; background: #fff4dc; color: #7a4710; }
+@media (prefers-reduced-motion: reduce) { .chat-bubble--hi { animation: none; } }

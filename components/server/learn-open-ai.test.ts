@@ -17,7 +17,7 @@ const path = findLearnPath('m1')!
 /** คำตอบที่ใช้คำของตัวเอง คำสำคัญจับไม่ได้เลย */
 const PARAPHRASE = 'เหมือนป้ายบอกบ้านบนอินเทอร์เน็ต พิมพ์แล้วไปเจอร้านเลย'
 /** คำตอบที่คำสำคัญจับได้ครบ */
-const KEYWORD_FULL = 'ชื่อเว็บร้าน ระบบช่วยค้นหาที่อยู่ให้'
+const KEYWORD_FULL = 'ชื่อเว็บร้าน จำง่ายกว่าตัวเลข'
 
 function typhoonPayload(obj: unknown) {
   return { choices: [{ message: { content: typeof obj === 'string' ? obj : JSON.stringify(obj) } }] }
@@ -79,7 +79,7 @@ describe('scoreOpenAnswers + AI ช่วยตรวจ', () => {
     const [q1, q2] = r.perQuestion
     expect(q1).toMatchObject({ source: 'typhoon', keywordScore: 0, aiScore: 70, score: 70 })
     expect(q1!.feedback).toBe('ลองเล่าเพิ่มว่าช่วยให้คนจำง่ายขึ้นอย่างไรนะ')
-    expect(q1!.missing).toEqual(['บอกว่าใส่ชื่อเว็บแล้วระบบช่วยค้นหาที่อยู่'])
+    expect(q1!.missing).toEqual(['บอกว่าช่วยให้คนจำง่ายหรือสะดวกกว่าหมายเลข IP'])
     expect(q2).toMatchObject({ source: 'typhoon', aiScore: 100, score: 100, missing: [] })
     expect(q2!.keywordScore).toBeLessThan(100)
     expect(r.score).toBe(85)
