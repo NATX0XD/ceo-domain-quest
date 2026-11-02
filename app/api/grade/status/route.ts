@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { type Submission, listSubmissions } from '@/lib/db/repo'
-import { certificateStandingOf } from '@/components/server/certificate-eligibility'
+import { allMissionsPassed, certificateStandingOf } from '@/components/server/certificate-eligibility'
+import { loadAllMissionRows } from '@/components/server/game-state'
 import { revisionDimensions, revisionState } from '@/components/server/revision'
 import { studentNextStep } from '@/components/server/next-step'
 import { readStudentSession, unauthorized } from '../../_lib/session-cookie'
@@ -80,9 +81,12 @@ export async function GET() {
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง')
 
   // อ่านครั้งเดียว แล้วใช้แถวชุดนี้คิดทุกอย่าง
-  const rows = await listSubmissions(session.studentId)
+  const [rows, missionRows] = await Promise.all([
+    listSubmissions(session.studentId),
+    loadAllMissionRows(session.studentId),
+  ])
   const state = revisionState(rows)
-  const standing = certificateStandingOf(rows)
+  const standing = certificateStandingOf(rows, { missionsDone: allMissionsPassed(missionRows) })
   const latest = state.latest
 
   const gradeState: GradeState =

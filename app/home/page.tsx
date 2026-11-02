@@ -65,7 +65,7 @@ export default async function HomePage() {
       : standing.status === 'not-submitted'
         ? { href: '/ceo', label: 'ไปด่านบอส CEO' }
         : standing.status === 'pending-teacher'
-          ? { href: '/ceo', label: 'ดูสถานะงานที่ส่งไป' }
+          ? { href: '/result', label: 'ดูผลและเกียรติบัตร' }
           : standing.status === 'keep-going'
             ? { href: '/ceo', label: standing.nextLabel }
             : { href: '/result', label: 'ดูผลและเกียรติบัตร' }

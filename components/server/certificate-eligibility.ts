@@ -1,12 +1,17 @@
 import { type Submission, listSubmissions } from '@/lib/db/repo'
+import { missions } from '@/components/missions'
+import { readTeacherConfirmedScores } from '@/lib/db/submission-scores'
+import { loadAllMissionRows } from './game-state'
 import { rubricDimensions, toRubricDimensionId } from './lesson-content'
 import { revisionRequestOf } from './revision'
 
 /**
  * ใครได้ใบประกาศ — **ฝั่งเซิร์ฟเวอร์เท่านั้น**
  *
- * มติเจ้าของโปรเจกต์ (สเปกข้อ 2.3 Competency-Based Progression + ข้อ 1.6 จุดประสงค์ข้อ 5):
- * ออกใบให้เมื่อ **ครูยืนยันคะแนนแล้ว และได้ระดับ 3 ขึ้นไปครบทั้ง 4 ด้าน** เท่านั้น
+ * มติเจ้าของโปรเจกต์ (2 พ.ย. 2569 — แทนมติ T40 เดิม):
+ * ออกใบให้ **ทันที** เมื่อผ่านภารกิจย่อยครบทุกข้อ และส่งใบเสนอ CEO แล้ว — ไม่ต้องรอครูยืนยัน
+ * คะแนนที่เด็กเห็นคือคะแนนตรวจอัตโนมัติ (AI ถ้าตรวจเสร็จ ไม่งั้นคะแนนจากกฎ)
+ * ครูยังยืนยัน/ปรับคะแนน/ส่งกลับให้แก้ได้ภายหลังเหมือนเดิม แต่ไม่ใช่ประตูของใบประกาศอีกต่อไป
  *
  * ⚠️ สเปกเขียนชัดว่า "ไม่มีการตก ทำต่อได้" — ทุกข้อความที่ออกจากไฟล์นี้จึงห้ามสื่อว่าตกหรือสอบไม่ผ่าน
  *    ให้บอกว่าเหลืออีกกี่ด้าน ขาดด้านไหน และทำอะไรต่อถึงจะได้ (ใช้ descriptor ระดับ 3 ของรูบริกตรง ๆ)
@@ -37,9 +42,23 @@ export interface DimensionStanding {
   whatGetsYouThere: string
 }
 
+/** คะแนนใบเสนอ CEO ที่แสดงให้ผู้เรียนเห็น — ครูยืนยัน > AI ตรวจเสร็จ > กฎ */
+export interface CeoScore {
+  source: 'teacher' | 'ai' | 'rules'
+  weightedTotal: number
+  weightedMax: number
+  percent: number
+  /** true = AI ยังตรวจอยู่ (ตอนนี้โชว์คะแนนจากกฎไปก่อน) */
+  grading: boolean
+}
+
 export interface CertificateEligibility {
   status: CertificateStatus
   eligible: boolean
+  /** ภารกิจย่อยผ่านครบทุกข้อแล้วหรือยัง */
+  missionsDone: boolean
+  /** คะแนนใบเสนอ CEO ล่าสุด (null = ยังไม่ส่ง) */
+  score: CeoScore | null
   dimensions: DimensionStanding[]
   /** ด้านที่ยังไม่ถึงระดับ 3 */
   missing: DimensionStanding[]
@@ -90,7 +109,52 @@ function standing(scores: Record<string, number> | null): DimensionStanding[] {
  * ใบของสถานี B ไม่นับ เพราะเป็นคนละงานกัน
  */
 export async function certificateEligibility(studentId: string): Promise<CertificateEligibility> {
-  return certificateStandingOf(await listSubmissions(studentId))
+  const [rows, missionRows] = await Promise.all([listSubmissions(studentId), loadAllMissionRows(studentId)])
+  return certificateStandingOf(rows, { missionsDone: allMissionsPassed(missionRows) })
+}
+
+/** ภารกิจย่อยทุกข้อผ่านแล้ว (ครูกดข้ามให้ก็นับเป็นผ่าน) */
+export function allMissionsPassed(rowsById: ReadonlyMap<string, { passed: boolean }>): boolean {
+  return missions.every((m) => rowsById.get(m.id)?.passed === true)
+}
+
+function bagOf(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null
+}
+
+function totalsOf(bag: Record<string, unknown> | null): { total: number; max: number } | null {
+  if (!bag) return null
+  const total = bag.weightedTotal ?? bag.score
+  const max = bag.weightedMax ?? bag.maxScore
+  if (typeof total !== 'number' || typeof max !== 'number' || !Number.isFinite(total) || !(max > 0)) return null
+  return { total, max }
+}
+
+/**
+ * คะแนนที่ผู้เรียนเห็น — ครูยืนยันแล้วใช้ของครู · AI ตรวจเสร็จใช้ของ AI · นอกนั้นใช้คะแนนจากกฎ
+ * (คะแนนจากกฎบันทึกตั้งแต่ตอนกดส่งเสมอ จึงไม่มีวันว่าง)
+ */
+export function ceoScoreOf(ceo: Submission | null): CeoScore | null {
+  if (!ceo) return null
+  const make = (source: CeoScore['source'], t: { total: number; max: number }, grading = false): CeoScore => ({
+    source,
+    weightedTotal: t.total,
+    weightedMax: t.max,
+    percent: Math.max(0, Math.min(100, Math.round((t.total / t.max) * 100))),
+    grading,
+  })
+  const teacher = readTeacherConfirmedScores(ceo)
+  if (teacher && teacher.weightedTotal !== null && teacher.weightedMax) {
+    return make('teacher', { total: teacher.weightedTotal, max: teacher.weightedMax })
+  }
+  const ai = bagOf(ceo.ai_scores)
+  const aiTotals = totalsOf(bagOf(ai?.aiProposed))
+  if (ai?.gradingStatus === 'done' && aiTotals) return make('ai', aiTotals)
+  const rules = totalsOf(bagOf(ai?.ruleScores)) ?? totalsOf(ai)
+  if (!rules) return null
+  return make('rules', rules, ai?.gradingStatus === 'pending-ai')
 }
 
 /**
@@ -100,13 +164,19 @@ export async function certificateEligibility(studentId: string): Promise<Certifi
  * อ่านฐานข้อมูล **ครั้งเดียว** แล้วใช้แถวชุดเดิมคิดทั้งสถานะการตรวจและสถานะใบประกาศ
  * (ถ้าเรียก `certificateEligibility()` ตรง ๆ จะกลายเป็นอ่านซ้ำสองรอบต่อการ poll หนึ่งครั้ง)
  */
-export function certificateStandingOf(rows: readonly Submission[]): CertificateEligibility {
+export function certificateStandingOf(
+  rows: readonly Submission[],
+  opts: { missionsDone?: boolean } = {},
+): CertificateEligibility {
   const ceo = rows.find((row) => row.emphasis_criterion !== null) ?? null
+  const missionsDone = opts.missionsDone ?? true
 
   if (!ceo) {
     return {
       status: 'not-submitted',
       eligible: false,
+      missionsDone,
+      score: null,
       dimensions: standing(null),
       missing: standing(null),
       passedCount: 0,
@@ -120,6 +190,12 @@ export function certificateStandingOf(rows: readonly Submission[]): CertificateE
 
   const scores = readDimensionScores(ceo.teacher_confirmed_scores)
   const dimensions = standing(scores)
+  const score = ceoScoreOf(ceo)
+  /** ส่งใบเสนอแล้ว + ภารกิจย่อยครบ = ได้ใบทันที ครูจะยืนยัน/ปรับ/สั่งแก้ทีหลังก็ไม่ดึงใบคืน */
+  const eligible = missionsDone
+  const certNext = eligible
+    ? { nextHref: '/api/certificate', nextLabel: 'ดาวน์โหลดเกียรติบัตร' }
+    : { nextHref: '/map', nextLabel: 'ทำภารกิจย่อยให้ครบ' }
   const missing = dimensions.filter((d) => !d.passed)
   const passedCount = dimensions.length - missing.length
 
@@ -134,7 +210,9 @@ export function certificateStandingOf(rows: readonly Submission[]): CertificateE
     const names = toFix.map((d) => d.shortName).join(' และ ')
     return {
       status: 'keep-going',
-      eligible: false,
+      eligible,
+      missionsDone,
+      score,
       dimensions,
       missing: toFix,
       passedCount: dimensions.length - toFix.length,
@@ -151,29 +229,32 @@ export function certificateStandingOf(rows: readonly Submission[]): CertificateE
   if (ceo.teacher_confirmed_scores === null) {
     return {
       status: 'pending-teacher',
-      eligible: false,
+      eligible,
+      missionsDone,
+      score,
       dimensions,
       missing,
       passedCount: 0,
       totalCount: dimensions.length,
-      message:
-        'ส่งงานเรียบร้อยแล้ว กำลังรอครูอ่านและยืนยันคะแนน ระหว่างรอไปดูผลงานของเพื่อนหรือเก็บดาวภารกิจอื่นต่อได้เลย',
-      nextHref: '/showcase',
-      nextLabel: 'ไปดูผลงานของเพื่อน',
+      message: eligible
+        ? 'ส่งงานเรียบร้อย ระบบตรวจให้แล้ว รับเกียรติบัตรได้เลย'
+        : 'ส่งงานเรียบร้อยแล้ว เหลือภารกิจย่อยอีกนิด ทำให้ครบแล้วรับเกียรติบัตรได้ทันที',
+      ...certNext,
     }
   }
 
   if (missing.length === 0) {
     return {
       status: 'passed',
-      eligible: true,
+      eligible,
+      missionsDone,
+      score,
       dimensions,
       missing,
       passedCount,
       totalCount: dimensions.length,
       message: 'ครูยืนยันแล้วว่าทำได้ครบทั้ง 4 ด้าน ใบประกาศเป็นของเราแล้ว',
-      nextHref: '/api/certificate',
-      nextLabel: 'โหลดใบประกาศ',
+      ...certNext,
     }
   }
 
@@ -184,7 +265,9 @@ export function certificateStandingOf(rows: readonly Submission[]): CertificateE
   const names = missing.map((d) => d.shortName).join(' และ ')
   return {
     status: 'keep-going',
-    eligible: false,
+    eligible,
+    missionsDone,
+    score,
     dimensions,
     missing,
     passedCount,

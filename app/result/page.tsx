@@ -19,6 +19,7 @@ import {
   TargetIcon,
 } from '@/components/ui'
 import { SelfAssessPanel } from '@/components/self-assess/self-assess-panel'
+import { ResultGradePoll } from '@/components/result-grade-poll'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { loadShopProfile, loadSelfProfileDb } from '@/components/server/game-state'
@@ -33,7 +34,7 @@ import { posttestGate } from '@/components/server/posttest-gate'
 import { PRODUCT_NAME_EN } from '@/components/product'
 import { getProfile, getStudent, listSubmissions } from '@/lib/db/repo'
 
-export const metadata: Metadata = { title: 'เปิดตัวบริษัท — CEO Domain Quest' }
+export const metadata: Metadata = { title: 'ผลงานของฉัน — CEO Domain Quest' }
 
 export const dynamic = 'force-dynamic'
 
@@ -79,8 +80,9 @@ function thaiDate(iso: string | null | undefined): string | null {
  * บรรทัด "ตอนนี้ต้องทำอะไร" พูดผ่านโดมติดกับปุ่มหลัก และแถบขั้นตอนบอกว่าอยู่ท้ายคาบแล้ว
  * สถานะ "รอครูยืนยัน" ต้องบอกด้วยว่าระหว่างรอทำอะไรได้ ไม่ใช่ปล่อยให้นั่งมองจอ
  *
- * ⚠️ กติกาใหม่ (มติ T40 · สเปกข้อ 2.3): ใบประกาศออกให้เมื่อ **ครูยืนยันแล้วว่าได้ระดับ 3 ครบทั้ง 4 ด้าน**
- *    **ห้ามใช้คำว่าตก/ไม่ผ่านเด็ดขาด** ต้องบอกว่าเหลือด้านไหนและทำอะไรต่อ
+ * ⚠️ มติเจ้าของ (2 พ.ย. 2569): ภารกิจย่อยครบ + ส่งใบเสนอ CEO แล้ว = ได้ใบทันที ไม่รอครู
+ *    คะแนนที่โชว์ = ครูยืนยัน > AI ตรวจเสร็จ > กฎ (AI ยังตรวจอยู่ = "กำลังตรวจ..." แล้ว poll เอง)
+ *    **ห้ามใช้คำว่าตก/ไม่ผ่านเด็ดขาด** ต้องบอกว่าเหลืออะไรและทำอะไรต่อ
  *    เงื่อนไขจริงตัดสินที่ `/api/certificate` หน้านี้แค่แสดงผล เดา URL ก็ไม่ได้ใบ
  */
 export default async function ResultPage() {
@@ -132,23 +134,25 @@ export default async function ResultPage() {
   // วันที่ออกใบ = วันที่เปิดหน้านี้ (หน้า force-dynamic จึงเป็นวันจริงเสมอ ไม่ใช่วันที่ build)
   const issuedOn = thaiDate(new Date().toISOString())
 
+  const score = standing.score
+  const grading = score?.grading === true
+  const revise = standing.status === 'keep-going'
+
   /** หัวข้อสั้นบนการ์ดสถานะ — ต้องอ่านปราดเดียวรู้ว่าตัวเองอยู่สถานะไหน */
   const statusTitle = earned
     ? 'ได้เกียรติบัตรแล้ว'
     : standing.status === 'not-submitted'
       ? 'ยังไม่ได้ส่งใบเสนอ'
-      : standing.status === 'pending-teacher'
-        ? 'ส่งแล้ว รอครูตรวจ'
-        : `ครูยืนยันแล้ว ${standing.passedCount} จาก ${standing.totalCount} ด้าน`
+      : 'เหลือภารกิจย่อยอีกนิด'
 
-  /** บรรทัดเดียวที่บอกว่าตอนนี้ต้องทำอะไร — รวมถึงตอนต้องรอ ต้องบอกว่าระหว่างรอทำอะไรได้ */
+  /** บรรทัดเดียวที่บอกว่าตอนนี้ต้องทำอะไร */
   const nowLine = earned
-    ? 'เยี่ยมมากครับ กดปุ่มด้านล่างโหลดใบประกาศเก็บไว้ได้เลย'
+    ? revise
+      ? 'ได้เกียรติบัตรแล้วครับ ครูฝากให้แก้งานนิดหน่อย ดูในแผ่น "เกียรติบัตร"'
+      : 'เยี่ยมมากครับ ดาวน์โหลดเกียรติบัตรเก็บไว้ได้เลย'
     : standing.status === 'not-submitted'
       ? 'ยังเหลือขั้นสุดท้าย ส่งใบเสนอชื่อเว็บที่ด่านบอสก่อนครับ'
-      : standing.status === 'pending-teacher'
-        ? 'ส่งแล้วครับ รอครูตรวจสักครู่ · ระหว่างรอ ให้คะแนนตัวเองในแผ่น "คะแนน 3 แหล่ง" ได้เลย'
-        : 'ครูตรวจแล้วครับ เปิดดูว่าเหลือด้านไหน แล้วแก้ตามที่เขียนไว้ได้เลย'
+      : 'ทำภารกิจย่อยที่ยังค้างให้ครบ แล้วรับเกียรติบัตรได้ทันทีครับ'
 
   return (
     <AppShell
@@ -157,8 +161,8 @@ export default async function ResultPage() {
       header={
         <AppHeader className="pb-2" backHref="/home">
           <div className="flex items-center gap-3">
-            <h1 className="min-w-0 flex-1 truncate text-title-sm font-extrabold text-ink">
-              เปิดตัวบริษัทของ {nickname}
+            <h1 className="min-w-0 flex-1 text-title-sm font-extrabold text-ink">
+              {earned ? 'เกียรติบัตรของฉัน' : 'ผลงานของฉัน'}
             </h1>
             <p className="shrink-0 rounded-full bg-reward-100 px-3 py-1 text-label font-extrabold text-reward-700 tabular-nums">
               <StarIcon width={16} height={16} aria-hidden className="mr-1 inline align-[-3px]" />
@@ -166,7 +170,7 @@ export default async function ResultPage() {
               <span className="sr-only">ดาวสะสมจากทั้งหมด {data.maxStars} ดวง</span>
             </p>
           </div>
-          {/* แถบขั้นตอน — จอนี้คือขั้นสุดท้ายของคาบ ทุกขีดเต็มหมด ยกเว้นขีดสุดท้ายที่รอใบประกาศ */}
+          {/* แถบขั้นตอน — ได้ใบแล้ว = เต็มทุกขีด */}
           <div className="mt-2 flex items-center gap-1" aria-hidden="true">
             <span className="h-2 flex-1 rounded-full bg-quest-500" />
             <span className="h-2 flex-1 rounded-full bg-quest-500" />
@@ -174,24 +178,35 @@ export default async function ResultPage() {
           </div>
           <p className="mt-1 text-note font-bold text-ink-muted">
             <span className="text-brand-700">ขั้นสุดท้ายของคาบ</span>
-            {earned ? ' · จบครบทุกขั้นแล้ว' : ' · เหลืออีก 1 ขั้นคือรับใบประกาศ'}
+            {earned ? ' · จบครบทุกขั้นแล้ว' : ' · เหลืออีกนิดก่อนรับเกียรติบัตร'}
           </p>
         </AppHeader>
       }
       footer={
         <>
           <AppFooter divider={false} className="pb-2">
-            <div className="mb-2 flex items-center gap-2">
-              <DomeAvatar mood="celebrate" size={44} decorative />
-              <SpeechBubble speaker="dome" tail="left" className="min-w-0 flex-1 px-3 py-2">
-                <span className="break-words text-label font-bold text-ink">{nowLine}</span>
-              </SpeechBubble>
-            </div>
+            {/* ได้ใบแล้วไม่ต้องมีโดมพูดซ้ำ ปุ่มสองปุ่มบอกครบแล้ว — เหลือที่ให้การ์ดเกียรติบัตร */}
+            {earned && !revise ? null : (
+              <div className="mb-2 flex items-center gap-2">
+                <DomeAvatar mood="celebrate" size={44} decorative />
+                <SpeechBubble speaker="dome" tail="left" className="min-w-0 flex-1 px-3 py-2">
+                  <span className="break-words text-label font-bold text-ink">{nowLine}</span>
+                </SpeechBubble>
+              </div>
+            )}
             {earned ? (
-              <a href="/api/certificate" className="btn-confirm">
-                <DownloadIcon width={22} height={22} aria-hidden />
-                โหลดใบประกาศ (PDF)
-              </a>
+              <>
+                <a href="/api/certificate" download className="btn-confirm">
+                  <DownloadIcon width={22} height={22} aria-hidden />
+                  ดาวน์โหลดเกียรติบัตร
+                </a>
+                <Link
+                  href="/showcase"
+                  className="btn-base mt-2 min-h-11 w-full rounded-xl bg-surface-sunken text-body font-bold text-brand-700"
+                >
+                  ไปดูผลงานของเพื่อน
+                </Link>
+              </>
             ) : (
               <Link href={standing.nextHref} className="btn-go">
                 {standing.nextLabel}
@@ -216,20 +231,21 @@ export default async function ResultPage() {
             <p className="text-note font-bold text-ink-muted">ดาวที่เก็บได้</p>
           </div>
           <div className="result-stat-card game-card rounded-2xl bg-surface-raised p-3 text-center shadow-soft-1">
-            {standing.status === 'not-submitted' || standing.status === 'pending-teacher' ? (
+            {score ? (
               <>
-                <p className="text-title font-black text-ink-subtle">—</p>
-                <p className="text-note font-bold text-ink-muted">
-                  {standing.status === 'not-submitted' ? 'ยังไม่ได้ส่งใบเสนอ' : 'รอครูตรวจ'}
+                <p className="text-title font-black text-brand-700 tabular-nums">
+                  {score.weightedTotal}
+                  <span className="text-body-lg font-extrabold text-ink-muted"> / {score.weightedMax}</span>
                 </p>
+                <p className="text-note font-bold text-ink-muted" aria-live="polite">
+                  {grading ? 'กำลังตรวจ...' : 'คะแนนใบเสนอ CEO'}
+                </p>
+                {grading ? <ResultGradePoll /> : null}
               </>
             ) : (
               <>
-                <p className="text-title font-black text-brand-700 tabular-nums">
-                  {standing.passedCount}
-                  <span className="text-body-lg font-extrabold text-ink-muted"> / {standing.totalCount}</span>
-                </p>
-                <p className="text-note font-bold text-ink-muted">ด้านที่ครูยืนยัน</p>
+                <p className="text-title font-black text-ink-subtle">—</p>
+                <p className="text-note font-bold text-ink-muted">ยังไม่ได้ส่งใบเสนอ</p>
               </>
             )}
           </div>
@@ -242,18 +258,23 @@ export default async function ResultPage() {
           }`}
         >
           <AchievementBadge
-            size={104}
+            size={84}
             earned={earned}
             className={earned ? 'animate-pop-in motion-reduce:animate-none' : undefined}
           />
           <p className="mt-2 text-title-sm font-black text-balance text-ink">{statusTitle}</p>
           <p className="mt-0.5 line-clamp-2 text-label text-pretty text-ink-muted">{standing.message}</p>
+          {score && score.source !== 'teacher' ? (
+            <p className="mt-1 text-note text-balance text-ink-subtle">
+              {score.source === 'ai' ? 'AI ตรวจให้' : 'ระบบตรวจให้'} · ครูปรับคะแนนได้ภายหลัง
+            </p>
+          ) : null}
           {earned ? null : (
             <div className="mt-2 w-full max-w-[18rem]">
               <ProgressBar
-                value={standing.passedCount}
-                max={standing.totalCount}
-                label={`ครูยืนยันแล้ว ${standing.passedCount} จาก ${standing.totalCount} ด้าน`}
+                value={data.stagesCleared}
+                max={data.stagesTotal}
+                label={`ผ่านแล้ว ${data.stagesCleared} จาก ${data.stagesTotal} ขั้น`}
                 hideLabel
                 tone="quest"
               />
@@ -267,7 +288,7 @@ export default async function ResultPage() {
             id="sheet-cert"
             triggerVariant="chip"
             triggerIcon={<RewardIcon width={18} height={18} aria-hidden />}
-            trigger="ใบประกาศ"
+            trigger="เกียรติบัตร"
             title={earned ? 'เกียรติบัตรของฉัน' : 'สิ่งที่ยังเหลืออยู่'}
           >
             {earned ? (
@@ -285,8 +306,17 @@ export default async function ResultPage() {
                 {joinedOn ? <p className="text-label text-ink-muted">วันที่เข้าร่วม {joinedOn}</p> : null}
                 {issuedOn ? <p className="text-label text-ink-muted">วันที่ออกใบ {issuedOn}</p> : null}
                 <p className="mt-4 text-label text-pretty text-ink-muted">
-                  ครูยืนยันแล้วว่าทำได้ครบทั้ง 4 ด้าน ส่วนดาวเป็นของใครของมัน ไม่ต้องเอาไปเทียบกับเพื่อน
+                  ทำภารกิจครบและส่งใบเสนอ CEO แล้ว ส่วนดาวเป็นของใครของมัน ไม่ต้องเอาไปเทียบกับเพื่อน
                 </p>
+                {revise ? (
+                  <p className="mt-3 rounded-lg bg-surface-raised p-2 text-label text-pretty text-ink">
+                    {standing.message}
+                  </p>
+                ) : null}
+                <a href="/api/certificate" download className="btn-confirm mt-4">
+                  <DownloadIcon width={22} height={22} aria-hidden />
+                  ดาวน์โหลดเกียรติบัตร
+                </a>
               </div>
             ) : (
               <div>

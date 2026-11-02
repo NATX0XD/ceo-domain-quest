@@ -18,10 +18,11 @@ describe('แหล่งความจริงเดียวของ "ต�
     expect(step.badge).toContain('2 ด้าน')
   })
 
-  it('ยังรอครูอ่าน = บอกให้รอ แต่ต้องบอกด้วยว่าระหว่างรอทำอะไรได้', () => {
+  it('ส่งแล้วแต่ครูยังไม่ยืนยัน = ไม่ต้องรอครู พาไปรับผลและเกียรติบัตรทันที', () => {
     const step = studentNextStep({ status: 'pending-teacher' })
-    expect(step.tone).toBe('wait')
-    expect(step.line).toMatch(/ระหว่างรอ/)
+    expect(step.tone).toBe('done')
+    expect(step.line).not.toMatch(/รอครู/)
+    expect(step.primary.href).toBe('/result')
     expect(step.secondary).not.toBeNull()
   })
 

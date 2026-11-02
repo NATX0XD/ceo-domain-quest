@@ -80,15 +80,10 @@ const MAP: NextStepAction = {
   label: 'กลับไปแผนภารกิจ',
   longLabel: 'กลับไปแผนภารกิจ',
 }
-const KNOWLEDGE: NextStepAction = {
-  href: '/knowledge',
-  label: 'อ่านคลังความรู้',
-  longLabel: 'อ่านคลังความรู้ระหว่างรอครู',
-}
-const SHOWCASE: NextStepAction = {
+const SHOWCASE_NOW: NextStepAction = {
   href: '/showcase',
   label: 'ดูผลงานของเพื่อน',
-  longLabel: 'ดูผลงานของเพื่อนระหว่างรอครู',
+  longLabel: 'ไปดูผลงานของเพื่อน',
 }
 
 export function studentNextStep(input: NextStepInput): StudentNextStep {
@@ -125,15 +120,17 @@ export function studentNextStep(input: NextStepInput): StudentNextStep {
         tone: 'act',
       }
 
+    /**
+     * ส่งแล้ว ครูยังไม่ได้ยืนยัน — **ไม่ต้องรอครูแล้ว** (มติเจ้าของ 2 พ.ย.)
+     * คะแนนตรวจอัตโนมัติขึ้นทันที และรับเกียรติบัตรได้เลย ครูปรับคะแนนได้ภายหลัง
+     */
     case 'pending-teacher':
       return {
-        badge: 'ส่งแล้ว รอครูอ่าน',
-        line: 'ส่งใบเสนอแล้ว ครูกำลังอ่านอยู่ · ระหว่างรอ ไปอ่านคลังความรู้หรือดูผลงานเพื่อนได้ ไม่ต้องนั่งรอเฉย ๆ',
-        primary: onBossScreen
-          ? KNOWLEDGE
-          : { href: '/ceo', label: 'ดูสถานะงานที่ส่งไป', longLabel: 'ดูสถานะงานที่ส่งไป' },
-        secondary: onBossScreen ? SHOWCASE : KNOWLEDGE,
-        tone: 'wait',
+        badge: 'ส่งแล้ว รับเกียรติบัตรได้เลย',
+        line: 'ส่งใบเสนอแล้ว ระบบตรวจให้อัตโนมัติ ไปดูคะแนนและรับเกียรติบัตรได้เลย',
+        primary: { href: '/result', label: 'ดูผลและเกียรติบัตร', longLabel: 'ดูผลและรับเกียรติบัตร' },
+        secondary: SHOWCASE_NOW,
+        tone: 'done',
       }
 
     /**
