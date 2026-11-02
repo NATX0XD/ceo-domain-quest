@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/components/ui";
 import { KIT, M2Button, M2Screen, Nail, placeUnique, useDragBoard, withDomains } from "./m2-kit";
+import { VideoControlIcon } from "../video-control-icon";
 
 type Chrome = { onBack: () => void; soundOn: boolean; onSound: () => void };
 
@@ -192,9 +193,10 @@ export function ClipPlayer({
             onToggle?.();
           }}
           aria-label={playing ? "หยุดชั่วคราว" : "เล่นต่อ"}
+          aria-pressed={playing}
           disabled={!onToggle}
         >
-          {playing ? "❚❚" : "▶"}
+          <VideoControlIcon name={playing ? "pause" : "play"} size={24} />
         </button>
         <div className="m2g-track">
           <span className="m2g-track-fill" style={{ width: `${(t / CLIP_END) * 100}%` }} />
@@ -216,7 +218,7 @@ export function ClipPlayer({
             }}
             aria-label="ข้ามไปช่วงถัดไป"
           >
-            ⏭
+            <VideoControlIcon name="skip" size={24} />
           </button>
         ) : null}
       </div>

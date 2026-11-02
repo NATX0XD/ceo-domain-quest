@@ -50,6 +50,7 @@ import { Confetti, Float, Shake, buzz } from './app/fx'
 import { themeFor } from './app/theme'
 import { DomeSays, M1Button, M1Shell, useM1Sound, type M1Scene } from './m1/m1-shell'
 import { M1Handoff, M1ModeChooser, M1ReadBrief, M1WatchBrief } from './m1/m1-screens'
+import { VideoControlIcon } from './video-control-icon'
 
 /**
  * เส้นทางเรียนก่อนเข้าภารกิจ (ดู / อ่าน / ลงมือทำ) — สเปก docs/learn-path-spec.md
@@ -1077,6 +1078,7 @@ export function LearnPathClient({
                   type="button"
                   className="m1-vbtn m1-vbtn--main"
                   aria-label={videoPlaying ? 'หยุดคลิปชั่วคราว' : 'เล่นคลิป'}
+                  aria-pressed={videoPlaying}
                   onClick={() => {
                     const v = videoRef.current
                     if (!v) return
@@ -1084,11 +1086,7 @@ export function LearnPathClient({
                     else v.pause()
                   }}
                 >
-                  {videoPlaying ? (
-                    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="currentColor" /><rect x="14" y="5" width="4" height="14" rx="1.5" fill="currentColor" /></svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" fill="currentColor" /></svg>
-                  )}
+                  <VideoControlIcon name={videoPlaying ? 'pause' : 'play'} size={25} />
                 </button>
                 <button
                   type="button"
@@ -1102,7 +1100,7 @@ export function LearnPathClient({
                     void v.play()
                   }}
                 >
-                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.6 4.7" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" /><path d="M4.2 4.5v5h5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <VideoControlIcon name="replay" size={24} />
                 </button>
                 <div
                   className="m1-video-track"
@@ -1244,7 +1242,8 @@ export function LearnPathClient({
                   />
                   <button
                     type="button"
-                    className="m1-replay-button"
+                    className="m1-vbtn m1-replay-button"
+                    aria-label="เล่นซ้ำตั้งแต่ต้น"
                     onClick={() => {
                       if (!videoRef.current) return
                       videoRef.current.currentTime = 0
@@ -1253,7 +1252,8 @@ export function LearnPathClient({
                       void videoRef.current.play()
                     }}
                   >
-                    เล่นซ้ำ
+                    <VideoControlIcon name="replay" size={24} />
+                    <span className="sr-only">เล่นซ้ำ</span>
                   </button>
                 </div>
               ) : null}
