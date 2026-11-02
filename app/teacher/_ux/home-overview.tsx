@@ -156,34 +156,49 @@ export function HomeOverview({
         </section>
       ) : (
         <section aria-label="สรุปห้องนี้" className="flex flex-col gap-4">
-          <div className="relative overflow-hidden rounded-3xl border border-[#ddd5f7] p-5 sm:p-6" style={{ background: 'linear-gradient(115deg,#e9e3fb 0%,#f3eefe 55%,#fdeee3 100%)' }}>
-            <div className="relative z-10 sm:max-w-[calc(100%-11rem)]">
-              <p className="m-0 pr-24 text-[13px] leading-5 font-bold tracking-wide text-[var(--c-brand)] sm:pr-0">โดมสรุปให้ครู</p>
-              <h2 className="m-0 mt-0.5 text-[24px] leading-8 font-extrabold text-[var(--c-ink)] sm:text-[28px] sm:leading-9">ภาพรวมห้องเรียน</h2>
-              <dl className="m-0 mt-4 grid grid-cols-3 gap-2 sm:gap-4">
-                {([
-                  ['เข้าห้อง', total, 'คน'],
-                  ['ได้เกียรติบัตร', ceoDone, 'คน'],
-                  ['ความคืบหน้าเฉลี่ย', avg, '%'],
-                ] as const).map(([label, value, unit]) => (
-                  <div key={label} className="min-w-0 rounded-2xl bg-white/70 px-3 py-2.5 backdrop-blur-sm">
-                    <dd className="m-0 text-[28px] leading-8 font-extrabold text-[var(--c-brand)] tabular-nums sm:text-[34px] sm:leading-10">{value}<span className="ml-0.5 text-[14px] font-bold text-[var(--c-ink-3)]">{unit}</span></dd>
-                    <dt className="text-[12px] leading-4 font-semibold text-[var(--c-ink-2)] sm:text-[13px]">{label}</dt>
+          <div className="home-hero">
+            <div className="home-hero__copy">
+              <p className="home-hero__eyebrow">โดมสรุปให้ครู</p>
+              <h2 className="home-hero__title">ภาพรวมห้องเรียน</h2>
+              <dl className="home-hero__kpis">
+                <div className="home-kpi">
+                  <Icon3d name="busts-in-silhouette" size={38} />
+                  <div>
+                    <dd className="home-kpi__value">{total}<span>คน</span></dd>
+                    <dt>เข้าห้องแล้ว</dt>
                   </div>
-                ))}
+                </div>
+                <div className="home-kpi">
+                  <Icon3d name="trophy" size={38} />
+                  <div>
+                    <dd className="home-kpi__value">{ceoDone}<span>คน</span></dd>
+                    <dt>ได้เกียรติบัตร</dt>
+                  </div>
+                </div>
+                <div className="home-kpi home-kpi--progress">
+                  <Icon3d name="chart-increasing" size={38} />
+                  <div className="min-w-0 flex-1">
+                    <dd className="home-kpi__value">{avg}<span>%</span></dd>
+                    <dt>ความคืบหน้าเฉลี่ย</dt>
+                    <div className="home-kpi__track" role="progressbar" aria-valuenow={avg} aria-valuemin={0} aria-valuemax={100} aria-label={`ความคืบหน้าเฉลี่ย ${avg}%`}><span style={{ width: `${avg}%` }} /></div>
+                  </div>
+                </div>
               </dl>
               {dome.slice(1, 3).length > 0 ? (
-                <ul className="m-0 mt-3 flex list-none flex-col gap-1 p-0 text-[14px] leading-5 text-[var(--c-ink-2)]">
-                  {dome.slice(1, 3).map((line) => (
-                    <li key={line} className="flex items-start gap-2"><span aria-hidden className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[var(--c-accent,#7a5cf0)]" />{line}</li>
+                <ul className="home-hero__notes">
+                  {dome.slice(1, 3).map((line, index) => (
+                    <li key={line}>
+                      <Icon3d name={index === 0 && /ติด|เงียบ|ยังไม่มี/.test(line) ? 'warning' : 'check-mark-button'} size={22} />
+                      <span>{line}</span>
+                    </li>
                   ))}
                 </ul>
               ) : null}
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/dome/mascot/dome-happy.webp" alt="" width={160} height={160} className="pointer-events-none absolute top-2 right-3 z-0 h-auto w-20 sm:top-auto sm:right-6 sm:bottom-0 sm:w-40" />
+            <img src="/ui/teacher/hero-dome.webp" alt="" width={900} height={420} className="home-hero__art" />
           </div>
-          <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-4">
+          <ul className="home-overview__chips m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-4">
             {chips.map((c) => {
               const zero = c.count === 0
               return (
@@ -211,7 +226,7 @@ export function HomeOverview({
 
       <section aria-labelledby="can-do">
         <h2 id="can-do" className="m-0 mb-2 text-[15px] leading-6 font-bold text-[var(--c-ink)]">ครูทำอะไรได้บ้าง</h2>
-        <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0 min-[700px]:grid-cols-3">
+          <ul className="home-overview__actions m-0 grid list-none grid-cols-2 gap-2.5 p-0 min-[700px]:grid-cols-3">
           {actions.map((a) => {
             const inner = (
               <>

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getServiceClient } from '@/lib/db/client'
 import { listClassroomsByTeacher, listPinnedShowcase } from '@/lib/db/repo'
+import { loadShopTypes } from '@/app/teacher/_lib/student-cards-data'
+import { shopArtSrc } from '@/components/shop-art'
 import { errorResponse, readTeacherSession, unauthorized } from '../../_lib/session-cookie'
 
 /**
@@ -28,6 +30,14 @@ export async function GET(request: Request) {
     listPinnedShowcase(session.teacherId, classroomId),
   ])
 
+  const submissionIds = pinned.map((row) => row.submission_id)
+  const { data: submissionRows } = submissionIds.length > 0
+    ? await getServiceClient().from('submissions').select('id, student_id').in('id', submissionIds)
+    : { data: [] as { id: string; student_id: string }[] }
+  const studentIds = (submissionRows ?? []).map((row) => row.student_id)
+  const shopTypes = await loadShopTypes(studentIds)
+  const typeBySubmission = new Map((submissionRows ?? []).map((row) => [row.id, shopTypes.get(row.student_id) ?? null]))
+
   return NextResponse.json({
     ok: true,
     joined: count ?? 0,
@@ -35,6 +45,7 @@ export async function GET(request: Request) {
       domain: `${row.domain_name ?? ''}${row.tld ?? ''}`,
       reason: row.reason_text ?? '',
       nickname: row.nickname,
+      shopArt: typeBySubmission.get(row.submission_id) ? shopArtSrc(typeBySubmission.get(row.submission_id) ?? null, 5) : null,
     })),
   })
 }

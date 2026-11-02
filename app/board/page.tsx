@@ -18,7 +18,10 @@ function one(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value
 }
 
-const BG_PATH = '/ui/teacher/join-poster-bg.webp'
+const BG_PATHS = {
+  join: '/ui/teacher/join-poster-bg.webp',
+  showcase: '/ui/teacher/showcase-bg.webp',
+} as const
 
 /**
  * จอหน้าห้อง — เปิดเป็นแท็บแยกหรือจอที่สอง ใช้ได้โดยไม่ต้องมีการควบคุมคาบสด
@@ -57,8 +60,9 @@ export default async function BoardPage({
 
   const joinUrl = `${process.env.APP_BASE_URL ?? 'http://localhost:3000'}/join?code=${classroom.room_code}`
   const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 720 })
-  const hasBg = existsSync(join(process.cwd(), 'public', BG_PATH))
   const mode = one(sp.mode) === 'showcase' ? 'showcase' : 'join'
+  const requestedBg = BG_PATHS[mode]
+  const hasBg = existsSync(join(process.cwd(), 'public', requestedBg))
 
   return (
     <BoardScreenClient
@@ -66,7 +70,7 @@ export default async function BoardPage({
       roomCode={classroom.room_code}
       joinUrl={joinUrl}
       qrSvg={qrSvg}
-      bgUrl={hasBg ? BG_PATH : null}
+      bgUrl={hasBg ? requestedBg : null}
       mode={mode}
       backHref={`/teacher?classroomId=${classroom.id}`}
     />
