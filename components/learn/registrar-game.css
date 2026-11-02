@@ -227,7 +227,7 @@
 }
 
 /* ── speech ── */
-.m4-say { display: flex; align-items: flex-end; gap: 6px; }
+.m4-say { display: flex; min-width: 0; align-items: flex-end; gap: 6px; }
 .m4-say-bubble {
   position: relative;
   min-width: 0;
@@ -240,6 +240,8 @@
   font-size: 14.5px;
   font-weight: 800;
   line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: normal;
   box-shadow: 0 3px 0 var(--m4-deep);
 }
 .m4-say-bubble::before {

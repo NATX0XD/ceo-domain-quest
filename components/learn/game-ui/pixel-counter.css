@@ -183,28 +183,49 @@
 
 /* ---------- ลูกค้า + ฟองคำพูด ---------- */
 .px-cust { position: relative; display: flex; flex: 0 0 auto; height: clamp(140px, 27vh, 250px); align-items: flex-end; justify-content: center; }
-.px-cust-sprite { position: relative; height: 100%; }
+.px-cust-sprite { position: relative; height: 100%; min-width: 0; }
 .px-cust-sprite .px-sprite { display: block; width: auto; max-width: none !important; height: 100%; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.3)); }
 /* ขั้นใบคำขอ/สัมภาษณ์/ตรา: ลูกค้าครึ่งตัวบน (หัวถึงเอว) อยู่ซ้าย ฟองคำพูดอยู่ขวา ไม่มีแผงไหนทับตัวลูกค้า */
 .px-cust.is-card,
 .px-cust.is-interview,
 .px-cust.is-stamp,
-.px-cust.is-result { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 6px; height: clamp(118px, 19vh, 170px); }
-.px-cust.is-result { height: clamp(130px, 22vh, 200px); }
+.px-cust.is-result {
+  display: grid;
+  grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+  height: auto;
+  min-height: clamp(118px, 19vh, 170px);
+}
+.px-cust.is-result { min-height: clamp(130px, 22vh, 200px); }
 .px-cust.is-interview:not(.is-result) { height: clamp(196px, 31vh, 290px); align-items: stretch; }
 /* สัมภาษณ์: ลูกค้าคอลัมน์ซ้ายกว้างคงที่ (หน้าเห็นเสมอ) บทสนทนาคอลัมน์ขวาอยู่หน้าภาพ ไม่ทับตัวลูกค้า */
-.px-cust.is-interview:not(.is-result) { grid-template-columns: 42% minmax(0, 1fr); gap: 10px; height: auto; min-height: clamp(196px, 31vh, 290px); }
+.px-cust.is-interview:not(.is-result) { grid-template-columns: minmax(0, 42%) minmax(0, 1fr); gap: 10px; height: auto; min-height: clamp(196px, 31vh, 290px); }
 .px-cust.is-interview:not(.is-result) .px-talk { overflow: visible; }
 .px-cust.is-interview:not(.is-result) .px-cust-sprite { width: 100%; aspect-ratio: auto; }
 .px-cust .px-cust-sprite { align-self: end; height: 100%; aspect-ratio: 0.7; overflow: hidden; border-radius: 0 0 10px 10px; }
 .px-cust .px-cust-sprite .px-sprite { position: absolute; top: 0; left: 50%; height: 196%; transform: translateX(-50%); }
-.px-cust .px-speech { position: relative; top: auto; right: auto; align-self: center; max-width: 100%; border-radius: 12px 12px 12px 3px; }
+.px-cust .px-speech {
+  position: relative;
+  inset: auto;
+  z-index: 1;
+  grid-column: 2;
+  align-self: center;
+  justify-self: stretch;
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  border-radius: 12px 12px 12px 3px;
+}
 .px-cust .px-speech::before { position: absolute; bottom: 8px; left: -11px; width: 12px; height: 12px; border-bottom: 3px solid var(--ink); border-left: 3px solid var(--ink); background: #fff; content: ""; transform: rotate(45deg); }
 .px-qmark { position: absolute; top: -4px; left: -14px; color: var(--purple); font-size: 46px; font-weight: 900; text-shadow: 3px 3px 0 #fff, -2px -2px 0 #fff; animation: px-bob 1.2s ease-in-out infinite; }
 .px-cust .px-qmark { top: 0; left: 4px; font-size: 36px; }
-.px-speech { position: absolute; top: 0; right: 0; z-index: 2; max-width: 58%; margin: 0; padding: 7px 11px; border: 3px solid var(--ink); border-radius: 12px 12px 3px 12px; background: #fff; box-shadow: 0 3px 0 var(--ink); color: #241a44; font-size: 14.5px; font-weight: 800; line-height: 1.4; }
+.px-speech { position: absolute; top: 0; right: 0; z-index: 2; max-width: 58%; margin: 0; padding: 7px 11px; border: 3px solid var(--ink); border-radius: 12px 12px 3px 12px; background: #fff; box-shadow: 0 3px 0 var(--ink); color: #241a44; font-size: 14.5px; font-weight: 800; line-height: 1.4; overflow-wrap: anywhere; white-space: normal; }
 .px-dome-mini { position: absolute; right: 0; bottom: 0; width: 72px; height: auto; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3)); image-rendering: auto !important; animation: px-bob 2.2s ease-in-out infinite; }
-.px-cust.is-stamp:not(.is-result) .px-speech { align-self: start; margin-top: 8px; margin-right: 60px; }
+.px-cust.is-stamp:not(.is-result) { grid-template-columns: minmax(0, 40%) minmax(0, 1fr); padding-right: 76px; }
+.px-cust.is-stamp:not(.is-result) .px-speech { align-self: start; margin-top: 8px; }
 .px-fore { display: grid; gap: 8px; }
 @keyframes px-bob { 50% { transform: translateY(-5px); } }
 
