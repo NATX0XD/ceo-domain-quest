@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { AlertIcon, EmptyState, UsersIcon } from '../../../components/ui'
+import { Dialog } from '../_ux/dialog'
 import { Bar, Bars, Chip, Fact, Icon3d, InfoTip, Kpi, KpiGrid } from '../_ux/v2'
 import { LearnResultsPanel } from '../report/learn-results-panel'
 
@@ -134,6 +135,8 @@ export function StudentReportClient({
   const [selected, setSelected] = useState<string | null>(studentId)
   const [report, setReport] = useState<StudentReport | null>(initialReport)
   const [error, setError] = useState<string | null>(null)
+  const [confirmRemove, setConfirmRemove] = useState(false)
+  const [removing, setRemoving] = useState(false)
 
   // รายชื่อในห้องมาจากแผงห้องเรียน (endpoint เดิม ไม่ได้เพิ่มของใหม่)
   useEffect(() => {
@@ -181,6 +184,32 @@ export function StudentReportClient({
   useEffect(() => {
     void load()
   }, [load])
+
+  const remove = async () => {
+    if (!selected || !classroomId) return
+    setRemoving(true)
+    try {
+      const res = await fetch('/api/teacher/student', {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ studentId: selected, classroomId }),
+      })
+      if (!res.ok) {
+        setError(res.status === 404 ? 'ไม่พบนักเรียนคนนี้ในห้องของคุณ' : 'ลบไม่สำเร็จ ลองอีกครั้ง')
+        return
+      }
+      const rest = roster.filter((r) => r.studentId !== selected)
+      setRoster(rest)
+      setReport(null)
+      setError(null)
+      setSelected(rest[0]?.studentId ?? null)
+    } catch {
+      setError('เชื่อมต่อไม่ได้ ลองอีกครั้ง')
+    } finally {
+      setRemoving(false)
+      setConfirmRemove(false)
+    }
+  }
 
   if (!classroomId) {
     return (
@@ -255,6 +284,9 @@ export function StudentReportClient({
               </button>
               <button type="button" onClick={() => void load()} className="t2-btn focus-ring">
                 โหลดใหม่
+              </button>
+              <button type="button" onClick={() => setConfirmRemove(true)} className="t2-btn focus-ring" data-kind="danger">
+                ลบออกจากห้อง
               </button>
             </div>
           </section>
@@ -508,6 +540,22 @@ export function StudentReportClient({
       ) : !error ? (
         <p className="t2-empty">เลือกนักเรียนเพื่อดูรายงาน</p>
       ) : null}
+
+      <Dialog
+        open={confirmRemove}
+        onClose={() => setConfirmRemove(false)}
+        title={`ลบ ${current?.nickname ?? 'นักเรียนคนนี้'} ออกจากห้อง?`}
+        description="งาน ดาว และคะแนนของคนนี้จะหายทั้งหมด กู้คืนไม่ได้ ใช้กับชื่อที่สมัครผิดหรือสมัครซ้ำ"
+      >
+        <div className="flex flex-wrap justify-end gap-2">
+          <button type="button" onClick={() => setConfirmRemove(false)} className="t2-btn focus-ring">
+            ยกเลิก
+          </button>
+          <button type="button" disabled={removing} onClick={() => void remove()} className="t2-btn focus-ring" data-kind="dangerfill">
+            {removing ? 'กำลังลบ' : 'ลบถาวร'}
+          </button>
+        </div>
+      </Dialog>
     </div>
   )
 }

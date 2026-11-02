@@ -10,6 +10,7 @@ import {
   listStudentOverrides,
   listStudentPhaseUnlocks,
   listTeacherNotes,
+  removeStudent,
   teacherAddNote,
   teacherAllowSkip,
   teacherForcePass,
@@ -212,4 +213,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, note: row })
     }
   }
+}
+
+const RemoveSchema = z.object({ studentId, classroomId: z.string().uuid() })
+
+/**
+ * ครูลบนักเรียนออกจากห้อง (สมัครชื่อผิด สมัครซ้ำ) — หน้าจอถามยืนยันก่อนส่งมาเสมอ
+ * removeStudent ตรวจว่าห้องเป็นของครูคนนี้และนักเรียนอยู่ห้องนั้นใน DELETE เดียวกัน
+ */
+export async function DELETE(request: Request) {
+  const session = await readTeacherSession()
+  if (!session) return unauthorized()
+
+  const parsed = RemoveSchema.safeParse(await readJsonBody(request))
+  if (!parsed.success) return errorResponse('bad-request', 'ต้องส่ง studentId และ classroomId')
+
+  const row = await removeStudent(session.teacherId, parsed.data.classroomId, parsed.data.studentId)
+  if (!row) return errorResponse('not-found', NOT_FOUND, 404)
+  return NextResponse.json({ ok: true, removed: { id: row.id, nickname: row.nickname } })
 }

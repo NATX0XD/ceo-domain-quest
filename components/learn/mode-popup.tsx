@@ -94,7 +94,8 @@ export function ModePopup({
   const pickedInfo = MODES.find((m) => m.id === picked)
 
   const drawer = presentation === 'drawer'
-  const officialM1 = drawer && missionNo === '1'
+  // ทุกภารกิจใช้กรอบภาพทางการเดียวกัน ข้อความเฉพาะภารกิจวางเป็นข้อความสดทับ
+  const officialM1 = drawer
 
   return (
     <motion.div
@@ -340,10 +341,18 @@ function OfficialModeArtwork({
   onClose,
 }: Omit<ModePopupProps, 'presentation' | 'reason'>) {
   return (
-    <div className="relative aspect-[1122/1402] w-full max-w-[720px] select-none" aria-label={`เลือกวิธีเรียนสำหรับภารกิจที่ ${missionNo}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- ภาพคอมโพสิตทางการจาก UI/ */}
-      <img src="/ui/mode/official-popup.webp" alt="" aria-hidden="true" draggable={false} className="absolute inset-0 size-full object-contain" />
-      <h2 className="sr-only">{title}</h2>
+    <div className="relative aspect-[1122/1402] w-full max-w-[720px] select-none [container-type:inline-size]" aria-label={`เลือกวิธีเรียนสำหรับภารกิจที่ ${missionNo}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- ภาพทางการจาก UI/ ที่ลบข้อความเฉพาะภารกิจ 1 ออกแล้ว */}
+      <img src="/ui/mode/official-popup-blank.webp" alt="" aria-hidden="true" draggable={false} className="absolute inset-0 size-full object-contain" />
+      <p aria-hidden="true" className="absolute left-[53.7%] top-[17%] grid h-[9.3%] w-[39.6%] place-items-center text-center text-[3.3cqw] font-extrabold leading-[1.3] text-[#2d1a5e]">
+        <span>เลือกวิธีเรียนที่ถนัด<br />แล้วไปลุยภารกิจที่ {missionNo} กันเลย!</span>
+      </p>
+      <p aria-hidden="true" className="absolute left-[37.3%] top-[35.9%] grid h-[4.8%] w-[25.6%] place-items-center text-[3.6cqw] font-extrabold text-white [text-shadow:0_1px_0_#15803d]">
+        ภารกิจที่ {missionNo}
+      </p>
+      <h2 id="mode-popup-title" className="absolute left-[18.9%] top-[41.7%] grid h-[7.6%] w-[62.2%] place-items-center text-center text-[5.2cqw] font-extrabold leading-tight text-balance text-[#2a1458]">
+        {title}
+      </h2>
       <button type="button" onClick={onClose} aria-label="ปิดและกลับไปแผนที่" className="absolute right-[3.2%] top-[34%] size-[10%] rounded-full bg-transparent" style={{ background: 'transparent', border: 0 }} />
       <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="absolute inset-x-[6.5%] top-[55%] grid h-[28%] grid-cols-3 gap-[1.5%]">
         {MODES.map((mode) => {
@@ -374,10 +383,10 @@ function OfficialModeArtwork({
         onClick={onStart}
         disabled={!picked || busy}
         aria-label={picked ? `เริ่มภารกิจที่ ${missionNo} แบบ${MODES.find((m) => m.id === picked)?.title}` : 'เลือกวิธีเรียนก่อน'}
-        className="absolute inset-x-[6.5%] bottom-[4%] h-[10%] rounded-full bg-transparent text-transparent outline-none focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/70 disabled:cursor-not-allowed"
+        className="absolute inset-x-[6.5%] bottom-[4%] h-[10%] rounded-full bg-transparent text-[4.6cqw] font-extrabold text-white outline-none [text-shadow:0_2px_0_#c2410c] focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/70 disabled:cursor-not-allowed"
         style={{ background: 'transparent', border: 0 }}
       >
-        {busy ? 'กำลังบันทึก' : 'เริ่มภารกิจ'}
+        {busy ? 'กำลังบันทึก' : `เริ่มภารกิจที่ ${missionNo} →`}
       </button>
     </div>
   )

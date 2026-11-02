@@ -719,6 +719,30 @@ access token ของ Supabase **ไม่ถูกส่งกลับไป�
         ...failures([400, ['bad-request']], [401, ['unauthorized']], [404, ['not-found']]),
       },
     }),
+    delete: op({
+      id: 'teacherStudentRemove',
+      summary: 'ลบนักเรียนรายคนออกจากห้อง (ลบจริง)',
+      tags: [TEACHER],
+      security: TEACHER_ONLY,
+      description: `
+⚠️ **ลบจริง ไม่ใช่ซ่อน** ใช้กับชื่อที่สมัครผิดหรือสมัครซ้ำ หน้าจอครูถามยืนยันก่อนส่งเสมอ
+ตรวจว่าห้องเป็นของครูคนนี้และนักเรียนอยู่ห้องนั้นในคำสั่งเดียวกัน ไม่ใช่ = \`404\`
+`,
+      requestBody: jsonBody(
+        obj(
+          {
+            studentId: uuid('นักเรียนที่จะลบ', FAKE.studentId),
+            classroomId: uuid('ห้องของนักเรียน', FAKE.classroomId),
+          },
+          { required: ['studentId', 'classroomId'] },
+        ),
+        { studentId: FAKE.studentId, classroomId: FAKE.classroomId },
+      ),
+      responses: {
+        ...ok('ลบแล้ว', obj({ ok: bool('สำเร็จ'), removed: obj({ id: uuid('นักเรียนที่ลบ'), nickname: str('ชื่อเล่น') }) })),
+        ...failures([400, ['bad-request']], [401, ['unauthorized']], [404, ['not-found']]),
+      },
+    }),
   },
 
   '/api/teacher/confirm-score': {
