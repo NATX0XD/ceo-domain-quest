@@ -405,7 +405,7 @@ export function CardSortGame({
               exit={reduce ? undefined : { height: 0, opacity: 0 }}
             >
               <LightbulbIcon width={20} height={20} aria-hidden />
-              ลองดูว่าการ์ดไหนพูดถึง <b>ชื่อ</b> และใบไหนพูดถึง <b>ระบบค้นหาที่อยู่</b> ครับ
+              <span>ลองดูว่าการ์ดไหนพูดถึง <b>ชื่อ</b> และใบไหนพูดถึง <b>ระบบค้นหาที่อยู่</b> ครับ</span>
             </motion.p>
           ) : null}
         </AnimatePresence>
