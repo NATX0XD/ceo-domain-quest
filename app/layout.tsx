@@ -3,6 +3,7 @@ import { Mitr, Noto_Sans_Thai } from 'next/font/google'
 import './globals.css'
 import './kit2.css'
 import { PRODUCT_NAME_FULL } from '@/components/product'
+import { CloudCurtain } from '@/components/cloud-curtain/cloud-curtain'
 
 const notoSansThai = Noto_Sans_Thai({
   subsets: ['thai', 'latin'],
@@ -46,7 +47,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="th" className={`${notoSansThai.variable} ${mitr.variable}`}>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        {children}
+        <CloudCurtain />
+      </body>
     </html>
   )
 }

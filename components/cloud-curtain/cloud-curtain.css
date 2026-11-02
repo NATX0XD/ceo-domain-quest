@@ -1,0 +1,197 @@
+/* ม่านเมฆตอนเปลี่ยนหน้า — เมฆสองฝั่งเลื่อนเข้ามาปิด แล้วแยกออกเมื่อหน้าใหม่พร้อม */
+.cc-root {
+  --cc-puff: min(26vh, 40vw);
+  --cc-close: 480ms;
+  --cc-open: 520ms;
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  overflow: hidden;
+  pointer-events: auto;
+  contain: strict;
+}
+.cc-root[data-phase='opening'] {
+  pointer-events: none;
+}
+
+.cc-bank {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /* ขอบเมฆสองฝั่งซ้อนกันราวครึ่งรัศมีก้อน — เห็นขอบฟูทั้งสองฝั่งตรงกลางจอ ไม่มีช่องโหว่ */
+  width: calc(50% - var(--cc-puff) * 0.22);
+  will-change: transform;
+}
+.cc-bank-left {
+  left: 0;
+}
+.cc-bank-right {
+  right: 0;
+}
+.cc-tier {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.cc-bank-left .cc-tier {
+  left: 0;
+}
+.cc-bank-right .cc-tier {
+  right: 0;
+}
+.cc-back {
+  width: 100%;
+  --cc-fill: #fdf0dc;
+  --cc-shadow: #edd3ab;
+  --k: 1;
+}
+.cc-front {
+  width: 52%;
+  --cc-fill: #fffdf8;
+  --cc-shadow: #f4e3c6;
+  --k: 0.78;
+}
+.cc-layer {
+  position: absolute;
+  inset: 0;
+}
+/* ตัวเมฆ = สี่เหลี่ยมพื้น + ก้อนกลมสีเดียวกันเรียงตามขอบ จึงรวมเป็นขอบฟูก้อนเดียว */
+.cc-main,
+.cc-main .cc-puff {
+  background: var(--cc-fill);
+}
+/* เงาครีมอุ่นใต้ขอบเมฆ เหมือนเมฆในฉากเกาะ */
+.cc-shade,
+.cc-shade .cc-puff {
+  background: var(--cc-shadow);
+}
+.cc-shade {
+  translate: 0 11px;
+}
+.cc-puff {
+  --d: calc(var(--cc-puff) * var(--s, 1) * var(--k, 1));
+  position: absolute;
+  width: var(--d);
+  height: var(--d);
+  margin-top: calc(var(--d) / -2);
+  border-radius: 50%;
+}
+.cc-bank-left .cc-puff {
+  left: calc(100% - var(--d) / 2 + var(--d) * var(--o, 0));
+}
+.cc-bank-right .cc-puff {
+  right: calc(100% - var(--d) / 2 + var(--d) * var(--o, 0));
+}
+
+.cc-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 3px 0 rgba(196, 150, 90, 0.35);
+  color: #7a4a22;
+  font-family: var(--font-display, sans-serif);
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+}
+.cc-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+.cc-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f2a03d;
+  animation: cc-dot 900ms ease-in-out infinite;
+}
+.cc-dots i:nth-child(2) {
+  animation-delay: 150ms;
+}
+.cc-dots i:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+/* ---- จังหวะ ---- */
+.cc-root[data-phase='closing'] .cc-bank-left {
+  animation: cc-in-left var(--cc-close) cubic-bezier(0.22, 0.9, 0.3, 1.08) both;
+}
+.cc-root[data-phase='closing'] .cc-bank-right {
+  animation: cc-in-right var(--cc-close) cubic-bezier(0.22, 0.9, 0.3, 1.08) both;
+}
+.cc-root[data-phase='closing'] .cc-label {
+  animation: cc-fade-in 200ms ease-out var(--cc-close) both;
+}
+.cc-root[data-phase='closed'] .cc-label {
+  opacity: 1;
+}
+.cc-root[data-phase='opening'] .cc-bank-left {
+  animation: cc-in-left var(--cc-open) cubic-bezier(0.55, 0, 0.75, 0.4) reverse both;
+}
+.cc-root[data-phase='opening'] .cc-bank-right {
+  animation: cc-in-right var(--cc-open) cubic-bezier(0.55, 0, 0.75, 0.4) reverse both;
+}
+.cc-root[data-phase='opening'] .cc-label {
+  animation: cc-fade-in 140ms ease-in reverse both;
+}
+
+@keyframes cc-in-left {
+  from {
+    transform: translateX(-135%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes cc-in-right {
+  from {
+    transform: translateX(135%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes cc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes cc-dot {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-root .cc-bank-left,
+  .cc-root .cc-bank-right {
+    animation: none !important;
+    transform: none;
+  }
+  .cc-root[data-phase='closing'] {
+    animation: cc-fade-in 200ms ease-out both;
+  }
+  .cc-root[data-phase='opening'] {
+    animation: cc-fade-in 220ms ease-in reverse both;
+  }
+  .cc-dots i {
+    animation: none;
+  }
+}
