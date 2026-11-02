@@ -20,7 +20,7 @@
 .map-artboard {
   flex: 0 0 auto;
   min-height: 0;
-  width: min(100cqw, calc((100cqh - 58px) * 941 / 1672));
+  width: min(100cqw, calc((100cqh - 70px) * 941 / 1672));
   aspect-ratio: 941 / 1672;
 }
 
