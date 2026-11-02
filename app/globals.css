@@ -1153,6 +1153,123 @@ select {
   .student-stage-prop { animation: none; }
 }
 
+/* --------------------------------------------------------------------------
+   Shared game skin
+   One set of primitives keeps the student routes, join flow, and teacher entry
+   screens in the same island world. Page-specific content stays HTML/React;
+   this layer only supplies the brand material, depth, and tactile states.
+   -------------------------------------------------------------------------- */
+.game-button {
+  display: inline-flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  border: 3px solid #fff1d6;
+  border-radius: 1.15rem;
+  padding: .75rem 1.35rem;
+  font-family: var(--font-display), var(--font-noto-sans-thai), sans-serif;
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.25;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 7px 0 #4a1f0a, inset 0 3px 0 rgb(255 255 255 / .82), inset 0 -4px 0 rgb(74 31 10 / .2), 0 12px 18px rgb(74 31 10 / .16);
+  text-shadow: 0 1px 0 rgb(255 241 214 / .75);
+  transition: filter .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+.game-button:hover:not(:disabled) { filter: saturate(1.08) brightness(1.04); transform: translateY(-1px); }
+.game-button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 3px 0 #4a1f0a, inset 0 2px 0 rgb(255 255 255 / .6); }
+.game-button:disabled { cursor: not-allowed; filter: saturate(.72) brightness(.88); opacity: 1; }
+.game-button--primary { color: #4a1f0a; background: linear-gradient(180deg, #ffc51b 0%, #ff7411 100%); }
+.game-button--secondary {
+  color: #5a2812;
+  background: linear-gradient(180deg, #fff8e7 0%, #ffdca8 100%);
+  border-color: #fff8e7;
+  box-shadow: 0 5px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .8), 0 8px 14px rgb(74 31 10 / .12);
+  text-shadow: none;
+}
+.game-button--secondary:active:not(:disabled) { box-shadow: 0 2px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .6); }
+
+.cream-card {
+  border: 2px solid rgb(107 45 18 / .36);
+  border-radius: 1.5rem;
+  background: rgb(255 241 214 / .96);
+  box-shadow: 0 6px 0 rgb(107 45 18 / .2), 0 16px 32px rgb(50 31 56 / .16), inset 0 1px 0 rgb(255 255 255 / .8);
+}
+.wood-sign {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  width: min(100%, 24rem);
+  margin-inline: auto;
+  padding: .8rem 1.25rem 1rem;
+  border: 3px solid #633218;
+  border-radius: 1.15rem;
+  background: linear-gradient(180deg, #bb6a2f 0%, #8b4a21 100%);
+  color: #fff7df;
+  box-shadow: 0 6px 0 #4a1f0a, inset 0 2px 0 rgb(255 215 147 / .58), inset 0 -5px 0 rgb(62 27 10 / .2), 0 14px 24px rgb(62 27 10 / .2);
+  transform: rotate(-1deg);
+}
+.wood-sign__rope { position: absolute; top: -.6rem; width: 58%; height: .75rem; border-top: 3px solid #6b2d12; opacity: .72; }
+.wood-sign__title { margin: 0; color: inherit; font-family: var(--font-display), sans-serif; font-size: clamp(1.35rem, 5vw, 1.9rem); font-weight: 800; line-height: 1.25; text-shadow: 0 2px 0 #421a0a; }
+.wood-sign__detail { margin-top: .2rem; font-size: .9rem; font-weight: 700; opacity: .94; }
+.themed-page { min-height: 100dvh; background: linear-gradient(180deg, rgb(20 91 144 / .18), rgb(78 43 87 / .3)), url('/landing/sea-bg.webp') center / cover; }
+
+/* Student routes that do not have their own scene art still inherit the island.
+   Existing mission/map/dome scenes remain more specific and keep their artwork. */
+.student-world.media-shell:not(:has(.map-page)):not(:has(.media-dome-shell)) .app-shell-main {
+  background: linear-gradient(180deg, rgb(32 169 243 / .12), rgb(255 241 214 / .82)), url('/landing/sea-bg.webp') center / cover;
+}
+.student-world .app-shell-header,
+.student-world .app-shell-footer {
+  background: rgb(255 241 214 / .9);
+  border-color: rgb(107 45 18 / .24);
+  box-shadow: 0 4px 16px rgb(74 31 10 / .1);
+}
+.student-world .card-soft,
+.student-world .card-work,
+.student-world .card-tap,
+.student-world .cream-card,
+.student-world .bg-surface-raised[class*='rounded'],
+.student-world .bg-brand-50[class*='rounded'],
+.student-world .bg-quest-50[class*='rounded'],
+.student-world .bg-spark-50[class*='rounded'],
+.student-world .bg-reward-100[class*='rounded'] {
+  border: 2px solid rgb(107 45 18 / .22);
+  background: rgb(255 241 214 / .95);
+  box-shadow: 0 5px 0 rgb(107 45 18 / .13), 0 12px 22px rgb(74 31 10 / .1);
+}
+.student-world .page-heading-sign,
+.student-world .app-shell-header h1:not(.gf-sign h1) {
+  display: inline-block;
+  max-width: 100%;
+  padding: .25rem .85rem .35rem;
+  border: 2px solid #633218;
+  border-radius: .8rem;
+  background: linear-gradient(180deg, #bb6a2f, #8b4a21);
+  color: #fff7df;
+  text-shadow: 0 2px 0 #421a0a;
+  box-shadow: 0 4px 0 #4a1f0a, inset 0 2px 0 rgb(255 215 147 / .48);
+}
+.student-world .btn-quest,
+.student-world .btn-base[class*='bg-brand-600'],
+.student-world .btn-base[class*='bg-brand-700'] {
+  border: 3px solid #fff1d6;
+  border-radius: 1.15rem;
+  background-image: linear-gradient(180deg, #ffc51b 0%, #ff7411 100%);
+  color: #4a1f0a;
+  box-shadow: 0 7px 0 #4a1f0a, inset 0 3px 0 rgb(255 255 255 / .82), inset 0 -4px 0 rgb(74 31 10 / .2);
+  text-shadow: 0 1px 0 rgb(255 241 214 / .75);
+}
+.student-world .btn-base[class*='bg-surface-raised'],
+.student-world .btn-base[class*='bg-brand-100'] {
+  border: 2px solid #fff1d6;
+  background: linear-gradient(180deg, #fff8e7, #ffdca8);
+  color: #5a2812;
+  box-shadow: 0 4px 0 #6b2d12;
+}
+
 /* Glossy 3D student-media skin. The art is decorative; live copy and controls stay HTML. */
 .student-display,
 .student-display h1,
@@ -1819,3 +1936,84 @@ select {
   font-weight: 800;
 }
 .map-test-strip { padding: .625rem 1rem .25rem; background: #20a9f3; }
+
+/* Teacher device recommendation — helpful, dismissible, never a route blocker. */
+.teacher-device-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(31 21 63 / .48);
+  backdrop-filter: blur(8px);
+}
+.teacher-device-dialog {
+  width: min(100%, 34rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  border: 3px solid #633218;
+  border-radius: 1.6rem;
+  background: #fff1d6;
+  box-shadow: 0 8px 0 #4a1f0a, 0 24px 50px rgb(24 17 55 / .35), inset 0 2px 0 rgb(255 255 255 / .84);
+  color: #4a1f0a;
+}
+.teacher-device-art { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-bottom: 2px solid rgb(107 45 18 / .22); }
+.teacher-device-copy { padding: 1rem 1.15rem .25rem; text-align: center; }
+.teacher-device-kicker { margin: 0 0 .2rem; color: #6c43bb; font-size: .9rem; font-weight: 800; }
+.teacher-device-copy h2 { margin: 0; font-family: var(--font-display), sans-serif; font-size: clamp(1.45rem, 5vw, 2rem); line-height: 1.25; }
+.teacher-device-copy p:last-child { margin: .5rem auto 0; max-width: 29rem; font-size: 1rem; font-weight: 600; line-height: 1.65; }
+.teacher-device-actions { display: grid; gap: .75rem; padding: .9rem 1.15rem 1.15rem; }
+.teacher-device-actions .game-button { width: 100%; }
+.teacher-device-toast { margin: -.55rem 1.15rem 1rem; border-radius: .8rem; background: #eadfff; color: #3b216f; padding: .65rem .8rem; text-align: center; font-size: .88rem; font-weight: 700; }
+@media (min-width: 1024px) { .teacher-device-overlay { display: none; } }
+@media (max-width: 390px) {
+  .teacher-device-overlay { padding: .65rem; }
+  .teacher-device-dialog { border-radius: 1.25rem; }
+  .teacher-device-copy { padding-inline: .9rem; }
+  .teacher-device-actions { padding-inline: .9rem; }
+}
+
+/* The remaining student routes use AppShell directly (home/result/setup/etc.).
+   Give them the exact same material tokens without requiring page-by-page rewrites. */
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .app-shell-main {
+  background: linear-gradient(180deg, rgb(32 169 243 / .12), rgb(255 241 214 / .82)), url('/landing/sea-bg.webp') center / cover;
+}
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .app-shell-header,
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .app-shell-footer {
+  background: rgb(255 241 214 / .9);
+  border-color: rgb(107 45 18 / .24);
+  box-shadow: 0 4px 16px rgb(74 31 10 / .1);
+}
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .app-shell-header h1 {
+  display: inline-block;
+  max-width: 100%;
+  padding: .25rem .85rem .35rem;
+  border: 2px solid #633218;
+  border-radius: .8rem;
+  background: linear-gradient(180deg, #bb6a2f, #8b4a21);
+  color: #fff7df;
+  text-shadow: 0 2px 0 #421a0a;
+  box-shadow: 0 4px 0 #4a1f0a, inset 0 2px 0 rgb(255 215 147 / .48);
+}
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .card-soft,
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .card-work,
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .bg-surface-raised[class*='rounded'],
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .bg-brand-50[class*='rounded'],
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .bg-quest-50[class*='rounded'],
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .bg-spark-50[class*='rounded'],
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .bg-reward-100[class*='rounded'],
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .bg-white[class*='rounded'] {
+  border: 2px solid rgb(107 45 18 / .22);
+  background: rgb(255 241 214 / .95);
+  box-shadow: 0 5px 0 rgb(107 45 18 / .13), 0 12px 22px rgb(74 31 10 / .1);
+}
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .btn-quest,
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .btn-base[class*='bg-brand-600'],
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .btn-base[class*='bg-brand-700'] {
+  border: 3px solid #fff1d6;
+  border-radius: 1.15rem;
+  background-image: linear-gradient(180deg, #ffc51b 0%, #ff7411 100%);
+  color: #4a1f0a;
+  box-shadow: 0 7px 0 #4a1f0a, inset 0 3px 0 rgb(255 255 255 / .82), inset 0 -4px 0 rgb(74 31 10 / .2);
+}
