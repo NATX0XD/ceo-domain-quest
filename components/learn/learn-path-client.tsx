@@ -23,12 +23,10 @@ import {
   DomeAvatar,
   DomeBoardFrame,
   HomeIcon,
-  DomeSays,
   PauseIcon,
   PlayIcon,
   ProgressBar,
   RefreshIcon,
-  StarIcon,
   cn,
 } from '@/components/ui'
 import {
@@ -43,9 +41,10 @@ import { LearnScenePanel } from './learn-path-scene'
 import { LearnQuestions } from './learn-path-questions'
 import { HelpPanel, ResultPanel, weakest } from './learn-path-result'
 import { CardSortGame } from './card-sort-game'
+import { LearnDoneScreen } from './learn-done'
 import { AppScreen, GlassCard, type MenuItem } from './app/app-screen'
 import { ChatReader, QuickChip } from './app/chat-reader'
-import { Confetti, CountUp, Float, Shake, buzz } from './app/fx'
+import { Confetti, Float, Shake, buzz } from './app/fx'
 import { themeFor } from './app/theme'
 
 /**
@@ -60,6 +59,11 @@ import { themeFor } from './app/theme'
 type Step = 'intro' | 'result' | 'watch' | 'read' | 'questions' | 'do' | 'done'
 
 const STAGES = ['เลือกวิธี', 'เรียน', 'สรุป'] as const
+
+/** สรุปสั้น ๆ บนจอเรียนจบ (เฉพาะภารกิจที่มีข้อสรุปกลาง) */
+const LEARN_RECAP: Record<string, string[]> = {
+  m1: ['โดเมนเนม = ชื่อที่ใช้ระบุและเข้าเว็บไซต์ จำง่ายกว่าเลข IP', 'DNS = ระบบที่ค้นหาเลข IP จากชื่อโดเมน ให้เบราว์เซอร์ไปถูกที่'],
+}
 
 function stageOf(step: Step): number {
   if (step === 'intro' || step === 'result') return 0
@@ -469,9 +473,9 @@ export function LearnPathClient({
         size="lg"
         fullWidth
         onClick={() => go('done')}
-        leadingIcon={<CheckIcon width={22} height={22} />}
+        trailingIcon={<ChevronRightIcon width={22} height={22} />}
       >
-        ดูสรุปผลการเรียน
+        ไปต่อ
       </Button>
     ) : step === 'questions' ? (
       qPhase === 'ask' ? (
@@ -541,7 +545,7 @@ export function LearnPathClient({
         onClick={() => router.refresh()}
         trailingIcon={<ChevronRightIcon width={22} height={22} />}
       >
-        ไปทำภารกิจ
+        ไปด่านหลัก
       </Button>
     )
   }
@@ -956,6 +960,7 @@ export function LearnPathClient({
                   onSubmit={submitDo}
                   onChangeMode={() => go('result')}
                   onLater={() => router.push('/home')}
+                  onPassed={() => go('done')}
                 />
               ) : path.do.kind === 'counter' && counterData ? (
                 <CounterGame
@@ -1009,33 +1014,12 @@ export function LearnPathClient({
           ) : null}
 
           {step === 'done' && done ? (
-            <>
-              <div className="flex flex-col items-center pt-2">
-                <Float>
-                  <DomeAvatar mood="celebrate" size={120} decorative />
-                </Float>
-              </div>
-              <DomeSays mood="celebrate">
-                เก่งมาก เรียนแบบ{MODE_LABEL[done.mode]}จบแล้ว ได้ {done.score} คะแนน พร้อมลุยภารกิจจริงแล้ว
-              </DomeSays>
-              <GlassCard dark={dark}>
-                <p className={cn('flex items-center gap-2 text-body-lg font-bold', ink)}>
-                  <CheckIcon width={24} height={24} aria-hidden className="text-quest-500" />
-                  ผ่านการเตรียมตัวแล้ว
-                </p>
-                <p className={cn('mt-2 flex items-baseline gap-2 text-title font-extrabold', ink)}>
-                  <StarIcon width={28} height={28} aria-hidden className="self-center text-reward-500" />
-                  <CountUp value={done.score} />
-                  <span className={cn('text-body font-bold', inkMuted)}>/ 100</span>
-                </p>
-                <dl className="mt-3 grid grid-cols-2 gap-2 text-body">
-                  <dt className={inkMuted}>วิธีเรียน</dt>
-                  <dd className={cn('font-bold', ink)}>{MODE_LABEL[done.mode]}</dd>
-                  <dt className={inkMuted}>คะแนน</dt>
-                  <dd className={cn('font-bold', ink)}>{done.score} / 100</dd>
-                </dl>
-              </GlassCard>
-            </>
+            <LearnDoneScreen
+              missionNo={missionId.replace(/\D/g, '') || missionId}
+              modeLabel={MODE_LABEL[done.mode]}
+              score={done.score}
+              recap={LEARN_RECAP[missionId]}
+            />
           ) : null}
         </motion.div>
       </AnimatePresence>

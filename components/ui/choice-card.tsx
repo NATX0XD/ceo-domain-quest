@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from './cn'
 import { CheckIcon, AlertIcon, LockIcon } from './icons'
+import './choice-card.css'
 
 /**
  * การ์ดตัวเลือกที่กดเลือกได้ — ใช้กับคำถามปรนัย การเลือกนามสกุลโดเมน
@@ -31,6 +32,12 @@ export type ChoiceCardProps = {
   onSelect?: () => void
   /** ข้อความอ่านออกเสียงแทน label เมื่อ label ไม่ใช่ข้อความล้วน */
   ariaLabel?: string
+  /**
+   * `row` (ค่าตั้งต้น) ไอคอนซ้าย ข้อความกลาง วงเช็กขวา
+   * `tile` ไอคอนบน ข้อความกลางใต้ไอคอน เช็กมุมขวาบน — ใช้ในตาราง 2 คอลัมน์
+   * ที่การ์ดแคบ (แบบ row ในการ์ดแคบทำให้คำไทยตกบรรทัดทีละคำ)
+   */
+  layout?: 'row' | 'tile'
   className?: string
 }
 
@@ -58,8 +65,10 @@ export function ChoiceCard({
   disabled = false,
   onSelect,
   ariaLabel,
+  layout = 'row',
   className,
 }: ChoiceCardProps) {
+  const tile = layout === 'tile'
   const isLocked = state === 'locked' || disabled
   const spokenBase = ariaLabel ?? (typeof label === 'string' ? label : undefined)
 
@@ -71,7 +80,10 @@ export function ChoiceCard({
       aria-pressed={selected}
       aria-label={spokenBase ? `${spokenBase}${STATE_SPOKEN[state]}` : undefined}
       className={cn(
-        'game-choice-card flex w-full min-h-14 cursor-pointer items-center gap-3 rounded-xl p-4 text-left',
+        'game-choice-card relative flex w-full min-h-14 cursor-pointer rounded-xl',
+        tile
+          ? 'game-choice-card--tile flex-col items-center justify-start gap-2 px-2 pt-3 pb-3 text-center'
+          : 'items-center gap-3 p-4 text-left',
         'ring-2 ring-inset shadow-soft-1',
         'transition-[background-color,box-shadow,transform] duration-200 ease-[var(--ease-soft)]',
         'focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus',
@@ -85,7 +97,8 @@ export function ChoiceCard({
         <span
           aria-hidden="true"
           className={cn(
-            'grid size-11 shrink-0 place-items-center rounded-full text-body-lg font-bold',
+            'choice-card-marker grid shrink-0 place-items-center rounded-full text-body-lg font-bold',
+            tile ? 'size-16' : 'size-11',
             selected && state === 'idle'
               ? 'bg-brand-600 text-ink-onbrand'
               : state === 'correct'
@@ -99,14 +112,21 @@ export function ChoiceCard({
         </span>
       ) : null}
 
-      <span className="min-w-0 flex-1">
-        <span className="block text-body font-semibold text-pretty text-ink">{label}</span>
+      <span className={cn('choice-card-body min-w-0', tile ? 'w-full' : 'flex-1')}>
+        <span
+          className={cn(
+            'block font-semibold text-ink',
+            tile ? 'text-label leading-snug text-balance' : 'text-body text-pretty',
+          )}
+        >
+          {label}
+        </span>
         {description ? (
           <span className="choice-card-description mt-1 block text-label text-ink-muted">{description}</span>
         ) : null}
       </span>
 
-      <span aria-hidden="true" className="shrink-0">
+      <span aria-hidden="true" className={cn('choice-card-check shrink-0', tile && 'absolute top-2 right-2')}>
         {state === 'correct' ? (
           <CheckIcon className="text-quest-700" width={24} height={24} />
         ) : state === 'wrong' ? (

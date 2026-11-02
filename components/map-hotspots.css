@@ -1,0 +1,124 @@
+/* แผนที่: ฉลองเกาะที่เพิ่งผ่าน + ชี้เกาะถัดไป (map-hotspots.tsx) — แยกจาก globals.css */
+.map-done-ring,
+.map-next-ring {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 28%;
+  pointer-events: none;
+}
+.map-done-ring {
+  place-items: start start;
+  box-shadow: 0 0 0 4px rgb(80 220 130 / .9), 0 0 30px rgb(80 220 130 / .75);
+  background: rgb(80 220 130 / .14);
+  animation: map-done-glow 1.6s ease-in-out 3;
+}
+@keyframes map-done-glow {
+  0%, 100% { box-shadow: 0 0 0 4px rgb(80 220 130 / .9), 0 0 30px rgb(80 220 130 / .75); }
+  50% { box-shadow: 0 0 0 7px rgb(80 220 130 / .6), 0 0 46px rgb(80 220 130 / .9); }
+}
+.map-done-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 3px solid #fff;
+  border-radius: 999px;
+  background: #1f9d55;
+  padding: 4px 12px 4px 8px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  box-shadow: 0 4px 0 #0f5132, 0 8px 16px rgb(0 0 0 / .25);
+  margin: -10px 0 0 -4px;
+}
+.map-next-ring {
+  box-shadow: 0 0 0 4px rgb(255 214 61 / .95), 0 0 28px rgb(255 180 30 / .8);
+  background: rgb(255 229 92 / .14);
+  animation: map-next-pulse 1.3s ease-in-out infinite;
+}
+@keyframes map-next-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 4px rgb(255 214 61 / .95), 0 0 24px rgb(255 180 30 / .7); }
+  50% { transform: scale(1.03); box-shadow: 0 0 0 7px rgb(255 214 61 / .7), 0 0 40px rgb(255 180 30 / .95); }
+}
+.map-next-tag {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  border: 3px solid #fff;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff9a3d, #f26b1d);
+  padding: 4px 12px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 4px 0 #c24f0d, 0 6px 14px rgb(0 0 0 / .25);
+  animation: map-next-bob 1.3s ease-in-out infinite;
+}
+@keyframes map-next-bob {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -4px); }
+}
+
+.map-celebrate {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: max(12px, env(safe-area-inset-top));
+  z-index: 50;
+  display: flex;
+  width: min(94vw, 460px);
+  margin-inline: auto;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  border: 3px solid #fff1d6;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fff6d2, #ffe0a8);
+  padding: 8px 40px 8px 8px;
+  color: #3a1a6e;
+  box-shadow: 0 6px 0 #6b2d12, 0 14px 28px rgb(0 0 0 / .3);
+}
+.map-celebrate-dome { width: 72px; height: auto; flex-shrink: 0; }
+.map-celebrate-copy { min-width: 0; }
+.map-celebrate-kicker { font-size: 18px; font-weight: 800; line-height: 1.2; }
+.map-celebrate-stars { display: flex; gap: 2px; margin-top: 2px; color: #f5b70a; }
+.map-celebrate-stars svg { filter: drop-shadow(0 1px 0 #a86b00); }
+.map-celebrate-next { margin-top: 2px; font-size: 14px; font-weight: 700; color: #6b2d12; line-height: 1.3; }
+.map-celebrate-close {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgb(255 255 255 / .7);
+  color: #6b2d12;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+.map-confetti { position: absolute; inset: 0; pointer-events: none; }
+.map-confetti i {
+  position: absolute;
+  top: -10px;
+  left: calc(var(--i) * 7%);
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
+  background: hsl(calc(var(--i) * 47) 90% 58%);
+  animation: map-confetti-fall 1.6s ease-in calc(var(--i) * 70ms) 2 both;
+}
+@keyframes map-confetti-fall {
+  from { transform: translateY(0) rotate(0); opacity: 1; }
+  to { transform: translateY(120px) rotate(420deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-done-ring, .map-next-ring, .map-next-tag, .map-confetti i { animation: none; }
+}
+
+/* ดาวของเกาะต้องอยู่เหนือวงแสง */
+.map-hotspot-layer .map-progress-badge { z-index: 2; }

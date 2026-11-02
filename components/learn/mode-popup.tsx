@@ -231,68 +231,16 @@ export function ModePopup({
           </div>
 
           <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
-            {MODES.map((m, i) => {
-              const on = picked === m.id
-              const rec = recommended === m.id
-              return (
-                <motion.button
-                  key={m.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  aria-label={`${m.title}${rec ? ' (แนะนำ)' : ''} ${m.lines.join(' ')}`}
-                  onClick={() => onPick(m.id)}
-                  initial={reduce ? false : { opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={reduce ? { duration: 0.01 } : { ...spring, delay: 0.2 + i * 0.06 }}
-                  whileTap={reduce ? undefined : { scale: 0.96 }}
-                  className="relative flex h-full min-w-0 flex-col items-center rounded-[20px] px-1 pb-2.5 pt-3.5 text-center outline-none transition-shadow focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/50"
-                  style={{
-                    backgroundColor: m.tint,
-                    boxShadow: on
-                      ? `0 0 0 3px ${m.ring}, 0 6px 14px rgba(40,20,80,0.2)`
-                      : '0 0 0 1.5px rgba(0,0,0,0.06), 0 3px 8px rgba(40,20,80,0.1)',
-                    color: m.text,
-                  }}
-                >
-                  {rec ? (
-                    <span
-                      className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-extrabold leading-none text-white shadow-sm"
-                      style={{ backgroundColor: '#f26b1d' }}
-                    >
-                      แนะนำ
-                    </span>
-                  ) : null}
-                  {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D ตัดจากดีไซน์ */}
-                  <span className="flex h-[clamp(52px,16vw,84px)] w-full items-center justify-center">
-                    <img
-                      src={m.icon}
-                      alt=""
-                      aria-hidden="true"
-                      draggable={false}
-                      className="h-full w-auto max-w-full select-none object-contain"
-                      style={{ WebkitMaskImage: FADE_EDGES, maskImage: FADE_EDGES }}
-                    />
-                  </span>
-                  <span className="mt-0.5 font-display text-[clamp(18px,5.6vw,28px)] font-extrabold leading-tight">
-                    {m.title}
-                  </span>
-                  <span className="mt-0.5 min-h-[2.7em] text-[clamp(10px,2.9vw,14px)] font-medium leading-snug opacity-85">
-                    {m.lines[0]}
-                    <br />
-                    {m.lines[1]}
-                  </span>
-                  <span className="h-2 shrink-0" aria-hidden="true" />
-                  <span
-                    aria-hidden="true"
-                    className="mt-auto grid size-[clamp(22px,6.5vw,30px)] place-items-center rounded-full border-[3px] bg-white"
-                    style={{ borderColor: on ? m.ring : '#b9b4c4' }}
-                  >
-                    {on ? <span className="size-[55%] rounded-full" style={{ backgroundColor: m.ring }} /> : null}
-                  </span>
-                </motion.button>
-              )
-            })}
+            {MODES.map((m) => (
+              <ModeCard
+                key={m.id}
+                mode={m}
+                selected={picked === m.id}
+                dimmed={picked !== null && picked !== m.id}
+                recommended={recommended === m.id}
+                onPick={onPick}
+              />
+            ))}
           </div>
 
           {reason ? <p className="sr-only">{reason}</p> : null}
@@ -354,28 +302,20 @@ function OfficialModeArtwork({
         {title}
       </h2>
       <button type="button" onClick={onClose} aria-label="ปิดและกลับไปแผนที่" className="absolute right-[3.2%] top-[34%] size-[10%] rounded-full bg-transparent" style={{ background: 'transparent', border: 0 }} />
-      <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="absolute inset-x-[6.5%] top-[55%] grid h-[28%] grid-cols-3 gap-[1.5%]">
-        {MODES.map((mode) => {
-          const selected = picked === mode.id
-          const rec = recommended === mode.id
-          return (
-            <button
-              key={mode.id}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              aria-label={`${mode.title}${rec ? ' (แนะนำ)' : ''} ${mode.lines.join(' ')}`}
-              onClick={() => onPick(mode.id)}
-              className="relative rounded-[20%] bg-transparent outline-none focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/70"
-              style={{ background: 'transparent', border: 0 }}
-            >
-              {rec ? <span className="absolute -top-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#f26b1d] px-2 py-0.5 text-[clamp(9px,2.5vw,15px)] font-extrabold text-white shadow-sm">แนะนำ</span> : null}
-              <span aria-hidden="true" className={`absolute bottom-[4%] left-1/2 size-[11%] -translate-x-1/2 rounded-full border-[3px] border-[#8f8f8f] bg-white ${selected ? 'ring-4 ring-white/80' : ''}`}>
-                {selected ? <span className="absolute inset-[22%] rounded-full bg-[#7c4dd6]" /> : null}
-              </span>
-            </button>
-          )
-        })}
+      {/* ปิดการ์ดในภาพ (มีวงกลม radio ที่ดูเหมือนเลข 0) แล้ววางการ์ด HTML ที่เห็นชัดว่าเลือกอันไหนอยู่ */}
+      <div aria-hidden="true" className="absolute inset-x-[5.4%] top-[52.6%] h-[32%] rounded-[4cqw] bg-[#fdf6ea]" />
+      <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="absolute inset-x-[6.2%] top-[53.4%] grid h-[30.4%] grid-cols-3 gap-[2.2cqw]">
+        {MODES.map((mode) => (
+          <ModeCard
+            key={mode.id}
+            mode={mode}
+            selected={picked === mode.id}
+            dimmed={picked !== null && picked !== mode.id}
+            recommended={recommended === mode.id}
+            onPick={onPick}
+            scaled
+          />
+        ))}
       </div>
       {error ? <p role="alert" className="absolute inset-x-[12%] top-[84%] text-center text-[clamp(10px,2.8vw,16px)] font-bold text-[#b42318]">{error}</p> : null}
       <button
@@ -389,6 +329,102 @@ function OfficialModeArtwork({
         {busy ? 'กำลังบันทึก' : `เริ่มภารกิจที่ ${missionNo} →`}
       </button>
     </div>
+  )
+}
+
+type ModeInfo = (typeof MODES)[number]
+
+/** การ์ดวิธีเรียน — เลือกแล้วลอยขึ้น มีวงแสงสีของการ์ด + ป้ายติ๊ก ส่วนใบที่ไม่ได้เลือกจางลง */
+function ModeCard({
+  mode,
+  selected,
+  dimmed,
+  recommended,
+  onPick,
+  scaled = false,
+}: {
+  mode: ModeInfo
+  selected: boolean
+  dimmed: boolean
+  recommended: boolean
+  onPick: (m: LearnModeId) => void
+  /** อยู่บนภาพทางการ = ขนาดตัวอักษรตามความกว้างกรอบ (cqw) */
+  scaled?: boolean
+}) {
+  const reduce = useReducedMotion()
+  return (
+    <motion.button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      aria-label={`${mode.title}${recommended ? ' (แนะนำ)' : ''} ${mode.lines.join(' ')}${selected ? ' เลือกอยู่' : ''}`}
+      onClick={() => onPick(mode.id)}
+      animate={reduce ? undefined : { y: selected ? -5 : 0, scale: selected ? 1.03 : dimmed ? 0.96 : 1 }}
+      whileTap={reduce ? undefined : { scale: 0.95 }}
+      transition={{ type: 'spring', stiffness: 380, damping: 24 }}
+      className="relative flex h-full min-w-0 flex-col items-center rounded-[18px] border-0 px-1 pb-2 pt-3 text-center outline-none focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/60"
+      style={{
+        backgroundColor: mode.tint,
+        color: mode.text,
+        opacity: dimmed ? 0.62 : 1,
+        filter: dimmed ? 'saturate(0.55)' : undefined,
+        boxShadow: selected
+          ? `0 0 0 4px ${mode.ring}, 0 0 0 8px ${mode.ring}33, 0 14px 24px ${mode.ring}66`
+          : '0 0 0 1.5px rgba(60,40,20,0.10), 0 3px 8px rgba(40,20,80,0.10)',
+      }}
+    >
+      {recommended ? (
+        <span
+          className={`absolute -top-2.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#f26b1d] px-2 py-0.5 font-extrabold leading-none text-white shadow-sm ${scaled ? 'text-[2.4cqw]' : 'text-[11px]'}`}
+        >
+          แนะนำ
+        </span>
+      ) : null}
+      {selected ? (
+        <motion.span
+          aria-hidden="true"
+          initial={reduce ? false : { scale: 0, rotate: -40 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 18 }}
+          className={`absolute -right-2 -top-2 z-10 grid place-items-center rounded-full border-[3px] border-white text-white shadow-[0_3px_8px_rgba(0,0,0,0.25)] ${scaled ? 'size-[8cqw]' : 'size-8'}`}
+          style={{ backgroundColor: mode.ring }}
+        >
+          <svg viewBox="0 0 24 24" className="size-[62%]" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12.5l4.5 4.5L19 7.5" />
+          </svg>
+        </motion.span>
+      ) : null}
+      <span className={`flex w-full items-center justify-center ${scaled ? 'h-[40%]' : 'h-[clamp(52px,16vw,84px)]'}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D ตัดจากดีไซน์ */}
+        <img
+          src={mode.icon}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="h-full w-auto max-w-full select-none object-contain"
+          style={{ WebkitMaskImage: FADE_EDGES, maskImage: FADE_EDGES }}
+        />
+      </span>
+      <span className={`mt-0.5 font-display font-extrabold leading-tight ${scaled ? 'text-[5.6cqw]' : 'text-[clamp(18px,5.6vw,28px)]'}`}>
+        {mode.title}
+      </span>
+      <span className={`mt-0.5 font-medium leading-snug opacity-85 ${scaled ? 'text-[2.7cqw]' : 'text-[clamp(10px,2.9vw,14px)]'}`}>
+        {mode.lines[0]}
+        <br />
+        {mode.lines[1]}
+      </span>
+      <span
+        aria-hidden="true"
+        className={`mt-auto rounded-full px-2.5 py-0.5 font-extrabold leading-tight ${scaled ? 'text-[2.6cqw]' : 'text-[12px]'}`}
+        style={
+          selected
+            ? { backgroundColor: mode.ring, color: '#fff' }
+            : { backgroundColor: 'rgba(255,255,255,0.75)', color: mode.text }
+        }
+      >
+        {selected ? 'เลือกแล้ว' : 'แตะเพื่อเลือก'}
+      </span>
+    </motion.button>
   )
 }
 

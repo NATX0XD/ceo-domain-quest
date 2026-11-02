@@ -180,7 +180,8 @@ export function SetupForm({
               key={b.id}
               label={b.label.split('/')[0]?.trim() ?? b.label}
               ariaLabel={`ประเภทร้าน ${b.label}`}
-              icon={<img src={`/setup/${b.id}.webp`} alt="" className="size-12 rounded-xl object-cover" />}
+              layout="tile"
+              icon={<img src={`/setup/${b.id}.webp`} alt="" className="size-full object-cover" />}
               selected={businessTypeId === b.id}
               onSelect={() => setBusinessTypeId(b.id)}
             />

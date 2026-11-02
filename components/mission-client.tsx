@@ -33,6 +33,7 @@ import {
   type IconProps,
 } from '@/components/ui'
 import type { ReactNode } from 'react'
+import { MissionPassCard } from '@/components/mission-pass-card'
 
 /**
  * หน้าจอภารกิจย่อย — **แสดงผลอย่างเดียว**
@@ -98,7 +99,7 @@ export function MissionClient({
   gameData,
   confidence,
   helpRequested,
-  nextStep,
+  nextStep: _nextStep,
   passedAnswer = null,
   stationSection = null,
 }: {
@@ -187,6 +188,7 @@ export function MissionClient({
   /** ตำแหน่งของภารกิจนี้ในลำดับ + ดาวที่ได้จริง (อ่านจากแถวที่เซิร์ฟเวอร์ส่งมา) */
   const myIndex = Math.max(0, progressRows.findIndex((r) => r.id === mission.id))
   const myStars = progressRows.find((r) => r.id === mission.id)?.stars ?? 0
+  const hasNextMission = progressRows.some((r) => r.id !== mission.id && !r.passed)
 
   /**
    * ผ่านแล้วต้องบอกด้วยว่า "เราตอบอะไรไป" — เด็กเปิดย้อนมาดูจะได้ไม่ต้องเดา (flow-1.md ข้อ 3)
@@ -444,12 +446,12 @@ export function MissionClient({
         <AppFooter>
           {passed ? (
             <>
+              {/* จบภารกิจแล้วกลับแผนที่เสมอ แผนที่จะฉลองเกาะนี้และชี้เกาะถัดไปให้แตะเอง */}
               <Link
-                href={nextStep.primary.href}
+                href={`/map?done=${encodeURIComponent(mission.id)}`}
                 className="btn-quest bg-quest-600 text-ink-onbrand hover:bg-quest-700"
               >
-                {/* จอนี้มีที่ว่างพอ จึงบอกชื่อภารกิจถัดไปเต็ม ๆ ไม่ใช่ "ไปต่อ" ลอย ๆ */}
-                <span className="min-w-0 truncate">{nextStep.primary.longLabel}</span>
+                <span className="min-w-0 truncate">{hasNextMission ? 'กลับแผนที่ ไปเกาะถัดไป' : 'กลับแผนที่'}</span>
                 <ChevronRightIcon width={22} height={22} aria-hidden className="shrink-0" />
               </Link>
             </>
@@ -512,20 +514,6 @@ export function MissionClient({
         * ของเดิมขึ้นคำว่า "ผ่านภารกิจแล้ว" เป็นตัวหนังสือเล็กใต้ตัวเลือก เด็กกดตัวเลือกแล้วไม่ขยับ
         * นึกว่าจอค้าง เพราะไม่มีอะไรบอกว่าจบไปแล้วและไม่บอกว่าตอบข้อไหน
         */}
-      {passed ? (
-        <div className="flex shrink-0 items-center gap-2.5 rounded-2xl bg-quest-50 px-3 py-2 ring-1 ring-quest-600/30 ring-inset animate-rise-in motion-reduce:animate-none">
-          <span
-            aria-hidden="true"
-            className="grid size-9 shrink-0 place-items-center rounded-full bg-quest-600 text-ink-onbrand shadow-soft-1"
-          >
-            <CheckIcon width={20} height={20} />
-          </span>
-          <p className="min-w-0 flex-1 text-label font-bold text-pretty text-quest-700">
-            ภารกิจนี้ผ่านแล้ว ได้ {myStars} ดาว
-            {myAnswerLabel ? ` · คำตอบของเราคือ${myAnswerLabel}` : ''} — เปิดดูซ้ำได้ ไม่เสียดาว
-          </p>
-        </div>
-      ) : null}
 
       {/**
         * โจทย์สั้นตาม mockup — รายละเอียดยาว ๆ อยู่ในแผ่น "ความรู้เพิ่มเติม"
@@ -547,11 +535,15 @@ export function MissionClient({
         */}
       <div className="flex min-h-0 flex-1 flex-col">
         {passed ? (
-        <div className="flex h-full flex-col justify-center gap-3 rounded-2xl bg-surface-raised p-4 ring-1 ring-line ring-inset">
-            <DomeSays mood="celebrate" speakerName="โดม" avatarSize={56}>
-              ผ่านแล้ว! เก็บได้ {myStars} จาก 3 ดาว
-            </DomeSays>
-          </div>
+          <MissionPassCard
+            missionNo={myIndex + 1}
+            stars={myStars}
+            answerLabel={myAnswerLabel}
+            explanation={check.kind === 'correct' ? check.explanation : null}
+            hasNext={hasNextMission}
+            passedCount={progressRows.filter((r) => r.passed || r.id === mission.id).length}
+            totalMissions={progressRows.length}
+          />
         ) : assemble ? (
           <div className="flex h-full flex-col gap-2">
             {/* ช่องว่างรูปแบบ www.____.com — แตะชิ้นส่วนแล้วเข้าช่อง แตะช่องเพื่อเอาออก */}

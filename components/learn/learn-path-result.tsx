@@ -66,7 +66,7 @@ export function ResultPanel({
             ) : (
               <AlertIcon width={22} height={22} aria-hidden className="text-spark-700" />
             )}
-            {result.passed ? 'ผ่านภารกิจแล้ว' : 'ยังไม่ครบ ลองอีกนิด'}
+            {result.passed ? 'ตอบผ่านแล้ว' : 'ยังไม่ครบ ลองอีกนิด'}
           </p>
           <p className="text-label text-ink-muted">
             {result.passed

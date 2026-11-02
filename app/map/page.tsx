@@ -14,7 +14,9 @@ import type { LearnModeId } from '@/components/learn/learn-path-api'
 export const metadata: Metadata = { title: 'แผนภารกิจของฉัน — CEO Domain Quest' }
 export const dynamic = 'force-dynamic'
 
-export default async function MapPage() {
+export default async function MapPage({ searchParams }: { searchParams: Promise<{ done?: string | string[] }> }) {
+  const doneParam = (await searchParams).done
+  const justDone = typeof doneParam === 'string' ? doneParam : null
   const session = await readStudentSession()
   if (!session) return <SignInGate message="ใส่รหัสห้องกับ PIN ที่ครูให้ก่อน แล้วแผนภารกิจจะขึ้นมาให้ดูทั้งเส้นทาง" />
 
@@ -47,6 +49,7 @@ export default async function MapPage() {
           href: '/ceo',
         }}
         recommendedMode={recommendedMode}
+        justDone={justDone}
       />
     </AppShell>
   )

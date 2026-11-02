@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { classifyDomeMessage } from '../../lib/ai/dome-scope'
 import { createAiClient, resetAiRateLimiter } from '../../lib/ai'
 import type { DomeChatInput, DomeChatResult } from '../../lib/ai/types'
-import { askDome } from './dome-brain'
+import { askDome, domeNextStep } from './dome-brain'
 import { setAnswerTextsForTest } from './dome-guard'
 
 const aiReply = (text: string, scope: 'on' | 'off' = 'on'): DomeChatResult => ({ text, scope, source: 'ai', provider: 'typhoon', fallbackReason: null })
@@ -76,6 +76,14 @@ describe('askDome with real-AI path', () => {
     const { reply, ai } = await askDome({ message: 'x', quickReplyId: 'ready', shopName: 'ร้านทดสอบ', ai: fakeAi(aiReply('x')) }).then((r) => ({ reply: r, ai: null }))
     expect(ai).toBeNull()
     expect(reply.action?.href).toBe('/map')
+  })
+
+  it('ready sends to /profile until the self-profile route is chosen, then /map', async () => {
+    const reply = await askDome({ message: 'x', quickReplyId: 'ready', shopName: 'ร้านทดสอบ', selfProfileDone: false, ai: fakeAi(aiReply('x')) })
+    expect(reply.action?.href).toBe('/profile')
+    expect(domeNextStep(null, false).href).toBe('/setup')
+    expect(domeNextStep('ร้าน', false).href).toBe('/profile')
+    expect(domeNextStep('ร้าน', true).href).toBe('/map')
   })
 
   it('blocks ready intent until the shop is set up', async () => {

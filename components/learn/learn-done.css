@@ -1,0 +1,31 @@
+/* จอสรุปหลังเรียนผ่าน (learn-done.tsx) — แยกจาก globals.css */
+.ld-done {
+  background: linear-gradient(180deg, #fff6d2 0%, #ffe6b3 45%, #ffd9c4 100%);
+  box-shadow: 0 0 0 3px #fff, 0 12px 28px rgb(120 60 10 / .25);
+}
+.ld-rays {
+  position: absolute;
+  left: 50%;
+  top: 90px;
+  width: 520px;
+  height: 520px;
+  margin-left: -260px;
+  margin-top: -260px;
+  background: repeating-conic-gradient(rgb(255 255 255 / .55) 0deg 10deg, transparent 10deg 24deg);
+  -webkit-mask-image: radial-gradient(circle, #000 20%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 20%, transparent 62%);
+  animation: ld-spin 24s linear infinite;
+  pointer-events: none;
+}
+@keyframes ld-spin { to { transform: rotate(360deg); } }
+.ld-next {
+  box-shadow: 0 0 0 3px #f26b1d;
+  animation: ld-next-pulse 1.4s ease-in-out infinite;
+}
+@keyframes ld-next-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px #f26b1d, 0 0 0 0 rgb(242 107 29 / .45); }
+  50% { box-shadow: 0 0 0 3px #f26b1d, 0 0 0 8px rgb(242 107 29 / 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-rays, .ld-next { animation: none; }
+}

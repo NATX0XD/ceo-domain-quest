@@ -61,7 +61,7 @@ export function IntroCardsClient({
       className="student-world student-display media-shell"
       mainClassName="flex flex-col"
       footer={
-        <AppFooter className="flex flex-col gap-2">
+        <AppFooter className="flex flex-col gap-3">
           {/* จุดบอกตำแหน่ง อยู่ติดปุ่มเพื่อให้เห็นว่าเหลืออีกกี่ใบโดยไม่ต้องเลื่อน */}
           <ul className="flex justify-center gap-2">
             {cards.map((c, i) => (
@@ -89,7 +89,9 @@ export function IntroCardsClient({
             {last ? startLabel : nextLabel}
             <ChevronRightIcon width={22} height={22} aria-hidden />
           </Button>
-          <Button variant="ghost" fullWidth onClick={finish}>
+          {/* ปุ่มรองเป็นแคปซูลครีม (.game-button--cream) — ghost เดิมมี active:bg-brand-100
+              ไปโดนกฎ CSS กลางที่ใส่ภาพชิ้นปุ่มเก่า เลยมีลูกศร/ขอบภาพหลุดออกมา */}
+          <Button variant="secondary" size="md" fullWidth onClick={finish} className="min-h-12 text-body">
             {skipLabel}
           </Button>
         </AppFooter>

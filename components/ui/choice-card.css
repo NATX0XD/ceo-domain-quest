@@ -1,0 +1,51 @@
+/*
+ * ChoiceCard — ส่วนที่ต้องชนะกฎกว้าง ๆ ใน app/globals.css
+ *
+ * globals.css มี `.student-world .game-choice-card > span:first-child` ไว้แต่งวงไอคอน
+ * แต่การ์ดที่ไม่มีไอคอน span แรกคือกล่องข้อความ จึงโดนทาสีน้ำตาล/แทน
+ * ทับตัวหนังสือจนอ่านไม่ออก ไฟล์นี้ล้างกล่องข้อความกลับเป็นโปร่ง และทำให้
+ * สถานะ "เลือกแล้ว" ชนะสถานะ hover เสมอ (บนมือถือ hover ค้างหลังแตะ)
+ * ตัวเลือกซ้ำคลาสเพื่อให้ specificity สูงกว่ากฎใน globals.css โดยไม่ต้องแก้ไฟล์นั้น
+ */
+.student-world .game-choice-card.game-choice-card > .choice-card-body.choice-card-body.choice-card-body {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+}
+
+.student-world .game-choice-card.game-choice-card {
+  white-space: normal;
+  text-wrap: wrap;
+  text-shadow: none;
+}
+
+.student-world .game-choice-card.game-choice-card[aria-pressed='true'],
+.student-world .game-choice-card.game-choice-card[aria-pressed='true']:hover {
+  border-color: #6b2d12;
+  background: linear-gradient(180deg, #fff6c4 0%, #ffd64f 100%) !important;
+  box-shadow:
+    0 0 0 3px #ffb800,
+    0 0 18px 2px rgb(255 184 0 / .55),
+    0 5px 0 #4a1f0a,
+    inset 0 2px 0 rgb(255 255 255 / .8);
+}
+
+/* วงเช็กตอนเลือกแล้ว — เขียวชัด ไม่ต้องเดาจากสีพื้นอย่างเดียว */
+.student-world .game-choice-card[aria-pressed='true'] > .choice-card-check > span {
+  background: #12a150;
+  box-shadow: 0 0 0 2px #fff8e7, 0 2px 0 #0b5f2f;
+  --tw-ring-color: #12a150;
+}
+
+/* tile: วงรูปใหญ่ขึ้น ขอบเบา ไม่ทาสีทึบตอนเลือก (รูปร้านต้องยังเห็นชัด) */
+.student-world .game-choice-card.game-choice-card--tile > .choice-card-marker.choice-card-marker {
+  overflow: hidden;
+  border: 2px solid rgb(107 45 18 / .2);
+  background: #fff1d6;
+}
+.student-world .game-choice-card.game-choice-card--tile[aria-pressed='true'] > .choice-card-marker.choice-card-marker {
+  border-color: #6b2d12;
+  background: #fff1d6;
+}

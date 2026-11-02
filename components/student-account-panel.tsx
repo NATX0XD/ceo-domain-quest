@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { CloseIcon } from '@/components/ui'
 
 type Notice = { kind: 'success' | 'error'; text: string } | null
 
@@ -42,12 +43,62 @@ export function StudentAccountPanel({ initialNickname }: { initialNickname: stri
     }
   }
 
+  const [open, setOpen] = useState(false)
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  function openSheet() {
+    setOpen(true)
+    dialogRef.current?.showModal()
+  }
+  function closeSheet() {
+    dialogRef.current?.close()
+  }
+
+  /*
+   * ปุ่มวงกลมเล็กมุมขวาบน (อยู่แถวเดียวกับป้าย "ขั้น X จาก 5")
+   * เดิมเป็นการ์ดเต็มความกว้าง "บัญชีของฉัน · ชื่อ" กินที่จอโดยไม่จำเป็น
+   * กดแล้วเปิดแผ่นตั้งค่าบัญชีชุดเดิม (เปลี่ยนชื่อเล่น / PIN)
+   * ใช้ <dialog>.showModal() — ขึ้นชั้นบนสุดของเบราว์เซอร์ ไม่โดนกล่องแม่ที่ overflow/transform ตัด
+   * และ Esc ปิดได้เอง
+   */
   return (
-    <details className="mb-3 rounded-2xl bg-surface-raised ring-1 ring-line ring-inset">
-      <summary className="cursor-pointer list-none px-4 py-3 text-label font-extrabold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
-        บัญชีของฉัน · {nickname}
-      </summary>
-      <div className="border-t border-line px-4 pb-4 pt-3">
+    <>
+      <button
+        type="button"
+        onClick={openSheet}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={`บัญชีของฉัน · ${nickname}`}
+        className="account-icon-btn grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border-2 border-[#6b2d12] bg-[#fff1d6] shadow-[0_3px_0_#6b2d12] transition-transform active:translate-y-px focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D ไฟล์สถิต */}
+        <img src="/icons/3d/bust-in-silhouette.webp" alt="" className="size-7" draggable={false} />
+      </button>
+          <dialog
+            ref={dialogRef}
+            aria-labelledby="student-account-title"
+            onClose={() => setOpen(false)}
+            onClick={(event) => {
+              if (event.target === event.currentTarget) closeSheet()
+            }}
+            className="m-auto max-h-[88dvh] w-[calc(100%-1.5rem)] max-w-[26rem] overflow-y-auto rounded-3xl border-[3px] border-[#6b2d12] bg-[#fff1d6] p-0 shadow-[0_6px_0_#4a1f0a] backdrop:bg-[rgb(40_20_8/.5)]"
+          >
+            <div className="flex items-center gap-2 border-b-2 border-[rgb(107_45_18/.2)] px-4 py-3">
+              {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D ไฟล์สถิต */}
+              <img src="/icons/3d/bust-in-silhouette.webp" alt="" className="size-8" draggable={false} />
+              <h2 id="student-account-title" className="min-w-0 flex-1 truncate text-body font-extrabold text-ink">
+                บัญชีของฉัน · {nickname}
+              </h2>
+              <button
+                type="button"
+                onClick={closeSheet}
+                aria-label="ปิดหน้าบัญชี"
+                className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-full border-2 border-[#6b2d12] bg-[#fff8e7] text-[#5a2812]"
+              >
+                <CloseIcon width={20} height={20} />
+              </button>
+            </div>
+      <div className="px-4 pb-4 pt-3">
         <p className="text-note text-ink-muted">เปลี่ยนชื่อเล่นหรือ PIN ได้เอง ข้อมูลความคืบหน้ายังอยู่ครบ</p>
 
         <form
@@ -121,6 +172,7 @@ export function StudentAccountPanel({ initialNickname }: { initialNickname: stri
           </p>
         ) : null}
       </div>
-    </details>
+          </dialog>
+    </>
   )
 }

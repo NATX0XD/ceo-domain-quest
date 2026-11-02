@@ -1,0 +1,33 @@
+/* เกมจับคู่ความหมาย (card-sort-game.tsx) — แยกจาก globals.css */
+.cs-intro {
+  background:
+    radial-gradient(circle at 15% 12%, rgb(255 255 255 / .9) 0 6px, transparent 7px),
+    radial-gradient(circle at 88% 20%, rgb(255 255 255 / .8) 0 4px, transparent 5px),
+    radial-gradient(circle at 80% 88%, rgb(255 255 255 / .7) 0 5px, transparent 6px),
+    linear-gradient(180deg, #fff3c4 0%, #ffe1a8 55%, #ffd2b8 100%);
+  box-shadow: 0 0 0 3px #fff, 0 10px 24px rgb(120 60 10 / .22);
+}
+.cs-head {
+  background: linear-gradient(180deg, #ffffff, #f7f1ff);
+  box-shadow: 0 0 0 2px #e4d6fb, 0 6px 14px rgb(60 30 110 / .14);
+}
+.cs-zone {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cs-ring) 45%, transparent), 0 6px 14px rgb(30 30 60 / .12);
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+.cs-zone-target {
+  cursor: pointer;
+  box-shadow: 0 0 0 4px var(--cs-ring), 0 0 22px color-mix(in srgb, var(--cs-ring) 55%, transparent);
+  animation: cs-zone-pulse 1.1s ease-in-out infinite;
+}
+@keyframes cs-zone-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.012); }
+}
+.cs-tray {
+  background: linear-gradient(180deg, #fffaf0, #fff1d9);
+  box-shadow: 0 0 0 2px #f6dfb0, 0 6px 14px rgb(120 70 10 / .14);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cs-zone-target { animation: none; }
+}

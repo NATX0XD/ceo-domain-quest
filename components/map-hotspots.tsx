@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
+import './map-hotspots.css'
 import { useRouter } from 'next/navigation'
 import { TestNudgeCard } from '@/components/test-nudge'
 import type { TestNudge } from '@/components/server/test-nudge'
@@ -26,6 +28,8 @@ type MapHotspotsProps = {
   boss: Boss
   nudge?: TestNudge | null
   recommendedMode?: LearnModeId | null
+  /** มาจาก /map?done=m1 หลังจบภารกิจ = ฉลองเกาะนั้น แล้วชี้เกาะถัดไป */
+  justDone?: string | null
 }
 
 const ISLAND_HOTSPOTS = [
@@ -49,7 +53,17 @@ function statusOf(mission: Mission, unlocked: boolean) {
   return 'ล็อกอยู่'
 }
 
-export function MapHotspots({ imageState, missions, boss, nudge = null, recommendedMode = null }: MapHotspotsProps) {
+export function MapHotspots({ imageState, missions, boss, nudge = null, recommendedMode = null, justDone = null }: MapHotspotsProps) {
+  const reduce = useReducedMotion()
+  const doneIndex = justDone ? missions.findIndex((m) => m.id === justDone && m.passed) : -1
+  const [celebrate, setCelebrate] = useState(doneIndex >= 0)
+  /** เกาะถัดไป = เกาะแรกที่ยังไม่ผ่าน (ปลดล็อกแล้วเพราะเกาะก่อนหน้าผ่าน) */
+  const nextIndex = missions.slice(0, 4).findIndex((m, i) => !m.passed && (i === 0 || Boolean(missions[i - 1]?.passed)))
+  useEffect(() => {
+    if (!justDone) return
+    // ล้าง ?done ออกจาก URL รีเฟรชแล้วจะได้ไม่ฉลองซ้ำ (ไม่ต้องโหลดหน้าใหม่)
+    window.history.replaceState(window.history.state, '', '/map')
+  }, [justDone])
   const [toast, setToast] = useState(false)
   const [entering, setEntering] = useState<number | null>(null)
   const [drawerIndex, setDrawerIndex] = useState<number | null>(null)
@@ -67,6 +81,7 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
   }
 
   function openMission(index: number, href: string) {
+    setCelebrate(false)
     if (index < 2) {
       setDrawerIndex(index)
       setPicked(recommendedMode ?? 'do')
@@ -153,6 +168,24 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
                 <span>{mission.stars}/{mission.maxStars}</span>
                 {mission.passed ? <CheckIcon aria-hidden width={15} height={15} strokeWidth={3} /> : null}
               </span>
+              {index === doneIndex ? (
+                <span className="map-done-ring" style={ISLAND_HOTSPOTS[index]} aria-hidden="true">
+                  <motion.span
+                    className="map-done-stamp"
+                    initial={reduce ? false : { scale: 2.4, opacity: 0, rotate: -25 }}
+                    animate={{ scale: 1, opacity: 1, rotate: -8 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 14, delay: 0.35 }}
+                  >
+                    <CheckIcon width={18} height={18} strokeWidth={3.5} />
+                    สำเร็จ
+                  </motion.span>
+                </span>
+              ) : null}
+              {index === nextIndex && drawerIndex === null ? (
+                <span className="map-next-ring" style={ISLAND_HOTSPOTS[index]} aria-hidden="true">
+                  <span className="map-next-tag">แตะเพื่อเริ่ม ภารกิจที่ {index + 1}</span>
+                </span>
+              ) : null}
             </div>
           )
         })}
@@ -177,6 +210,39 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
           </button>
         )}
       </section>
+      {celebrate && doneIndex >= 0 && drawerIndex === null ? (
+        <motion.div
+          className="map-celebrate"
+          role="status"
+          initial={reduce ? false : { y: -40, opacity: 0, scale: 0.9 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- มาสคอตทางการ */}
+          <img src="/dome/mascot/dome-celebrate.webp" alt="" aria-hidden="true" className="map-celebrate-dome" />
+          <div className="map-celebrate-copy">
+            <p className="map-celebrate-kicker">ภารกิจที่ {doneIndex + 1} สำเร็จ!</p>
+            <p className="map-celebrate-stars" aria-label={`ได้ ${missions[doneIndex]?.stars ?? 0} จาก ${missions[doneIndex]?.maxStars ?? 3} ดาว`}>
+              {Array.from({ length: missions[doneIndex]?.maxStars ?? 3 }, (_, i) => (
+                <StarIcon key={i} aria-hidden width={22} height={22} filled={i < (missions[doneIndex]?.stars ?? 0)} />
+              ))}
+            </p>
+            <p className="map-celebrate-next">
+              {nextIndex >= 0 ? `ต่อไป: แตะเกาะที่ ${nextIndex + 1} ที่กระพริบอยู่` : boss.unlocked ? 'ครบทุกเกาะแล้ว ไปด่านบอสด้านล่างได้เลย' : 'เก่งมาก!'}
+            </p>
+          </div>
+          <button type="button" className="map-celebrate-close focus-ring" onClick={() => setCelebrate(false)} aria-label="ปิดข้อความฉลอง">
+            ×
+          </button>
+          {!reduce ? (
+            <span className="map-confetti" aria-hidden="true">
+              {Array.from({ length: 14 }, (_, i) => (
+                <i key={i} style={{ '--i': i } as CSSProperties} />
+              ))}
+            </span>
+          ) : null}
+        </motion.div>
+      ) : null}
       {drawerIndex !== null && missions[drawerIndex] ? (
         <ModePopup
           missionNo={String(drawerIndex + 1)}

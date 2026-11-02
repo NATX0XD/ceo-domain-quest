@@ -31,6 +31,33 @@ interface Turn {
  * อารมณ์ของโดมในแต่ละบับเบิล — เป็นเรื่องการนำเสนอล้วน ไม่แตะข้อมูลที่เซิร์ฟเวอร์ส่งมา
  * บับเบิลที่มีปุ่มพาไปทำภารกิจ = โดมกำลังเชียร์ให้ไปต่อ · บับเบิลแรก = ทักทาย
  */
+/** ไอคอน 3D ของปุ่มคำตอบด่วนแต่ละแบบ — id มาจากเซิร์ฟเวอร์ ไม่รู้จัก = ประกาย */
+const REPLY_ICON: Record<string, string> = {
+  'want-website': '/icons/3d/rocket.webp',
+  'explain-domain': '/icons/3d/magnifying-glass-tilted-left.webp',
+  ready: '/icons/3d/chequered-flag.webp',
+  other: '/icons/3d/speech-balloon.webp',
+}
+
+/** การ์ดคำตอบด่วนแบบเกม: ครีม ขอบน้ำตาล ยุบลงเมื่อกด (ไม่ใช้ rounded-xl เพราะ CSS กลางบังคับห้ามตัดบรรทัด) */
+const REPLY_CARD =
+  'flex min-h-16 w-full items-center gap-3 rounded-2xl border-[3px] px-4 py-3 text-left text-[1rem] font-extrabold leading-snug transition-[transform,box-shadow] duration-100 active:translate-y-[3px] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-60'
+const REPLY_CREAM =
+  'border-[#6b2d12] bg-[linear-gradient(180deg,#fffdf0_0%,#ffe2b3_100%)] text-[#5a2812] shadow-[0_5px_0_#6b2d12,inset_0_2px_0_#fff] active:shadow-[0_2px_0_#6b2d12,inset_0_2px_0_#fff]'
+const REPLY_PRIMARY =
+  'border-[#6b2d12] bg-[linear-gradient(180deg,#ffc51b_0%,#ff7411_100%)] text-[#4a1f0a] shadow-[0_6px_0_#6b2d12,inset_0_3px_0_rgb(255_255_255/.7)] active:shadow-[0_2px_0_#6b2d12,inset_0_3px_0_rgb(255_255_255/.7)]'
+
+function ReplyIcon({ id }: { id: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="grid size-11 shrink-0 place-items-center rounded-full bg-[rgb(255_255_255/.75)] shadow-[inset_0_-2px_0_rgb(107_45_18/.15)]"
+    >
+      <img src={REPLY_ICON[id] ?? '/icons/3d/sparkles.webp'} alt="" className="size-8 object-contain" />
+    </span>
+  )
+}
+
 function moodOf(turn: Turn, index: number): DomeMood {
   if (turn.action) return 'happy'
   return index === 0 ? 'greet' : 'cheer'
@@ -41,17 +68,19 @@ export function DomeChatClient({
   quickReplies,
   greetingAction,
   currentMissionId,
+  nextStep,
 }: {
   greeting: string
   quickReplies: { id: string; label: string }[]
   greetingAction: { href: string; label: string } | null
   currentMissionId: string
+  /** ขั้นถัดไปจริงของผู้เรียน (ตั้งร้าน → /profile → /map) — ปุ่ม "พร้อม" พาไปตรงนี้ทันที */
+  nextStep: { href: string; label: string }
 }) {
   const [turns, setTurns] = useState<Turn[]>([
     { id: 0, who: 'dome', text: greeting, action: greetingAction, source: 'fallback' },
   ])
   const [replies, setReplies] = useState(quickReplies)
-  const [showReplies, setShowReplies] = useState(false)
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const nextId = useRef(1)
@@ -119,12 +148,9 @@ export function DomeChatClient({
     <AppShell
       className="media-shell media-dome-shell student-display"
       header={
-        <AppHeader className="flex items-center gap-3">
-          <DomeAvatar mood="greet" size={48} decorative />
-          <div className="min-w-0">
-            <h1 className="text-title-sm font-extrabold text-ink">เลขาโดม</h1>
-            <p className="text-[0.875rem] text-ink-muted">ผู้ช่วยส่วนตัวของ CEO ตัวน้อย</p>
-          </div>
+        <AppHeader className="flex items-center gap-2 py-1.5!">
+          <DomeAvatar mood="greet" size={36} decorative />
+          <h1 className="text-title-sm font-extrabold text-ink">เลขาโดม</h1>
         </AppHeader>
       }
       /**
@@ -156,19 +182,23 @@ export function DomeChatClient({
               autoComplete="off"
               className="min-h-14 min-w-0 flex-1 rounded-full bg-surface-raised px-5 text-body text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus:ring-brand-500 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus"
             />
+            {/* p-0! ทับ padding ของ .game-button ไม่งั้นไอคอนถูกบีบจนหายเหลือแต่วงกลมเปล่า */}
             <IconButton
               type="submit"
               variant="primary"
               size="lg"
               aria-label="ส่งข้อความให้โดม"
+              title="ส่ง"
               disabled={busy || text.trim().length === 0}
-              icon={<SendIcon width={24} height={24} />}
+              className="p-0!"
+              icon={<SendIcon width={26} height={26} strokeWidth={2.6} className="shrink-0 -translate-x-px translate-y-px" />}
             />
           </form>
         </AppFooter>
       }
     >
-      <div className="px-4 pt-4 pb-4">
+      {/* relative z-1: ยกบทสนทนาขึ้นเหนือฉากไล่สี ::before ของพื้นหลังโดม ไม่งั้นการ์ดครึ่งล่างดูซีด */}
+      <div className="relative z-1 px-4 pt-4 pb-4">
         <section aria-label="บทสนทนากับโดม" className="flex flex-1 flex-col gap-4">
           {turns.map((turn, index) =>
             turn.who === 'dome' ? (
@@ -221,36 +251,35 @@ export function DomeChatClient({
             </div>
           ) : null}
 
-          {/* คำตอบด่วนของเทิร์นล่าสุด — อยู่ต่อท้ายบทสนทนา เลื่อนตามข้อความ
-              การเลื่อนอัตโนมัติ (bottomRef) พาปุ่มพวกนี้เข้ามาในจอให้เองทุกครั้งที่โดมตอบ */}
-          {replies.length > 0 && !busy && !showReplies ? (
-            <button
-              type="button"
-              onClick={() => setShowReplies(true)}
-              className="card-tap flex min-h-14 items-center justify-between rounded-xl bg-surface-raised p-4 text-body font-semibold text-brand-700 shadow-soft-1 ring-2 ring-brand-100 ring-inset"
-            >
-              <span>ถามโดม</span>
-              <ChevronRightIcon width={20} height={20} aria-hidden className="shrink-0 opacity-70" />
-            </button>
-          ) : replies.length > 0 && !busy ? (
-            <section aria-label="คำตอบด่วน" className="flex flex-col gap-2">
-              {replies.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => void send(r.label, r.id)}
-                  disabled={busy}
-                  className="card-tap flex min-h-14 items-center gap-2 rounded-xl bg-surface-raised p-4 text-body font-semibold text-brand-700 shadow-soft-1 ring-2 ring-brand-100 ring-inset disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <span className="min-w-0 flex-1 text-pretty">{r.label}</span>
-                  <ChevronRightIcon
-                    width={20}
-                    height={20}
-                    aria-hidden
-                    className="shrink-0 opacity-70"
-                  />
-                </button>
-              ))}
+          {/* คำตอบด่วนของเทิร์นล่าสุด — แสดงทันทีไม่ต้องกดเปิด เด็กจะได้รู้ว่าทำอะไรต่อได้
+              การเลื่อนอัตโนมัติ (bottomRef) พาปุ่มพวกนี้เข้ามาในจอให้เองทุกครั้งที่โดมตอบ
+              "พร้อมเริ่มภารกิจ" เป็นปุ่มหลัก พาไปขั้นถัดไปจริงทันที (ไม่ต้องคุยอีกรอบ) */}
+          {replies.length > 0 && !busy ? (
+            <section aria-label="เลือกคำตอบ" className="mt-1 flex flex-col gap-3 pl-2">
+              <p className="self-start rounded-full bg-[rgb(255_241_214/.92)] px-3 py-1 text-[0.875rem] font-bold text-[#6b2d12] shadow-[0_2px_0_rgb(107_45_18/.25)]">
+                แตะเลือกได้เลย หรือพิมพ์คุยกับโดม
+              </p>
+              {replies.map((r) =>
+                r.id === 'ready' ? (
+                  <Link key={r.id} href={nextStep.href} className={`${REPLY_CARD} ${REPLY_PRIMARY} min-h-[4.5rem]`}>
+                    <ReplyIcon id={r.id} />
+                    <span className="min-w-0 flex-1 text-pretty text-[1.08rem]">{r.label}</span>
+                    <ChevronRightIcon width={24} height={24} strokeWidth={3} aria-hidden className="shrink-0" />
+                  </Link>
+                ) : (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => void send(r.label, r.id)}
+                    disabled={busy}
+                    className={`${REPLY_CARD} ${REPLY_CREAM}`}
+                  >
+                    <ReplyIcon id={r.id} />
+                    <span className="min-w-0 flex-1 text-pretty">{r.label}</span>
+                    <ChevronRightIcon width={20} height={20} aria-hidden className="shrink-0 opacity-70" />
+                  </button>
+                ),
+              )}
             </section>
           ) : null}
 

@@ -125,6 +125,17 @@ const READY_INTENT = /พร้อม|เริ่ม|ลุย|ไปต่อ|
 
 const SETUP_FIRST_REPLY = 'ตั้งร้านก่อนนะครับ พอมีร้านแล้วเราค่อยออกไปทำภารกิจด้วยกัน'
 const SETUP_FIRST_ACTION: DomeAction = { href: '/setup', label: 'ไปตั้งร้านก่อน' }
+const PROFILE_FIRST_ACTION: DomeAction = { href: '/profile', label: 'ไปทำความรู้จักตัวเอง' }
+const MAP_ACTION: DomeAction = { href: '/map', label: 'ดูแผนภารกิจของฉัน' }
+
+/**
+ * ขั้นถัดไปจริงของผู้เรียนเมื่อบอกว่า "พร้อม" — ลำดับ: ตั้งร้าน → รู้จักตัวเอง (/profile) → แผนที่ (/map)
+ * selfProfileDone ไม่ระบุ = ถือว่าทำแล้ว (ไม่บังคับผู้เรียนเก่าย้อนกลับไป)
+ */
+export function domeNextStep(shopName: string | null, selfProfileDone = true): DomeAction {
+  if (!shopName) return SETUP_FIRST_ACTION
+  return selfProfileDone ? MAP_ACTION : PROFILE_FIRST_ACTION
+}
 
 
 
@@ -212,6 +223,8 @@ export async function askDome(input: {
   message: string
   quickReplyId?: string | null
   shopName: string | null
+  /** เลือกเส้นทางเรียนที่ /profile แล้วหรือยัง — ใช้ตัดสินว่า "พร้อม" พาไปไหน */
+  selfProfileDone?: boolean
   missionId?: string
   role?: 'dome'
   history?: DomeTurn[]
@@ -234,7 +247,10 @@ export async function askDome(input: {
     return scripted(rule?.reply ?? FALLBACK_REPLY, rule?.action ?? null)
   }
   if (input.quickReplyId === 'ready') {
-    return scripted('พร้อมแล้วก็ลุยเลยครับ ผมจะคอยเชียร์อยู่ข้าง ๆ ถ้าติดตรงไหนกดขอคำใบ้ได้', { href: '/map', label: 'ดูแผนภารกิจของฉัน' })
+    if (input.selfProfileDone === false) {
+      return scripted('พร้อมแล้วก็ลุยเลยครับ ก่อนออกเดินทางมาทำความรู้จักตัวเองกันนิดนึง ผมจะได้เสนอวิธีเรียนที่เข้ากับคุณ', PROFILE_FIRST_ACTION)
+    }
+    return scripted('พร้อมแล้วก็ลุยเลยครับ ผมจะคอยเชียร์อยู่ข้าง ๆ ถ้าติดตรงไหนกดขอคำใบ้ได้', MAP_ACTION)
   }
   if (input.quickReplyId === 'other') {
     return scripted('ถามมาได้เลยครับ พิมพ์คำถามในช่องข้างล่าง ผมตอบเรื่องชื่อโดเมนได้เกือบทุกเรื่อง', null)

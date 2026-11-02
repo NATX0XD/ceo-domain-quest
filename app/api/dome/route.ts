@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { isAiEnabledForStudent, listRecentChatMessages, saveChatMessage } from '@/lib/db/repo'
 import { askDome, domeQuickReplies } from '@/components/server/dome-brain'
-import { loadShopProfile } from '@/components/server/game-state'
+import { loadSelfProfileDb, loadShopProfile } from '@/components/server/game-state'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { moderateStudentText } from '@/components/server/moderation'
 import {
@@ -62,8 +62,9 @@ export async function POST(request: Request) {
     })
   }
 
-  const [profile, summary, recent, aiOn] = await Promise.all([
+  const [profile, selfProfile, summary, recent, aiOn] = await Promise.all([
     loadShopProfile(session.studentId),
+    loadSelfProfileDb(session.studentId),
     lessonSummary(session.studentId),
     listRecentChatMessages(session.studentId, 6),
     // ครูปิด AI ทั้งห้องได้ที่หน้าตั้งค่า — ปิดแล้วโดมตอบด้วยกฎ (เหมือนคำใบ้)
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
     message: parsed.data.message,
     quickReplyId: parsed.data.quickReplyId ?? null,
     shopName: profile?.shopName ?? null,
+    selfProfileDone: selfProfile.route !== null,
     missionId,
     role: 'dome',
     history: recent.map((m) => ({ role: m.role === 'student' ? 'student' : 'dome', text: m.text })),

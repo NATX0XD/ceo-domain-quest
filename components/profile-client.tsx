@@ -9,6 +9,7 @@ import { AppFooter } from '@/components/app-shell'
 import { QuizStepper } from '@/components/quiz-stepper-client'
 import { DomeTip, FlowNote, StageLine, useFlowFeedback } from '@/components/flow-feedback-client'
 import {
+  ArrowLeftIcon,
   Button,
   ChevronRightIcon,
   ChoiceCard,
@@ -69,8 +70,33 @@ const LEVEL_LABELS: Record<LevelId, { title: string; detail: string }> = {
 }
 
 /** ป้ายข้อความในการ์ดตัวตน — ไม่ใช่ปุ่ม จึงเป็น span ไม่ใช่ Chip ที่กดได้ */
-const TAG_CLASS =
-  'inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-label font-bold text-brand-700 ring-1 ring-brand-200 ring-inset'
+const ID_TAG_CLASS =
+  'mt-0.5 inline-flex w-fit items-center rounded-full border border-[rgb(107_45_18/.3)] bg-[#ffe9b0] px-2 py-px text-note font-bold text-[#6b2d12]'
+
+/** ไอคอน 3D ของแต่ละเส้นทาง (public/icons/3d) */
+const ROUTE_ICON: Record<RouteId, string> = {
+  clip: 'television',
+  card: 'books',
+  game: 'performing-arts',
+  buddy: 'busts-in-silhouette',
+}
+
+/** ช่องค่าสถานะหนึ่งช่องบนการ์ดตัวตน: ไอคอน 3D + หัวข้อเล็ก + ค่า */
+function IdentityStat({ icon, label, children }: { icon: string; label: string; children: ReactNode }) {
+  return (
+    <div
+      className="flex min-w-0 items-start gap-2 rounded-xl border-2 border-[rgb(107_45_18/.18)] px-2 py-1"
+      style={{ background: 'linear-gradient(180deg, #fffdf3, #fff1d6)' }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D ไฟล์สถิต */}
+      <img src={`/icons/3d/${icon}.webp`} alt="" className="mt-0.5 size-8 shrink-0" draggable={false} />
+      <div className="flex min-w-0 flex-1 flex-col items-start text-label leading-snug text-[#4b260f]">
+        <p className="text-note font-bold text-[#8a5a35]">{label}</p>
+        {children}
+      </div>
+    </div>
+  )
+}
 
 export function ProfileClient({
   meta,
@@ -132,7 +158,10 @@ export function ProfileClient({
     initial.routeChosenBy,
   )
   const [level, setLevel] = useState<LevelId | null>(initial.level)
+  /** เป้าที่แตะเลือกไว้ (ยังไม่บันทึก) — บันทึกจริงตอนกดปุ่มท้ายจอของขั้นเป้าหมาย */
   const [goalId, setGoalId] = useState<string | null>(initial.goalId)
+  /** เป้าที่บันทึกในเซิร์ฟเวอร์แล้ว — กฎ "ลดเป้าไม่ได้" ใช้เทียบกับอันนี้เท่านั้น */
+  const [savedGoalId, setSavedGoalId] = useState<string | null>(initial.goalId)
   const [goalNote, setGoalNote] = useState<string | null>(null)
   /** ขั้นของวิซาร์ด · ข้อที่กำลังตอบ · สถานะการกดปุ่ม (กดแล้วห้ามเงียบ) */
   const [step, setStep] = useState(initial.finished ? 4 : 0)
@@ -166,7 +195,10 @@ export function ProfileClient({
       }
       if (data?.route) setRoute(data.route)
       if (data?.routeChosenBy) setRouteChosenBy(data.routeChosenBy)
-      if (data?.goalId) setGoalId(data.goalId)
+      if (data?.goalId) {
+        setGoalId(data.goalId)
+        setSavedGoalId(data.goalId)
+      }
       setGoalNote(data?.goalRejectedNote ?? null)
       flow.done('บันทึกแล้ว กดปุ่มข้างล่างเพื่อไปขั้นต่อไป')
       router.refresh()
@@ -204,6 +236,20 @@ export function ProfileClient({
     : null
   const chosenChannel = route ? channels.find((c) => c.id === route) : null
   const chosenGoal = goalId ? goals.find((g) => g.id === goalId) : null
+  const savedGoal = savedGoalId ? goals.find((g) => g.id === savedGoalId) : null
+  /** ลดเป้าที่บันทึกแล้วไม่ได้ (goalPolicy.canLowerDuringLesson = false) — ก่อนบันทึกเลือกสลับได้อิสระ */
+  const isBelowSavedGoal = (g: ProfileGoal) => savedGoal != null && g.starTarget < savedGoal.starTarget
+
+  /** ขั้นเป้าหมาย: บันทึกเป้าที่เลือกไว้ก่อน แล้วค่อยไปหน้าการ์ด (ถูกปฏิเสธ = อยู่หน้าเดิมพร้อมเหตุผล) */
+  async function confirmGoal() {
+    if (!goalId) return
+    if (goalId === savedGoalId) {
+      setStep(4)
+      return
+    }
+    const data = await sendChoice({ goalId })
+    if (data && !data.goalRejectedNote && data.goalId === goalId) setStep(4)
+  }
   const talent = suggestion?.talentId ? talents.find((t) => t.id === suggestion.talentId) : null
   const weakNames = (suggestion?.weakObjectives ?? [])
     .map((id) => objectives.find((o) => o.id === id)?.shortName)
@@ -254,8 +300,8 @@ export function ProfileClient({
     }
     if (stepKey === 'goal') {
       return {
-        label: 'ดูบัตรประจำตัวของฉัน',
-        onClick: () => setStep(4),
+        label: goalId !== null && goalId !== savedGoalId ? 'ยืนยันเป้าหมาย ดูการ์ด' : 'ดูการ์ดตัวตนของฉัน',
+        onClick: () => void confirmGoal(),
         why: goalId === null ? 'เลือกเป้าหมายดาวสักอันก่อน' : null,
         tone: 'primary',
       }
@@ -274,8 +320,9 @@ export function ProfileClient({
           {flow.state.kind !== 'done' ? <FlowNote state={flow.state} className="mb-2" /> : null}
           {stepKey === 'card' ? (
             <div className="flex flex-col gap-2">
+            {/* จบขั้นรู้จักตัวเองแล้วไปแผนที่เกาะ — ลิ้นชักล่างของแผนที่เป็นที่เลือกวิธีเรียนของแต่ละภารกิจ */}
             <Link
-              href="/mission/m1"
+              href="/map"
               onClick={() => void sendChoice({ finish: true })}
               className="btn-quest bg-quest-600 text-ink-onbrand hover:bg-quest-700"
             >
@@ -284,7 +331,7 @@ export function ProfileClient({
             </Link>
             <Button
               variant="secondary"
-              size="lg"
+              size="md"
               fullWidth
               onClick={() => {
                 setQIndex(0)
@@ -298,11 +345,12 @@ export function ProfileClient({
             <div className="flex gap-2">
               {stepKey !== 'ask' ? (
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="lg"
                   onClick={() => setStep((n) => Math.max(0, n - 1))}
                   disabled={flow.busy}
-                  className="shrink-0 px-4"
+                  leadingIcon={<ArrowLeftIcon width={20} height={20} />}
+                  className="min-w-[7.25rem] shrink-0 px-4"
                 >
                   ย้อน
                 </Button>
@@ -324,10 +372,13 @@ export function ProfileClient({
         </AppFooter>
       }
     >
-      {stepKey !== 'ask' ? (
-        <StageLine stage={`รู้จักตัวเอง · ขั้น ${stepNo} จาก ${stepList.length}`} />
-      ) : null}
-      <StudentAccountPanel initialNickname={initial.nickname} />
+      <div className="flex shrink-0 items-center gap-2">
+        <StageLine
+          stage={`รู้จักตัวเอง · ขั้น ${stepNo} จาก ${stepList.length}`}
+          className="min-w-0 flex-1"
+        />
+        <StudentAccountPanel initialNickname={initial.nickname} />
+      </div>
       <span className="sr-only">
         ใช้เวลาประมาณ {meta.minuteFrom}-{meta.minuteTo} นาที
       </span>
@@ -439,6 +490,12 @@ export function ProfileClient({
             เป้าหมายดาวที่ตั้งเอง
           </h1>
           <DomeTip mood="cheer">{goalPolicyNote}</DomeTip>
+          {savedGoal ? (
+            <p className="shrink-0 rounded-xl border-2 border-[rgb(107_45_18/.25)] bg-[#fff8e7] px-3 py-2 text-label font-semibold text-pretty text-[#5a2812]">
+              ตอนนี้ตั้งไว้ {savedGoal.name} {savedGoal.starTarget} ดาว เลือกเป้าที่สูงขึ้นได้
+              แต่เป้าที่ต่ำกว่าล็อกไว้ ถ้าอยากลดเป้าให้ยกมือบอกครู
+            </p>
+          ) : null}
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2">
           <ul
             role="radiogroup"
@@ -457,8 +514,12 @@ export function ProfileClient({
                   description={g.description}
                   ariaLabel={`${g.name} เป้าหมาย ${g.starTarget} ดาว — ${g.description}`}
                   selected={goalId === g.id}
+                  state={isBelowSavedGoal(g) ? 'locked' : 'idle'}
                   disabled={flow.busy}
-                  onSelect={() => void sendChoice({ goalId: g.id })}
+                  onSelect={() => {
+                    setGoalNote(null)
+                    setGoalId(g.id)
+                  }}
                 />
               </li>
             ))}
@@ -470,46 +531,94 @@ export function ProfileClient({
       ) : null}
 
       {stepKey === 'card' ? (
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <h1 className="shrink-0 text-title-sm font-extrabold text-balance text-ink">
-            {identity.title}
-          </h1>
-          <div className="flex min-h-0 flex-1 flex-col justify-center gap-2 rounded-2xl bg-reward-100 p-4 ring-1 ring-reward-300 ring-inset">
-            {talent ? (
-              <p className="text-body text-pretty text-ink">
-                <span className="font-bold">{talent.name}</span> — {talent.cardLine}
-              </p>
-            ) : null}
-            <p className="flex flex-wrap items-center gap-2 text-body text-ink">
-              <span className="text-label font-bold text-ink-muted">เส้นทางที่ฉันใช้</span>
-              <span className="font-bold">{chosenChannel?.name}</span>
-              <span className={TAG_CLASS}>
-                {routeChosenBy === 'student' ? 'ฉันเลือกเอง' : 'เอาตามที่ระบบเสนอ'}
-              </span>
-            </p>
-            <p className="flex flex-wrap items-center gap-2 text-body text-ink">
-              <span className="text-label font-bold text-ink-muted">ระดับตัวช่วย</span>
-              <span className="font-bold">{level ? LEVEL_LABELS[level].title : '—'}</span>
-            </p>
-            <p className="flex flex-wrap items-center gap-2 text-body text-ink">
-              <span className="text-label font-bold text-ink-muted">{identity.goalLabel}</span>
-              <span className="font-bold">{chosenGoal?.name ?? '—'}</span>
-              {chosenGoal ? (
-                <StatBadge kind="star" value={chosenGoal.starTarget} label={identity.goalLabel} hideLabel size="sm" />
-              ) : null}
-            </p>
-            {weakNames.length > 0 ? (
-              <p className="flex flex-wrap items-center gap-2">
-                <span className="text-label font-bold text-ink-muted">{identity.focusLabel}</span>
-                {weakNames.map((n) => (
-                  <span key={n} className={TAG_CLASS}>
-                    {n}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pb-1">
+          {/* การ์ดตัวตนแบบการ์ดสะสมในเกม: กรอบทอง แถบหัวสีม่วงฟ้า โดม + ป้ายระดับ แล้วค่อยเป็นค่าสถานะ */}
+          <article
+            aria-labelledby="identity-card-title"
+            className="relative isolate my-auto shrink-0 rounded-[1.6rem] border-[3px] border-[#6b2d12] p-1.5 shadow-[0_6px_0_#4a1f0a,0_16px_30px_rgb(74_31_10/.28)]"
+            style={{ background: 'linear-gradient(155deg, #ffe58a 0%, #ffb11b 45%, #e0711c 100%)' }}
+          >
+            <div className="overflow-hidden rounded-[1.2rem] border-2 border-[#8a4a21]" style={{ background: '#fff8e7' }}>
+              <header
+                className="relative flex items-center gap-3 px-3 py-2.5"
+                style={{
+                  background:
+                    "url('/ui/kit/fx/light-rays.webp') center / cover no-repeat, linear-gradient(140deg, #6c43bb 0%, #a36ef0 50%, #20a9f3 100%)",
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  className="relative grid size-16 shrink-0 place-items-center rounded-full border-[3px] border-[#fff1d6] shadow-[0_4px_0_rgb(40_20_60/.45)]"
+                  style={{ background: 'radial-gradient(circle at 50% 40%, #fff6c4 0%, #ffd64f 55%, #ff9a1f 100%)' }}
+                >
+                  <DomeAvatar mood="cheer" size={56} decorative />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="inline-flex items-center gap-1 rounded-full bg-[rgb(255_255_255/.22)] px-2 py-0.5 text-note font-bold text-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D ไฟล์สถิต */}
+                    <img src="/icons/3d/crown.webp" alt="" className="size-4" draggable={false} />
+                    {identity.subtitle}
+                  </p>
+                  <h1
+                    id="identity-card-title"
+                    className="mt-1 pr-10 text-body-lg leading-tight font-extrabold text-balance break-words text-white [text-shadow:0_2px_0_rgb(40_20_60/.55)]"
+                  >
+                    {identity.title}
+                  </h1>
+                </div>
+                {level ? (
+                  <span
+                    className="absolute top-2 right-2 grid size-11 place-items-center rounded-full border-2 border-[#6b2d12] text-center leading-none font-extrabold text-[#4a1f0a] shadow-[0_3px_0_#4a1f0a]"
+                    style={{ background: 'linear-gradient(180deg, #fff6c4, #ffc51b)' }}
+                    aria-label={`ระดับตัวช่วย ${level}`}
+                  >
+                    <span className="text-[0.6rem]">LV</span>
+                    <span className="text-body-lg -mt-1">{level}</span>
                   </span>
-                ))}
+                ) : null}
+              </header>
+
+              <div className="flex flex-col gap-1.5 p-2.5">
+                {talent ? (
+                  <IdentityStat icon="sparkles" label={identity.talentLabel}>
+                    <span className="font-extrabold">{talent.name}</span>
+                    <span className="text-note leading-snug font-semibold text-[#7a4a25]">{talent.cardLine}</span>
+                  </IdentityStat>
+                ) : null}
+                <div className="grid grid-cols-2 gap-1.5">
+                  <IdentityStat icon={ROUTE_ICON[route ?? 'card']} label="เส้นทางที่ฉันใช้">
+                    <span className="font-extrabold">{chosenChannel?.name ?? '—'}</span>
+                    <span className={ID_TAG_CLASS}>{routeChosenBy === 'student' ? 'ฉันเลือกเอง' : 'ตามที่ระบบเสนอ'}</span>
+                  </IdentityStat>
+                  <IdentityStat icon="glowing-star" label="เป้าหมายดาว">
+                    <span className="font-extrabold">{chosenGoal?.name ?? '—'}</span>
+                    {chosenGoal ? (
+                      <span className={ID_TAG_CLASS} aria-label={`${identity.goalLabel} ${chosenGoal.starTarget} ดาว`}>
+                        ★ {chosenGoal.starTarget} ดาว
+                      </span>
+                    ) : null}
+                  </IdentityStat>
+                </div>
+                <IdentityStat icon="light-bulb" label="ระดับตัวช่วย">
+                  <span className="font-extrabold">{level ? LEVEL_LABELS[level].title : '—'}</span>
+                </IdentityStat>
+                {weakNames.length > 0 ? (
+                  <IdentityStat icon="bullseye" label={identity.focusLabel}>
+                    <span className="mt-0.5 flex flex-wrap gap-1">
+                      {weakNames.map((n) => (
+                        <span key={n} className={ID_TAG_CLASS}>
+                          {n}
+                        </span>
+                      ))}
+                    </span>
+                  </IdentityStat>
+                ) : null}
+              </div>
+              <p className="border-t-2 border-dashed border-[rgb(107_45_18/.25)] px-3 py-1.5 text-center text-note font-bold text-pretty text-[#7a4a25]">
+                {identity.encouragement}
               </p>
-            ) : null}
-          </div>
-          <DomeTip mood="happy">{identity.encouragement}</DomeTip>
+            </div>
+          </article>
         </div>
       ) : null}
 
