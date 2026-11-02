@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import known from '../content/known-domains.json'
+import brands from '../content/known-brands.json'
 import { offlineStatus } from '../lib/domain-offline'
 
 /**
@@ -26,5 +27,11 @@ describe('known-domains.json รายชื่อสำรอง m4', () => {
     const taken = known.registered[0]
     if (taken) expect(offlineStatus(taken.toUpperCase()).status).toBe('registered')
     expect(offlineStatus('zz-not-in-list-qa.in.th')).toEqual({ status: 'not-found', label: 'ไม่พบการจด' })
+  })
+
+  it('known-brands.json: แบรนด์ดังที่ไม่อยู่ในรายชื่อตรวจแล้วถือว่าถูกจด เช่น apple', () => {
+    expect(brands.brands).toContain('apple')
+    const unlisted = brands.brands.flatMap((b) => [`${b}.co.th`, `${b}.in.th`]).find((d) => !known.registered.includes(d) && !known.notFound.includes(d))
+    if (unlisted) expect(offlineStatus(unlisted).status).toBe('registered')
   })
 })
