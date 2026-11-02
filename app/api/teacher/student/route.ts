@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { LIVE_CONTROL_ENABLED, liveControlNotFound } from '@/lib/teacher-features'
 import { z } from 'zod'
 import { PIN_LENGTH, hashPin } from '@/lib/pin'
 import {
@@ -131,6 +132,7 @@ export async function POST(request: Request) {
   }
 
   const body = parsed.data
+  if (body.action === 'open-boss' && !LIVE_CONTROL_ENABLED) return liveControlNotFound()
   const teacherId = session.teacherId
 
   switch (body.action) {

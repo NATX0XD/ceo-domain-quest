@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { listClassroomCeoWorks, listPendingReview, listTeacherShowcaseLikes } from '@/lib/db/repo'
 import { TeacherShowcaseClient } from '@/components/teacher-showcase-client'
 import { TeacherFlagsClient } from '@/components/teacher-flags-client'
@@ -7,7 +6,7 @@ import { TeacherPeerVisibilityClient, type PeerVisibilityRow } from '@/component
 import { showcaseSafeForPeers, showcaseVisibleToPeers } from '@/components/server/showcase-safety'
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
 import { PageBody, PageHead } from '../_ux/page-head'
-import { Icon3d, InfoTip } from '../_ux/v2'
+import { InfoTip } from '../_ux/v2'
 
 export const metadata: Metadata = { title: 'ผลงานและจอหน้าห้อง — สำหรับครู' }
 export const dynamic = 'force-dynamic'
@@ -53,20 +52,7 @@ export default async function TeacherShowcasePage({
     <PageBody>
       <PageHead
         title="ผลงานเด่น"
-        subtitle="จอหน้าห้องไม่แสดงดาวและคะแนน"
-        action={
-          data.selectedId ? (
-            <Link
-              href={`/board?classroomId=${data.selectedId}`}
-              target="_blank"
-              className="t2-btn focus-ring"
-              data-kind="primary"
-            >
-              <Icon3d name="television" size={24} />
-              เปิดจอฉาย
-            </Link>
-          ) : null
-        }
+        subtitle="กลั่นกรองผลงานที่เพื่อนจะเห็น"
       />
 
       <div className="t2-stack">
@@ -108,16 +94,7 @@ export default async function TeacherShowcasePage({
           )}
         </section>
 
-        <section className="t2-note" data-tone="sky">
-          <Icon3d name="television" size={32} />
-          <span className="min-w-0 flex-1">
-            จอหน้าห้องเปลี่ยนตามช่วงคาบเอง
-            <InfoTip
-              label="เรื่องจอหน้าห้อง"
-              text="ช่วงรอเริ่มขึ้นรหัสห้องกับ QR · ช่วงภารกิจขึ้นเมืองของห้อง · ช่วงครูสรุปขึ้นผลงานที่ปักหมุดไว้ ไม่มีดาว ไม่มีคะแนน ไม่มีการจัดอันดับ"
-            />
-          </span>
-        </section>
+        <section className="t2-note" data-tone="sky"><span><strong>การมองเห็นของเพื่อน</strong> ใช้ปุ่ม peer_visible เพื่อเลือกผลงานที่ปลอดภัยและเหมาะกับการแลกเปลี่ยนเรียนรู้</span><InfoTip label="เรื่องการมองเห็น" text="ผลงานที่ไม่ผ่านตัวกรองจะถูกซ่อนจากเพื่อนโดยอัตโนมัติ ครูตรวจและยืนยันได้จากหน้านี้" /></section>
       </div>
     </PageBody>
   )

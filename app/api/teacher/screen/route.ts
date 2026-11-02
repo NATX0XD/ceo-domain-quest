@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { LIVE_CONTROL_ENABLED, liveControlNotFound } from '@/lib/teacher-features'
 import {
   SESSION_PHASE_LABELS,
   getActiveClassSession,
@@ -22,6 +23,7 @@ export const dynamic = 'force-dynamic'
 const SHOWCASE_ON_SCREEN = 3
 
 export async function GET(request: Request) {
+  if (!LIVE_CONTROL_ENABLED) return liveControlNotFound()
   const session = await readTeacherSession()
   if (!session) return unauthorized()
 

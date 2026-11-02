@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { TeacherGradeQueueClient } from '../../../components/teacher-grade-queue-client'
 import { CloseIcon, ProfileIcon } from '../../../components/ui'
 import { Icon3d, type Icon3dName } from './v2'
 
@@ -38,15 +37,8 @@ interface ClassroomChoice {
 }
 
 interface Badges {
-  needAttention: number
   review: number
   requests: number
-}
-
-function mmss(total: number | null): string {
-  if (total === null) return '--:--'
-  const safe = Math.max(0, total)
-  return `${String(Math.floor(safe / 60)).padStart(2, '0')}:${String(safe % 60).padStart(2, '0')}`
 }
 
 interface NavItem {
@@ -81,9 +73,7 @@ export function TeacherShell({
   const selected = classrooms.find((c) => c.id === askedId) ?? classrooms[0] ?? null
   const classroomId = selected?.id ?? null
 
-  const [badges, setBadges] = useState<Badges>({ needAttention: 0, review: 0, requests: 0 })
-  const [phaseLabel, setPhaseLabel] = useState<string | null>(null)
-  const [seconds, setSeconds] = useState<number | null>(null)
+  const [badges, setBadges] = useState<Badges>({ review: 0, requests: 0 })
   const [signingOut, setSigningOut] = useState(false)
   const [drawer, setDrawer] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -93,41 +83,14 @@ export function TeacherShell({
   const load = useCallback(async () => {
     if (!classroomId) return
     try {
-      const [boardRes, planRes, sessionRes] = await Promise.all([
-        fetch(`/api/teacher/board?classroomId=${classroomId}`, { cache: 'no-store' }),
-        fetch(`/api/plan-request?classroomId=${classroomId}`, { cache: 'no-store' }),
-        fetch(`/api/teacher/session?classroomId=${classroomId}`, { cache: 'no-store' }),
-      ])
-      if (boardRes.ok && planRes.ok) {
-        const board = (await boardRes.json()) as { needAttention?: number; pendingReview?: number }
+      const planRes = await fetch(`/api/plan-request?classroomId=${classroomId}`, { cache: 'no-store' })
+      if (planRes.ok) {
         const plans = (await planRes.json()) as { requests?: { status?: string }[] }
         setBadges({
-          needAttention: board.needAttention ?? 0,
-          review: board.pendingReview ?? 0,
+          review: 0,
           requests: (plans.requests ?? []).filter((r) => (r.status ?? 'pending') === 'pending')
             .length,
         })
-      }
-      if (sessionRes.ok) {
-        const data = (await sessionRes.json()) as {
-          session?: {
-            phase: string
-            timer_end_at: string | null
-            timer_paused_seconds: number | null
-          }
-          phases?: { phase: string; label: string }[]
-        }
-        const s = data.session
-        if (s) {
-          setPhaseLabel(data.phases?.find((p) => p.phase === s.phase)?.label ?? s.phase)
-          setSeconds(
-            s.timer_paused_seconds !== null
-              ? s.timer_paused_seconds
-              : s.timer_end_at
-                ? Math.max(0, Math.round((new Date(s.timer_end_at).getTime() - Date.now()) / 1000))
-                : null,
-          )
-        }
       }
     } catch {
       // เน็ตสะดุดรอบเดียว รอบหน้าค่อยว่ากัน ไม่ล้างเลขเดิมทิ้ง
@@ -139,12 +102,6 @@ export function TeacherShell({
     const id = setInterval(() => void load(), POLL_MS)
     return () => clearInterval(id)
   }, [load])
-
-  useEffect(() => {
-    if (seconds === null) return
-    const id = setInterval(() => setSeconds((s) => (s === null ? null : Math.max(0, s - 1))), 1000)
-    return () => clearInterval(id)
-  }, [seconds === null])
 
   // เปลี่ยนหน้า = ปิดลิ้นชักเมนูบนมือถือ
   useEffect(() => {
@@ -188,8 +145,7 @@ export function TeacherShell({
     {
       title: 'ภาพรวม',
       items: [
-        { href: `/teacher${q}`, label: 'คุมคาบสด', icon: ico('chequered-flag'), badge: badges.needAttention, urgent: true },
-        { href: `/teacher/board${q}`, label: 'ห้องเรียน', icon: ico('school') },
+        { href: `/teacher${q}`, label: 'ภาพรวมชั้นเรียน', icon: ico('school') },
       ],
     },
     {
@@ -210,8 +166,8 @@ export function TeacherShell({
     {
       title: 'ระบบ',
       items: [
-        { href: `/teacher/settings${q}`, label: 'ตั้งค่า', icon: ico('gear') },
-        { href: `/teacher/demo${q}`, label: 'โหมดสาธิต', icon: ico('performing-arts') },
+        { href: `/teacher/missions${q}`, label: 'ตั้งค่าด่าน', icon: ico('gear') },
+        { href: `/teacher/settings${q}`, label: 'ห้องและบัญชี', icon: ico('clipboard') },
       ],
     },
   ]
@@ -380,14 +336,6 @@ export function TeacherShell({
             ) : null}
           </div>
 
-          {phaseLabel ? (
-            <p className="hidden shrink-0 items-center gap-2 rounded-full bg-[#e8e3fa] px-3 py-1.5 text-label font-bold text-ink xl:flex">
-              <Icon3d name="alarm-clock" size={22} />
-              <span className="max-w-[10rem] truncate">{phaseLabel}</span>
-              <span className="tabular-nums text-brand-700">{mmss(seconds)}</span>
-            </p>
-          ) : null}
-
           {/* สลับห้อง */}
           {classrooms.length > 0 ? (
             <label className="flex shrink-0 items-center gap-1.5">
@@ -448,13 +396,6 @@ export function TeacherShell({
         {/* ───────── เนื้อหา — ชั้นเดียวที่เลื่อนได้ */}
         <main className="teacher-cms-main min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
 
-        {/**
-         * ตัวปลุกคิวตรวจงาน AI — ระบบไม่มี cron ถ้าไม่มีหน้าครูเปิดค้างไว้ คิวจะไม่เดินเลย (bus T77)
-         * อยู่ที่โครงนี้ คิวจึงเดินทุกหน้าที่ครูเปิด เก็บไว้นอกสายตาเพราะการ์ดของมันสูงเกินและแก้ไม่ได้
-         */}
-        <div aria-hidden className="pointer-events-none absolute size-0 overflow-hidden opacity-0">
-          <TeacherGradeQueueClient />
-        </div>
       </div>
     </div>
   )

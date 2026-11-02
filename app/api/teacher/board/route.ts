@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { LIVE_CONTROL_ENABLED, liveControlNotFound } from '@/lib/teacher-features'
 import { calibrationFlag, shouldCoach, type CoachCause } from '@/core/personalize'
 import coachPrompts from '@/content/coach-prompts.json'
 import missionsContent from '@/content/missions.json'
@@ -158,6 +159,7 @@ function findEncouragement(reasonId: string): string | null {
 }
 
 export async function GET(request: Request) {
+  if (!LIVE_CONTROL_ENABLED) return liveControlNotFound()
   const session = await readTeacherSession()
   if (!session) return unauthorized()
 

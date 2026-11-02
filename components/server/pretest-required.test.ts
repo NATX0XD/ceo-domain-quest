@@ -67,12 +67,12 @@ describe('pretestRequirement', () => {
     expect(await res?.json()).toMatchObject({ error: 'pretest-required', href: '/pretest', pretestOpen: true, message: 'ทำแบบทดสอบก่อนเรียนก่อนนะ' })
   })
 
-  it('not done + teacher not opened -> 409 asking to wait', async () => {
+  it('not done + gate closed -> 409 with self-paced fallback', async () => {
     mocks.getProfile.mockResolvedValue(null)
     mocks.pretestGate.mockResolvedValue({ open: false, reason: 'x', unlockedForStudent: false })
     const res = await pretestBlockResponse('s1')
     expect(res?.status).toBe(409)
-    expect(await res?.json()).toMatchObject({ href: '/pretest', pretestOpen: false, message: 'รอครูเปิดแบบทดสอบก่อนเรียน' })
+    expect(await res?.json()).toMatchObject({ href: '/pretest', pretestOpen: false, message: 'แบบทดสอบก่อนเรียนยังไม่พร้อม' })
   })
 })
 

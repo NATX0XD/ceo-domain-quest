@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { LIVE_CONTROL_ENABLED, liveControlNotFound } from '@/lib/teacher-features'
 import { z } from 'zod'
 import {
   SESSION_PHASES,
@@ -111,6 +112,7 @@ const ActionSchema = z.discriminatedUnion('action', [
 
 /** เปิดคาบของห้อง (หรือคืนคาบที่กำลังเดินอยู่) พร้อมประวัติการย้ายช่วง */
 export async function GET(request: Request) {
+  if (!LIVE_CONTROL_ENABLED) return liveControlNotFound()
   const session = await readTeacherSession()
   if (!session) return unauthorized()
 
@@ -129,6 +131,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!LIVE_CONTROL_ENABLED) return liveControlNotFound()
   const session = await readTeacherSession()
   if (!session) return unauthorized()
 

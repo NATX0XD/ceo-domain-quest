@@ -13,7 +13,7 @@ import { pretestGate } from './posttest-gate'
  */
 export const PRETEST_HREF = '/pretest'
 export const PRETEST_TODO_MESSAGE = 'ทำแบบทดสอบก่อนเรียนก่อนนะ'
-export const PRETEST_WAIT_MESSAGE = 'รอครูเปิดแบบทดสอบก่อนเรียน'
+export const PRETEST_WAIT_MESSAGE = 'แบบทดสอบก่อนเรียนยังไม่พร้อม'
 
 export interface PretestRequirement {
   /** ส่งแบบทดสอบก่อนเรียนแล้ว = เข้าภารกิจได้ */

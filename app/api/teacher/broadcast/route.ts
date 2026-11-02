@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { LIVE_CONTROL_ENABLED, liveControlNotFound } from '@/lib/teacher-features'
 import { z } from 'zod'
 import { getOwnedClassroom, listBroadcasts, sendBroadcast } from '@/lib/db/repo'
 import { errorResponse, readJsonBody, readTeacherSession, unauthorized } from '../../_lib/session-cookie'
@@ -32,6 +33,7 @@ const SendSchema = z.object({
 })
 
 export async function GET(request: Request) {
+  if (!LIVE_CONTROL_ENABLED) return liveControlNotFound()
   const session = await readTeacherSession()
   if (!session) return unauthorized()
 
@@ -47,6 +49,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!LIVE_CONTROL_ENABLED) return liveControlNotFound()
   const session = await readTeacherSession()
   if (!session) return unauthorized()
 

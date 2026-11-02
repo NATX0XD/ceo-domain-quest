@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { LiveBoardClient } from './live-board-client'
+import { redirectIfLiveControlDisabled } from '@/lib/teacher-features'
 import { TeacherSignedOut, TeacherSubPage, loadTeacherPage, type SearchParams } from '../_lib/teacher-page'
 
 /**
@@ -14,6 +15,7 @@ export default async function TeacherBoardPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
+  redirectIfLiveControlDisabled()
   const data = await loadTeacherPage(await searchParams)
   if (!data) return <TeacherSignedOut title="แผงห้องเรียนสด" />
 

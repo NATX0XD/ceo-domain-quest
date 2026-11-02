@@ -52,6 +52,33 @@ const classroomQuery: ParameterObject = query('classroomId', CLASSROOM_ID_SOURCE
 })
 
 export const teacherPaths: Record<string, PathItemObject> = {
+  '/api/teacher/mission-settings': {
+    get: op({
+      id: 'teacherMissionSettingsGet',
+      summary: 'อ่านค่าตั้งค่าด่านของห้อง',
+      tags: [TEACHER],
+      security: TEACHER_ONLY,
+      parameters: [classroomQuery],
+      description: 'คืนค่าตั้งค่าของ m1, m2, m3, m4 และ CEO โดยผสานค่าที่เก็บไว้กับค่าเริ่มต้นและตรวจสิทธิ์เจ้าของห้อง',
+      responses: {
+        ...ok('ค่าตั้งค่าด่านทั้งห้า', obj({ ok: bool('สำเร็จ'), classroomId: uuid('รหัสห้อง'), missions: map(opaque('รายละเอียดด่าน'), 'ค่าตั้งค่ารายด่าน') })),
+        ...failures([400, ['bad-request']], [401, ['unauthorized']], [404, ['not-found']]),
+      },
+    }),
+    put: op({
+      id: 'teacherMissionSettingsPut',
+      summary: 'บันทึกค่าตั้งค่าด่านของห้อง',
+      tags: [TEACHER],
+      security: TEACHER_ONLY,
+      parameters: [classroomQuery],
+      description: 'ตรวจ schema และบีบค่าตัวเลขให้อยู่ในช่วงที่เนื้อหารองรับก่อนบันทึก พร้อมเขียน audit event',
+      requestBody: jsonBody(obj({ missionId: str('m1 | m2 | m3 | m4 | ceo'), settings: opaque('ค่าตั้งค่าของด่าน') }, { required: ['missionId', 'settings'] }), { missionId: 'm3', settings: { realCustomers: 3 } }),
+      responses: {
+        ...ok('บันทึกแล้ว', obj({ ok: bool('สำเร็จ'), setting: opaque('แถวค่าตั้งค่าที่บันทึก') })),
+        ...failures([400, ['bad-request']], [401, ['unauthorized']], [404, ['not-found']], [500, ['save-failed']]),
+      },
+    }),
+  },
   '/api/teacher/account': {
     get: op({
       id: 'teacherAccountGet',

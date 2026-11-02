@@ -1,4 +1,4 @@
-import { getActiveClassSession, getProfile, getStudent, listStudentPhaseUnlocks } from '@/lib/db/repo'
+import { getProfile, getStudent, listSubmissions } from '@/lib/db/repo'
 
 /**
  * ประตูของแบบทดสอบก่อน/หลังเรียน (T-12) — ชุดก่อนเรียน **ครูเป็นคนกดเปิด**
@@ -13,9 +13,6 @@ import { getActiveClassSession, getProfile, getStudent, listStudentPhaseUnlocks 
 
 export type TestKind = 'pretest' | 'posttest'
 
-/** ครูปลดล็อกรายคนก่อนทั้งห้องได้ด้วยช่วงนี้ (ตาราง student_phase_unlocks) */
-const UNLOCK_PHASE = 'reflect'
-
 export interface TestGate {
   open: boolean
   /** เหตุผลที่ยังไม่เปิด — บอกว่าต้องรออะไร ไม่ใช่บอกว่าห้าม */
@@ -26,11 +23,7 @@ export interface TestGate {
   byTeacher?: boolean
 }
 
-const CLOSED_MESSAGE: Record<TestKind, string> = {
-  pretest:
-    'แบบทดสอบก่อนเรียนจะเปิดตอนครูกดเปิดให้ทั้งห้องก่อนเริ่มคาบ ระหว่างนี้ยังไม่ต้องทำอะไรครับ',
-  posttest: 'ทำแบบทดสอบก่อนเรียนก่อนนะ แล้วแบบทดสอบหลังเรียนจะเปิดให้เอง',
-}
+const CLOSED_MESSAGE = 'ทำภารกิจ CEO ให้เสร็จก่อน แล้วแบบทดสอบหลังเรียนจะเปิดให้เอง'
 
 export async function testGate(studentId: string, kind: TestKind): Promise<TestGate> {
   const student = await getStudent(studentId)
@@ -42,32 +35,12 @@ export async function testGate(studentId: string, kind: TestKind): Promise<TestG
     }
   }
 
-  const unlocks = await listStudentPhaseUnlocks(studentId)
-  const unlockedForStudent = unlocks.some(
-    (row) => row.phase === UNLOCK_PHASE && row.revoked_at === null,
-  )
-
-  const session = student.classroom_id ? await getActiveClassSession(student.classroom_id) : null
-  const enabled =
-    kind === 'pretest' ? session?.pretest_enabled === true : session?.posttest_enabled === true
-
-  if (enabled || unlockedForStudent) {
-    return { open: true, reason: null, unlockedForStudent, byTeacher: true }
-  }
-
-  /**
-   * แบบทดสอบหลังเรียน **ไม่ต้องรอครูเปิด** (เจ้าของสั่ง) — ทำได้ทันทีที่ทำชุดก่อนเรียนแล้ว
-   * เด็กที่จบด่านบอสเร็วจะได้ทำต่อเลย ไม่ต้องนั่งรอทั้งห้อง · สวิตช์ของครูยังเปิดให้ได้ แต่ไม่ใช่ประตู
-   * ต้องมีคะแนนก่อนเรียนก่อน ไม่งั้นเทียบก่อน-หลัง (E1/E2) ไม่ได้
-   */
-  if (kind === 'posttest') {
-    const profile = await getProfile(studentId)
-    if (profile && profile.pre_test_score !== null) {
-      return { open: true, reason: null, unlockedForStudent, byTeacher: false }
-    }
-  }
-
-  return { open: false, reason: CLOSED_MESSAGE[kind], unlockedForStudent }
+  if (kind === 'pretest') return { open: true, reason: null, unlockedForStudent: false, byTeacher: false }
+  const [profile, submissions] = await Promise.all([getProfile(studentId), listSubmissions(studentId)])
+  const ready = profile?.pre_test_score !== null && submissions.length > 0
+  return ready
+    ? { open: true, reason: null, unlockedForStudent: false, byTeacher: false }
+    : { open: false, reason: CLOSED_MESSAGE, unlockedForStudent: false }
 }
 
 /** ทางลัดเดิมของแบบทดสอบหลังเรียน — หน้าและ route เดิมเรียกชื่อนี้อยู่ */

@@ -154,6 +154,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"classroom_mission_settings": {
+                  Row: {
+                    "classroom_id": string,"mission_id": string,"settings": NonNullable<Json>,"updated_at": string,"updated_by": string | null
+                  }
+                  Insert: {
+                    "classroom_id": string,"mission_id": string,"settings"?: NonNullable<Json>,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "classroom_id"?: string,"mission_id"?: string,"settings"?: NonNullable<Json>,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "classroom_mission_settings_classroom_id_fkey"
+      columns: ["classroom_id"]
+isOneToOne: false
+      referencedRelation: "classrooms"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "classroom_mission_settings_updated_by_fkey"
+      columns: ["updated_by"]
+isOneToOne: false
+      referencedRelation: "teachers"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"classrooms": {
                   Row: {
                     "closes_at": string | null,"created_at": string,"id": string,"is_demo": boolean,"opens_at": string,"room_code": string,"status": string,"teacher_id": string
@@ -356,13 +381,13 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "audience": string | null,"boss_template_id": string | null,"business_edit_unlocked": boolean,"business_name": string | null,"business_type": string | null,"channel_chosen_by": string | null,"channel_suggested": string | null,"channel_switches": number,"confidence": NonNullable<Json>,"domain_name": string | null,"earned_stars": number,"goal_id": string | null,"goal_raised_at": string | null,"goal_raised_count": number,"goal_stars": number | null,"hints_toggled_by": string | null,"is_registered_company": boolean | null,"learning_route": string | null,"level_by_objective": NonNullable<Json>,"level_overridden_by_student": NonNullable<Json>,"level_suggested": number | null,"own_goal_text": string | null,"post_test_score": number | null,"pre_test_score": number | null,"readiness": NonNullable<Json>,"scaffold_level": number,"self_goal_level": number | null,"student_id": string,"talent_id": string | null,"updated_at": string
+                    "audience": string | null,"boss_template_id": string | null,"business_edit_unlocked": boolean,"business_name": string | null,"business_type": string | null,"certificate_display_name": string | null,"channel_chosen_by": string | null,"channel_suggested": string | null,"channel_switches": number,"confidence": NonNullable<Json>,"domain_name": string | null,"earned_stars": number,"goal_id": string | null,"goal_raised_at": string | null,"goal_raised_count": number,"goal_stars": number | null,"hints_toggled_by": string | null,"is_registered_company": boolean | null,"learning_route": string | null,"level_by_objective": NonNullable<Json>,"level_overridden_by_student": NonNullable<Json>,"level_suggested": number | null,"own_goal_text": string | null,"post_test_score": number | null,"pre_test_score": number | null,"readiness": NonNullable<Json>,"scaffold_level": number,"self_goal_level": number | null,"student_id": string,"talent_id": string | null,"updated_at": string
                   }
                   Insert: {
-                    "audience"?: string | null,"boss_template_id"?: string | null,"business_edit_unlocked"?: boolean,"business_name"?: string | null,"business_type"?: string | null,"channel_chosen_by"?: string | null,"channel_suggested"?: string | null,"channel_switches"?: number,"confidence"?: NonNullable<Json>,"domain_name"?: string | null,"earned_stars"?: number,"goal_id"?: string | null,"goal_raised_at"?: string | null,"goal_raised_count"?: number,"goal_stars"?: number | null,"hints_toggled_by"?: string | null,"is_registered_company"?: boolean | null,"learning_route"?: string | null,"level_by_objective"?: NonNullable<Json>,"level_overridden_by_student"?: NonNullable<Json>,"level_suggested"?: number | null,"own_goal_text"?: string | null,"post_test_score"?: number | null,"pre_test_score"?: number | null,"readiness"?: NonNullable<Json>,"scaffold_level"?: number,"self_goal_level"?: number | null,"student_id": string,"talent_id"?: string | null,"updated_at"?: string
+                    "audience"?: string | null,"boss_template_id"?: string | null,"business_edit_unlocked"?: boolean,"business_name"?: string | null,"business_type"?: string | null,"certificate_display_name"?: string | null,"channel_chosen_by"?: string | null,"channel_suggested"?: string | null,"channel_switches"?: number,"confidence"?: NonNullable<Json>,"domain_name"?: string | null,"earned_stars"?: number,"goal_id"?: string | null,"goal_raised_at"?: string | null,"goal_raised_count"?: number,"goal_stars"?: number | null,"hints_toggled_by"?: string | null,"is_registered_company"?: boolean | null,"learning_route"?: string | null,"level_by_objective"?: NonNullable<Json>,"level_overridden_by_student"?: NonNullable<Json>,"level_suggested"?: number | null,"own_goal_text"?: string | null,"post_test_score"?: number | null,"pre_test_score"?: number | null,"readiness"?: NonNullable<Json>,"scaffold_level"?: number,"self_goal_level"?: number | null,"student_id": string,"talent_id"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "audience"?: string | null,"boss_template_id"?: string | null,"business_edit_unlocked"?: boolean,"business_name"?: string | null,"business_type"?: string | null,"channel_chosen_by"?: string | null,"channel_suggested"?: string | null,"channel_switches"?: number,"confidence"?: NonNullable<Json>,"domain_name"?: string | null,"earned_stars"?: number,"goal_id"?: string | null,"goal_raised_at"?: string | null,"goal_raised_count"?: number,"goal_stars"?: number | null,"hints_toggled_by"?: string | null,"is_registered_company"?: boolean | null,"learning_route"?: string | null,"level_by_objective"?: NonNullable<Json>,"level_overridden_by_student"?: NonNullable<Json>,"level_suggested"?: number | null,"own_goal_text"?: string | null,"post_test_score"?: number | null,"pre_test_score"?: number | null,"readiness"?: NonNullable<Json>,"scaffold_level"?: number,"self_goal_level"?: number | null,"student_id"?: string,"talent_id"?: string | null,"updated_at"?: string
+                    "audience"?: string | null,"boss_template_id"?: string | null,"business_edit_unlocked"?: boolean,"business_name"?: string | null,"business_type"?: string | null,"certificate_display_name"?: string | null,"channel_chosen_by"?: string | null,"channel_suggested"?: string | null,"channel_switches"?: number,"confidence"?: NonNullable<Json>,"domain_name"?: string | null,"earned_stars"?: number,"goal_id"?: string | null,"goal_raised_at"?: string | null,"goal_raised_count"?: number,"goal_stars"?: number | null,"hints_toggled_by"?: string | null,"is_registered_company"?: boolean | null,"learning_route"?: string | null,"level_by_objective"?: NonNullable<Json>,"level_overridden_by_student"?: NonNullable<Json>,"level_suggested"?: number | null,"own_goal_text"?: string | null,"post_test_score"?: number | null,"pre_test_score"?: number | null,"readiness"?: NonNullable<Json>,"scaffold_level"?: number,"self_goal_level"?: number | null,"student_id"?: string,"talent_id"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -906,7 +931,7 @@ isOneToOne: false
                            },
 "classroom_showcase":
 { Args: { "p_classroom_id": string,"p_student_id": string }; Returns: {
-              "domain_name": string,"nickname": string,"peer_visible": boolean | null,"reason_text": string,"tld": string
+              "domain_name": string,"nickname": string,"peer_visible": boolean,"reason_text": string,"tld": string
             }[]
                            },
 "classroom_showcase_extras":
@@ -1368,6 +1393,7 @@ isOneToOne: false
 "business_edit_unlocked": boolean,
 "business_name": string | null,
 "business_type": string | null,
+"certificate_display_name": string | null,
 "channel_chosen_by": string | null,
 "channel_suggested": string | null,
 "channel_switches": number,
@@ -1465,6 +1491,7 @@ isOneToOne: false
 "business_edit_unlocked": boolean,
 "business_name": string | null,
 "business_type": string | null,
+"certificate_display_name": string | null,
 "channel_chosen_by": string | null,
 "channel_suggested": string | null,
 "channel_switches": number,
@@ -1849,6 +1876,7 @@ isOneToOne: false
 "business_edit_unlocked": boolean,
 "business_name": string | null,
 "business_type": string | null,
+"certificate_display_name": string | null,
 "channel_chosen_by": string | null,
 "channel_suggested": string | null,
 "channel_switches": number,
@@ -2187,38 +2215,6 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
-"teacher_set_peer_visible":
-{ Args: { "p_submission_id": string,"p_teacher_id": string,"p_visible": boolean | null }; Returns: {
-              "ai_scores": Json | null,
-"ai_scores_snapshot": Json | null,
-"confirmed_at": string | null,
-"confirmed_by": string | null,
-"created_at": string,
-"domain_name": string,
-"emphasis_changed_count": number,
-"emphasis_criterion": string | null,
-"format": string,
-"id": string,
-"needs_review": boolean,
-"peer_visible": boolean | null,
-"pin_hide_name": boolean,
-"pinned_at": string | null,
-"pinned_by": string | null,
-"reason_text": string | null,
-"self_scores": Json | null,
-"student_id": string,
-"teacher_changed": boolean | null,
-"teacher_confirmed_scores": Json | null,
-"teacher_scores_before": Json | null,
-"tld": string,
-"updated_at": string
-            }[]
-                          SetofOptions: {
-        from: "*"
-        to: "submissions"
-        isOneToOne: false
-        isSetofReturn: true
-      } },
 "teacher_reset_pin":
 { Args: { "p_note"?: string,"p_pin_hash": string,"p_reason"?: string,"p_student_id": string,"p_teacher_id": string }; Returns: {
               "accepts_buddy_requests": boolean,
@@ -2248,6 +2244,7 @@ isOneToOne: false
 "business_edit_unlocked": boolean,
 "business_name": string | null,
 "business_type": string | null,
+"certificate_display_name": string | null,
 "channel_chosen_by": string | null,
 "channel_suggested": string | null,
 "channel_switches": number,
@@ -2311,6 +2308,7 @@ isOneToOne: false
 "business_edit_unlocked": boolean,
 "business_name": string | null,
 "business_type": string | null,
+"certificate_display_name": string | null,
 "channel_chosen_by": string | null,
 "channel_suggested": string | null,
 "channel_switches": number,
@@ -2343,6 +2341,38 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"teacher_set_peer_visible":
+{ Args: { "p_submission_id": string,"p_teacher_id": string,"p_visible": boolean }; Returns: {
+              "ai_scores": Json | null,
+"ai_scores_snapshot": Json | null,
+"confirmed_at": string | null,
+"confirmed_by": string | null,
+"created_at": string,
+"domain_name": string,
+"emphasis_changed_count": number,
+"emphasis_criterion": string | null,
+"format": string,
+"id": string,
+"needs_review": boolean,
+"peer_visible": boolean | null,
+"pin_hide_name": boolean,
+"pinned_at": string | null,
+"pinned_by": string | null,
+"reason_text": string | null,
+"self_scores": Json | null,
+"student_id": string,
+"teacher_changed": boolean | null,
+"teacher_confirmed_scores": Json | null,
+"teacher_scores_before": Json | null,
+"tld": string,
+"updated_at": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "submissions"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "teacher_set_scaffold":
 { Args: { "p_channel"?: string,"p_level"?: number,"p_note"?: string,"p_reason"?: string,"p_student_id": string,"p_teacher_id": string }; Returns: {
               "audience": string | null,
@@ -2350,6 +2380,7 @@ isOneToOne: false
 "business_edit_unlocked": boolean,
 "business_name": string | null,
 "business_type": string | null,
+"certificate_display_name": string | null,
 "channel_chosen_by": string | null,
 "channel_suggested": string | null,
 "channel_switches": number,
@@ -2408,6 +2439,7 @@ isOneToOne: false
 "business_edit_unlocked": boolean,
 "business_name": string | null,
 "business_type": string | null,
+"certificate_display_name": string | null,
 "channel_chosen_by": string | null,
 "channel_suggested": string | null,
 "channel_switches": number,

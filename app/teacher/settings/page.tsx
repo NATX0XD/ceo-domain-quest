@@ -1,14 +1,10 @@
 import type { Metadata } from 'next'
 import QRCode from 'qrcode'
-import { getActiveClassSession, getTeacher } from '@/lib/db/repo'
+import { getTeacher } from '@/lib/db/repo'
 import { TeacherRoomClient } from '@/components/teacher-room-client'
-import { TeacherPosttestClient } from '@/components/teacher-posttest-client'
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
 import { PageBody, PageHead } from '../_ux/page-head'
 import { Icon3d, InfoTip } from '../_ux/v2'
-import { AiSwitch } from '../ai-switch'
-import { DemoModeBanner } from '../demo-mode'
-import { SessionSettings } from './session-settings'
 import { TeacherAccountPanel } from './account-panel'
 
 export const metadata: Metadata = { title: 'ตั้งค่าห้อง — สำหรับครู' }
@@ -34,7 +30,6 @@ export default async function TeacherSettingsPage({
   const data = await loadTeacherPage(await searchParams)
   if (!data) return <TeacherSignedOut title="ตั้งค่าห้อง" />
 
-  const activeSession = data.selectedId ? await getActiveClassSession(data.selectedId) : null
   const teacher = await getTeacher(data.teacherId)
 
   // QR ของลิงก์เข้าห้อง — สร้างเป็น SVG ฝั่งเซิร์ฟเวอร์ ไม่ต้องพึ่ง JS ฝั่งเบราว์เซอร์
@@ -50,14 +45,6 @@ export default async function TeacherSettingsPage({
 
       <div className="t2-stack">
         {teacher ? <TeacherAccountPanel email={teacher.email} initialDisplayName={teacher.name ?? ''} /> : null}
-        {/* E-16 ป้ายโหมดสาธิต + ปุ่มล้างกลับค่าเริ่มต้น — ขึ้นเฉพาะห้องที่ติดป้ายห้องสาธิต */}
-        <DemoModeBanner
-          classroomId={data.selectedId}
-          roomCode={data.selectedRoomCode}
-          isDemo={data.selectedIsDemo}
-          showReset
-        />
-
         <div className="t2-grid-2" style={{ alignItems: 'stretch' }}>
           <TeacherRoomClient roomCode={data.selectedRoomCode} joinPath={joinPath} />
 
@@ -78,15 +65,6 @@ export default async function TeacherSettingsPage({
             </section>
           ) : null}
         </div>
-
-        <SessionSettings classroomId={data.selectedId} />
-
-        <AiSwitch
-          sessionId={activeSession?.id ?? null}
-          aiEnabled={activeSession?.ai_enabled ?? true}
-        />
-
-        <TeacherPosttestClient classroomId={data.selectedId} />
 
         {data.selectedId ? (
           <section className="t2-card">
