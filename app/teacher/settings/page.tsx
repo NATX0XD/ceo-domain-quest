@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { UrlTabs } from '../_ux/url-tabs'
 import QRCode from 'qrcode'
 import { getTeacher } from '@/lib/db/repo'
 import { TeacherRoomClient } from '@/components/teacher-room-client'
@@ -44,9 +45,10 @@ export default async function TeacherSettingsPage({
     <PageBody>
       <PageHead tone="gray" icon={<Icon3d name="clipboard" size={36} />} title="ตั้งค่าห้อง" subtitle="บัญชี รหัสห้อง และการดาวน์โหลดข้อมูล" />
 
-      <div className="grid gap-6">
-        {teacher ? <TeacherAccountPanel email={teacher.email} initialDisplayName={teacher.name ?? ''} /> : null}
-
+      <UrlTabs
+        label="หมวดตั้งค่าห้อง"
+        items={[
+          { value: 'room', label: 'ห้องเรียน', content: (
         <div className="grid items-start gap-4 lg:grid-cols-2">
           <TeacherRoomClient roomCode={data.selectedRoomCode} joinPath={joinPath} />
 
@@ -64,7 +66,12 @@ export default async function TeacherSettingsPage({
           ) : null}
         </div>
 
-        {data.selectedId ? (
+          ) },
+          { value: 'account', label: 'บัญชี', content: (
+            <>{teacher ? <TeacherAccountPanel email={teacher.email} initialDisplayName={teacher.name ?? ''} /> : null}</>
+          ) },
+          { value: 'export', label: 'ดาวน์โหลดข้อมูล', content: (
+        <>{data.selectedId ? (
           <Card
             icon={<Icon3d name="package" size={22} />}
             tone="amber"
@@ -85,8 +92,10 @@ export default async function TeacherSettingsPage({
               ))}
             </ul>
           </Card>
-        ) : null}
-      </div>
+        ) : null}</>
+          ) },
+        ]}
+      />
     </PageBody>
   )
 }

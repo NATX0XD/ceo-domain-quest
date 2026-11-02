@@ -40,9 +40,9 @@ export default async function TeacherClassReportPage({
             ? `/api/teacher/export?classroomId=${data.selectedId}&type=scores&pseudonymize=1`
             : undefined
         }
+        learnSlot={<LearnResultsPanel classroomId={data.selectedId} />}
+        reflectionSlot={<ReflectionPanel teacherId={data.teacherId} classroomId={data.selectedId} />}
       />
-      <LearnResultsPanel classroomId={data.selectedId} />
-      <ReflectionPanel teacherId={data.teacherId} classroomId={data.selectedId} />
     </TeacherSubPage>
   )
 }

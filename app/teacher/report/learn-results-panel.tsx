@@ -119,13 +119,12 @@ export function LearnResultsPanel({
   const title = (id: string) => (titles[id] ? `${id.toUpperCase()} ${titles[id]}` : id.toUpperCase())
 
   return (
-    <details className="t2-more mt-4">
-      <summary className="focus-ring">
-        <Icon3d name="books" size={32} />
-        เส้นทางเรียน ดู · อ่าน · ลงมือ
-      </summary>
-      <div className="t2-more__body">
-      <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+    <section className="t2-card" aria-label="เส้นทางเรียน ดู · อ่าน · ลงมือ">
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="t2-card-title !mb-0">
+          <Icon3d name="books" size={28} />
+          เส้นทางเรียน ดู · อ่าน · ลงมือ
+        </h2>
         <button type="button" onClick={() => void load()} className="t2-btn focus-ring print:hidden">
           โหลดใหม่
         </button>
@@ -336,8 +335,7 @@ export function LearnResultsPanel({
       ) : !error ? (
         <p className="mt-2 text-label text-ink-muted">กำลังโหลด…</p>
       ) : null}
-      </div>
-    </details>
+    </section>
   )
 }
 

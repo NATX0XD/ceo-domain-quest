@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { AlertIcon, Card, EmptyState, UsersIcon, cn } from '../../../components/ui'
 import { Icon3d, InfoTip, type Icon3dName } from '../_ux/v2'
-import { LevelBadge, Legend, StatTile, StatusBadge, statusFromRate } from '../_ux/ui'
+import { LevelBadge, Legend, StatTile, StatusBadge, Segmented, Tabs, statusFromRate } from '../_ux/ui'
+import { useUrlTab } from '../_ux/url-tab'
 import { BarList, ColorBar, LikertDist } from '../_ux/data-viz'
 
 /**
@@ -221,6 +222,18 @@ function VCard({ title, icon, tip, legend, children }: { title: string; icon: Ic
   )
 }
 
+const TABS = ['overview', 'missions', 'weak', 'stats', 'items', 'path', 'reflect'] as const
+type TabKey = (typeof TABS)[number]
+
+/** แผงของแต่ละแท็บ — ซ่อนด้วย CSS (ไม่ถอดออกจาก DOM) เพื่อให้พิมพ์/ส่งออกได้ครบทุกแท็บ */
+function Panel({ id, active, children }: { id: TabKey; active: TabKey; children: ReactNode }) {
+  return (
+    <div role="tabpanel" id={`report-tab-${id}`} className={cn('t2-stack', id !== active && '!hidden print:!flex')}>
+      {children}
+    </div>
+  )
+}
+
 function n2(value: number | null | undefined, digits = 2): string {
   return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '-'
 }
@@ -317,11 +330,12 @@ export function toPlainText(r: ClassReport, ia: ItemAnalysisReport | null = null
 
 export function ClassReportClient({
   classroomId,
-  roomCode,
   csvHref,
   initialReport = null,
   initialItemAnalysis = null,
   masterySlot = null,
+  learnSlot = null,
+  reflectionSlot = null,
 }: {
   classroomId: string | null
   roomCode: string | null
@@ -331,7 +345,11 @@ export function ClassReportClient({
   initialItemAnalysis?: ItemAnalysisReport | null
   /** การ์ดเรดาร์ความเข้าใจรายภารกิจ (มาจาก /api/teacher/learn คนละ endpoint) */
   masterySlot?: ReactNode
+  learnSlot?: ReactNode
+  reflectionSlot?: ReactNode
 }) {
+  const [tab, setTab] = useUrlTab(TABS, 'overview')
+  const [itemSet, setItemSet] = useState<string | null>(null)
   const [report, setReport] = useState<ClassReport | null>(initialReport)
   const [itemReport, setItemReport] = useState<ItemAnalysisReport | null>(initialItemAnalysis)
   const [error, setError] = useState<string | null>(null)
@@ -444,15 +462,28 @@ export function ClassReportClient({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <p className="text-note text-[var(--c-ink-3)]">
-          ห้อง {roomCode ?? '-'} · {report.headcount} คน
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 print:hidden">
+        <div className="min-w-0 flex-1 basis-[420px]">
+          <Tabs<TabKey>
+            label="หมวดรายงาน"
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: 'overview', label: 'ภาพรวม' },
+              { value: 'missions', label: 'ผลรายด่าน' },
+              { value: 'weak', label: 'จุดที่ยังอ่อน', count: weak.length || undefined },
+              { value: 'stats', label: 'สถิติละเอียด' },
+              { value: 'items', label: 'ข้อสอบและความพึงพอใจ' },
+              { value: 'path', label: 'เส้นทางเรียน' },
+              { value: 'reflect', label: 'ทบทวนตัวเอง' },
+            ]}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pb-1">
           <InfoTip
             label="เรื่องที่มาของตัวเลข"
             text="ตัวเลขทุกค่าคำนวณที่ core/ ที่เดียว หน้านี้แสดงอย่างเดียว ส่งออกเป็นข้อความล้วนไม่มีชื่อนักเรียน"
           />
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => void load()} className="t2-btn focus-ring">
             คำนวณใหม่
           </button>
@@ -477,6 +508,7 @@ export function ClassReportClient({
         </div>
       </div>
 
+      <Panel id="overview" active={tab}>
       {/* ── ตัวเลขหลัก 4 ช่อง */}
       <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 lg:grid-cols-4">
         <StatTile tone="amber"
@@ -571,6 +603,9 @@ export function ClassReportClient({
         </VCard>
       </div>
 
+      </Panel>
+
+      <Panel id="missions" active={tab}>
       {/* ── คะแนนเทียบเกณฑ์ · ภารกิจที่ยาก · ช่องทาง · ความพึงพอใจ */}
       <div className="t2-grid">
         <VCard
@@ -669,16 +704,18 @@ export function ClassReportClient({
       </div>
 
       {/* ── จุดประสงค์ที่ยังอ่อน + บทสอนซ่อม (กางอ่านเมื่อต้องการ) */}
-      <details className="t2-more">
-        <summary className="focus-ring">
-          <Icon3d name="light-bulb" size={32} />
+      </Panel>
+
+      <Panel id="weak" active={tab}>
+      <section className="t2-card" aria-label="ห้องนี้ยังอ่อนเรื่องไหน">
+        <h2 className="t2-card-title">
+          <Icon3d name="light-bulb" size={28} />
           ห้องนี้ยังอ่อนเรื่องไหน
           <StatusBadge status={weak.length > 0 ? 'atrisk' : 'passed'}>{weak.length > 0 ? `${weak.length} เรื่อง` : 'ผ่านครบ'}</StatusBadge>
-        </summary>
-        <div className="t2-more__body">
+        </h2>
+        <div>
         {report.objectiveGaps.length > 0 ? (
           <div className="mt-4 rounded-xl bg-spark-100/60 p-3 ring-1 ring-spark-300 ring-inset">
-            <h3 className="text-body font-bold text-ink">ห้องนี้ยังอ่อนเรื่องไหน</h3>
             {/*
               API ส่งบทสอนซ่อม 3 นาที + คำถามชวนคิดมาพร้อมกับ advice ตั้งแต่ต้น (สเปกข้อ 11.12)
               แต่จอเคยโชว์แค่ advice — ครูรู้ว่า "ต้องทบทวนเรื่องนี้" แต่ไม่มีของให้หยิบไปสอนจริง
@@ -730,15 +767,11 @@ export function ClassReportClient({
         )}
 
         </div>
-      </details>
+      </section>
+      </Panel>
 
-      {/* ── ตัวเลขสถิติละเอียด (พิมพ์แล้วกางให้เองทั้งหมด) */}
-      <details className="t2-more">
-        <summary className="focus-ring">
-          <Icon3d name="clipboard" size={32} />
-          ตารางสถิติละเอียด
-        </summary>
-        <div className="t2-more__body">
+      <Panel id="stats" active={tab}>
+        <div className="grid items-start gap-4 lg:grid-cols-2 [&>*]:!mt-0">
       {/* ── E1/E2 */}
       <Card as="section" className="mt-4">
         <h2 className="text-title-sm font-bold text-ink">ประสิทธิภาพของสื่อ (E1/E2)</h2>
@@ -930,9 +963,14 @@ export function ClassReportClient({
         </dl>
       </Card>
 
+        </div>
+      </Panel>
+
+      <Panel id="items" active={tab}>
+        <div className="grid items-start gap-4 [&>*]:!mt-0">
       {/* ── ความพึงพอใจรายข้อ (สเปกข้อ 9.4 แถวแรก: ค่าเฉลี่ย/S.D. ของ "ความพึงพอใจ") */}
       {report.survey && report.survey.responses > 0 ? (
-        <Card as="section" className="mt-4">
+        <Card as="section" className="mt-4 lg:col-span-2">
           <h2 className="text-title-sm font-bold text-ink">ความพึงพอใจรายข้อ</h2>
           <p className="mt-1 text-label text-ink-muted">
             ตอบแล้ว {report.survey.responses} คน · ทำครบ {report.survey.completed} คน · เฉลี่ยรวม{' '}
@@ -996,7 +1034,7 @@ export function ClassReportClient({
       ) : null}
 
       {/* ── ค่าความยาก p และอำนาจจำแนก r รายข้อ (สเปกข้อ 9.4 สถิติตัวที่ 5) */}
-      <Card as="section" className="mt-4">
+      <Card as="section" className="mt-4 lg:col-span-2">
         <h2 className="text-title-sm font-bold text-ink">ค่าความยาก (p) และอำนาจจำแนก (r) รายข้อ</h2>
         <p className="mt-1 text-label text-ink-muted">
           คิดแยกชุด เพราะแบบทดสอบก่อนเรียนกับหลังเรียนเป็นข้อสอบคู่ขนานคนละฉบับ
@@ -1008,8 +1046,17 @@ export function ClassReportClient({
         {!itemReport ? (
           <p className="mt-3 text-body text-ink-muted">กำลังอ่านคำตอบรายข้อ…</p>
         ) : (
-          itemReport.sets.map((set) => (
-            <div key={set.set} className="mt-4">
+          <>
+          <div className="mt-3 print:hidden">
+            <Segmented<string>
+              label="เลือกชุดข้อสอบ"
+              value={itemSet ?? itemReport.sets[0]?.set ?? ''}
+              onChange={setItemSet}
+              options={itemReport.sets.map((x) => ({ value: x.set, label: x.label }))}
+            />
+          </div>
+          {itemReport.sets.map((set) => (
+            <div key={set.set} className={cn('mt-4', set.set !== (itemSet ?? itemReport.sets[0]?.set) && 'hidden print:block')}>
               <h3 className="text-body font-bold text-ink">{set.label}</h3>
               {set.responders === 0 ? (
                 <p className="mt-1 text-label text-ink-muted">
@@ -1088,7 +1135,8 @@ export function ClassReportClient({
                 </>
               )}
             </div>
-          ))
+          ))}
+          </>
         )}
 
         <p className="mt-3 text-note text-ink-muted">
@@ -1097,7 +1145,10 @@ export function ClassReportClient({
       </Card>
 
         </div>
-      </details>
+      </Panel>
+
+      <Panel id="path" active={tab}>{learnSlot}</Panel>
+      <Panel id="reflect" active={tab}>{reflectionSlot}</Panel>
     </div>
   )
 }

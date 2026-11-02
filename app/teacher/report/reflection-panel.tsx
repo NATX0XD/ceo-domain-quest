@@ -1,7 +1,6 @@
 import { listClassroomReflections } from '../../../lib/db/repo'
 import { Icon3d } from '../_ux/v2'
 import { StatTile } from '../_ux/ui'
-import { BarList, ColorBar } from '../_ux/data-viz'
 
 /**
  * สรุปการทบทวนตัวเองของทั้งห้อง (ทำหลังแบบทดสอบหลังเรียน) — ไม่ให้คะแนน ใช้ดูภาพรวมเท่านั้น
@@ -28,7 +27,16 @@ export async function ReflectionPanel({
   if (!classroomId) return null
   const rows = (await listClassroomReflections(teacherId, classroomId)) as unknown as Row[]
   const answered = new Set(rows.map((r) => r.student_id)).size
-  if (answered === 0) return null
+  if (answered === 0)
+    return (
+      <section className="t2-card" aria-label="ทบทวนตัวเองของห้อง">
+        <h2 className="t2-card-title">
+          <Icon3d name="memo" size={28} />
+          ทบทวนตัวเอง
+        </h2>
+        <p className="t2-empty">ยังไม่มีใครทบทวนตัวเอง · จะขึ้นเองหลังนักเรียนทำแบบทดสอบหลังเรียน</p>
+      </section>
+    )
 
   const feelCount = new Map<string, number>()
   const conf: number[] = []
@@ -53,27 +61,32 @@ export async function ReflectionPanel({
         <StatTile tone="blue" label="มั่นใจเฉลี่ย (เต็ม 5)" value={avgConf === null ? '-' : avgConf.toFixed(1)} icon={<Icon3d name="glowing-star" size={30} />} />
         <StatTile tone="rose" label="ยังสงสัย" value={wonders.length} unit="เรื่อง" icon={<Icon3d name="speech-balloon" size={30} />} />
       </div>
-      {feelTotal > 0 ? (
-        <div className="mt-5">
-        <BarList>
-          {FEELINGS.map((f) => (
-            <ColorBar
-              key={f}
-              label={f}
-              value={feelCount.get(f) ?? 0}
-              max={feelTotal}
-              display={`${feelCount.get(f) ?? 0} คน`}
-              color={FEEL_COLOR[f]}
-            />
-          ))}
-        </BarList>
-        </div>
-      ) : null}
-      {wonders.length > 0 ? (
-        <details className="t2-more">
-          <summary className="focus-ring">เรื่องที่นักเรียนยังสงสัย ({wonders.length})</summary>
-          <div className="t2-more__body">
-            <ul className="flex flex-col gap-2">
+      <div className="mt-5 grid items-start gap-5 lg:grid-cols-2">
+        {feelTotal > 0 ? (
+          <div>
+            <h3 className="mb-2 text-label font-bold text-ink">ความรู้สึกหลังเรียน</h3>
+            <div className="flex h-4 overflow-hidden rounded-full bg-[var(--c-sunken)]" role="img" aria-label="สัดส่วนความรู้สึก">
+              {FEELINGS.filter((f) => (feelCount.get(f) ?? 0) > 0).map((f) => (
+                <div key={f} title={`${f} ${feelCount.get(f)} คน`} style={{ width: `${((feelCount.get(f) ?? 0) / feelTotal) * 100}%`, background: FEEL_COLOR[f] }} />
+              ))}
+            </div>
+            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-label">
+              {FEELINGS.map((f) => {
+                const c = feelCount.get(f) ?? 0
+                return (
+                  <li key={f} className={c === 0 ? 'flex items-center gap-1.5 text-[var(--c-ink-3)] opacity-60' : 'flex items-center gap-1.5 text-[var(--c-ink)]'}>
+                    <span className="size-2.5 rounded-sm" style={{ background: FEEL_COLOR[f] }} />
+                    {f} <b className="tabular-nums">{c}</b>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ) : null}
+        {wonders.length > 0 ? (
+          <div>
+            <h3 className="mb-2 text-label font-bold text-ink">เรื่องที่นักเรียนยังสงสัย ({wonders.length})</h3>
+            <ul className="flex max-h-64 flex-col gap-2 overflow-y-auto">
               {wonders.map((w, i) => (
                 <li key={i} className="rounded-lg bg-[var(--c-sunken)] p-3">
                   <p className="text-note font-bold text-ink-muted">{w.name}</p>
@@ -82,8 +95,8 @@ export async function ReflectionPanel({
               ))}
             </ul>
           </div>
-        </details>
-      ) : null}
+        ) : null}
+      </div>
     </section>
   )
 }

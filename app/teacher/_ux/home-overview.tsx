@@ -8,6 +8,7 @@ import {
 } from './ui'
 import { StudentCards, cardStatus, type StudentCardData } from './student-cards'
 import { Icon3d } from './v2'
+import { UrlTabs } from './url-tabs'
 import { MissionTag, StackBar } from './data-viz'
 
 export interface HomeStudent extends StudentCardData {
@@ -74,6 +75,10 @@ export function HomeOverview({
         <StatTile tone="green" label="ความคืบหน้าเฉลี่ย" value={`${avg}%`} icon={<Icon3d name="chart-increasing" size={30} />} hint="จาก 5 ด่าน (รวม CEO)" />
       </div>
 
+      <UrlTabs
+        label="มุมมองภาพรวม"
+        items={[
+          { value: 'progress', label: 'ความคืบหน้า', content: (
       <div className="grid gap-5 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <Card title="ความคืบหน้าแต่ละด่าน" tip="แท่งหนึ่งแท่งคือหนึ่งด่าน แบ่งตามสถานะของนักเรียนทั้งห้อง">
           <div className="mb-4">
@@ -134,14 +139,18 @@ export function HomeOverview({
           )}
         </Card>
       </div>
-
+          ) },
+          { value: 'students', label: 'นักเรียน', count: total, content: (
       <section aria-label="นักเรียน">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="m-0 text-[16px] leading-6 font-bold text-[var(--c-ink)]">นักเรียน</h2>
-          {total > 8 ? <Link href={`/teacher/student${q}`} className="text-[14px] font-semibold text-[var(--c-brand)]">ดูทั้งหมด {total} คน ›</Link> : null}
+          {total > 4 ? <Link href={`/teacher/student${q}`} className="text-[14px] font-semibold text-[var(--c-brand)]">ดูทั้งหมด {total} คน ›</Link> : null}
         </div>
-        <StudentCards students={students} classroomId={classroomId} roomCode={roomCode} limit={8} filterable={false} />
+        <StudentCards students={students} classroomId={classroomId} roomCode={roomCode} limit={4} filterable={false} />
       </section>
+          ) },
+        ]}
+      />
     </div>
   )
 }

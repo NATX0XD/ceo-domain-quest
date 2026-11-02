@@ -7,6 +7,7 @@ import { showcaseSafeForPeers, showcaseVisibleToPeers } from '@/components/serve
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
 import { PageBody, PageHead } from '../_ux/page-head'
 import { InfoTip } from '../_ux/v2'
+import { UrlTabs } from '../_ux/url-tabs'
 
 import { Icon3d } from '../_ux/v2'
 
@@ -60,11 +61,19 @@ export default async function TeacherShowcasePage({
         subtitle="กลั่นกรองผลงานที่เพื่อนจะเห็น"
       />
 
-      <div className="t2-stack">
+      <UrlTabs
+        label="หมวดผลงานเด่น"
+        items={[
+          { value: 'moderate', label: 'กลั่นกรอง', content: (
+            <>
         <TeacherFlagsClient classroomId={data.selectedId} />
 
         {data.selectedId ? <TeacherPeerVisibilityClient rows={peerRows} /> : null}
-
+        <section className="t2-note" data-tone="sky"><span><strong>การมองเห็นของเพื่อน</strong> ใช้ปุ่ม peer_visible เพื่อเลือกผลงานที่ปลอดภัยและเหมาะกับการแลกเปลี่ยนเรียนรู้</span><InfoTip label="เรื่องการมองเห็น" text="ผลงานที่ไม่ผ่านตัวกรองจะถูกซ่อนจากเพื่อนโดยอัตโนมัติ ครูตรวจและยืนยันได้จากหน้านี้" /></section>
+            </>
+          ) },
+          { value: 'screen', label: 'ขึ้นจอหน้าห้อง', content: (
+            <>
         <TeacherShowcaseClient
           classroomId={data.selectedId}
           candidates={pending
@@ -99,8 +108,10 @@ export default async function TeacherShowcasePage({
           )}
         </section>
 
-        <section className="t2-note" data-tone="sky"><span><strong>การมองเห็นของเพื่อน</strong> ใช้ปุ่ม peer_visible เพื่อเลือกผลงานที่ปลอดภัยและเหมาะกับการแลกเปลี่ยนเรียนรู้</span><InfoTip label="เรื่องการมองเห็น" text="ผลงานที่ไม่ผ่านตัวกรองจะถูกซ่อนจากเพื่อนโดยอัตโนมัติ ครูตรวจและยืนยันได้จากหน้านี้" /></section>
-      </div>
+            </>
+          ) },
+        ]}
+      />
     </PageBody>
   )
 }
