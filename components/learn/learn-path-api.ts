@@ -56,7 +56,11 @@ export async function postLearn<T>(missionId: string, body: LearnBody): Promise<
       body: JSON.stringify(body),
       signal: controller.signal,
     })
-    const data = (await res.json().catch(() => null)) as (T & { message?: string }) | null
+    const data = (await res.json().catch(() => null)) as (T & { message?: string; error?: string; href?: string }) | null
+    // ยังไม่ส่งแบบทดสอบก่อนเรียน — เซิร์ฟเวอร์กั้นทุกภารกิจ พาไปหน้าแบบทดสอบเลย
+    if (res.status === 409 && data?.error === 'pretest-required' && typeof window !== 'undefined') {
+      window.location.assign(data.href ?? '/pretest')
+    }
     if (!res.ok || !data) {
       const fallback =
         res.status === 401 ? 'ยังไม่ได้เข้าห้อง ใส่รหัสห้องกับ PIN ที่หน้า /join ก่อน' : 'ส่งไม่สำเร็จ ลองใหม่อีกครั้ง'

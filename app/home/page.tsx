@@ -14,6 +14,7 @@ import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { TestNudgeCard } from '@/components/test-nudge'
 import { loadTestNudge } from '@/components/server/test-nudge'
 import { requireShopProfile } from '@/components/server/shop-gate'
+import { pretestRequirement } from '@/components/server/pretest-required'
 import { resolveShopArt } from '@/components/server/shop-art-file'
 import { shopArtFallbackSrc, shopArtStageFromLevel } from '@/components/shop-art'
 import { ShopArtImg } from '@/components/shop-art-img'
@@ -46,14 +47,18 @@ export default async function HomePage() {
     lessonSummary(session.studentId),
     certificateEligibility(session.studentId),
   ])
-  const nudge = await loadTestNudge(session.studentId, summary.missions.filter((m) => m.passed).length)
+  const nudge = await loadTestNudge(session.studentId)
+  const pretest = await pretestRequirement(session.studentId)
 
   const nextMission = summary.missions.find((m) => !m.passed)
   const stepTotal = summary.missions.length + 1
   const stepNow = Math.min(stepTotal, (nextMission ? summary.missions.indexOf(nextMission) : summary.missions.length) + 1)
   const stepsLeft = Math.max(0, stepTotal - stepNow)
 
-  const primary = nudge && !nudge.waiting
+  // ยังไม่ส่งแบบทดสอบก่อนเรียน = ภารกิจล็อก ปุ่มหลักพาไป /pretest (ครูยังไม่เปิด = บอกให้รอ)
+  const primary = !pretest.done
+    ? { href: '/pretest', label: pretest.open ? 'ทำแบบทดสอบก่อนเรียนก่อน' : 'รอครูเปิดแบบทดสอบก่อนเรียน' }
+    : nudge && !nudge.waiting
     ? { href: nudge.href, label: nudge.title }
     : nextMission
       ? { href: `/mission/${nextMission.id}`, label: 'ทำภารกิจต่อ' }

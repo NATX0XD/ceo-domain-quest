@@ -4,7 +4,7 @@ import { recommendLevel } from '@/core/personalize'
 import { PretestClient } from '@/components/pretest-client'
 import { SignInGate } from '@/components/student-shell'
 import { selfProfile } from '@/components/server/lesson-content'
-import { loadPretestDb } from '@/components/server/game-state'
+import { loadPretestDb, loadSelfProfileDb } from '@/components/server/game-state'
 import { pretestGate } from '@/components/server/posttest-gate'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 
@@ -34,9 +34,10 @@ export default async function PretestPage() {
     selfProfile.objectives.map((o) => [o.id, o.shortName]),
   )
 
-  const [saved, gate] = await Promise.all([
+  const [saved, gate, self] = await Promise.all([
     loadPretestDb(session.studentId),
     pretestGate(session.studentId),
+    loadSelfProfileDb(session.studentId),
   ])
   const questions = getQuizSet('pre').map((q) => ({
     id: q.id,
@@ -70,6 +71,8 @@ export default async function PretestPage() {
       // ครูเป็นคนกดเปิด (T-12) · ทำไปแล้วยังเปิดดูผลเดิมได้เสมอ
       open={gate.open || initialResult !== null}
       closedReason={gate.reason}
+      // ต้องทำแบบทดสอบนี้ก่อนเข้าภารกิจ — รู้จักตัวเองแล้วให้กลับไปแผนที่ได้เลย
+      nextHref={self.route !== null ? '/map' : '/profile'}
     />
   )
 }

@@ -3,6 +3,7 @@ import { type MissionId, logEvent } from '@/lib/db/repo'
 import { findMission, missions } from '@/components/missions'
 import { applyMissionSkip, decideMissionSkip } from '@/components/server/mission-skip'
 import { hasShopProfile } from '@/components/server/shop-gate'
+import { pretestBlockResponse } from '@/components/server/pretest-required'
 import { errorResponse, readStudentSession, unauthorized } from '../../../_lib/session-cookie'
 
 /**
@@ -28,6 +29,8 @@ export async function POST(_request: Request, ctx: { params: Promise<{ id: strin
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง ใส่รหัสห้องกับ PIN ที่หน้า /join ก่อน')
   if (!(await hasShopProfile(session.studentId))) return errorResponse('no-profile', 'ยังไม่ได้ตั้งค่าร้าน กลับไปที่หน้า /setup ก่อน', 409, { href: '/setup' })
+  const pretestBlocked = await pretestBlockResponse(session.studentId)
+  if (pretestBlocked) return pretestBlocked
 
   const mission = findMission(id)
   if (!mission) return errorResponse('mission-not-found', 'ไม่พบภารกิจนี้', 404, { missionId: id })

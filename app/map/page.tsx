@@ -8,6 +8,7 @@ import { bigMission, selfProfile } from '@/components/server/lesson-content'
 import { MapHotspots } from '@/components/map-hotspots'
 import { loadTestNudge } from '@/components/server/test-nudge'
 import { requireShopProfile } from '@/components/server/shop-gate'
+import { pretestRequirement } from '@/components/server/pretest-required'
 import { loadSelfProfileDb } from '@/components/server/game-state'
 import type { LearnModeId } from '@/components/learn/learn-path-api'
 
@@ -23,8 +24,9 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
   await requireShopProfile(session.studentId)
   const data = await lessonSummary(session.studentId)
   const self = await loadSelfProfileDb(session.studentId)
+  const pretest = await pretestRequirement(session.studentId)
   const allMissionsPassed = data.missions.length > 0 && data.missions.every((mission) => mission.passed)
-  const nudge = await loadTestNudge(session.studentId, data.missions.filter((m) => m.passed).length)
+  const nudge = await loadTestNudge(session.studentId)
   const mapState = Math.min(data.summary.done + 1, 4)
   const savedRoute = self.route ?? self.suggestedRoute
   const recommendedMode: LearnModeId | null =
@@ -50,6 +52,7 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
         }}
         recommendedMode={recommendedMode}
         justDone={justDone}
+        pretestLock={pretest.done ? null : { open: pretest.open }}
       />
     </AppShell>
   )

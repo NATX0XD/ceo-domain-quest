@@ -30,6 +30,7 @@ export function PretestClient({
   objectives,
   initialResult,
   open = true,
+  nextHref = '/profile',
 }: {
   questions: PretestQuestion[]
   /** รหัสวัตถุประสงค์ -> ชื่อสั้น ใช้แปลงผลที่เซิร์ฟเวอร์ส่งกลับให้เป็นภาษาคน */
@@ -38,6 +39,8 @@ export function PretestClient({
   /** ครูกดเปิดแล้วหรือยัง (T-12) — เซิร์ฟเวอร์ตัดสิน หน้านี้แค่แสดงผล */
   open?: boolean
   closedReason?: string | null
+  /** ทำเสร็จแล้วไปไหนต่อ — ยังไม่รู้จักตัวเอง = /profile · รู้จักแล้ว = /map */
+  nextHref?: string
 }) {
   const router = useRouter()
   const [result, setResult] = useState<PretestResult | null>(initialResult)
@@ -92,7 +95,7 @@ export function PretestClient({
         score={result.score}
         total={result.total}
         chips={[`ตัวช่วยระดับ ${result.suggestedLevel}`, ...result.weakTopics.slice(0, 2)]}
-        ctaHref="/profile"
+        ctaHref={nextHref}
         ctaLabel="ไปต่อ"
       />
     )

@@ -25,6 +25,8 @@ import { publicCounterData } from '@/components/server/learn-counter'
 import { currentShift } from '@/components/server/m3-shift'
 import { publicRegistrarData } from '@/components/server/learn-registrar'
 import { requireShopProfile } from '@/components/server/shop-gate'
+import { pretestRequirement } from '@/components/server/pretest-required'
+import { PretestGateScreen } from '@/components/pretest-gate-screen'
 import { loadShopProfile } from '@/components/server/game-state'
 import type { RegistrarCard } from '@/components/learn/registrar-types'
 import type { LearnModeId } from '@/components/learn/learn-path-api'
@@ -59,6 +61,9 @@ export default async function MissionPage({
   }
 
   const shopProfile = await requireShopProfile(session.studentId)
+  // ต้องส่งแบบทดสอบก่อนเรียนก่อน ทุกภารกิจ (API ของภารกิจก็กั้นด้วย 409 เช่นกัน)
+  const pretest = await pretestRequirement(session.studentId)
+  if (!pretest.done) return <PretestGateScreen open={pretest.open} />
   const selfProfile = await loadSelfProfileDb(session.studentId)
   const savedRoute = selfProfile.route ?? selfProfile.suggestedRoute
   const recommendedMode: LearnModeId | null =

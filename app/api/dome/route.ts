@@ -6,6 +6,7 @@ import { loadSelfProfileDb, loadShopProfile } from '@/components/server/game-sta
 import { counterHandbookFacts } from '@/components/server/learn-counter'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { moderateStudentText } from '@/components/server/moderation'
+import { pretestRequirement } from '@/components/server/pretest-required'
 import {
   errorResponse,
   readJsonBody,
@@ -80,6 +81,7 @@ export async function POST(request: Request) {
     quickReplyId: parsed.data.quickReplyId ?? null,
     shopName: profile?.shopName ?? null,
     selfProfileDone: selfProfile.route !== null,
+    pretestDone: (await pretestRequirement(session.studentId)).done,
     missionId,
     role: 'dome',
     context: parsed.data.desk === 'm3-handbook' ? counterHandbookFacts() : undefined,

@@ -7,6 +7,7 @@ import { findTld } from '@/core/content'
 import { evaluateTld } from '@/core/tld-rules'
 import { ai, sourceInfo } from '@/components/server/ai'
 import { loadShopProfile, recordStationBAttemptDb } from '@/components/server/game-state'
+import { pretestBlockResponse } from '@/components/server/pretest-required'
 import { errorResponse, readJsonBody, readStudentSession, unauthorized } from '../../_lib/session-cookie'
 
 /**
@@ -37,6 +38,8 @@ export async function POST(request: Request) {
   if (!profile) {
     return errorResponse('no-profile', 'ยังไม่ได้ตั้งค่าร้าน กลับไปที่หน้า /setup ก่อน', 409)
   }
+  const pretestBlocked = await pretestBlockResponse(session.studentId)
+  if (pretestBlocked) return pretestBlocked
 
   const parsed = RequestSchema.safeParse(await readJsonBody(request))
   if (!parsed.success) return errorResponse('bad-request', 'ต้องส่ง tldId มาด้วย', 400)

@@ -127,13 +127,16 @@ const SETUP_FIRST_REPLY = 'ตั้งร้านก่อนนะครั�
 const SETUP_FIRST_ACTION: DomeAction = { href: '/setup', label: 'ไปตั้งร้านก่อน' }
 const PROFILE_FIRST_ACTION: DomeAction = { href: '/profile', label: 'ไปทำความรู้จักตัวเอง' }
 const MAP_ACTION: DomeAction = { href: '/map', label: 'ดูแผนภารกิจของฉัน' }
+const PRETEST_FIRST_ACTION: DomeAction = { href: '/pretest', label: 'ทำแบบทดสอบก่อนเรียนก่อน' }
 
 /**
  * ขั้นถัดไปจริงของผู้เรียนเมื่อบอกว่า "พร้อม" — ลำดับ: ตั้งร้าน → รู้จักตัวเอง (/profile) → แผนที่ (/map)
  * selfProfileDone ไม่ระบุ = ถือว่าทำแล้ว (ไม่บังคับผู้เรียนเก่าย้อนกลับไป)
  */
-export function domeNextStep(shopName: string | null, selfProfileDone = true): DomeAction {
+export function domeNextStep(shopName: string | null, selfProfileDone = true, pretestDone = true): DomeAction {
   if (!shopName) return SETUP_FIRST_ACTION
+  // ภารกิจล็อกจนกว่าจะส่งแบบทดสอบก่อนเรียน (components/server/pretest-required.ts)
+  if (!pretestDone) return PRETEST_FIRST_ACTION
   return selfProfileDone ? MAP_ACTION : PROFILE_FIRST_ACTION
 }
 
@@ -225,6 +228,8 @@ export async function askDome(input: {
   shopName: string | null
   /** เลือกเส้นทางเรียนที่ /profile แล้วหรือยัง — ใช้ตัดสินว่า "พร้อม" พาไปไหน */
   selfProfileDone?: boolean
+  /** ส่งแบบทดสอบก่อนเรียนแล้วหรือยัง — ยังไม่ส่ง "พร้อม" พาไป /pretest ก่อน (ไม่ระบุ = ส่งแล้ว) */
+  pretestDone?: boolean
   missionId?: string
   role?: 'dome'
   history?: DomeTurn[]
@@ -249,6 +254,9 @@ export async function askDome(input: {
     return scripted(rule?.reply ?? FALLBACK_REPLY, rule?.action ?? null)
   }
   if (input.quickReplyId === 'ready') {
+    if (input.pretestDone === false) {
+      return scripted('พร้อมแล้วก็ลุยเลยครับ แต่ก่อนเข้าภารกิจ ทำแบบทดสอบก่อนเรียนสั้น ๆ ก่อนนะครับ ภารกิจจะเปิดทันทีที่ส่ง', PRETEST_FIRST_ACTION)
+    }
     if (input.selfProfileDone === false) {
       return scripted('พร้อมแล้วก็ลุยเลยครับ ก่อนออกเดินทางมาทำความรู้จักตัวเองกันนิดนึง ผมจะได้เสนอวิธีเรียนที่เข้ากับคุณ', PROFILE_FIRST_ACTION)
     }

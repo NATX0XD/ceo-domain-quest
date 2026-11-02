@@ -10,7 +10,7 @@ import { DomeFab } from '@/components/dome-fab'
 import type { TestNudge } from '@/components/server/test-nudge'
 import { ModePopup } from '@/components/learn/mode-popup'
 import { postLearn, type LearnModeId } from '@/components/learn/learn-path-api'
-import { CheckIcon, LockIcon, StarIcon, Toast, ToastViewport } from '@/components/ui'
+import { CheckIcon, ChevronRightIcon, LockIcon, StarIcon, Toast, ToastViewport } from '@/components/ui'
 
 type Mission = {
   id: string
@@ -31,6 +31,8 @@ type MapHotspotsProps = {
   recommendedMode?: LearnModeId | null
   /** มาจาก /map?done=m1 หลังจบภารกิจ = ฉลองเกาะนั้น แล้วชี้เกาะถัดไป */
   justDone?: string | null
+  /** ยังไม่ได้ส่งแบบทดสอบก่อนเรียน = ล็อกทุกเกาะ (open = ครูเปิดแบบทดสอบแล้ว) · null = ไม่ล็อก */
+  pretestLock?: { open: boolean } | null
 }
 
 const ISLAND_HOTSPOTS = [
@@ -54,12 +56,15 @@ function statusOf(mission: Mission, unlocked: boolean) {
   return 'ล็อกอยู่'
 }
 
-export function MapHotspots({ imageState, missions, boss, nudge = null, recommendedMode = null, justDone = null }: MapHotspotsProps) {
+export function MapHotspots({ imageState, missions, boss, nudge = null, recommendedMode = null, justDone = null, pretestLock = null }: MapHotspotsProps) {
   const reduce = useReducedMotion()
   const doneIndex = justDone ? missions.findIndex((m) => m.id === justDone && m.passed) : -1
   const [celebrate, setCelebrate] = useState(doneIndex >= 0)
   /** เกาะถัดไป = เกาะแรกที่ยังไม่ผ่าน (ปลดล็อกแล้วเพราะเกาะก่อนหน้าผ่าน) */
-  const nextIndex = missions.slice(0, 4).findIndex((m, i) => !m.passed && (i === 0 || Boolean(missions[i - 1]?.passed)))
+  const nextIndex = pretestLock
+    ? -1
+    : missions.slice(0, 4).findIndex((m, i) => !m.passed && (i === 0 || Boolean(missions[i - 1]?.passed)))
+  const pretestMessage = pretestLock?.open === false ? 'รอครูเปิดแบบทดสอบก่อนเรียน' : 'ทำแบบทดสอบก่อนเรียนก่อนนะ'
   useEffect(() => {
     if (!justDone) return
     // ล้าง ?done ออกจาก URL รีเฟรชแล้วจะได้ไม่ฉลองซ้ำ (ไม่ต้องโหลดหน้าใหม่)
@@ -112,10 +117,25 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
   return (
     <div className="map-page">
       <ToastViewport className="map-toast-viewport">
-        {toast ? <Toast message="ผ่านภารกิจก่อนหน้าก่อนนะ" tone="info" onDismiss={() => setToast(false)} /> : null}
+        {toast ? <Toast message={pretestLock ? pretestMessage : 'ผ่านภารกิจก่อนหน้าก่อนนะ'} tone="info" onDismiss={() => setToast(false)} /> : null}
       </ToastViewport>
 
-      {nudge ? (
+      {pretestLock ? (
+        <div className="map-test-strip map-pretest-gate" data-testid="map-pretest-gate">
+          {/* ต้องทำแบบทดสอบก่อนเรียนก่อน — ปุ่มหลักของหน้า เกาะทุกเกาะล็อกจนกว่าจะส่ง */}
+          <Link href="/pretest" className="gf-nudge map-pretest-cta focus-ring" data-testid="nudge-pretest">
+            {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3 มิติ */}
+            <img src="/icons/3d/clipboard.webp" alt="" width={44} height={44} style={{ width: 44, height: 44 }} />
+            <span className="min-w-0 flex-1">
+              <strong className="block">{pretestMessage}</strong>
+              <span className="gf-nudge-chip">
+                {pretestLock.open ? 'ถึงเวลาแล้ว · แตะเพื่อเริ่ม' : 'ภารกิจยังล็อกอยู่ · แตะเพื่อดู'}
+              </span>
+            </span>
+            <ChevronRightIcon aria-hidden width={24} height={24} />
+          </Link>
+        </div>
+      ) : nudge ? (
         <div className="map-test-strip">
           <TestNudgeCard nudge={nudge} />
         </div>
@@ -154,7 +174,7 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
 
         {missions.slice(0, 4).map((mission, index) => {
           const previousPassed = index === 0 || Boolean(missions[index - 1]?.passed)
-          const unlocked = mission.passed || previousPassed
+          const unlocked = !pretestLock && (mission.passed || previousPassed)
           const label = `ภารกิจที่ ${index + 1} ${mission.title} ${statusOf(mission, unlocked)}`
           return (
             <div

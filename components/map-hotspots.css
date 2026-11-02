@@ -348,3 +348,13 @@
 
 /* ทะเลต่อลงไปใต้แถบเมนู เพื่อให้รอยไล่สีของแถบเมนูกลืนจากน้ำทะเล ไม่ใช่จากพื้นครีม */
 .app-shell.map-shell-fit > .app-shell-main { background: #20a9f3; }
+
+/* ยังไม่ได้ทำแบบทดสอบก่อนเรียน — ปุ่มหลักของหน้าแผนที่ เกาะทุกเกาะล็อก */
+.map-pretest-gate { padding-bottom: .625rem; }
+.map-pretest-cta { min-height: 4.25rem; font-size: 1.0625rem; animation: map-pretest-pulse 1.8s ease-in-out infinite; }
+.map-pretest-cta strong { white-space: normal; line-height: 1.25; }
+@keyframes map-pretest-pulse {
+  0%, 100% { box-shadow: 0 5px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .75), 0 0 0 0 rgb(255 197 27 / .7); }
+  50% { box-shadow: 0 5px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .75), 0 0 0 8px rgb(255 197 27 / 0); }
+}
+@media (prefers-reduced-motion: reduce) { .map-pretest-cta { animation: none; } }

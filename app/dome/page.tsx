@@ -6,6 +6,7 @@ import { loadSelfProfileDb, loadShopProfile } from '@/components/server/game-sta
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { mainTabReturnPath } from '@/components/dome-fab'
+import { pretestRequirement } from '@/components/server/pretest-required'
 
 export const metadata: Metadata = { title: 'คุยกับเลขาโดม — CEO Domain Quest' }
 
@@ -17,10 +18,11 @@ export default async function DomePage({ searchParams }: { searchParams: Promise
   const session = await readStudentSession()
   if (!session) return <SignInGate />
 
-  const [profile, selfProfile, summary] = await Promise.all([
+  const [profile, selfProfile, summary, pretest] = await Promise.all([
     loadShopProfile(session.studentId),
     loadSelfProfileDb(session.studentId),
     lessonSummary(session.studentId),
+    pretestRequirement(session.studentId),
   ])
   const currentMissionId = summary.missions.find((mission) => !mission.passed)?.id ?? 'm5'
   const greeting = domeGreeting(profile?.shopName ?? null)
@@ -31,7 +33,7 @@ export default async function DomePage({ searchParams }: { searchParams: Promise
       greetingAction={greeting.action}
       quickReplies={domeQuickReplies()}
       currentMissionId={currentMissionId}
-      nextStep={domeNextStep(profile?.shopName ?? null, selfProfile.route !== null)}
+      nextStep={domeNextStep(profile?.shopName ?? null, selfProfile.route !== null, pretest.done)}
       backHref={backHref}
     />
   )
