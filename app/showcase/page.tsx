@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getStudent, listPeerFeedbackFor, listSubmissions } from '@/lib/db/repo'
+import { getProfile, getStudent, listPeerFeedbackFor, listSubmissions } from '@/lib/db/repo'
 import { SignInGate } from '@/components/student-shell'
 import { AppShell } from '@/components/app-shell'
 import { BottomNav } from '@/components/bottom-nav'
@@ -43,12 +43,15 @@ export default async function ShowcasePage() {
     return <SignInGate message="ใส่รหัสห้องกับ PIN ที่ครูให้ก่อน แล้วจะเห็นผลงานของเพื่อนทั้งห้อง" />
   }
 
-  const [student, mine, allFeedback, shop] = await Promise.all([
+  const [student, mine, allFeedback, shop, profile] = await Promise.all([
     getStudent(session.studentId),
     listSubmissions(session.studentId),
     listPeerFeedbackFor(session.studentId),
     loadShopProfile(session.studentId).catch(() => null),
+    getProfile(session.studentId).catch(() => null),
   ])
+  // แหล่งเดียวกับ /posttest — ทำแล้วไม่ชวนทำซ้ำ พาไปดูผลกับเกียรติบัตรแทน
+  const posttestDone = profile?.post_test_score != null
 
   /**
    * T-09 ครูซ่อนความเห็นที่ไม่เหมาะสมได้ — ที่ถูกซ่อนต้องไม่โผล่ให้ผู้เรียนเห็น
@@ -209,8 +212,11 @@ export default async function ShowcasePage() {
           </Sheet>
         </nav>
 
-        <Link href="/posttest" className="game-button game-button--orange game-button--lg sc-cta">
-          แบบทดสอบหลังเรียน
+        <Link
+          href={posttestDone ? '/result' : '/posttest'}
+          className="game-button game-button--orange game-button--lg sc-cta"
+        >
+          {posttestDone ? 'ดูผลและเกียรติบัตร' : 'แบบทดสอบหลังเรียน'}
           <ChevronRightIcon width={22} height={22} aria-hidden />
         </Link>
       </div>

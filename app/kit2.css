@@ -214,6 +214,26 @@
   color: #4b260f;
 }
 .sheet-panel.sheet-panel > .sheet-grip { display: none; }
+/* Leafy frame: inset from the screen edges so the leaf tips stay in view, and
+   scroll only the body under the head — content never slides under the leaves. */
+.sheet-panel.sheet-panel,
+.student-world .sheet-panel.sheet-panel,
+.knowledge-world .sheet-panel.sheet-panel {
+  width: calc(100% - 1.25rem);
+  max-width: 30rem;
+  overflow: hidden;
+  outline: none;
+  padding-bottom: calc(var(--safe-bottom) + .25rem);
+}
+.sheet-panel.sheet-panel > .sheet-head + div {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin-inline: -.35rem;
+  padding-inline: .35rem;
+  padding-bottom: .5rem;
+}
 
 /* ── Choice marks (radio / check) ─────────────────────────────────────────── */
 .choice-card-radio.choice-card-radio,
