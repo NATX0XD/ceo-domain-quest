@@ -344,7 +344,6 @@
   /* balance the 48px back button on the left so the sign sits at true centre */
   padding-right: 3.35rem;
 }
-.dome-chat-header__row > img.dome-chat-header__avatar { width: 32px !important; height: 32px !important; flex: none; }
 .student-stage > .app-shell .app-shell-header h1.dome-chat-header__sign,
 .dome-chat-header__sign { flex: 0 1 auto; margin: 0; white-space: nowrap; }
 

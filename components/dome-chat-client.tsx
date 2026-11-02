@@ -152,9 +152,8 @@ export function DomeChatClient({
       className="media-shell media-dome-shell student-display"
       header={
         <AppHeader className="dome-chat-header py-1.5!" backHref={backHref}>
-          {/* แถวเดียว: ปุ่มย้อนกลับซ้าย · ป้ายไม้ตรงกลาง (โดมตัวเล็กข้างป้าย) — ไม่ตัดบรรทัดที่ 360/390 */}
+          {/* แถวเดียว: ปุ่มย้อนกลับซ้าย · ป้ายไม้ตรงกลาง — ไม่ตัดบรรทัดที่ 360/390 */}
           <div className="dome-chat-header__row">
-            <DomeAvatar mood="greet" size={32} decorative className="dome-chat-header__avatar" />
             <h1 className="dome-chat-header__sign">เลขาโดม</h1>
           </div>
         </AppHeader>
