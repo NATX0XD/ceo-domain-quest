@@ -209,7 +209,8 @@ export default async function ShowcasePage() {
             triggerIcon={<SendIcon width={20} height={20} aria-hidden />}
             trigger="เขียนชมเพื่อน"
             title="เขียนถึงเพื่อน"
-            triggerClassName="game-button game-button--green game-button--md sc-action"
+            /* ไม่มีปุ่มเปิดแผ่นนี้เอง — เขียนได้จากปุ่มบนการ์ดเพื่อนเท่านั้น (เลือกคนให้แล้ว) */
+            triggerClassName="sc-action--hidden"
           >
             <ShowcaseFeedbackForm />
           </Sheet>

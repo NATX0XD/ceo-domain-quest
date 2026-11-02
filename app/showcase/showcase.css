@@ -241,9 +241,10 @@
 .sc-actions {
   display: grid;
   flex: none;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 8px;
 }
+.sc-actions .sc-action--hidden { display: none !important; }
 .sc-actions .sc-action { width: 100%; padding-inline: 10px; font-size: 1rem; }
 .sc-actions .sc-action > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .sc-cta { flex: none; width: 100%; }
