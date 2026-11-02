@@ -1023,6 +1023,47 @@ route จึงไม่แตะคอลัมน์ \`channel\`/\`learning_ro
     }),
   },
 
+  '/api/mission/{id}/learn/reply': {
+    post: op({
+      id: 'missionLearnReply',
+      summary: 'โดมตอบกลับรายข้อในแชต "คุยกับโดม" (ไม่ตรวจคะแนน)',
+      tags: [PLAY],
+      security: STUDENT_ONLY,
+      description: `
+ส่ง \`mode\` (\`watch\` | \`read\`) \`questionId\` และ \`answer\` ของข้อที่เพิ่งตอบ → คืน \`reply\` สั้น 1–2 ประโยคของโดม
+ใช้ลูกโซ่ AI เดียวกับการตรวจคำตอบ (งบ 4.5 วินาที) + ล็อกหัวข้อ + กรองเฉลยหลุด · พัง/ช้า/เกินโควตา (20 ครั้ง/10 นาที/คน) = ข้อความเดิมแบบตายตัว
+⚠️ **ไม่ใช่การตรวจคะแนน** ผลตรวจจริงยังอยู่ที่ \`/api/mission/{id}/learn\` action \`answer\` · บันทึก event \`learn-reply\` (source ai/fallback)
+`,
+      parameters: [missionParam],
+      requestBody: jsonBody(
+        obj(
+          {
+            mode: str('`watch` | `read`'),
+            questionId: str('รหัสข้อ'),
+            answer: str('คำตอบของผู้เรียน (ไม่เกิน 1000 ตัวอักษร)'),
+          },
+          { required: ['mode', 'questionId', 'answer'] },
+        ),
+        { mode: 'watch', questionId: 'm1-wq1', answer: 'ชื่อเว็บที่จำง่าย' },
+      ),
+      responses: {
+        ...ok(
+          'คำตอบกลับของโดม',
+          obj({
+            reply: str('ข้อความของโดม'),
+            source: str('`ai` | `fallback`'),
+          }),
+        ),
+        ...failures(
+          [400, ['bad-request']],
+          [401, ['unauthorized']],
+          [404, ['mission-not-found']],
+          [409, ['no-profile']],
+        ),
+      },
+    }),
+  },
+
   '/api/mission/{id}/skip': {
     post: op({
       id: 'missionSkip',

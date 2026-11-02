@@ -4,7 +4,8 @@ import { useEffect, useId, useRef } from 'react'
 import { useReducedMotion } from 'motion/react'
 import { cn } from '@/components/ui'
 import { Bubble, ChatFrame, QuickChip } from './app/chat-reader'
-import { Shake } from './app/fx'
+import { Shake, TypingDots } from './app/fx'
+import { DOME_REPLY_FIXED } from './learn-reply-api'
 
 export interface LearnQuestion {
   id: string
@@ -30,6 +31,8 @@ export function LearnQuestions({
   grading = false,
   shakeKey = 0,
   domeNote = null,
+  replies = {},
+  pendingId = null,
 }: {
   mode: 'watch' | 'read'
   questions: LearnQuestion[]
@@ -43,6 +46,10 @@ export function LearnQuestions({
   shakeKey?: number
   /** คำตอบกลับจริงของโดม (AI) สำหรับข้อที่ตอบเสริม null = ใช้ข้อความเดิม */
   domeNote?: string | null
+  /** คำตอบกลับรายข้อของโดม (AI หรือข้อความเดิม) ตามรหัสข้อ ไม่มี = ข้อความเดิม */
+  replies?: Record<string, string>
+  /** ข้อที่เพิ่งตอบและโดมกำลังพิมพ์ตอบกลับ — ซ่อนช่องตอบจนกว่าโดมตอบเสร็จ (ไม่เกินงบเวลา) */
+  pendingId?: string | null
 }) {
   const baseId = useId()
   const reduce = useReducedMotion()
@@ -50,7 +57,7 @@ export function LearnQuestions({
   // ข้อใหม่ขึ้นมา = เลื่อนให้เห็นคำถามกับช่องตอบเสมอ
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'end' })
-  }, [qIdx, onlyId, reduce])
+  }, [qIdx, onlyId, reduce, pendingId, replies])
   const intro =
     mode === 'watch'
       ? 'ดูเรื่องของมีนจบแล้วนะครับ ลองตอบตามความเข้าใจของตัวเอง 2 ข้อ ไม่ต้องตอบเหมือนในคลิปก็ได้ครับ'
@@ -78,7 +85,7 @@ export function LearnQuestions({
         )}
         {shown.map((q) => {
           const idx = questions.findIndex((x) => x.id === q.id)
-          const current = onlyId ? true : idx === qIdx
+          const current = onlyId ? true : idx === qIdx && q.id !== pendingId
           return (
             <div key={q.id} className="contents">
               <Bubble name="โดม" side="left" tone="dome">
@@ -89,9 +96,18 @@ export function LearnQuestions({
                   <Bubble side="right" tone="me" animate={false}>
                     {answers[q.id]}
                   </Bubble>
-                  <Bubble name="โดม" side="left" tone="dome">
-                    {mode === 'watch' ? 'โดมได้รับคำตอบแล้วครับ ไปคำถามต่อไปกันเลย' : 'ได้รับคำตอบแล้วครับ ไปข้อถัดไปกัน'}
-                  </Bubble>
+                  {q.id === pendingId ? (
+                    <li className="flex flex-col items-start self-start">
+                      <span className="px-1 pb-0.5 text-label font-extrabold text-[#6b4a2c]">โดม</span>
+                      <div className="rounded-[20px] bg-white px-4 py-3 shadow-soft-1 ring-1 ring-brand-100">
+                        <TypingDots />
+                      </div>
+                    </li>
+                  ) : (
+                    <Bubble name="โดม" side="left" tone="dome">
+                      {replies[q.id] ?? DOME_REPLY_FIXED[mode]}
+                    </Bubble>
+                  )}
                 </>
               ) : null}
             </div>
@@ -106,7 +122,7 @@ export function LearnQuestions({
       ) : null}
       {(() => {
         const q = onlyId ? questions.find((x) => x.id === onlyId) : questions[qIdx]
-        if (!q) return null
+        if (!q || q.id === pendingId) return null
         return (
           <Shake trigger={shakeKey} className="flex flex-col gap-2 border-t-2 border-[#e6cfa6] bg-[#fff6e4] px-3 py-3">
             <label htmlFor={`${baseId}-${q.id}`} className="sr-only">

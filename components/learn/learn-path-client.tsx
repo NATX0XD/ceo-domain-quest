@@ -39,6 +39,7 @@ import {
 import { ModePopup } from './mode-popup'
 import { LearnScenePanel } from './learn-path-scene'
 import { LearnQuestions } from './learn-path-questions'
+import { fetchDomeReply } from './learn-reply-api'
 import { HelpPanel, ResultPanel, aiReply, weakest } from './learn-path-result'
 import { CardSortGame } from './card-sort-game'
 import { LearnDoneScreen } from './learn-done'
@@ -148,6 +149,9 @@ export function LearnPathClient({
   const [brief, setBrief] = useState(true)
   const [qIdx, setQIdx] = useState(0)
   const [qPhase, setQPhase] = useState<'ask' | 'result' | 'help' | 'supp'>('ask')
+  // โดมตอบกลับรายข้อ (AI) — replyPending = ข้อที่โดมกำลังพิมพ์ตอบ
+  const [domeReplies, setDomeReplies] = useState<Record<string, string>>({})
+  const [replyPending, setReplyPending] = useState<string | null>(null)
   const [suppTried, setSuppTried] = useState(0)
   const [hintShown, setHintShown] = useState(false)
   const [reviewing, setReviewing] = useState<{ from: number; to: number } | null>(null)
@@ -202,6 +206,7 @@ export function LearnPathClient({
           if (typeof saved.sceneIdx === 'number') setSceneIdx(Math.max(0, Math.min(lastScene, saved.sceneIdx)))
           if (typeof saved.chatShown === 'number') setChatShown(Math.max(1, Math.min(chat.length, saved.chatShown)))
           if (saved.answers && typeof saved.answers === 'object') setAnswers(saved.answers as Record<string, string>)
+          if (saved.domeReplies && typeof saved.domeReplies === 'object') setDomeReplies(saved.domeReplies as Record<string, string>)
           if (usableSavedStep === 'watch') setAutoPlay(false)
         }
       }
@@ -219,13 +224,13 @@ export function LearnPathClient({
       else {
         sessionStorage.setItem(
           storeKey,
-          JSON.stringify({ step, mode, brief, qIdx, sceneIdx, chatShown, answers }),
+          JSON.stringify({ step, mode, brief, qIdx, sceneIdx, chatShown, answers, domeReplies }),
         )
       }
     } catch {
       /* เก็บไม่ได้ก็ข้าม */
     }
-  }, [ready, storeKey, step, mode, brief, qIdx, sceneIdx, chatShown, answers, done])
+  }, [ready, storeKey, step, mode, brief, qIdx, sceneIdx, chatShown, answers, domeReplies, done])
 
   useEffect(() => {
     if (step !== 'watch' || showVideo || !autoPlay || sceneIdx >= lastScene) return
@@ -254,6 +259,7 @@ export function LearnPathClient({
     setDoResult(null)
     setBrief(!singleMode)
     setQIdx(0)
+    setDomeReplies({})
     setQPhase('ask')
     setSuppTried(0)
     setHintShown(false)
@@ -283,6 +289,17 @@ export function LearnPathClient({
     setBusy(false)
     if (!res.ok) return setError(res.message)
     openMode(picked)
+  }
+
+  /** ตอบข้อนี้แล้ว (ไม่ใช่ข้อสุดท้าย) — โดมพิมพ์ตอบกลับด้วย AI ก่อน แล้วค่อยขึ้นข้อถัดไป (รอไม่เกินงบเวลา) */
+  async function answerAndNext() {
+    const q = questions[qIdx]
+    if (!q || replyPending) return
+    setReplyPending(q.id)
+    const { reply } = await fetchDomeReply(missionId, { mode: askMode, questionId: q.id, answer: answers[q.id] ?? '' })
+    setDomeReplies((prev) => ({ ...prev, [q.id]: reply }))
+    setReplyPending(null)
+    setQIdx((i) => Math.min(questions.length - 1, i + 1))
   }
 
   async function submitAnswers() {
@@ -554,10 +571,10 @@ export function LearnPathClient({
           variant="success"
           size="lg"
           fullWidth
-          disabled={busy || !(cur && (answers[cur.id] ?? '').trim())}
-          loading={busy}
-          loadingLabel="กำลังตรวจคำตอบ"
-          onClick={() => (lastQ ? submitAnswers() : setQIdx((i) => i + 1))}
+          disabled={busy || replyPending !== null || !(cur && (answers[cur.id] ?? '').trim())}
+          loading={busy || replyPending !== null}
+          loadingLabel={replyPending ? 'โดมกำลังพิมพ์' : 'กำลังตรวจคำตอบ'}
+          onClick={() => (lastQ ? submitAnswers() : answerAndNext())}
           leadingIcon={busy ? undefined : lastQ ? <CheckIcon width={22} height={22} /> : undefined}
           trailingIcon={busy || lastQ ? undefined : <ChevronRightIcon width={22} height={22} />}
         >
@@ -712,10 +729,10 @@ export function LearnPathClient({
         <M1Button
           variant="success"
           fullWidth
-          disabled={busy || !(cur && (answers[cur.id] ?? '').trim())}
-          loading={busy}
-          loadingLabel="โดมกำลังอ่านคำตอบ"
-          onClick={() => (qIdx >= questions.length - 1 ? submitAnswers() : setQIdx((i) => i + 1))}
+          disabled={busy || replyPending !== null || !(cur && (answers[cur.id] ?? '').trim())}
+          loading={busy || replyPending !== null}
+          loadingLabel={replyPending ? 'โดมกำลังพิมพ์' : 'โดมกำลังอ่านคำตอบ'}
+          onClick={() => (qIdx >= questions.length - 1 ? submitAnswers() : answerAndNext())}
           trailingIcon={chev}
         >
           ส่งคำตอบ
@@ -864,7 +881,7 @@ export function LearnPathClient({
         ? () => go('result')
         : step === 'result' || step === 'intro'
           ? exit.request
-          : step === 'questions' && qPhase === 'ask' && qIdx > 0
+          : step === 'questions' && qPhase === 'ask' && qIdx > 0 && !replyPending
             ? () => setQIdx((i) => i - 1)
             : exit.request
 
@@ -1285,6 +1302,8 @@ export function LearnPathClient({
                 qIdx={qIdx}
                 onlyId={qPhase === 'supp' && answerResult ? (weakest(answerResult)?.id ?? null) : null}
                 domeNote={qPhase === 'supp' && answerResult ? aiReply(weakest(answerResult)) : null}
+                replies={domeReplies}
+                pendingId={qPhase === 'ask' ? replyPending : null}
                 onReview={qPhase === 'ask' ? () => startReview(questions[qIdx]?.review) : undefined}
                 disabled={busy || done !== null}
                 grading={busy}

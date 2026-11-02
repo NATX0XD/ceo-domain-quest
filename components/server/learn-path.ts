@@ -143,6 +143,11 @@ async function loadAnswers(missionId: string) {
   return found
 }
 
+/** เฉลยของคำถามปลายเปิดข้อเดียว (ใช้ตอนโดมตอบกลับรายข้อ) ไม่มี = undefined */
+export async function loadRubric(missionId: string, questionId: string): Promise<Rubric | undefined> {
+  return (await loadAnswers(missionId)).rubrics[questionId]
+}
+
 /* ---------------------------------------------------------- เช็กพื้นฐาน */
 
 export interface WarmupResult {
@@ -201,7 +206,7 @@ export interface QuestionScore {
 
 export type FeedbackSource = 'ai' | 'script'
 
-type Rubric = z.infer<typeof RubricSchema>
+export type Rubric = z.infer<typeof RubricSchema>
 
 function clampScore(n: number): number {
   return Math.max(0, Math.min(100, n))
@@ -317,7 +322,7 @@ export function mergeAiCheck(
 
 /** คำสำคัญของแนวคิดที่นักเรียนยังไม่ได้พูด บอกโมเดลว่าห้ามใช้ในคำแนะนำ (ตัวกรอง feedbackGivesAway ยังตรวจซ้ำเสมอ) */
 const AVOID_PER_CONCEPT = 6
-function avoidWords(rubric: Rubric, answer: string, question: string): string[] {
+export function avoidWords(rubric: Rubric, answer: string, question: string): string[] {
   const said = normalizeAnswer(`${answer} ${question}`)
   const out: string[] = []
   for (const c of rubric.concepts) {
@@ -329,7 +334,7 @@ function avoidWords(rubric: Rubric, answer: string, question: string): string[] 
 }
 
 /** คำตอบสั้นกว่านี้ไม่ต้องส่งให้ AI (ไม่มีเนื้อหาให้ตีความ) */
-const AI_MIN_ANSWER_CHARS = 4
+export const AI_MIN_ANSWER_CHARS = 4
 
 export interface OpenAnswerOptions {
   /** ตัวตรวจ AI (ปกติคือ ai จาก components/server/ai.ts) ไม่ส่ง = คำสำคัญล้วน */
