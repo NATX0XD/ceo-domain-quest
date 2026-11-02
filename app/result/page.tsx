@@ -26,7 +26,7 @@ import { gameCertificateContent } from '@/lib/certificate/game'
 import { certificateProgressOf } from '@/lib/certificate/progress'
 import { CERT_THEME, certArtPresence, resolveCertTheme } from '@/lib/certificate/art'
 import { certificateDomain } from '@/components/server/showcase-safety'
-import { certificateDisplayNameFor } from '@/lib/certificate/profile'
+import { certificateDisplayNameFor, certificateDisplayNameFromProfile } from '@/lib/certificate/profile'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { loadShopProfile, loadSelfProfileDb } from '@/components/server/game-state'
@@ -292,9 +292,11 @@ export default async function ResultPage({
               <div className="result-cert-fit">
                 <CertificatePreview content={certContent} art={certArt} theme={certTheme} />
               </div>
-              <Link href="/profile?account=1" className="shrink-0 text-note font-bold text-brand-700 underline underline-offset-2">
-                แก้ชื่อบนเกียรติบัตร
-              </Link>
+              {certificateDisplayNameFromProfile(profileRow) ? null : (
+                <Link href="/profile?account=1" className="shrink-0 text-note font-bold text-brand-700 underline underline-offset-2">
+                  ตั้งชื่อจริงบนเกียรติบัตร (ตั้งได้ครั้งเดียว)
+                </Link>
+              )}
             </>
           ) : (
             <>

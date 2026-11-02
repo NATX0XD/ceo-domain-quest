@@ -122,6 +122,21 @@ async function saveCertificateName(formData: FormData) {
     maxAge: 30,
   }
 
+  // ตั้งชื่อบนเกียรติบัตรได้ครั้งเดียว — กันออกใบใหม่ด้วยชื่ออื่นไปเรื่อย ๆ (พิมพ์ผิดให้ครูช่วยแก้)
+  if (certificateDisplayNameFromProfile(await getProfile(session.studentId).catch(() => null))) {
+    jar.set(
+      CERTIFICATE_NAME_NOTICE_COOKIE,
+      encodeNotice({ ok: false, message: 'ตั้งชื่อบนเกียรติบัตรไปแล้ว แก้เองไม่ได้ ถ้าพิมพ์ผิดให้บอกครู', original }),
+      noticeOptions,
+    )
+    return
+  }
+
+  if (!original) {
+    jar.set(CERTIFICATE_NAME_NOTICE_COOKIE, encodeNotice({ ok: false, message: 'พิมพ์ชื่อก่อนกดบันทึก', original }), noticeOptions)
+    return
+  }
+
   if (original.length > CERTIFICATE_DISPLAY_NAME_MAX_LENGTH) {
     jar.set(
       CERTIFICATE_NAME_NOTICE_COOKIE,
@@ -187,6 +202,7 @@ export default async function ProfilePage() {
   const certificateNameNotice = decodeNotice((await cookies()).get(CERTIFICATE_NAME_NOTICE_COOKIE)?.value)
   // ถูกทักแล้วต้องเห็นข้อความเดิมของตัวเองในช่อง ไม่ใช่ช่องว่างเปล่า
   const goalFieldValue = notice && !notice.ok ? notice.original : (state.ownGoalText ?? '')
+  const lockedCertificateName = certificateDisplayNameFromProfile(profile)
   const certificateNameFieldValue = certificateNameNotice && !certificateNameNotice.ok
     ? certificateNameNotice.original
     : (certificateDisplayNameFromProfile(profile) ?? '')
@@ -233,11 +249,18 @@ export default async function ProfilePage() {
           finished: state.goalId !== null && state.route !== null,
         }}
         certificateNameForm={
+          lockedCertificateName ? (
+            <div className="rounded-xl bg-brand-50 p-3 ring-1 ring-brand-200 ring-inset">
+              <p className="text-label font-bold text-ink">ชื่อที่จะแสดงบนเกียรติบัตร</p>
+              <p className="mt-1 text-body font-extrabold text-ink">{lockedCertificateName}</p>
+              <p className="mt-1 text-note font-semibold text-brand-700">ตั้งแล้ว แก้เองไม่ได้ ถ้าพิมพ์ผิดให้บอกครู</p>
+            </div>
+          ) : (
           <form action={saveCertificateName} className="rounded-xl bg-brand-50 p-3 ring-1 ring-brand-200 ring-inset">
             <label htmlFor="certificate-display-name" className="text-label font-bold text-ink">
               ชื่อที่จะแสดงบนเกียรติบัตร
             </label>
-            <p className="mt-2 text-note font-semibold text-brand-700">ใส่ชื่อ-นามสกุลเต็มได้ ถ้าเว้นว่างจะใช้ชื่อเล่น</p>
+            <p className="mt-2 text-note font-semibold text-brand-700">ใส่ชื่อ-นามสกุลจริง ตั้งได้ครั้งเดียว ตรวจตัวสะกดก่อนกดบันทึก (ถ้าไม่ตั้งจะใช้ชื่อเล่น)</p>
             <input
               id="certificate-display-name"
               name="certificateDisplayName"
@@ -260,6 +283,7 @@ export default async function ProfilePage() {
               บันทึกชื่อบนเกียรติบัตร
             </button>
           </form>
+          )
         }
         goalForm={
       /*
