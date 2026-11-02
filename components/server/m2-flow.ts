@@ -12,6 +12,12 @@ const StopSchema = z.object({
   attempt: z.number().int().min(1).max(3),
 })
 
+const PostSchema = z.object({
+  kind: z.literal('post'),
+  q: z.number().int().min(0).max(0),
+  answer: z.string().min(1).max(40),
+})
+
 const DragSchema = z.object({
   kind: z.literal('visual-drag'),
   placements: z.record(z.string(), z.string()),
@@ -34,7 +40,7 @@ const SimSchema = z.object({
 
 const ExitSchema = z.object({
   kind: z.literal('exit'),
-  answers: z.array(z.number().int().min(0).max(3)).length(3),
+  answers: z.array(z.number().int().min(0).max(2)).length(3),
   stageScore: z.number().min(0).max(70),
   repair: z.boolean().optional().default(false),
 })
@@ -42,28 +48,31 @@ const ExitSchema = z.object({
 const NotebookSchema = z.object({ kind: z.literal('notebook'), text: z.string().min(1).max(1200) })
 
 export const M2ExitQuestions = [
-  { id: 'm2-exit-1', prompt: 'ส่วนที่อยู่ขวาสุดของชื่อเว็บเรียกว่าอะไร', choices: ['Subdomain', 'SLD', 'TLD', 'URL ทั้งชุด'] },
-  { id: 'm2-exit-2', prompt: 'ชื่อโดเมนควรไล่ลำดับความสำคัญจากทางไหน', choices: ['ซ้ายไปขวา', 'ขวาไปซ้าย', 'ตรงกลางออกสองข้าง', 'อ่านทางไหนก็ได้'] },
-  { id: 'm2-exit-3', prompt: 'ใน booking.kanombanyai.com ส่วนใดเป็นบริการย่อย', choices: ['.com', 'kanombanyai', 'booking', 'ทั้งชื่อ'] },
+  { id: 'm2-exit-1', prompt: 'ใน news.islandtimes.org ส่วนใดคือชื่อเว็บ (SLD)?', choices: ['news', 'islandtimes', 'org'] },
+  { id: 'm2-exit-2', prompt: 'ใน shop.kanombanyai.com คอมพิวเตอร์อ่านชื่อเว็บนี้จากทางไหน?', choices: ['ซ้ายไปขวา', 'ขวาไปซ้าย', 'เริ่มตรงกลาง'] },
+  { id: 'm2-exit-3', prompt: 'ใน booking.kanombanyai.com ส่วนใดคือบริการย่อย (Subdomain)?', choices: ['booking', 'kanombanyai', 'com'] },
 ] as const
+const EXIT_ANSWERS = [1, 1, 0] as const
 
-const STOP_ANSWERS = ['tld', 'rtl', 'subdomain'] as const
+// stop 1: pick the right-most piece · stop 2: drag the three cards into order · stop 3: pick the booking name
+const STOP_ANSWERS = ['tld', 'shop.kanombanyai.com', 'subdomain'] as const
 const STOP_HINTS = [
   'ลองดูชื่อเว็บจากขวาสุด ส่วนที่บอกกลุ่มใหญ่ของเว็บอยู่ตรงนั้น',
-  'ระบบโดเมนเหมือนจ่าหน้าซอง เริ่มจากพื้นที่ใหญ่ก่อน แล้วค่อยย้อนมาหาส่วนย่อย',
-  'ส่วนซ้ายสุดใช้แยกบริการย่อย เช่น หน้าสั่งซื้อหรือหน้า booking',
+  'ห้องย่อย shop อยู่ซ้ายสุด ชื่อร้านอยู่ตรงกลาง และกลุ่มใหญ่ com อยู่ขวาสุดนะ',
+  'หน้าจองเค้กเป็นบริการย่อย ต้องเปลี่ยนแค่ส่วนซ้ายสุดเป็น booking ส่วนชื่อร้านกับ com เหมือนเดิม',
 ] as const
 const STOP_EXPLANATIONS = [
   'ส่วนขวาสุดคือ TLD เช่น .com เป็นกลุ่มใหญ่ของชื่อเว็บ',
-  'ต้องอ่านจากขวาไปซ้าย เริ่มจาก TLD แล้วค่อยย้อนมาที่ SLD และ Subdomain',
-  'booking อยู่ซ้ายสุด จึงเป็น Subdomain ที่ใช้แยกบริการย่อยของเว็บ',
+  'เรียงเป็น shop.kanombanyai.com เพราะคอมพิวเตอร์อ่านจากขวาไปซ้าย เริ่มจาก com แล้วค่อยหา kanombanyai และ shop',
+  'booking.kanombanyai.com ถูกต้อง เพราะ booking อยู่ซ้ายสุดเป็น Subdomain ที่แยกบริการย่อยของร้าน',
 ] as const
 
 export type M2StepResult =
   | { kind: 'stop'; correct: boolean; phase: 'hint' | 'rewatch' | 'explain'; hint?: string; from?: number; to?: number; explanation?: string }
   | { kind: 'drag'; passed: boolean; score: number; wrong: string[]; feedback: string }
   | { kind: 'text'; correct: boolean; score: number; feedback: string; hint?: string; reveal?: string; reason?: string; source: string }
-  | { kind: 'sim'; correct: boolean; reason?: string }
+  | { kind: 'sim'; correct: boolean; reason?: string; wrong?: string[] }
+  | { kind: 'post'; correct: boolean; explanation: string }
   | { kind: 'notebook'; saved: true }
   | { kind: 'exit'; score: number; exitScore: number; grade: 'A' | 'B' | 'C'; passed: boolean; stars: number }
 
@@ -109,29 +118,44 @@ async function textResult(studentId: string, input: z.infer<typeof TextSchema>):
 }
 
 function simResult(input: z.infer<typeof SimSchema>): Extract<M2StepResult, { kind: 'sim' }> {
-  const expected: Record<number, Record<string, string> | string[]> = {
-    0: { slot1: 'parts' },
-    1: { slot1: 'parts', slot2: 'forcespeed', slot3: 'com' },
-    2: { slot1: 'Subdomain', slot2: 'SLD', slot3: 'TLD' },
-    3: ['com', 'forcespeed', 'parts'],
-    4: { slot1: 'kanombanyai', slot2: 'co', slot3: 'th', slot4: 'booking' },
+  const expected: Record<number, Array<Record<string, string> | string[]>> = {
+    0: [{ slot1: 'parts' }],
+    1: [{ slot1: 'parts', slot2: 'forcespeed', slot3: 'com' }, { slot1: 'shop', slot2: 'ployflower', slot3: 'com' }],
+    2: [{ slot1: 'Subdomain', slot2: 'SLD', slot3: 'TLD' }],
+    // Keep the original canonical values, and accept the teammate's storyboard labels too.
+    3: [['com', 'forcespeed', 'parts'], ['com', 'ittimbeach', 'order']],
+    4: [
+      { slot1: 'kanombanyai', slot2: 'co', slot3: 'th', slot4: 'booking' },
+      { slot1: 'menu', slot2: 'kafaethai', slot3: 'co', slot4: 'th' },
+    ],
   }
   const expectedStage = expected[input.stage]
-  const answer = Array.isArray(expectedStage)
-    ? JSON.stringify(input.order ?? []) === JSON.stringify(expectedStage)
-    : Object.entries(expectedStage as Record<string, string>).every(([key, value]) => input.placements?.[key] === value)
+  const answer = expectedStage?.some((candidate) =>
+    Array.isArray(candidate)
+      ? JSON.stringify(input.order ?? []) === JSON.stringify(candidate)
+      : Object.entries(candidate).every(([key, value]) => input.placements?.[key] === value),
+  ) ?? false
   if (answer) return { kind: 'sim', correct: true }
-  if (input.stage === 4 && Object.values(input.placements ?? {}).some((v) => v === 'www' || v === '.com' || v === 'com')) {
-    return { kind: 'sim', correct: false, reason: 'ชิ้นนี้เป็นตัวหลอก: www คือโฮสต์ที่ไม่ใช่ชิ้นของโจทย์ และ .com ไม่ใช่ช่องของ .co.th' }
+  // closest map candidate → which slots are wrong (per-slot ✓/✗ on the board)
+  const maps = (expectedStage ?? []).filter((c): c is Record<string, string> => !Array.isArray(c))
+  const best = maps.sort((a, b) => score(b) - score(a))[0]
+  function score(c: Record<string, string>) {
+    return Object.entries(c).filter(([k, v]) => input.placements?.[k] === v).length
   }
-  return { kind: 'sim', correct: false, reason: 'ลองจัดใหม่โดยดูป้ายกำกับและลูกศรอ่านจากขวาไปซ้ายนะ' }
+  const wrong = best ? Object.keys(best).filter((k) => input.placements?.[k] !== best[k]) : undefined
+  if (input.stage === 4 && Object.values(input.placements ?? {}).some((v) => v === 'www' || v === '.com' || v === 'com')) {
+    return { kind: 'sim', correct: false, wrong, reason: 'ชิ้นนี้เป็นตัวหลอก: www คือโฮสต์ที่ไม่ใช่ชิ้นของโจทย์ และ .com ไม่ใช่ช่องของ .co.th' }
+  }
+  return { kind: 'sim', correct: false, wrong, reason: 'ลองจัดใหม่โดยดูป้ายกำกับและลูกศรอ่านจากขวาไปซ้ายนะ' }
 }
 
 async function exitResult(studentId: string, input: z.infer<typeof ExitSchema>): Promise<Extract<M2StepResult, { kind: 'exit' }>> {
-  const correct = [2, 1, 2].filter((answer, i) => input.answers[i] === answer).length
+  const correct = EXIT_ANSWERS.filter((answer, i) => input.answers[i] === answer).length
   const exitScore = Math.round((correct / 3) * 30)
   const score = Math.max(0, Math.min(100, Math.round(input.stageScore) + exitScore))
-  const grade = score >= 90 ? 'A' : score >= 60 ? 'B' : 'C'
+  // A zero-answer Exit Check is the storyboard's “almost there” ending even when
+  // the learner completed the practice board. This keeps the repair drill reachable.
+  const grade = correct === 0 ? 'C' : score >= 90 ? 'A' : score >= 60 ? 'B' : 'C'
   const passed = grade !== 'C'
   const stars = grade === 'A' ? 3 : grade === 'B' ? 2 : 0
   await logEvent(studentId, 'learn-m2-exit', { missionId: 'm2', score, exitScore, grade, passed, answers: input.answers, repair: input.repair })
@@ -142,8 +166,16 @@ async function exitResult(studentId: string, input: z.infer<typeof ExitSchema>):
 }
 
 export async function handleM2Step(studentId: string, payload: unknown): Promise<M2StepResult> {
-  const parsed = z.discriminatedUnion('kind', [StopSchema, DragSchema, TextSchema, SimSchema, ExitSchema, NotebookSchema]).parse(payload)
+  const parsed = z.discriminatedUnion('kind', [StopSchema, PostSchema, DragSchema, TextSchema, SimSchema, ExitSchema, NotebookSchema]).parse(payload)
   if (parsed.kind === 'stop') return stopResult(parsed)
+  if (parsed.kind === 'post') {
+    // post-clip question 1: kanombanyai.com vs kanombanyai.net — the TLD differs, so not the same site
+    return {
+      kind: 'post',
+      correct: parsed.answer === 'different',
+      explanation: '.com กับ .net เป็นคนละส่วนขวาสุด จึงเป็นคนละเว็บได้ ต้องดูให้ครบทุกส่วน',
+    }
+  }
   if (parsed.kind === 'text') return textResult(studentId, parsed)
   if (parsed.kind === 'sim') return simResult(parsed)
   if (parsed.kind === 'visual-drag') {

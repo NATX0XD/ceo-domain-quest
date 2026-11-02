@@ -1,329 +1,540 @@
-'use client'
+"use client";
 
-import { useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { AlertIcon, DomeAvatar, HomeIcon, LightbulbIcon, cn } from '@/components/ui'
-import { AppScreen, GlassCard, type MenuItem } from '@/components/learn/app/app-screen'
-import { useExitConfirm } from '@/components/student-navigation'
-import { ChatReader } from '@/components/learn/app/chat-reader'
-import { GameButton, Stars } from '@/components/learn/game-ui'
-import { ModePopup } from '@/components/learn/mode-popup'
-import { postLearn, type LearnModeId } from '@/components/learn/learn-path-api'
-import { themeFor } from '@/components/learn/app/theme'
-import type { LearnPath, LearnState } from '@/components/server/learn-path'
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { MotionConfig } from "motion/react";
+import { useExitConfirm } from "@/components/student-navigation";
+import { ModePopup } from "@/components/learn/mode-popup";
+import { postLearn, type LearnModeId } from "@/components/learn/learn-path-api";
+import type { LearnPath, LearnState } from "@/components/server/learn-path";
+import { Dome, KIT, M2Button, M2Screen, Panel } from "./m2/m2-kit";
+import { SimFinale, SimStage1, SimStage2, SimStage3, SimStage4, SimStorm, SimTutorial, type SimResult } from "./m2/m2-sim";
+import {
+  ChoiceCards,
+  ClipPlayer,
+  CLIP_END,
+  REWATCH_FROM,
+  RulesCard,
+  SHOTS,
+  STOP_AFTER,
+  StopDrag,
+  VisualRules,
+  useClip,
+} from "./m2/m2-visual";
+import { TextChat, type TextGrade, type TextQuestion } from "./m2/m2-text";
+import { Ending, ExitCheck, RepairDrill } from "./m2/m2-end";
+import "./m2/m2-game.css";
 
-type M2Step =
-  | 'choose' | 'rules' | 'visual-clip' | 'visual-stop' | 'visual-review' | 'visual-explain' | 'visual-drag' | 'visual-post'
-  | 'text-lesson' | 'text-answer' | 'text-summary'
-  | 'sim-story' | 'sim-tutorial' | 'sim-stage' | 'sim-finale' | 'exit' | 'end'
+type Step =
+  | "choose"
+  | "rules"
+  | "v-clip"
+  | "v-stop"
+  | "v-post1"
+  | "v-post2"
+  | "t-chat"
+  | "s-storm"
+  | "s-tutorial"
+  | "s-stage1"
+  | "s-stage2"
+  | "s-stage3"
+  | "s-stage4"
+  | "s-finale"
+  | "exit"
+  | "end"
+  | "repair";
 
-type M2Result = {
-  kind: 'stop' | 'drag' | 'text' | 'sim' | 'notebook' | 'exit'
-  correct?: boolean
-  passed?: boolean
-  score?: number
-  exitScore?: number
-  grade?: 'A' | 'B' | 'C'
-  stars?: number
-  phase?: 'hint' | 'rewatch' | 'explain'
-  hint?: string
-  from?: number
-  to?: number
-  explanation?: string
-  feedback?: string
-  reveal?: string
-  reason?: string
-  source?: string
-  wrong?: string[]
-}
+type Final = { score: number; exitScore: number; grade: "A" | "B" | "C"; passed: boolean; stars: number };
+type StopResult = { correct: boolean; phase: "hint" | "rewatch" | "explain"; hint?: string; explanation?: string };
 
-const STOP_CHOICES = [
-  [{ id: 'tld', label: 'ส่วนขวาสุด TLD' }, { id: 'sld', label: 'ชื่อร้านตรงกลาง SLD' }, { id: 'subdomain', label: 'บริการย่อยซ้ายสุด' }],
-  [{ id: 'ltr', label: 'ซ้ายไปขวา' }, { id: 'rtl', label: 'ขวาไปซ้าย' }, { id: 'middle', label: 'เริ่มตรงกลาง' }],
-  [{ id: 'tld', label: 'เปลี่ยน TLD' }, { id: 'sld', label: 'เปลี่ยน SLD' }, { id: 'subdomain', label: 'เปลี่ยน Subdomain' }],
-] as const
+const STOP_QUESTIONS = [
+  {
+    title: "การ์ดเว็บปลิวลม",
+    ask: (
+      <>
+        มะลิต่อชิ้นการ์ดเป็น
+        <br />
+        <b>com.kanombanyai.shop</b>
+        <br />
+        ชิ้นไหนควรอยู่ขวาสุด?
+      </>
+    ),
+    choices: [
+      { id: "subdomain", label: "shop" },
+      { id: "sld", label: "kanombanyai" },
+      { id: "tld", label: "com" },
+    ],
+  },
+  {
+    title: "ช่วยมะลิเรียงใหม่",
+    ask: (
+      <>
+        ลากชิ้นการ์ดเรียงให้ถูก
+        <br />
+        มะลิจะได้เข้าเว็บร้านยายได้
+      </>
+    ),
+    choices: [],
+  },
+  {
+    title: "หน้าจองเค้กวันเกิด",
+    ask: (
+      <>
+        ยายอยากมีหน้า &quot;จองเค้ก&quot; (booking)
+        <br />
+        ชื่อเว็บใหม่ควรเป็นข้อไหน?
+      </>
+    ),
+    choices: [
+      { id: "a", label: "shop.booking.com" },
+      { id: "subdomain", label: "booking.kanombanyai.com" },
+      { id: "c", label: "kanombanyai.booking" },
+    ],
+  },
+] as const;
 
-const EXIT_QUESTIONS = [
-  { prompt: 'ส่วนที่อยู่ขวาสุดของชื่อเว็บเรียกว่าอะไร', choices: ['Subdomain', 'SLD', 'TLD', 'URL ทั้งชุด'] },
-  { prompt: 'ชื่อโดเมนควรไล่ลำดับความสำคัญจากทางไหน', choices: ['ซ้ายไปขวา', 'ขวาไปซ้าย', 'ตรงกลางออกสองข้าง', 'อ่านทางไหนก็ได้'] },
-  { prompt: 'ใน booking.kanombanyai.com ส่วนใดเป็นบริการย่อย', choices: ['.com', 'kanombanyai', 'booking', 'ทั้งชื่อ'] },
-] as const
+export function M2Flow({
+  missionTitle,
+  path,
+  state,
+  recommendedMode = null,
+}: {
+  missionTitle: string;
+  path: LearnPath;
+  state: LearnState;
+  recommendedMode?: LearnModeId | null;
+}) {
+  const router = useRouter();
+  const [mode, setMode] = useState<LearnModeId | null>(state.chosen);
+  const [pickedMode, setPickedMode] = useState<LearnModeId>(state.chosen ?? recommendedMode ?? "do");
+  const [step, setStep] = useState<Step>(state.chosen ? "rules" : "choose");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [soundOn, setSoundOn] = useState(true);
+  const [stageScore, setStageScore] = useState(0);
+  const [final, setFinal] = useState<Final | null>(null);
+  const [repairHits, setRepairHits] = useState(0);
+  // visual
+  const [clipFrom, setClipFrom] = useState(0);
+  const [clipRun, setClipRun] = useState(0);
+  const [rewatching, setRewatching] = useState(false);
+  const [stop, setStop] = useState(0);
+  const [stopAttempts, setStopAttempts] = useState<number[]>([0, 0, 0]);
+  const [stopPick, setStopPick] = useState<string | null>(null);
+  const [stopResult, setStopResult] = useState<StopResult | null>(null);
+  const [postPick, setPostPick] = useState<string | null>(null);
+  const [postResult, setPostResult] = useState<{ correct: boolean; explanation: string } | null>(null);
+  const [postText, setPostText] = useState("");
+  const [postFeedback, setPostFeedback] = useState<TextGrade | null>(null);
 
-const VISUAL_SCHEDULE = [2, 4, 6]
-const VISUAL_PIECES = [
-  { id: 'booking', label: 'booking', color: 'bg-quest-500' },
-  { id: 'kanombanyai', label: 'kanombanyai', color: 'bg-brand-500' },
-  { id: '.com', label: '.com', color: 'bg-spark-500' },
-]
-const SIM_PIECES = ['parts', 'forcespeed', 'com']
-
-function ChoiceList({ choices, picked, onPick, disabled = false }: { choices: readonly { id?: string; label?: string; text?: string }[]; picked: string | null; onPick: (value: string) => void; disabled?: boolean }) {
-  return (
-    <div className="grid gap-2">
-      {choices.map((choice, index) => {
-        const value = choice.id ?? String(index)
-        const label = choice.label ?? choice.text ?? value
-        return (
-          <button key={value} type="button" disabled={disabled} onClick={() => onPick(value)} className={cn('min-h-12 rounded-2xl border-2 px-4 text-left text-body font-extrabold transition-transform active:scale-[.98]', picked === value ? 'border-brand-600 bg-brand-100 text-brand-900' : 'border-[#caa66a] bg-[#fffaf0] text-[#3a2a18]', 'disabled:opacity-60')}>
-            {label}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-export function M2Flow({ missionTitle, path, state, recommendedMode = null }: { missionTitle: string; path: LearnPath; state: LearnState; recommendedMode?: LearnModeId | null }) {
-  const router = useRouter()
-  const theme = themeFor('m2')
-  const [mode, setMode] = useState<LearnModeId | null>(state.chosen)
-  const [picked, setPicked] = useState<LearnModeId>(state.chosen ?? recommendedMode ?? 'do')
-  const [step, setStep] = useState<M2Step>(state.chosen ? 'rules' : 'choose')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [score, setScore] = useState(0)
-  const [stageScore, setStageScore] = useState(0)
-  const [final, setFinal] = useState<M2Result | null>(null)
-
-  const [visualScene, setVisualScene] = useState(0)
-  const [visualStop, setVisualStop] = useState(0)
-  const [visualAttempts, setVisualAttempts] = useState<Record<number, number>>({})
-  const [visualChoice, setVisualChoice] = useState<string | null>(null)
-  const [visualFeedback, setVisualFeedback] = useState<M2Result | null>(null)
-  const [visualPlacements, setVisualPlacements] = useState<Record<string, string>>({})
-  const [visualSelected, setVisualSelected] = useState<string | null>(null)
-  const [visualPost, setVisualPost] = useState('')
-
-  const [textLesson, setTextLesson] = useState(0)
-  const [textShown, setTextShown] = useState(5)
-  const [textAnswer, setTextAnswer] = useState('')
-  const [textAttempts, setTextAttempts] = useState<Record<string, number>>({})
-  const [textFeedback, setTextFeedback] = useState<M2Result | null>(null)
-  const [textScores, setTextScores] = useState<number[]>([])
-  const [notebookSaved, setNotebookSaved] = useState(false)
-  const [domeOpen, setDomeOpen] = useState(false)
-
-  const [simStage, setSimStage] = useState(0)
-  const [simPicked, setSimPicked] = useState<Record<string, string>>({})
-  const [simOrder, setSimOrder] = useState<string[]>([])
-  const [simFeedback, setSimFeedback] = useState<string | null>(null)
-
-  const [exitAnswers, setExitAnswers] = useState<(number | null)[]>([null, null, null])
-  const [repair, setRepair] = useState(false)
-
-  const currentTextQuestion = path.read.questions[textLesson] ?? path.read.questions[0]
-  const textTarget = textLesson === 0 ? 5 : textLesson === 1 ? 10 : path.read.chat.length
-  const currentScene = path.watch.scenes[Math.min(visualScene, path.watch.scenes.length - 1)]
-  const textPath = useMemo(() => path.read.chat.slice(0, Math.min(textShown, textTarget)), [path.read.chat, textShown, textTarget])
-
-  async function send(payload: unknown): Promise<M2Result | null> {
-    setBusy(true)
-    setError(null)
-    const response = await postLearn<M2Result>('m2', { action: 'm2', payload })
-    setBusy(false)
-    if (!response.ok) {
-      setError(response.message)
-      return null
+  useEffect(() => {
+    // warm the kit so pieces never pop in mid-stage
+    const names =
+      mode === "watch"
+        ? ["paper_card_full", "paper_card_shop", "paper_card_kanombanyai", "paper_card_com", "phone_error", "phone_cake", "phone_booking", "box_shop", "box_kanombanyai", "box_com", "box_booking", "pause_badge_1", "pause_badge_2", "pause_badge_3", "l1_shop", "tut_kanombanyai", "l1_com"]
+        : mode === "do"
+          ? ["tut_www", "tut_kanombanyai", "tut_com", "l1_ployflower", "l1_shop", "l1_com", "l2_parts", "l2_forcespeed", "l2_com", "tag_sub", "tag_sld", "tag_tld", "l3_order", "l3_ittimbeach", "l3_com", "badge_1", "badge_2", "badge_3", "badge_1_correct", "badge_2_correct", "badge_3_correct", "l4_menu", "l4_kafaethai", "l4_co", "l4_th", "l4_decoy_www", "l4_decoy_com", "l4_menu_placed", "l4_kafaethai_placed", "l4_co_placed", "l4_th_placed", "icon_check", "icon_cross"]
+          : [];
+    for (const name of [...names, "crate_sub", "crate_sld", "crate_tld", "stars_0", "stars_2", "stars_3", "badge_domain_architect"]) {
+      const img = new Image();
+      img.src = KIT(name);
     }
-    return response.data
+  }, [mode]);
+
+  const exit = useExitConfirm({ href: "/map", note: "คำตอบที่ยังไม่ส่งจะยังไม่ถูกบันทึก" });
+  const chrome = { onBack: exit.request, soundOn, onSound: () => setSoundOn((value) => !value) };
+
+  async function send<T>(payload: unknown): Promise<T | null> {
+    setBusy(true);
+    setError(null);
+    const response = await postLearn<T>("m2", { action: "m2", payload });
+    setBusy(false);
+    if (!response.ok) {
+      setError(response.message);
+      return null;
+    }
+    return response.data;
   }
 
   async function chooseMode() {
-    const response = await postLearn<{ ok: true }>('m2', { action: 'choose', mode: picked })
-    if (!response.ok) return setError(response.message)
-    setMode(picked)
-    setStep('rules')
+    setBusy(true);
+    const response = await postLearn<{ ok: true }>("m2", { action: "choose", mode: pickedMode });
+    setBusy(false);
+    if (!response.ok) return setError(response.message);
+    setMode(pickedMode);
+    setStep("rules");
   }
 
-  function beginMode() {
-    if (mode === 'watch') setStep('visual-clip')
-    else if (mode === 'read') setStep('text-lesson')
-    else setStep('sim-story')
+  function begin() {
+    if (mode === "watch") {
+      setClipFrom(0);
+      setStop(0);
+      setStep("v-clip");
+    } else if (mode === "read") setStep("t-chat");
+    else setStep("s-storm");
   }
 
-  async function answerStop() {
-    if (!visualChoice) return
-    const attempt = (visualAttempts[visualStop] ?? 0) + 1
-    const result = await send({ kind: 'stop', stop: visualStop, answer: visualChoice, attempt })
-    if (!result) return
-    setVisualAttempts((all) => ({ ...all, [visualStop]: attempt }))
-    setVisualFeedback(result)
-    if (result.correct) setStep('visual-explain')
-    else if (result.phase === 'rewatch') setStep('visual-review')
-    else if (result.phase === 'explain') setStep('visual-explain')
-  }
+  const simCheck = (stage: number) => (placements: Record<string, string>) =>
+    send<SimResult>({ kind: "sim", stage, placements });
 
-  function continueVisualExplanation() {
-    setVisualChoice(null)
-    setVisualFeedback(null)
-    if (visualStop < 2) {
-      setVisualStop((n) => n + 1)
-      setVisualScene(VISUAL_SCHEDULE[visualStop]! + 1)
-      setStep('visual-clip')
-    } else {
-      setVisualScene(path.watch.scenes.length - 1)
-      setStep('visual-clip')
+  /* ── visual helpers ── */
+  const clipUntil = stop < STOP_AFTER.length ? SHOTS[STOP_AFTER[stop]!]!.to : CLIP_END;
+  const clip = useClip(clipFrom, clipUntil, () => {
+    if (stop < STOP_AFTER.length) {
+      setStopPick(null);
+      setStopResult(null);
+      setStep("v-stop");
+    } else setStep("v-post1");
+  }, step === "v-clip", clipRun);
+
+  async function answerStop(answer: string) {
+    const attempt = (stopAttempts[stop] ?? 0) + 1;
+    const result = await send<StopResult>({ kind: "stop", stop, answer, attempt });
+    if (!result) return;
+    setStopAttempts((all) => all.map((value, index) => (index === stop ? attempt : value)));
+    setStopResult(result);
+  }
+  function afterStop() {
+    if (stopResult?.phase === "rewatch") {
+      setClipFrom(SHOTS[REWATCH_FROM[stop]!]!.from);
+      setClipRun((value) => value + 1);
+      setRewatching(true);
+      setStopResult(null);
+      setStopPick(null);
+      setStep("v-clip");
+      return;
+    }
+    const next = stop + 1;
+    setRewatching(false);
+    setClipRun((value) => value + 1);
+    setClipFrom(SHOTS[STOP_AFTER[stop]!]!.to);
+    setStop(next);
+    setStopPick(null);
+    setStopResult(null);
+    setStep("v-clip");
+  }
+  async function answerPost1(id: string) {
+    if (postResult) return;
+    setPostPick(id);
+    const result = await send<{ correct: boolean; explanation: string }>({ kind: "post", q: 0, answer: id });
+    if (result) setPostResult(result);
+  }
+  async function answerPost2() {
+    const question = path.watch.questions[0];
+    if (!question || !postText.trim()) return;
+    const attempt = postFeedback ? 2 : 1;
+    const result = await send<TextGrade>({ kind: "text", mode: "watch", questionId: question.id, answer: postText, attempt });
+    if (!result) return;
+    setPostFeedback(result);
+    if (result.correct || attempt >= 2) {
+      const stopPenalty = stopAttempts.reduce((sum, value) => sum + Math.max(0, value - 1), 0) * 3;
+      setStageScore(Math.max(40, (result.correct ? 70 : 55) - stopPenalty + (postResult?.correct ? 0 : -5)));
     }
   }
 
-  function nextVisualScene() {
-    if (VISUAL_SCHEDULE.includes(visualScene)) {
-      setStep('visual-stop')
-      return
-    }
-    if (visualScene >= path.watch.scenes.length - 1) {
-      setStep('visual-drag')
-      return
-    }
-    setVisualScene((n) => n + 1)
+  async function submitExit(answers: number[]) {
+    const result = await send<Final>({ kind: "exit", answers, stageScore, repair: repairHits > 0 });
+    if (!result) return;
+    setFinal(result);
+    setStep("end");
   }
 
-  async function checkVisualDrag() {
-    const result = await send({ kind: 'visual-drag', placements: visualPlacements })
-    if (!result) return
-    setVisualFeedback(result)
-    if (result.passed) {
-      setStageScore(result.score ?? 0)
-      setStep('visual-post')
-    }
-  }
-
-  async function submitVisualPost() {
-    const question = path.watch.questions[0]
-    if (!question || !visualPost.trim()) return
-    const result = await send({ kind: 'text', mode: 'watch', questionId: question.id, answer: visualPost, attempt: 1 })
-    if (!result) return
-    setVisualFeedback(result)
-    setStageScore(Math.max(stageScore, result.correct ? 70 : 50))
-    setStep('exit')
-  }
-
-  async function submitTextAnswer() {
-    if (!currentTextQuestion || !textAnswer.trim()) return
-    const attempt = (textAttempts[currentTextQuestion.id] ?? 0) + 1
-    const result = await send({ kind: 'text', mode: 'read', questionId: currentTextQuestion.id, answer: textAnswer, attempt })
-    if (!result) return
-    setTextAttempts((all) => ({ ...all, [currentTextQuestion.id]: attempt }))
-    setTextFeedback(result)
-    if (result.correct || result.reveal) {
-      setTextScores((scores) => [...scores, result.score ?? 0])
-      setTextAnswer('')
-      setTextFeedback(null)
-      if (textLesson < 2) {
-        setTextLesson((n) => n + 1)
-        setTextShown(5)
-        setStep('text-lesson')
-      } else {
-        const total = [...textScores, result.score ?? 0].reduce((sum, value) => sum + value, 0)
-        setStageScore(Math.round((total / 3) * 0.7))
-        setStep('text-summary')
+  const stage = (() => {
+    switch (step) {
+      case "choose":
+        return (
+          <M2Screen {...chrome} onBack={() => router.push("/map")} title="ภารกิจที่ 2" subtitle="แยกชิ้นส่วนชื่อเว็บ">
+            <Dome className="m2g-dome-bottom">เลือกวิธีเรียนที่ถนัด แล้วไปลุยภารกิจที่ 2 กันเลย!</Dome>
+            <ModePopup
+              missionNo="2"
+              title={missionTitle}
+              recommended={recommendedMode ?? "do"}
+              reason={recommendedMode ? undefined : "เลือกวิธีที่ถนัดได้เลย"}
+              picked={pickedMode}
+              busy={busy}
+              error={error}
+              onPick={setPickedMode}
+              onStart={() => void chooseMode()}
+              onClose={() => router.push("/map")}
+              presentation="drawer"
+            />
+          </M2Screen>
+        );
+      case "rules":
+        if (mode === "watch") return <VisualRules chrome={chrome} onStart={begin} />;
+        return (
+          <M2Screen
+            {...chrome}
+            title={mode === "read" ? "แชทติวกับโดม" : "ซ่อมป้ายหลังพายุ"}
+            subtitle={mode === "read" ? "Text · ภารกิจที่ 2" : "Sim · ภารกิจที่ 2"}
+            footer={<M2Button onClick={begin}>{mode === "read" ? "เริ่มแชทกับโดม" : "เริ่มซ่อมป้าย"}</M2Button>}
+          >
+            <RulesCard
+              heading={mode === "read" ? "วิธีเรียนแบบแชทกับโดม" : "วิธีเล่นแบบลากวาง"}
+              steps={
+                mode === "read"
+                  ? [
+                      "อ่านบทอ่านสั้น ๆ ในแชท 3 บท",
+                      "โดมถามคำถาม 3 ข้อ พิมพ์ตอบด้วยคำของตัวเอง",
+                      "ตอบยังไม่ครบ โดมให้คำใบ้ แล้วลองใหม่ได้",
+                      "กดหลอดไฟเมื่ออยากได้คำใบ้",
+                      "จบแล้วได้การ์ดสรุปลงสมุดโน้ต",
+                    ]
+                  : [
+                      "ลากชิ้นป้ายไม้ไปวางในช่อง (หรือแตะชิ้น แล้วแตะช่อง)",
+                      "ทำ Tutorial 1 ครั้ง แล้วลุย 4 ด่าน",
+                      "ติดป้ายชื่อส่วน และเลขลำดับการอ่าน",
+                      "ด่านสุดท้ายมีชิ้นหลอก ระวังให้ดี",
+                      "กดหลอดไฟเมื่ออยากได้คำใบ้",
+                    ]
+              }
+              art={
+                mode === "read" ? (
+                  <div className="m2g-rules-parts">
+                    <span className="m2g-part-pill tone-green">parts</span>
+                    <i>.</i>
+                    <span className="m2g-part-pill tone-blue">forcespeed</span>
+                    <i>.</i>
+                    <span className="m2g-part-pill tone-orange">com</span>
+                  </div>
+                ) : (
+                  <div className="m2g-rules-woods">
+                    <img src={KIT("l1_shop")} alt="" />
+                    <img src={KIT("l1_ployflower")} alt="" />
+                    <img src={KIT("l1_com")} alt="" />
+                  </div>
+                )
+              }
+            />
+          </M2Screen>
+        );
+      case "v-clip":
+        return (
+          <M2Screen {...chrome} title="ดูคลิปสถานการณ์" subtitle="การ์ดเว็บปลิวลม" className="m2g-visual">
+            <ClipPlayer t={clip.t} playing={clip.playing} stopNo={null} onToggle={clip.toggle} onSkip={clip.skip} />
+            <Dome className="m2g-dome-row">
+              {rewatching
+                ? "ย้อนดูช่วงสำคัญอีกครั้งนะครับ แล้วกลับไปตอบข้อเดิม"
+                : "ดูดี ๆ นะครับ CEO เดี๋ยวคลิปจะหยุดถามที่จุดสีทอง"}
+            </Dome>
+          </M2Screen>
+        );
+      case "v-stop": {
+        const q = STOP_QUESTIONS[stop]!;
+        const verdict = stopResult ? (stopResult.correct ? "good" : "bad") : null;
+        return (
+          <M2Screen
+            {...chrome}
+            title={`หยุดถาม ${stop + 1}/3`}
+            subtitle={q.title}
+            className="m2g-visual"
+            footer={
+              stopResult && (stopResult.correct || stopResult.phase !== "hint") ? (
+                <M2Button onClick={afterStop}>
+                  {stopResult.phase === "rewatch" ? "ย้อนดูช่วงสำคัญ" : "ดูคลิปต่อ"}
+                </M2Button>
+              ) : null
+            }
+          >
+            <ClipPlayer t={SHOTS[STOP_AFTER[stop]!]!.to - 0.1} playing={false} stopNo={stop} />
+            <Dome
+              className="m2g-dome-row"
+              tag={stopResult ? (stopResult.correct ? "ถูกต้อง!" : stopResult.phase === "explain" ? "เฉลย" : "คำใบ้") : "คำถามจากโดม"}
+              tagTone={stopResult ? (stopResult.correct ? "green" : "yellow") : "yellow"}
+            >
+              {stopResult ? (stopResult.explanation ?? stopResult.hint) : q.ask}
+            </Dome>
+            {stop === 1 ? (
+              stopResult && (stopResult.correct || stopResult.phase !== "hint") ? null : (
+                <StopDrag key={stopAttempts[1]} busy={busy} onSubmit={(answer) => void answerStop(answer)} />
+              )
+            ) : (
+              <ChoiceCards
+                choices={[...q.choices]}
+                picked={stopPick}
+                verdict={verdict}
+                disabled={busy || Boolean(stopResult?.correct) || stopResult?.phase === "explain" || stopResult?.phase === "rewatch"}
+                onPick={(id) => {
+                  setStopPick(id);
+                  setStopResult(null);
+                  void answerStop(id);
+                }}
+              />
+            )}
+          </M2Screen>
+        );
       }
-    }
-  }
-
-  async function saveNotebook() {
-    const result = await send({ kind: 'notebook', text: 'TLD อยู่ขวาสุด · SLD อยู่ตรงกลาง · Subdomain อยู่ซ้ายสุด · อ่านจากขวาไปซ้าย' })
-    if (result) setNotebookSaved(true)
-  }
-
-  async function checkSim() {
-    const result = await send({ kind: 'sim', stage: simStage, placements: simPicked, order: simOrder })
-    if (!result) return
-    setSimFeedback(result.reason ?? (result.correct ? 'ถูกต้อง' : 'ลองใหม่อีกครั้ง'))
-    if (result.correct) {
-      if (simStage < 4) {
-        setSimStage((n) => n + 1)
-        setSimPicked({})
-        setSimOrder([])
-      } else {
-        setStageScore(70)
-        setStep('sim-finale')
+      case "v-post1":
+        return (
+          <M2Screen
+            {...chrome}
+            title="คำถามท้ายคลิป"
+            subtitle="ข้อ 1/2"
+            footer={postResult ? <M2Button onClick={() => setStep("v-post2")}>ข้อถัดไป</M2Button> : null}
+          >
+            <Dome tag="สถานการณ์ใหม่" className="m2g-dome-row top">
+              มีคนส่งลิงก์มาให้มะลิว่า
+              <br />
+              <b>kanombanyai.net</b>
+              <br />
+              เป็นเว็บร้านยายใช่ไหม?
+            </Dome>
+            <ChoiceCards
+              choices={[
+                { id: "same", label: "ใช่ ชื่อร้านเหมือนกัน" },
+                { id: "different", label: "ไม่แน่ ส่วนขวาสุดต่างกัน" },
+              ]}
+              picked={postPick}
+              verdict={postResult ? (postResult.correct ? "good" : "bad") : null}
+              disabled={busy || Boolean(postResult)}
+              onPick={(id) => void answerPost1(id)}
+            />
+            {postResult ? (
+              <Panel className="m2g-reveal" title="เฉลย">
+                <p>{postResult.explanation}</p>
+              </Panel>
+            ) : null}
+          </M2Screen>
+        );
+      case "v-post2": {
+        const question = path.watch.questions[0];
+        const done = Boolean(postFeedback && (postFeedback.correct || stageScore > 0));
+        return (
+          <M2Screen
+            {...chrome}
+            title="คำถามท้ายคลิป"
+            subtitle="ข้อ 2/2"
+            footer={
+              done ? (
+                <M2Button onClick={() => setStep("exit")}>ไปเช็กความเข้าใจ</M2Button>
+              ) : (
+                <M2Button disabled={busy || !postText.trim()} onClick={() => void answerPost2()}>
+                  {busy ? "โดมกำลังอ่าน" : "ส่งคำตอบ"}
+                </M2Button>
+              )
+            }
+          >
+            <Dome tag="ตอบด้วยคำของตัวเอง" className="m2g-dome-row top">
+              {question?.prompt}
+            </Dome>
+            <Panel className="m2g-answer">
+              <textarea
+                value={postText}
+                onChange={(event) => setPostText(event.target.value)}
+                placeholder={question?.placeholder}
+                maxLength={600}
+                disabled={done}
+                aria-label="พิมพ์คำตอบ"
+              />
+            </Panel>
+            {postFeedback ? (
+              <Panel className={postFeedback.correct ? "m2g-reveal is-good" : "m2g-reveal"} title={postFeedback.correct ? "คำตอบนี้ใช้ได้" : done ? "สรุปจากโดม" : "ลองเพิ่มอีกนิด"}>
+                <p>{postFeedback.feedback}</p>
+                {!postFeedback.correct && !done ? <p>คำใบ้: {postFeedback.hint ?? question?.hint}</p> : null}
+              </Panel>
+            ) : null}
+          </M2Screen>
+        );
       }
-    } else {
-      // A decoy or misplaced piece must be removable before the learner retries.
-      setSimPicked({})
+      case "t-chat":
+        return (
+          <TextChat
+            chrome={chrome}
+            questions={path.read.questions as TextQuestion[]}
+            grade={(question, answer, attempt) =>
+              send<TextGrade>({ kind: "text", mode: "read", questionId: question.id, answer, attempt })
+            }
+            saveNotebook={async () =>
+              Boolean(
+                await send({
+                  kind: "notebook",
+                  text: "TLD อยู่ขวาสุด · SLD อยู่ตรงกลาง · Subdomain อยู่ซ้ายสุด · อ่านจากขวาไปซ้าย",
+                }),
+              )
+            }
+            onFinish={(scores) => {
+              const avg = scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : 0;
+              setStageScore(Math.round(avg * 0.7));
+              setStep("exit");
+            }}
+          />
+        );
+      case "s-storm":
+        return <SimStorm chrome={chrome} onNext={() => setStep("s-tutorial")} />;
+      case "s-tutorial":
+        return <SimTutorial chrome={chrome} onDone={() => setStep("s-stage1")} />;
+      case "s-stage1":
+        return <SimStage1 chrome={chrome} check={simCheck(1)} onPass={() => setStep("s-stage2")} />;
+      case "s-stage2":
+        return <SimStage2 chrome={chrome} check={simCheck(2)} onPass={() => setStep("s-stage3")} />;
+      case "s-stage3":
+        return (
+          <SimStage3
+            chrome={chrome}
+            check={(order) => send<SimResult>({ kind: "sim", stage: 3, order })}
+            onPass={() => setStep("s-stage4")}
+          />
+        );
+      case "s-stage4":
+        return (
+          <SimStage4
+            chrome={chrome}
+            check={simCheck(4)}
+            onPass={() => {
+              setStageScore(70);
+              setStep("s-finale");
+            }}
+          />
+        );
+      case "s-finale":
+        return <SimFinale chrome={chrome} onNext={() => setStep("exit")} />;
+      case "exit":
+        return <ExitCheck key={repairHits} chrome={chrome} busy={busy} onSubmit={(answers) => void submitExit(answers)} />;
+      case "end":
+        return final ? (
+          <Ending
+            chrome={{ ...chrome, onBack: () => router.push("/map") }}
+            grade={final.grade}
+            stars={final.stars}
+            score={final.score}
+            onNext={() => router.push("/mission/m2")}
+            onMap={() => router.push("/map")}
+            onRepair={() => setStep("repair")}
+            onChangeMode={() => {
+              setFinal(null);
+              setStep("choose");
+            }}
+          />
+        ) : null;
+      case "repair":
+        return (
+          <RepairDrill
+            chrome={chrome}
+            onDone={(hits) => {
+              setRepairHits((value) => value + Math.max(1, hits));
+              setStageScore((value) => Math.min(70, Math.max(value, 35 + hits * 7)));
+              setFinal(null);
+              setStep("exit");
+            }}
+          />
+        );
     }
-  }
-
-  async function submitExit() {
-    if (exitAnswers.some((answer) => answer === null)) return
-    const result = await send({ kind: 'exit', answers: exitAnswers as number[], stageScore, repair })
-    if (!result) return
-    setFinal(result)
-    setScore(result.score ?? 0)
-    setStep('end')
-  }
-
-  const menu: MenuItem[] = [
-    { key: 'home', label: 'กลับหน้าหลัก', hint: 'ความคืบหน้าจะถูกบันทึกไว้', icon: <HomeIcon width={22} height={22} />, onSelect: () => router.push('/home') },
-  ]
-  const exit = useExitConfirm({
-    href: '/map',
-    note: 'ที่ส่งให้ระบบแล้วจะอยู่ต่อ ส่วนคำตอบหรือ Exit Check ที่ยังไม่ส่งจะยังไม่ถูกบันทึก',
-  })
-  const footer = (() => {
-    if (step === 'rules') return <GameButton onClick={beginMode}>เริ่มภารกิจ {mode === 'watch' ? 'Visual' : mode === 'read' ? 'Text' : 'Sim'} →</GameButton>
-    if (step === 'visual-clip') return <GameButton onClick={nextVisualScene}>{visualScene >= path.watch.scenes.length - 1 ? 'ไปลากวางชิ้นส่วน' : VISUAL_SCHEDULE.includes(visualScene) ? 'หยุดตอบคำถาม' : 'ฉากถัดไป →'}</GameButton>
-    if (step === 'visual-stop') return <GameButton disabled={busy || !visualChoice} onClick={() => void answerStop()}>{busy ? 'กำลังตรวจ' : 'ตอบคำถาม'}</GameButton>
-    if (step === 'visual-review') return <GameButton onClick={() => setStep('visual-stop')}>กลับมาตอบข้อเดิม</GameButton>
-    if (step === 'visual-explain') return <GameButton onClick={continueVisualExplanation}>เข้าใจแล้ว ไปต่อ →</GameButton>
-    if (step === 'visual-drag') return <GameButton disabled={busy || Object.keys(visualPlacements).length < 3} onClick={() => void checkVisualDrag()}>{busy ? 'กำลังตรวจ' : 'ตรวจชิ้นส่วน'}</GameButton>
-    if (step === 'visual-post') return <GameButton disabled={busy || !visualPost.trim()} onClick={() => void submitVisualPost()}>{busy ? 'กำลังตรวจ' : 'ส่งคำตอบหลังคลิป'}</GameButton>
-    if (step === 'text-lesson') return textShown < textTarget ? <GameButton onClick={() => setTextShown((n) => Math.min(textTarget, n + 1))}>อ่านต่อ</GameButton> : <GameButton onClick={() => setStep('text-answer')}>ตอบคำถามบทที่ {textLesson + 1}</GameButton>
-    if (step === 'text-answer') return <GameButton disabled={busy || !textAnswer.trim()} onClick={() => void submitTextAnswer()}>{busy ? 'โดมกำลังอ่าน' : 'ส่งคำตอบ'}</GameButton>
-    if (step === 'text-summary') return <GameButton disabled={!notebookSaved} onClick={() => setStep('exit')}>{notebookSaved ? 'ไป Exit Check' : 'บันทึกสรุปก่อน'}</GameButton>
-    if (step === 'sim-story') return <GameButton onClick={() => setStep('sim-tutorial')}>ฝ่าพายุไปต่อ</GameButton>
-    if (step === 'sim-tutorial') return <GameButton onClick={() => setStep('sim-stage')}>เริ่ม Tutorial ลากชิ้นแรก</GameButton>
-    if (step === 'sim-stage') return <GameButton disabled={busy} onClick={() => void checkSim()}>{busy ? 'กำลังตรวจ' : 'วางแล้ว ตรวจคำตอบ'}</GameButton>
-    if (step === 'sim-finale') return <GameButton onClick={() => setStep('exit')}>ไป Exit Check →</GameButton>
-    if (step === 'exit') return <GameButton disabled={busy || exitAnswers.some((answer) => answer === null)} onClick={() => void submitExit()}>{busy ? 'กำลังสรุปผล' : 'ส่ง Exit Check ครั้งเดียว'}</GameButton>
-    if (step === 'end') return <GameButton onClick={() => (final?.passed ? router.push('/map') : (setRepair(true), setStageScore(0), setStep('rules'), setFinal(null), setExitAnswers([null, null, null]), setScore(0)))}>{final?.passed ? 'กลับแผนที่' : 'ซ่อมภารกิจ แล้วลองใหม่'}</GameButton>
-    return null
-  })()
+  })();
 
   return (
-    <>
-      <AppScreen theme={theme} title={missionTitle} onBack={step === 'end' ? undefined : exit.request} score={score} stage={step === 'end' ? 2 : step === 'exit' ? 1 : 0} stageCount={3} menu={menu} dock={footer}>
-      {step === 'choose' ? (
-        <ModePopup missionNo="2" title={missionTitle} recommended={recommendedMode ?? 'do'} reason={recommendedMode ? undefined : 'เลือกวิธีที่ถนัดได้เลย'} picked={picked} busy={busy} error={error} onPick={setPicked} onStart={() => void chooseMode()} onClose={() => router.push('/map')} presentation="drawer" />
-      ) : null}
-      {error ? <GlassCard className="mb-3 border-2 border-red-400"><p role="alert" className="flex items-center gap-2 text-body font-bold text-red-800"><AlertIcon width={20} height={20} />{error}</p></GlassCard> : null}
-
-      {step === 'rules' ? <GlassCard><p className="text-label font-extrabold text-brand-700">กติกาภารกิจที่ 2 · {mode === 'watch' ? 'Visual ดูคลิป' : mode === 'read' ? 'Text แชท' : 'Sim ลากวาง'}</p><h2 className="mt-2 text-title font-extrabold text-[#3a2a18]">รู้จัก 3 ส่วนของชื่อเว็บ</h2><p className="mt-3 text-body-lg text-[#3a2a18]">TLD อยู่ขวาสุด · SLD อยู่ตรงกลาง · Subdomain อยู่ซ้ายสุด และระบบไล่ลำดับจากขวาไปซ้าย</p><div className="mt-4 rounded-2xl bg-[#fff3cf] p-4 text-body font-bold text-[#5c3c1b]">Exit Check มี 3 ข้อ ใช้ครั้งเดียว ไม่มีคำใบ้ และคิดเป็น 30% ของคะแนน</div></GlassCard> : null}
-
-      {step === 'visual-clip' && currentScene ? <GlassCard><div className="flex items-center justify-between"><p className="text-label font-bold text-brand-700">Visual · คลิปสถานการณ์</p><span className="rounded-full bg-brand-100 px-3 py-1 text-label font-extrabold text-brand-700">{visualScene + 1}/{path.watch.scenes.length}</span></div><img src={currentScene.image ?? '/learn/m2/watch-s1.webp'} alt={currentScene.caption ?? currentScene.line} className="mt-3 aspect-video w-full rounded-2xl object-cover" /><p className="mt-3 text-body-lg font-bold text-[#3a2a18]">{currentScene.line}</p><div className="mt-4 flex gap-1" aria-label="timeline">{path.watch.scenes.map((_, i) => <span key={i} className={cn('h-2 flex-1 rounded-full', i <= visualScene ? 'bg-brand-600' : 'bg-[#e3c78e]', VISUAL_SCHEDULE.includes(i) && 'ring-2 ring-spark-400')} />)}</div></GlassCard> : null}
-
-      {step === 'visual-stop' ? <GlassCard><p className="text-label font-extrabold text-spark-700">หยุดถาม {visualStop + 1}/3</p><h2 className="mt-2 text-title-sm font-extrabold text-[#3a2a18]">จากที่ดูมา คำตอบไหนถูก</h2><p className="mt-2 text-body text-[#3a2a18]">booking.kanombanyai.com</p><div className="mt-4"><ChoiceList choices={STOP_CHOICES[visualStop]!} picked={visualChoice} onPick={setVisualChoice} disabled={busy} /></div>{visualFeedback && !visualFeedback.correct ? <div className="mt-4 rounded-2xl bg-[#fff3cf] p-3 text-body text-[#5c3c1b]"><LightbulbIcon width={20} height={20} className="mr-1 inline text-reward-700" />{visualFeedback.hint ?? 'ลองอีกครั้งนะ'}</div> : null}</GlassCard> : null}
-
-      {step === 'visual-review' ? <GlassCard><p className="text-label font-extrabold text-brand-700">โดมพาย้อนดูช่วงสำคัญ</p><div className="mt-3 grid gap-3">{path.watch.scenes.slice(Math.max(0, (visualFeedback?.from ?? 1) - 1), visualFeedback?.to ?? 1).map((scene) => <div key={scene.id} className="rounded-2xl bg-[#fff8e6] p-3"><img src={scene.image ?? '/learn/m2/watch-s1.webp'} alt="" className="aspect-video w-full rounded-xl object-cover" /><p className="mt-2 text-label font-bold text-[#3a2a18]">{scene.line}</p></div>)}</div><p className="mt-3 text-body font-bold text-[#3a2a18]">ดูซ้ำแล้วกลับมาตอบคำถามเดิมได้เลย</p></GlassCard> : null}
-
-      {step === 'visual-explain' ? <GlassCard><div className="flex items-center gap-3"><DomeAvatar mood="explain" size={72} decorative /><div><p className="text-label font-extrabold text-brand-700">โดมอธิบาย</p><p className="mt-1 text-body-lg font-bold text-[#3a2a18]">{visualFeedback?.explanation}</p></div></div></GlassCard> : null}
-
-      {step === 'visual-drag' ? <GlassCard><p className="text-label font-extrabold text-brand-700">หลังคำอธิบาย · ต่อ 3 ชิ้น</p><h2 className="mt-2 text-title-sm font-extrabold text-[#3a2a18]">ลากหรือแตะชิ้นส่วนลงช่องให้ถูก</h2><div className="mt-4 grid gap-2">{(['Subdomain', 'SLD', 'TLD'] as const).map((slot, i) => <button key={slot} type="button" onClick={() => visualSelected && (setVisualPlacements((all) => ({ ...all, [`slot${i + 1}`]: visualSelected })), setVisualSelected(null))} className="min-h-16 rounded-2xl border-2 border-dashed border-[#b48a48] bg-[#fff8e6] p-3 text-left"><span className="block text-label font-extrabold text-brand-700">{slot}</span><span className="text-body font-extrabold text-[#3a2a18]">{visualPlacements[`slot${i + 1}`] ?? 'แตะชิ้นส่วน แล้วแตะที่นี่'}</span></button>)}</div><div className="mt-4 flex flex-wrap gap-2">{VISUAL_PIECES.map((piece) => <button key={piece.id} type="button" draggable onDragStart={() => setVisualSelected(piece.id)} onClick={() => setVisualSelected(piece.id)} className={cn('min-h-12 rounded-xl px-3 text-body font-extrabold text-white shadow-[0_3px_0_rgba(0,0,0,.2)]', piece.color, visualSelected === piece.id && 'ring-4 ring-reward-300')}>{piece.label}</button>)}</div>{visualFeedback && !visualFeedback.passed ? <p className="mt-3 rounded-2xl bg-red-100 p-3 text-body font-bold text-red-800">{visualFeedback.feedback}</p> : null}</GlassCard> : null}
-
-      {step === 'visual-post' ? <GlassCard><p className="text-label font-extrabold text-brand-700">คำถามท้ายคลิป</p><h2 className="mt-2 text-title-sm font-extrabold text-[#3a2a18]">{path.watch.questions[0]?.prompt}</h2><textarea value={visualPost} onChange={(e) => setVisualPost(e.target.value)} placeholder={path.watch.questions[0]?.placeholder} className="mt-4 min-h-28 w-full rounded-2xl border-2 border-[#caa66a] bg-[#fffaf0] p-3 text-body text-[#3a2a18]" />{visualFeedback?.feedback ? <p className="mt-3 rounded-2xl bg-[#fff3cf] p-3 text-body font-bold text-[#5c3c1b]">{visualFeedback.feedback}</p> : null}</GlassCard> : null}
-
-      {step === 'text-lesson' ? <GlassCard><p className="text-label font-extrabold text-brand-700">Text · บทเรียน {textLesson + 1}/3</p><ChatReader chat={textPath} shown={textPath.length} onNext={() => setTextShown((n) => Math.min(textTarget, n + 1))} onAll={() => setTextShown(textTarget)} title="CEO Domain Quest" /><div className="mt-3 rounded-2xl bg-[#fff3cf] p-3 text-body font-bold text-[#5c3c1b]">อ่านให้จบ แล้วพิมพ์คำตอบด้วยภาษาของตัวเองได้เลย</div></GlassCard> : null}
-
-      {step === 'text-answer' && currentTextQuestion ? <GlassCard><p className="text-label font-extrabold text-brand-700">ตอบแบบพิมพ์อิสระ · บทเรียน {textLesson + 1}/3</p><h2 className="mt-2 text-title-sm font-extrabold text-[#3a2a18]">{currentTextQuestion.prompt}</h2><textarea value={textAnswer} onChange={(e) => setTextAnswer(e.target.value)} placeholder={currentTextQuestion.placeholder} className="mt-4 min-h-32 w-full rounded-2xl border-2 border-[#caa66a] bg-[#fffaf0] p-3 text-body text-[#3a2a18]" />{textFeedback ? <div className={cn('mt-3 rounded-2xl p-3 text-body font-bold', textFeedback.correct ? 'bg-quest-100 text-quest-800' : 'bg-[#fff3cf] text-[#5c3c1b]')}><p>{textFeedback.feedback}</p>{textFeedback.hint ? <p className="mt-2">คำใบ้ระดับ {(textAttempts[currentTextQuestion.id] ?? 1)}/2: {textFeedback.hint}</p> : null}{textFeedback.reveal ? <p className="mt-2">เฉลยพร้อมเหตุผล: {textFeedback.reveal}</p> : null}{!textFeedback.correct && !textFeedback.reveal ? <button type="button" className="mt-2 font-extrabold underline" onClick={() => setDomeOpen(true)}>ถามโดม แล้วกลับมาตอบข้อนี้</button> : null}</div> : null}</GlassCard> : null}
-
-      {step === 'text-summary' ? <GlassCard><div className="flex items-center gap-3"><DomeAvatar mood="celebrate" size={72} decorative /><div><p className="text-label font-extrabold text-brand-700">สรุปความรู้ · สมุดโน้ต</p><p className="mt-1 text-body-lg font-bold text-[#3a2a18]">TLD อยู่ขวาสุด · SLD อยู่ตรงกลาง · Subdomain อยู่ซ้ายสุด · อ่านจากขวาไปซ้าย</p></div></div><button type="button" disabled={notebookSaved} onClick={() => void saveNotebook()} className="mt-4 min-h-12 w-full rounded-2xl bg-brand-600 px-4 text-body font-extrabold text-white disabled:bg-quest-600">{notebookSaved ? 'บันทึกลงสมุดโน้ตแล้ว ✓' : 'บันทึกลงสมุดโน้ต'}</button></GlassCard> : null}
-
-      {step === 'sim-story' ? <GlassCard><p className="text-label font-extrabold text-spark-700">Sim · พายุพัดป้ายกระจาย</p><h2 className="mt-2 text-title font-extrabold text-[#3a2a18]">ช่วยร้านขนมต่อชื่อเว็บกลับคืน</h2><img src="/learn/m2/bg-bakery-front.webp" alt="ร้านขนมในพายุ" className="mt-4 aspect-video w-full rounded-2xl object-cover" /><p className="mt-3 text-body-lg text-[#3a2a18]">ป้ายหลุดออกจากกัน เราจะค่อย ๆ ลากกลับให้ถูกช่อง</p></GlassCard> : null}
-
-      {step === 'sim-tutorial' ? <GlassCard><p className="text-label font-extrabold text-brand-700">Tutorial · บังคับลากครั้งแรก</p><DomeAvatar mood="encourage" size={90} decorative /><p className="mt-2 text-body-lg font-bold text-[#3a2a18]">ลากป้าย parts ไปช่องแรก เพื่อเริ่มประกอบชื่อโดเมน</p><button type="button" onClick={() => { setSimStage(0); setStep('sim-stage') }} className="mt-4 min-h-12 w-full rounded-2xl border-2 border-dashed border-[#b48a48] bg-[#fff8e6] p-3 text-left text-body font-extrabold text-[#3a2a18]">ช่องแรก: {simPicked.slot1 ?? 'วาง parts ที่นี่'}</button><div className="mt-3 flex gap-2"><button type="button" onClick={() => setSimPicked({ slot1: 'parts' })} className="min-h-12 rounded-xl bg-quest-500 px-4 text-body font-extrabold text-white">ลาก parts</button></div></GlassCard> : null}
-
-      {step === 'sim-stage' ? <GlassCard><p className="text-label font-extrabold text-brand-700">Sim · ด่าน {Math.min(simStage + 1, 5)}/5</p><h2 className="mt-2 text-title-sm font-extrabold text-[#3a2a18]">{simStage === 0 ? 'ตรวจป้ายแรก' : simStage === 1 ? 'ประกอบ 3 ชิ้นตามลำดับ' : simStage === 2 ? 'ติดชื่อ Subdomain / SLD / TLD' : simStage === 3 ? 'อ่านจากขวาไปซ้าย' : 'ต่อ .co.th และแยกชิ้นหลอก'}</h2>{simStage <= 2 ? <div className="mt-4 grid gap-2">{(simStage === 0 ? ['slot1'] : ['slot1', 'slot2', 'slot3']).map((slot, i) => <button key={slot} type="button" onClick={() => { const values = simStage === 2 ? ['Subdomain', 'SLD', 'TLD'] : SIM_PIECES; const value = values[i]; if (value) setSimPicked((all) => ({ ...all, [slot]: value })) }} className="min-h-14 rounded-2xl border-2 border-dashed border-[#b48a48] bg-[#fff8e6] p-3 text-left text-body font-extrabold text-[#3a2a18]">{slot}: {simPicked[slot] ?? 'แตะเพื่อวางชิ้นส่วน'}</button>)}</div> : simStage === 3 ? <div className="mt-4 grid gap-2"><p className="rounded-2xl bg-spark-100 p-3 text-center text-body-lg font-extrabold text-[#5c3c1b]">← อ่านจากขวาไปซ้าย</p><div className="flex flex-wrap gap-2">{SIM_PIECES.map((piece) => <button key={piece} type="button" onClick={() => setSimOrder((all) => all.includes(piece) ? all : [...all, piece])} className="min-h-12 rounded-xl bg-brand-500 px-3 text-body font-extrabold text-white">{piece}</button>)}</div><p className="rounded-xl bg-[#fff8e6] p-3 text-body font-bold text-[#3a2a18]">ลำดับ: {simOrder.join(' → ') || 'ยังไม่ได้เลือก'}</p></div> : <div className="mt-4 grid grid-cols-2 gap-2">{['kanombanyai', 'co', 'th', 'booking', 'www', '.com'].map((piece) => <button key={piece} type="button" onClick={() => setSimPicked((all) => ({ ...all, [`slot${Math.min(4, Object.keys(all).length + 1)}`]: piece }))} className="min-h-12 rounded-xl bg-brand-500 px-3 text-body font-extrabold text-white">{piece}</button>)}</div>}{simFeedback ? <p className={cn('mt-3 rounded-2xl p-3 text-body font-bold', simFeedback.includes('ถูก') ? 'bg-quest-100 text-quest-800' : 'bg-[#fff3cf] text-[#5c3c1b]')}>{simFeedback}</p> : null}</GlassCard> : null}
-
-      {step === 'sim-finale' ? <GlassCard><p className="text-label font-extrabold text-brand-700">จบ Sim · ลูกศรความสำคัญ</p><p className="mt-2 text-title-sm font-extrabold text-[#3a2a18]">.com → kanombanyai → booking</p><p className="mt-3 rounded-2xl bg-spark-100 p-4 text-center text-title font-extrabold text-[#5c3c1b]">← อ่านจากขวาไปซ้าย</p><p className="mt-3 text-body text-[#3a2a18]">ผ่านครบทั้ง 4 ด่านแล้ว ไปทำ Exit Check ชุดเดียวกับทุกโหมด</p></GlassCard> : null}
-
-      {step === 'exit' ? <GlassCard><p className="text-label font-extrabold text-brand-700">Exit Check · 3 ข้อ · ครั้งเดียว · ไม่มีคำใบ้</p><p className="mt-2 text-body font-bold text-[#3a2a18]">ส่วนนี้คิด 30% ของคะแนนทั้งหมด</p><div className="mt-4 grid gap-4">{EXIT_QUESTIONS.map((question, qi) => <div key={question.prompt}><p className="mb-2 text-body font-extrabold text-[#3a2a18]">{qi + 1}. {question.prompt}</p><ChoiceList choices={question.choices.map((text) => ({ text }))} picked={exitAnswers[qi] === null ? null : String(exitAnswers[qi])} onPick={(value) => setExitAnswers((all) => all.map((old, i) => i === qi ? Number(value) : old))} /></div>)}</div></GlassCard> : null}
-
-      {step === 'end' && final ? <GlassCard><div className="text-center"><DomeAvatar mood={final.grade === 'C' ? 'encourage' : 'celebrate'} size={110} decorative /><p className="text-label font-extrabold text-brand-700">สรุปผลภารกิจที่ 2</p><h2 className="mt-2 text-title font-extrabold text-[#3a2a18]">ได้เกรด {final.grade} · {final.score ?? 0}/100</h2><p className="mt-2 text-body text-[#3a2a18]">Exit Check {final.exitScore ?? 0}/30 · คะแนนระหว่างเรียน {Math.max(0, (final.score ?? 0) - (final.exitScore ?? 0))}/70</p><div className="mt-4"><Stars count={final.stars ?? 0} /></div>{final.grade === 'C' ? <p className="mt-4 rounded-2xl bg-[#fff3cf] p-4 text-body font-bold text-[#5c3c1b]">ยังไม่ปลดล็อกเกาะ 3 ลองซ่อมบทเรียน แล้วทำ Exit Check ใหม่อีกครั้งนะ</p> : <p className="mt-4 rounded-2xl bg-quest-100 p-4 text-body font-bold text-quest-800">ผ่านแล้ว ปลดล็อกเกาะ 3 ให้ไปต่อได้เลย</p>}</div></GlassCard> : null}
-
-      {domeOpen ? <div className="fixed inset-0 z-[80] grid place-items-center bg-[#21150f]/40 p-4"><GlassCard className="max-w-md"><div className="flex items-start gap-3"><DomeAvatar mood="explain" size={64} decorative /><p className="text-body font-bold text-[#3a2a18]">ลองย้อนดูว่าชื่อเว็บแบ่งเป็น 3 ส่วนอย่างไร แล้วตอบด้วยคำของตัวเองได้เลยครับ</p></div><button type="button" onClick={() => setDomeOpen(false)} className="mt-4 min-h-12 w-full rounded-2xl bg-brand-600 text-body font-extrabold text-white">กลับไปตอบข้อเดิม</button></GlassCard></div> : null}
-      </AppScreen>
+    <MotionConfig reducedMotion="user">
+      <div className="m2g-root" data-step={step}>
+        <div className="m2g-stage">{stage}</div>
+        {error && step !== "choose" ? (
+          <div className="m2g-error" role="alert">
+            {error}
+            <button type="button" onClick={() => setError(null)} aria-label="ปิด">
+              ×
+            </button>
+          </div>
+        ) : null}
+      </div>
       {exit.dialog}
-    </>
-  )
+    </MotionConfig>
+  );
 }
