@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { PageHeading, SignInGate, StudentShell } from '@/components/student-shell'
 import { PageStateCard } from '@/components/page-state-card'
@@ -10,6 +10,10 @@ import { StudentBackButton, useExitConfirm } from '@/components/student-navigati
 import '@/components/mission-revisit.css'
 import { GradeStatusCard } from '@/components/grade-status-client'
 import { Sheet, SheetChip } from '@/components/sheet-client'
+import { GameHeader } from '@/components/learn/game-header'
+import { useM1Sound } from '@/components/learn/m1/m1-shell'
+import { buzz } from '@/components/learn/app/fx'
+import './ceo-game.css'
 import {
   AlertIcon,
   Button,
@@ -24,11 +28,9 @@ import {
   InfoIcon,
   LightbulbIcon,
   MicIcon,
-  ProgressBar,
   QuestIcon,
   SendIcon,
   StopIcon,
-  TextField,
   cn,
 } from '@/components/ui'
 
@@ -106,6 +108,50 @@ const MAX_RECORD_SECONDS = 120
 
 const NO_DATA = 'ยังไม่มีข้อมูล'
 
+/** id ของบับเบิลบอส — ช่องกรอกอ้างถึงเป็นคำอธิบาย (aria-describedby) */
+const BOSS_LINE_ID = 'ceo-boss-line'
+
+function elapsedClock(totalSeconds: number): string {
+  const mm = String(Math.floor(totalSeconds / 60)).padStart(2, '0')
+  const ss = String(totalSeconds % 60).padStart(2, '0')
+  return `${mm}:${ss}`
+}
+
+/** ช่องพิมพ์ที่สูงตามข้อความ เริ่มที่ 6 บรรทัด — ไม่มีกล่องว่างใหญ่ค้างจอ */
+function GrowTextarea({
+  id,
+  value,
+  placeholder,
+  describedBy,
+  onChange,
+}: {
+  id: string
+  value: string
+  placeholder?: string
+  describedBy?: string
+  onChange: (next: string) => void
+}) {
+  const ref = useRef<HTMLTextAreaElement | null>(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight + 4}px`
+  }, [value])
+  return (
+    <textarea
+      ref={ref}
+      id={id}
+      rows={6}
+      value={value}
+      placeholder={placeholder}
+      aria-describedby={describedBy}
+      onChange={(e) => onChange(e.target.value)}
+      className="ceo-input ceo-textarea"
+    />
+  )
+}
+
 function clock(totalSeconds: number): string {
   const safe = Math.max(0, Math.min(totalSeconds, MAX_RECORD_SECONDS))
   const mm = String(Math.floor(safe / 60)).padStart(2, '0')
@@ -144,8 +190,6 @@ function SectionCard({
 
 export function CeoClient({
   title,
-  startMinute,
-  endMinute,
   objective,
   scenario,
   guidingQuestions,
@@ -486,6 +530,15 @@ export function CeoClient({
   const [stepIndex, setStepIndex] = useState(0)
   /** แผ่นที่เปิดอยู่ — ที่เดียวในหน้าที่เลื่อนได้ */
   const [sheet, setSheet] = useState<'topics' | 'rubric' | 'revision' | null>(null)
+  /** เสียงตอบรับของปุ่ม (จำค่าในเครื่องร่วมกับภารกิจ) */
+  const sound = useM1Sound()
+  /** เวลาที่อยู่ในด่าน — นับจาก 0 ทั้งฝั่งเซิร์ฟเวอร์และเครื่อง จึงไม่เกิด hydration mismatch */
+  const [elapsed, setElapsed] = useState(0)
+  useEffect(() => {
+    if (submitted && !editingAgain) return
+    const timer = window.setInterval(() => setElapsed((s) => s + 1), 1000)
+    return () => window.clearInterval(timer)
+  }, [submitted, editingAgain])
 
   /**
    * ลำดับขั้นประกอบจากไฟล์เนื้อหาล้วน ๆ — เพิ่มช่องในไฟล์เนื้อหาแล้วขั้นตอนขึ้นเอง
@@ -803,57 +856,52 @@ export function CeoClient({
 
   function renderField(field: CeoField) {
     const value = values[field.id] ?? ''
-    const labelText = field.required ? `${field.label} (ต้องกรอก)` : field.label
-    const helpId = `${field.id}-help`
     const groupLabelId = `${field.id}-group-label`
 
     if (field.type === 'text') {
       return (
-        <TextField
-          id={field.id}
-          label={labelText}
-          value={value}
-          placeholder={field.placeholder}
-          onChange={(e) => setField(field.id, e.target.value)}
-          hint={field.help}
-          autoComplete="off"
-        />
+        <div className="ceo-field">
+          <label htmlFor={field.id} className="ceo-panel-title">
+            {field.label}
+            <span className="ceo-req">{field.required ? 'ต้องกรอก' : 'ไม่บังคับ'}</span>
+          </label>
+          <input
+            id={field.id}
+            type="text"
+            value={value}
+            placeholder={field.placeholder}
+            aria-describedby={BOSS_LINE_ID}
+            autoComplete="off"
+            onChange={(e) => setField(field.id, e.target.value)}
+            className="ceo-input"
+          />
+        </div>
       )
     }
 
     if (field.type === 'textarea') {
       return (
-        <div className="flex min-h-0 flex-1 flex-col">
-          <label htmlFor={field.id} className="text-body font-bold text-pretty text-ink">
-            {labelText}
+        <div className="ceo-field">
+          <label htmlFor={field.id} className="ceo-panel-title">
+            {field.label}
+            <span className="ceo-req">{field.required ? 'ต้องกรอก' : 'ไม่บังคับ'}</span>
           </label>
-          <p id={helpId} className="mt-1 text-label text-pretty text-ink-muted">
-            {field.help}
-          </p>
-          <textarea
+          <GrowTextarea
             id={field.id}
             value={value}
             placeholder={field.placeholder}
-            aria-describedby={helpId}
-            onChange={(e) => setField(field.id, e.target.value)}
-            className={cn(
-              'mt-2 min-h-0 w-full flex-1 resize-none rounded-sm bg-surface-raised px-4 py-3 text-body text-ink',
-              'ring-2 ring-line-contrast ring-inset outline-none',
-              'placeholder:text-ink-subtle focus:ring-brand-500',
-              'focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus',
-            )}
+            describedBy={BOSS_LINE_ID}
+            onChange={(next) => setField(field.id, next)}
           />
         </div>
       )
     }
 
     return (
-      <div className="flex min-h-0 flex-1 flex-col">
-        <p id={groupLabelId} className="text-body font-bold text-ink">
-          {labelText}
-        </p>
-        <p id={helpId} className="mt-1 text-label text-pretty text-ink-muted">
-          {field.help}
+      <div className="ceo-field">
+        <p id={groupLabelId} className="ceo-panel-title">
+          {field.label}
+          <span className="ceo-req">{field.required ? 'ต้องเลือก' : 'ไม่บังคับ'}</span>
         </p>
         {field.options.length === 0 ? (
           <EmptyState
@@ -863,12 +911,7 @@ export function CeoClient({
             description="รอครูเปิดเนื้อหาส่วนนี้ให้ก่อนนะ"
           />
         ) : (
-          <ul
-            role="group"
-            aria-labelledby={groupLabelId}
-            aria-describedby={helpId}
-            className="mt-2 flex min-h-0 flex-1 flex-col gap-1.5"
-          >
+          <ul role="group" aria-labelledby={groupLabelId} aria-describedby={BOSS_LINE_ID} className="ceo-choice-list">
             {field.options.map((option) => (
               <li key={option.value}>
                 <ChoiceCard
@@ -876,6 +919,7 @@ export function CeoClient({
                   selected={value === option.value}
                   ariaLabel={`${option.label}${value === option.value ? ' — เลือกอยู่' : ''}`}
                   onSelect={() => setField(field.id, option.value)}
+                  className="ceo-choice"
                 />
               </li>
             ))}
@@ -885,20 +929,287 @@ export function CeoClient({
     )
   }
 
+  /** คำสั่งของขั้นนี้ — บอสพูดในบับเบิลแทนข้อความบรรทัดเล็ก (ข้อความเนื้อหามาจาก props) */
+  const stepDone = stepMeta ? stepMeta.summary().length > 0 : false
+  /** ที่ยังขาด — นับจากฟอร์มตรงหน้า (และจากที่เซิร์ฟเวอร์ตอบกลับถ้ากดส่งแล้ว) */
+  const reviewGap = Math.max(missing.length, localMissing.length + (focusRubricId ? 0 : 1))
+  const bossLine = (() => {
+    switch (stepMeta?.kind) {
+      case 'speak':
+        return `ซ้อมเสนอชื่อเว็บ${shopName ? `ของร้าน ${shopName}` : ''}ให้ผมฟังหน่อย พูด 1–2 นาที ช้า ๆ ชัด ๆ`
+      case 'mode':
+        return 'จะส่งงานแบบไหนดี เลือกได้ 1 แบบ เปลี่ยนใจได้จนกว่าจะกดส่ง'
+      case 'field':
+        return stepMeta.field?.help || stepMeta.label
+      case 'focus':
+        return 'อยากให้ครูดูด้านไหนเป็นพิเศษ เลือก 1 ด้าน ด้านนั้นครูให้น้ำหนัก 2 เท่า'
+      case 'self':
+        return 'ตอบตามจริงได้เลย ไม่มีถูกผิด ครูอยากรู้ว่าเราคิดยังไง'
+      case 'review':
+        return reviewGap > 0
+          ? `ยังขาดอีก ${reviewGap} อย่าง แตะรายการที่ยังว่างเพื่อกลับไปเติมได้เลย`
+          : 'ตรวจอีกรอบ ส่งได้ครั้งเดียว พร้อมแล้วกดส่งเลย'
+      default:
+        return ''
+    }
+  })()
+  const bossSmile = stepMeta?.kind === 'mode' || stepDone || (stepMeta?.kind === 'review' && reviewGap === 0)
+  const progressPercent = steps.length > 0 ? ((stepIndex + 1) / steps.length) * 100 : 0
+
+  function goStep(next: number) {
+    if (sound.on) buzz()
+    setStepIndex(Math.max(0, Math.min(steps.length - 1, next)))
+  }
+
   return (
     <>
-      <StudentShell
-      className="ceo-world-shell flex h-full min-h-0 flex-col gap-2.5"
-      onBack={exit.request}
-      footer={
-        <AppFooter>
-          <div className="flex gap-2">
+      <StudentShell className="ceo-world-shell">
+        <div className="ceo-game" data-step={stepMeta?.kind}>
+          <img className="ceo-game-bg" src="/learn/pixel/bg-boss-office.webp" alt="" aria-hidden draggable={false} />
+          <div className="ceo-game-veil" aria-hidden />
+          <GameHeader
+            className="ceo-game-head"
+            title="ด่านบอส CEO"
+            subtitle={stepMeta?.kind === 'self' ? 'ประเมินตัวเอง' : stepMeta?.kind === 'field' ? 'ใบเสนอชื่อเว็บ' : (stepMeta?.label ?? '')}
+            onBack={exit.request}
+            backLabel="ออกจากด่านบอส"
+            soundOn={sound.on}
+            onSound={sound.toggle}
+          />
+
+          {/* HUD — ขั้น x/13 · มาตรความคืบหน้า · เวลาที่ใช้ในด่าน */}
+          <div className="ceo-hud">
+            <span className="ceo-hud-chip">
+              ขั้น <b>{stepIndex + 1}</b>/{steps.length}
+            </span>
+            <div
+              className="ceo-gauge"
+              role="progressbar"
+              aria-label={`ขั้นที่ ${stepIndex + 1} จาก ${steps.length}`}
+              aria-valuemin={1}
+              aria-valuemax={steps.length}
+              aria-valuenow={stepIndex + 1}
+            >
+              <span className="ceo-gauge-fill" style={{ width: `${progressPercent}%` }} />
+              <img className="ceo-gauge-goal" src="/learn/pixel/badge-ceo.webp" alt="" aria-hidden draggable={false} />
+            </div>
+            <span className="ceo-hud-chip ceo-hud-time" aria-label={`ใช้เวลาไป ${elapsedClock(elapsed)}`}>
+              <ClockIcon width={16} height={16} aria-hidden />
+              {elapsedClock(elapsed)}
+            </span>
+          </div>
+
+          <main className="ceo-game-content">
+            {/* ครูส่งกลับมาให้แก้ — ย้ำไว้บรรทัดเดียว รายละเอียดอยู่ในแผ่น */}
+            {editingAgain && revision ? (
+              <button type="button" onClick={() => setSheet('revision')} className="ceo-revision-strip">
+                <AlertIcon width={18} height={18} aria-hidden className="shrink-0" />
+                <span className="min-w-0 flex-1 truncate">ครูขอให้แก้รอบที่ {revision.round} — แตะเพื่ออ่าน</span>
+                <ChevronRightIcon width={18} height={18} aria-hidden className="shrink-0" />
+              </button>
+            ) : null}
+
+            <div className="ceo-boss-says">
+              <img
+                className="ceo-boss-img"
+                src={bossSmile ? '/learn/pixel/boss-smile.webp' : '/learn/pixel/boss-neutral.webp'}
+                alt=""
+                aria-hidden
+                draggable={false}
+              />
+              <p id={BOSS_LINE_ID} className="ceo-speech" aria-live="polite">
+                <span className="ceo-speech-name">บอส CEO</span>
+                {bossLine}
+              </p>
+            </div>
+
+            {stepMeta?.kind === 'speak' ? (
+              <section className="ceo-panel">
+                <h2 className="ceo-panel-title">{objective}</h2>
+                <p className="ceo-note">พูดให้ได้ 1–2 นาที พูดช้า ๆ ชัด ๆ แล้วจะจำได้เองว่าจะพูดอะไรต่อ</p>
+                <SheetChip
+                  tone="brand"
+                  icon={<QuestIcon width={18} height={18} />}
+                  onClick={() => setSheet('topics')}
+                  badge={`${checkedCount}/${guidingQuestions.length}`}
+                  className="mt-3"
+                >
+                  หัวข้อที่ต้องพูด
+                </SheetChip>
+
+                <div className="ceo-mic">
+                  <div className="flex items-center justify-center gap-3">
+                    <SoundWave active={recording} side="left" />
+                    <div className="relative grid place-items-center">
+                      {recording ? (
+                        <span
+                          aria-hidden="true"
+                          className="absolute inset-0 animate-ping rounded-full bg-danger-500/40 motion-reduce:animate-none"
+                        />
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={startRecording}
+                        aria-pressed={recording}
+                        aria-label={
+                          recording ? `หยุดบันทึกเสียง กำลังบันทึกมาแล้ว ${seconds} วินาที` : 'เริ่มบันทึกเสียงซ้อมพูด'
+                        }
+                        className={cn('ceo-mic-btn', recording && 'is-on')}
+                      >
+                        {recording ? <StopIcon width={40} height={40} /> : <MicIcon width={40} height={40} />}
+                      </button>
+                    </div>
+                    <SoundWave active={recording} side="right" />
+                  </div>
+                  <p className="ceo-mic-clock">
+                    <span aria-live="off">{clock(seconds)}</span>
+                    <small>/ {clock(MAX_RECORD_SECONDS)}</small>
+                  </p>
+                  <p className="ceo-mic-hint">
+                    {recording ? 'กำลังบันทึก — กดปุ่มอีกครั้งเพื่อหยุด' : 'กดปุ่มเพื่อเริ่มบันทึกเสียง (ไม่บังคับ)'}
+                  </p>
+                  {micNote ? <p className="ceo-mic-hint is-warn">{micNote}</p> : null}
+                  {audioUrl ? (
+                    <p className="ceo-mic-hint">
+                      {uploading
+                        ? 'กำลังส่งไฟล์เสียงให้ครู…'
+                        : voiceSent
+                          ? 'ส่งไฟล์เสียงให้ครูแล้ว ครูเปิดฟังย้อนหลังได้'
+                          : 'ไฟล์เสียงอยู่ในเครื่องแล้ว กรอกใบเสนอต่อได้เลย'}
+                    </p>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
+
+            {stepMeta?.kind === 'mode' ? (
+              <section className="ceo-panel">
+                <h2 className="ceo-panel-title">วิธีส่งงาน</h2>
+                <div className="ceo-mode-grid" role="group" aria-label="วิธีส่งงาน">
+                  {submitModes.map((mode) => {
+                    const on = mode.id === modeId
+                    return (
+                      <button
+                        key={mode.id}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => setModeId(mode.id)}
+                        className={cn('ceo-mode', on && 'is-on')}
+                      >
+                        <span className="ceo-mode-icon" aria-hidden>
+                          {mode.icon}
+                        </span>
+                        <span className="ceo-mode-label">{mode.label}</span>
+                        {on ? <span className="kit-check ceo-mode-check" aria-hidden /> : null}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="ceo-instruction">{selectedMode?.instruction ?? NO_DATA}</p>
+                {typingOnly ? (
+                  <p className="ceo-warn">ตอนนี้สลับมาโหมดพิมพ์ให้แล้ว เลือกวิธีอื่นใหม่ได้ตลอดถ้าอยากลองอีกครั้ง</p>
+                ) : null}
+                {selectedMode && selectedMode.id !== primaryModeId ? (
+                  <p className="ceo-warn">
+                    แบบ{selectedMode.label}ยังต้องเอางานจริงไปส่งครูที่หน้าห้อง ในหน้านี้ระบบเก็บได้แค่ตัวเลือกกับข้อความ
+                  </p>
+                ) : null}
+              </section>
+            ) : null}
+
+            {stepMeta?.kind === 'field' && stepMeta.field ? (
+              <section className="ceo-panel">{renderField(stepMeta.field)}</section>
+            ) : null}
+
+            {stepMeta?.kind === 'focus' ? (
+              <section className="ceo-panel">
+                <h2 className="ceo-panel-title">ด้านที่อยากให้ครูเน้น</h2>
+                <ul className="ceo-choice-list" aria-describedby={BOSS_LINE_ID}>
+                  {rubric.map((row, index) => (
+                    <li key={row.id}>
+                      <ChoiceCard
+                        marker={String(index + 1)}
+                        label={row.dimension}
+                        selected={row.id === focusRubricId}
+                        ariaLabel={`ด้านที่ ${index + 1} ${row.dimension}`}
+                        onSelect={() => setFocusRubricId(row.id)}
+                        className="ceo-choice"
+                      />
+                    </li>
+                  ))}
+                </ul>
+                <SheetChip
+                  tone="brand"
+                  icon={<InfoIcon width={18} height={18} />}
+                  onClick={() => setSheet('rubric')}
+                  className="mt-3"
+                >
+                  ดูเกณฑ์ให้คะแนน 4 ด้าน
+                </SheetChip>
+              </section>
+            ) : null}
+
+            {stepMeta?.kind === 'self' && stepMeta.self ? (
+              <section className="ceo-panel">
+                <div className="ceo-field">
+                  <label htmlFor={stepMeta.self.id} className="ceo-panel-title">
+                    {stepMeta.self.question}
+                    <span className="ceo-req">ต้องตอบ</span>
+                  </label>
+                  <GrowTextarea
+                    id={stepMeta.self.id}
+                    value={selfValues[stepMeta.self.id] ?? ''}
+                    describedBy={BOSS_LINE_ID}
+                    onChange={(next) => setSelf(stepMeta.self!.id, next)}
+                  />
+                </div>
+              </section>
+            ) : null}
+
+            {stepMeta?.kind === 'review' ? (
+              <section className="ceo-panel">
+                <h2 className="ceo-panel-title">ตรวจก่อนส่ง</h2>
+                <ul className="ceo-review-list">
+                  {steps.map((s, i) =>
+                    s.kind === 'field' || s.kind === 'self' || s.kind === 'focus' ? (
+                      <li key={s.key}>
+                        <button
+                          type="button"
+                          onClick={() => goStep(i)}
+                          className={cn(
+                            'ceo-review-row',
+                            s.summary() ? 'is-filled' : s.kind === 'field' && !s.field?.required ? 'is-optional' : 'is-empty',
+                          )}
+                        >
+                          <span className={s.summary() ? 'kit-check ceo-review-mark' : 'kit-radio ceo-review-mark'} aria-hidden />
+                          <span className="ceo-review-text">
+                            <span className="ceo-review-label">{s.label}</span>
+                            <span className="ceo-review-value">
+                              {s.summary() || (s.kind === 'field' && !s.field?.required ? 'ไม่บังคับ' : 'ยังว่าง')}
+                            </span>
+                          </span>
+                          <ChevronRightIcon width={16} height={16} aria-hidden className="shrink-0" />
+                        </button>
+                      </li>
+                    ) : null,
+                  )}
+                </ul>
+                {systemMessage ? (
+                  <p role="alert" className="ceo-warn">
+                    {systemMessage}
+                  </p>
+                ) : null}
+              </section>
+            ) : null}
+          </main>
+
+          <div className="ceo-dock">
             <Button
-              variant="ghost"
+              variant="secondary"
               size="lg"
-              onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
+              onClick={() => goStep(stepIndex - 1)}
               disabled={stepIndex === 0 || busy}
-              className="shrink-0 px-4"
+              className="ceo-dock-back"
             >
               ย้อน
             </Button>
@@ -913,287 +1224,20 @@ export function CeoClient({
                 loadingLabel="กำลังส่งใบเสนอ"
                 trailingIcon={<SendIcon width={22} height={22} />}
               >
-                {busy ? 'กำลังส่ง…' : 'ส่งใบเสนอให้ที่ประชุม'}
+                {busy ? 'กำลังส่ง…' : 'ส่งใบเสนอ'}
               </Button>
             ) : (
               <Button
                 variant="primary"
                 size="lg"
                 fullWidth
-                onClick={() => setStepIndex((i) => Math.min(steps.length - 1, i + 1))}
+                onClick={() => goStep(stepIndex + 1)}
                 trailingIcon={<ChevronRightIcon width={22} height={22} />}
               >
                 ถัดไป
               </Button>
             )}
           </div>
-        </AppFooter>
-      }
-    >
-      {/* แถบบอกว่าอยู่ขั้นไหนของด่านบอส — แทนการเลื่อนหาว่าเหลืออะไรอีกบ้าง */}
-      <div className="flex shrink-0 items-center gap-2">
-        <p className="min-w-0 flex-1 truncate text-label font-bold text-brand-700">
-          ด่านบอส CEO · {stepMeta?.label ?? ''}
-        </p>
-        <span className="shrink-0 text-label font-bold tabular-nums text-ink-muted">
-          นาทีที่ {startMinute}–{endMinute} · {stepIndex + 1}/{steps.length}
-        </span>
-      </div>
-      <ProgressBar
-        className="shrink-0"
-        value={stepIndex + 1}
-        max={steps.length}
-        tone="brand"
-        label={`ขั้นที่ ${stepIndex + 1} จาก ${steps.length}`}
-        hideLabel
-        showValue={false}
-      />
-
-      {/* ครูส่งกลับมาให้แก้ — ย้ำไว้บรรทัดเดียว รายละเอียดอยู่ในแผ่น */}
-      {editingAgain && revision ? (
-        <button
-          type="button"
-          onClick={() => setSheet('revision')}
-          className="flex shrink-0 items-center gap-2 rounded-xl bg-spark-50 px-3 py-2 text-left ring-1 ring-spark-100 ring-inset focus-ring"
-        >
-          <AlertIcon width={18} height={18} aria-hidden className="shrink-0 text-spark-700" />
-          <span className="min-w-0 flex-1 truncate text-label font-bold text-ink">
-            ครูขอให้แก้รอบที่ {revision.round} — แตะเพื่ออ่าน
-          </span>
-          <ChevronRightIcon width={18} height={18} aria-hidden className="shrink-0 text-spark-700" />
-        </button>
-      ) : null}
-
-      <div className="flex min-h-0 flex-1 flex-col gap-2.5">
-        {stepMeta?.kind === 'speak' ? (
-          <>
-            <h1 className="shrink-0 line-clamp-3 text-title-sm font-extrabold text-balance text-ink">
-              {objective}
-            </h1>
-
-            <p className="shrink-0 truncate text-label font-bold text-brand-700">
-              ร้านของเรา: {shopName}
-            </p>
-
-            {/* โน้ตกระดาษเหลืองเตือนเวลา (mockup) */}
-            <p className="shrink-0 -rotate-1 rounded-xl bg-reward-100 px-3 py-2 text-label text-pretty text-ink shadow-soft-1 ring-1 ring-reward-300 ring-inset">
-              พูดให้ได้ 1–2 นาที พูดช้า ๆ ชัด ๆ แล้วจะจำได้เองว่าจะพูดอะไรต่อ
-            </p>
-
-            <SheetChip
-              tone="brand"
-              icon={<QuestIcon width={18} height={18} />}
-              onClick={() => setSheet('topics')}
-              badge={`${checkedCount}/${guidingQuestions.length}`}
-              className="shrink-0"
-            >
-              หัวข้อที่ต้องพูด
-            </SheetChip>
-
-            {/* พระเอกของจอนี้ — ไมค์วงกลมใหญ่ มีคลื่นเสียงสองข้างตาม mockup */}
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3">
-              <div className="flex items-center justify-center gap-3">
-                <SoundWave active={recording} side="left" />
-                <div className="relative grid place-items-center">
-                  {recording ? (
-                    <span
-                      aria-hidden="true"
-                      className="absolute inset-0 animate-ping rounded-full bg-danger-500/40 motion-reduce:animate-none"
-                    />
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={startRecording}
-                    aria-pressed={recording}
-                    aria-label={
-                      recording
-                        ? `หยุดบันทึกเสียง กำลังบันทึกมาแล้ว ${seconds} วินาที`
-                        : 'เริ่มบันทึกเสียงซ้อมพูด'
-                    }
-                    className={cn(
-                      'relative grid size-28 cursor-pointer place-items-center rounded-full text-ink-onbrand',
-                      'shadow-soft-3 transition-[background-color,box-shadow] duration-200 ease-[var(--ease-soft)]',
-                      'focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus',
-                      'active:translate-y-px motion-reduce:transition-none',
-                      recording ? 'bg-danger-600 hover:bg-danger-700' : 'bg-brand-600 hover:bg-brand-700',
-                    )}
-                  >
-                    {recording ? <StopIcon width={48} height={48} /> : <MicIcon width={48} height={48} />}
-                  </button>
-                </div>
-                <SoundWave active={recording} side="right" />
-              </div>
-
-              <p className="flex items-center gap-2">
-                <ClockIcon width={22} height={22} aria-hidden className="shrink-0 text-brand-700" />
-                <span aria-live="off" className="text-title font-extrabold tabular-nums text-ink">
-                  {clock(seconds)}
-                </span>
-                <span className="text-body font-bold tabular-nums text-ink-muted">
-                  / {clock(MAX_RECORD_SECONDS)}
-                </span>
-              </p>
-              <p className="text-center text-label text-ink-muted">
-                {recording ? 'กำลังบันทึก — กดปุ่มอีกครั้งเพื่อหยุด' : 'กดปุ่มเพื่อเริ่มบันทึกเสียง'}
-              </p>
-              {micNote ? (
-                <p className="text-center text-label text-pretty text-spark-700">{micNote}</p>
-              ) : null}
-              {audioUrl ? (
-                <p className="text-center text-label text-ink-muted">
-                  {uploading
-                    ? 'กำลังส่งไฟล์เสียงให้ครู…'
-                    : voiceSent
-                      ? 'ส่งไฟล์เสียงให้ครูแล้ว ครูเปิดฟังย้อนหลังได้'
-                      : 'ไฟล์เสียงอยู่ในเครื่องแล้ว กรอกใบเสนอต่อได้เลย'}
-                </p>
-              ) : null}
-            </div>
-          </>
-        ) : null}
-
-        {stepMeta?.kind === 'mode' ? (
-          <>
-            <h1 className="shrink-0 text-title-sm font-extrabold text-balance text-ink">
-              จะส่งงานแบบไหนดี
-            </h1>
-            <p className="shrink-0 text-label text-pretty text-ink-muted">
-              เลือกได้ 1 แบบ เปลี่ยนใจได้จนกว่าจะกดส่ง
-            </p>
-            <div className="grid shrink-0 grid-cols-3 gap-2">
-              {submitModes.map((mode) => {
-                const on = mode.id === modeId
-                return (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setModeId(mode.id)}
-                    className={cn(
-                      'flex min-h-16 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl px-2 py-3',
-                      'text-label font-bold ring-2 ring-inset focus-ring',
-                      on
-                        ? 'bg-brand-600 text-ink-onbrand shadow-soft-2 ring-brand-700'
-                        : 'bg-surface-sunken text-ink ring-line-contrast',
-                    )}
-                  >
-                    <span className="text-center break-words">{mode.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-            <p className="min-h-0 flex-1 rounded-xl bg-brand-50 p-3 text-body text-pretty text-ink">
-              {selectedMode?.instruction ?? NO_DATA}
-            </p>
-            {typingOnly ? (
-              <p className="shrink-0 text-label text-pretty text-spark-700">
-                ตอนนี้สลับมาโหมดพิมพ์ให้แล้ว เลือกวิธีอื่นใหม่ได้ตลอดถ้าอยากลองอีกครั้ง
-              </p>
-            ) : null}
-            {selectedMode && selectedMode.id !== primaryModeId ? (
-              <p className="shrink-0 text-label text-pretty text-spark-700">
-                แบบ{selectedMode.label}ยังต้องเอางานจริงไปส่งครูที่หน้าห้อง ในหน้านี้ระบบเก็บได้แค่ตัวเลือกกับข้อความ
-              </p>
-            ) : null}
-          </>
-        ) : null}
-
-        {stepMeta?.kind === 'field' && stepMeta.field ? renderField(stepMeta.field) : null}
-
-        {stepMeta?.kind === 'focus' ? (
-          <>
-            <h1 className="shrink-0 text-title-sm font-extrabold text-balance text-ink">
-              อยากให้ครูดูด้านไหนเป็นพิเศษ
-            </h1>
-            <p className="shrink-0 text-label text-pretty text-ink-muted">
-              ด้านที่เลือกครูจะให้น้ำหนัก 2 เท่า · เกณฑ์เต็ม ๆ อยู่ในแผ่น &ldquo;ดูเกณฑ์ให้คะแนน&rdquo;
-            </p>
-            <ul className="flex min-h-0 flex-1 flex-col gap-1.5">
-              {rubric.map((row, index) => (
-                <li key={row.id}>
-                  <ChoiceCard
-                    marker={String(index + 1)}
-                    label={row.dimension}
-                    selected={row.id === focusRubricId}
-                    ariaLabel={`ด้านที่ ${index + 1} ${row.dimension}`}
-                    onSelect={() => setFocusRubricId(row.id)}
-                  />
-                </li>
-              ))}
-            </ul>
-            <SheetChip
-              tone="brand"
-              icon={<InfoIcon width={18} height={18} />}
-              onClick={() => setSheet('rubric')}
-              className="shrink-0"
-            >
-              ดูเกณฑ์ให้คะแนน 4 ด้าน
-            </SheetChip>
-          </>
-        ) : null}
-
-        {stepMeta?.kind === 'self' && stepMeta.self ? (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <label htmlFor={stepMeta.self.id} className="shrink-0 text-body font-bold text-pretty text-ink">
-              {stepMeta.self.question} (ต้องตอบ)
-            </label>
-            <textarea
-              id={stepMeta.self.id}
-              value={selfValues[stepMeta.self.id] ?? ''}
-              onChange={(e) => setSelf(stepMeta.self!.id, e.target.value)}
-              className={cn(
-                'mt-2 min-h-0 w-full flex-1 resize-none rounded-sm bg-surface-raised px-4 py-3 text-body text-ink',
-                'ring-2 ring-line-contrast ring-inset outline-none',
-                'placeholder:text-ink-subtle focus:ring-brand-500',
-                'focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus',
-              )}
-            />
-          </div>
-        ) : null}
-
-        {stepMeta?.kind === 'review' ? (
-          <>
-            <h1 className="shrink-0 text-title-sm font-extrabold text-balance text-ink">
-              ตรวจก่อนส่ง
-            </h1>
-            {missing.length > 0 ? (
-              <p className="shrink-0 rounded-xl bg-spark-50 p-3 text-label text-pretty text-spark-700 ring-1 ring-spark-100 ring-inset">
-                ยังต้องกรอกอีก {missing.length} อย่าง กด &ldquo;ย้อน&rdquo; กลับไปเติมได้
-              </p>
-            ) : (
-              <p className="shrink-0 rounded-xl bg-quest-50 p-3 text-label text-pretty text-quest-700 ring-1 ring-quest-100 ring-inset">
-                กรอกครบแล้ว ส่งได้ครั้งเดียว ตรวจอีกรอบแล้วกดส่งได้เลย
-              </p>
-            )}
-            <ul className="flex min-h-0 flex-1 flex-col gap-1.5">
-              {steps.map((s, i) =>
-                s.kind === 'field' || s.kind === 'self' || s.kind === 'focus' ? (
-                  <li key={s.key}>
-                    <button
-                      type="button"
-                      onClick={() => setStepIndex(i)}
-                      className="flex min-h-11 w-full items-center gap-2 rounded-xl bg-surface-raised px-3 text-left shadow-soft-1 ring-1 ring-line ring-inset focus-ring"
-                    >
-                      <span className="min-w-0 flex-1 truncate text-label font-bold text-ink">
-                        {s.label}
-                      </span>
-                      <span className="min-w-0 max-w-[45%] truncate text-label text-ink-muted">
-                        {s.summary() || 'ยังว่าง'}
-                      </span>
-                      <ChevronRightIcon width={16} height={16} aria-hidden className="shrink-0 text-ink-subtle" />
-                    </button>
-                  </li>
-                ) : null,
-              )}
-            </ul>
-            {systemMessage ? (
-              <p role="alert" className="shrink-0 text-label text-pretty text-spark-700">
-                {systemMessage}
-              </p>
-            ) : null}
-          </>
-        ) : null}
-      </div>
 
       {/* ───────── แผ่นเลื่อนขึ้น ───────── */}
 
@@ -1270,6 +1314,7 @@ export function CeoClient({
           </>
         ) : null}
       </Sheet>
+        </div>
       </StudentShell>
       {exit.dialog}
     </>
