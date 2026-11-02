@@ -447,6 +447,13 @@
    คือ .app-shell-main ข้างใน AppShell ทำแบบนี้แล้วแถบหัวกับปุ่มลงมือท้ายจอ
    จะไม่ขยับตามนิ้ว และไม่มีแถบเลื่อนซ้อนสองชั้นให้เด็กกดพลาด */
 /* คีย์บอร์ดเปิด: home indicator ถูกบังอยู่แล้ว ไม่ต้องเว้น safe-area ล่าง (ไม่งั้นเกิดช่องว่างเหนือคีย์บอร์ด) */
+/* iPhone โหมดโฮมสกรีน (black-translucent): layout viewport = จอ − status bar (เช่น 852 − 59 = 793)
+   แต่เริ่มที่ขอบบนสุด → 100% / dvh / bottom:0 ขาดล่าง 59px (ช่องว่างใต้ปุ่ม) · วัดจากเครื่องจริง iPhone 15
+   100vh/lvh = ความสูงจอจริง (852) และโหมดนี้ไม่มีแถบเบราว์เซอร์ให้บัง จึงใช้ได้ปลอดภัย */
+@media (display-mode: standalone) {
+  :root { --app-h: 100vh; }
+  html { height: 100vh; }
+}
 html[data-keyboard='open'] {
   --safe-bottom: 0px;
   --bottom-nav-height: 4.5rem;
