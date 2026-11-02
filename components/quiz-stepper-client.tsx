@@ -69,7 +69,8 @@ export function QuizStepper({
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col gap-2.5', className)}>
       {/* ตัวบอกว่าอยู่ข้อไหนจากทั้งหมด — ตัวเลขคู่กับแถบ ไม่ได้ใช้สีอย่างเดียว */}
-      <div className="shrink-0">
+      {/* หน้าโปรไฟล์ (compactProgress) มีตัวบอกขั้นบนหัวอยู่แล้ว — ซ่อนแถบนี้ เหลือแค่ข้อความสำหรับโปรแกรมอ่านหน้าจอ */}
+      <div className={compactProgress ? 'sr-only' : 'shrink-0'}>
         <p aria-live="polite" className="mb-1.5 text-label font-bold text-brand-700">
           ข้อ {safeIndex + 1} จาก {total}
           {!compactProgress && current.topic ? ` · ${current.topic}` : ''}
