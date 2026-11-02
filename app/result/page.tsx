@@ -23,6 +23,7 @@ import { ResultGradePoll } from '@/components/result-grade-poll'
 import { CertificatePreview } from '@/components/certificate-preview'
 import { TeacherNote } from '@/components/teacher-note'
 import { gameCertificateContent } from '@/lib/certificate/game'
+import { certificateProgressOf } from '@/lib/certificate/progress'
 import { CERT_THEME, certArtPresence, resolveCertTheme } from '@/lib/certificate/art'
 import { certificateDomain } from '@/components/server/showcase-safety'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
@@ -150,10 +151,8 @@ export default async function ResultPage({
         shopName: shop?.shopName ?? '',
         // ชื่อเว็บติดตัวกรองคำ = ใบประกาศแสดงแค่ชื่อร้าน (ตรงกับ PDF)
         domainFull: certificateDomain(certDomain),
-        starsTotal: data.totalStars,
-        starsMax: data.maxStars,
-        missionsPassed: data.missions.filter((m) => m.passed).length,
-        missionsTotal: data.missions.length,
+        // ดาว/ภารกิจชุดเดียวกับ /home /rewards และ PDF
+        ...certificateProgressOf(data),
         ceoScore: score ? { total: score.weightedTotal, max: score.weightedMax, source: score.source } : null,
         issuedAt: Date.now(),
       })

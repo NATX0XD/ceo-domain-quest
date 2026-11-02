@@ -5,7 +5,8 @@ import { certificateData, studentReport, type MissionInput } from '@/core/report
 import { certificateFileName } from '@/lib/certificate/render'
 import { renderGameCertificatePdf } from '@/lib/certificate/game'
 import { loadCertArt, resolveCertTheme } from '@/lib/certificate/art'
-import { missions as missionList } from '@/components/missions'
+import { certificateProgressOf } from '@/lib/certificate/progress'
+import { lessonSummary } from '@/components/server/lesson-progress'
 import { loadThaiFonts, type ThaiFontSet } from '@/lib/certificate/font'
 import { getProfile, getStudent, listMissionProgress, listSubmissions } from '@/lib/db/repo'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
@@ -76,10 +77,11 @@ export async function GET(request: Request) {
     })
   }
 
-  const [profile, missionRows, submissions] = await Promise.all([
+  const [profile, missionRows, submissions, summary] = await Promise.all([
     getProfile(session.studentId),
     listMissionProgress(session.studentId),
     listSubmissions(session.studentId),
+    lessonSummary(session.studentId),
   ])
 
   /**
@@ -116,12 +118,14 @@ export async function GET(request: Request) {
     Date.now(),
   )
 
-  // ดาวรวมยึดตามที่ระบบบันทึกไว้ ถ้ามี เพราะภารกิจใหญ่ให้ดาวคนละทางกับภารกิจย่อย
-  const starsTotal = profile?.earned_stars ?? report.starsTotal
-  const data = certificateData({ ...report, starsTotal }, Date.now())
+  /**
+   * ดาวรวม/ภารกิจที่ผ่าน = lessonSummary() ตัวเดียวกับ /home /rewards และพรีวิว /result
+   * ห้ามกลับไปใช้ profiles.earned_stars (ตามหลังหนึ่งรอบ ทำให้ PDF กับหน้าเว็บคนละเลข)
+   */
+  const progress = certificateProgressOf(summary)
+  const data = certificateData({ ...report, starsTotal: progress.starsTotal, starsMax: progress.starsMax }, Date.now())
 
   // เกียรติบัตรแบบเกม — ภาพจาก public/ui/cert/ (ไม่มีรูปไหนก็วาดรูปทรงแทน)
-  const passedIds = new Set(missionRows.filter((row) => row.passed_at !== null).map((row) => row.mission_id))
   const [fonts, art] = await Promise.all([serverFonts(), loadCertArt(theme)])
   const pdf = renderGameCertificatePdf(
     {
@@ -129,10 +133,7 @@ export async function GET(request: Request) {
       shopName: data.shopName,
       // ชื่อเว็บติดตัวกรองคำ = แสดงแค่ชื่อร้าน (ตรงกับพรีวิวหน้า /result)
       domainFull: certificateDomain(data.domainFull),
-      starsTotal: data.starsTotal,
-      starsMax: data.starsMax,
-      missionsPassed: missionList.filter((m) => passedIds.has(m.id)).length,
-      missionsTotal: missionList.length,
+      ...progress,
       ceoScore: standing.score
         ? { total: standing.score.weightedTotal, max: standing.score.weightedMax, source: standing.score.source }
         : null,
