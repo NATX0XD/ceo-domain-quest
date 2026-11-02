@@ -12,7 +12,6 @@ import {
   SendIcon,
   Skeleton,
   SkeletonGroup,
-  TextField,
   UsersIcon,
 } from '@/components/ui'
 
@@ -33,6 +32,8 @@ export interface ShowcaseItem {
   likedByMe?: boolean
   praises?: number
 }
+
+type PraiseTarget = { nickname: string; shopName: string | null }
 
 /** แกลเลอรีกด "เขียนชม" แล้วฟอร์มในแผ่น #sheet-praise เลือกเพื่อนคนนั้นให้เอง */
 const PRAISE_EVENT = 'showcase:praise'
@@ -144,8 +145,12 @@ export function ShowcaseBoard() {
     }
   }
 
-  function praise(nickname: string) {
-    window.dispatchEvent(new CustomEvent(PRAISE_EVENT, { detail: nickname }))
+  function praise(item: ShowcaseItem) {
+    window.dispatchEvent(
+      new CustomEvent<PraiseTarget>(PRAISE_EVENT, {
+        detail: { nickname: item.nickname, shopName: item.shopName ?? null },
+      }),
+    )
     window.location.hash = 'sheet-praise'
   }
 
@@ -273,7 +278,8 @@ export function ShowcaseBoard() {
                   <button
                     type="button"
                     className="game-button game-button--green game-button--sm scg-praise"
-                    onClick={() => praise(item.nickname)}
+                    aria-label={`เขียนถึง ${item.nickname}`}
+                    onClick={() => praise(item)}
                   >
                     <SendIcon width={18} height={18} aria-hidden />
                     <span>เขียนชม</span>
@@ -327,8 +333,9 @@ export function ShowcaseBoard() {
   )
 }
 
-export function ShowcaseFeedbackForm({ myNickname }: { myNickname: string }) {
+export function ShowcaseFeedbackForm() {
   const [toNickname, setToNickname] = useState('')
+  const [directFriend, setDirectFriend] = useState<PraiseTarget | null>(null)
   const [praiseText, setPraiseText] = useState('')
   const [suggestText, setSuggestText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -353,15 +360,32 @@ export function ShowcaseFeedbackForm({ myNickname }: { myNickname: string }) {
 
   useEffect(() => {
     function pick(event: Event) {
-      const name = (event as CustomEvent<string>).detail
-      if (typeof name === 'string' && name) {
-        setToNickname(name)
+      const detail = (event as CustomEvent<PraiseTarget | string>).detail
+      const target =
+        typeof detail === 'string'
+          ? { nickname: detail, shopName: null }
+          : detail && typeof detail.nickname === 'string'
+            ? detail
+            : null
+      if (target?.nickname) {
+        setDirectFriend(target)
+        setToNickname(target.nickname)
         setMessage(null)
         setError(null)
       }
     }
     window.addEventListener(PRAISE_EVENT, pick)
-    return () => window.removeEventListener(PRAISE_EVENT, pick)
+    function clearWhenClosed() {
+      if (window.location.hash !== '#sheet-praise') {
+        setDirectFriend(null)
+        setToNickname('')
+      }
+    }
+    window.addEventListener('hashchange', clearWhenClosed)
+    return () => {
+      window.removeEventListener(PRAISE_EVENT, pick)
+      window.removeEventListener('hashchange', clearWhenClosed)
+    }
   }, [])
 
   const ready =
@@ -411,11 +435,16 @@ export function ShowcaseFeedbackForm({ myNickname }: { myNickname: string }) {
       <h2 className="text-title-sm font-bold text-balance text-ink">
         ให้ความเห็นเพื่อน (ทำหรือไม่ทำก็ได้)
       </h2>
-      <p className="mt-1 text-body text-pretty text-ink-muted">
-        ชม 1 ข้อ เสนอแนะ 1 ข้อ เขียนเป็นข้อเสนอ ไม่ใช่คำตำหนิ · ชื่อของเราในห้องนี้คือ {myNickname}
+      <p className="mt-1 whitespace-nowrap text-note tracking-tight text-ink-muted">
+        ชม 1 ข้อ เสนอแนะ 1 ข้อ สุภาพ ไม่ตำหนิ
       </p>
 
-      {friends.length > 0 ? (
+      {directFriend ? (
+        <p className="mt-4 text-label font-bold text-ink-muted" aria-live="polite">
+          เขียนถึง {directFriend.nickname}
+          {directFriend.shopName ? ` · ${directFriend.shopName}` : ''}
+        </p>
+      ) : friends.length > 0 ? (
         <div className="mt-4">
           <p className="text-body font-bold text-ink">เลือกเพื่อน</p>
           <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="เลือกเพื่อนที่จะเขียนถึง">
@@ -426,7 +455,12 @@ export function ShowcaseFeedbackForm({ myNickname }: { myNickname: string }) {
                   key={name}
                   type="button"
                   aria-pressed={picked}
-                  onClick={() => setToNickname(name)}
+                  onClick={() => {
+                    setDirectFriend(null)
+                    setToNickname(name)
+                    setMessage(null)
+                    setError(null)
+                  }}
                   className={`min-h-11 rounded-full px-4 text-label font-bold ring-2 ring-inset focus-ring ${
                     picked
                       ? 'bg-quest-600 text-white ring-quest-700'
@@ -440,17 +474,6 @@ export function ShowcaseFeedbackForm({ myNickname }: { myNickname: string }) {
           </div>
         </div>
       ) : null}
-
-      <TextField
-        id="to-nickname"
-        className="mt-4"
-        label="ชื่อเล่นของเพื่อน"
-        type="text"
-        value={toNickname}
-        onChange={(e) => setToNickname(e.target.value)}
-        maxLength={40}
-        placeholder="พิมพ์ชื่อเล่นที่เพื่อนใช้ในห้องนี้"
-      />
 
       <label htmlFor="praise" className="mt-5 block text-body font-bold text-ink">
         ชมเพื่อน 1 ข้อ
@@ -509,7 +532,11 @@ export function ShowcaseFeedbackForm({ myNickname }: { myNickname: string }) {
         disabled={!ready}
         leadingIcon={ready ? <SendIcon width={22} height={22} aria-hidden /> : undefined}
       >
-        {ready ? 'ส่งความเห็นให้เพื่อน' : 'พิมพ์ชื่อเพื่อนและอย่างน้อย 1 ช่อง'}
+        {ready
+          ? 'ส่งความเห็นให้เพื่อน'
+          : directFriend
+            ? 'เขียนอย่างน้อย 1 ช่อง'
+            : 'เลือกเพื่อนและอย่างน้อย 1 ช่อง'}
       </Button>
     </Card>
   )

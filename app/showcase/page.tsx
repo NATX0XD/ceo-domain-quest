@@ -211,7 +211,7 @@ export default async function ShowcasePage() {
             title="เขียนถึงเพื่อน"
             triggerClassName="game-button game-button--green game-button--md sc-action"
           >
-            <ShowcaseFeedbackForm myNickname={student?.nickname ?? ''} />
+            <ShowcaseFeedbackForm />
           </Sheet>
         </nav>
 
