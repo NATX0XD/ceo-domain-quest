@@ -27,11 +27,11 @@
     },
     {
       "caseId": "c4",
-      "tags": { "myshop.co.th": "ccTLD ไทย", "myshop.or.th": "หมวดเฉพาะที่สงวน" },
-      "stamp": "suggest",
-      "acceptedExtensions": [".in.th", ".shop", ".com"],
-      "keyQuestions": ["q1", "q5"],
-      "explanation": "ร้านยังไม่ได้จดบริษัท ไม่มีเครื่องหมายการค้าหรือ VAT จึงจด .co.th ไม่ได้ และ .or.th สงวนไว้ให้องค์กรไม่แสวงหากำไร ควรเสนอ .in.th ที่ใช้บัตรประชาชนจดได้ หรือ .shop .com ที่ใครก็จดได้"
+      "tags": { "sukjai.co.th": "ccTLD ไทย", "sukjai.shop": "gTLD ทั่วไป" },
+      "stamp": "approve",
+      "acceptedExtensions": [],
+      "keyQuestions": ["q1", "q2"],
+      "explanation": "บริษัทสุขใจจดทะเบียนเป็นนิติบุคคลและมีหนังสือรับรองบริษัท จึงจด .co.th ได้ตามที่ขอ ส่วน .shop อยู่ในหมวด gTLD ที่ใครก็จดได้"
     }
   ]
 }

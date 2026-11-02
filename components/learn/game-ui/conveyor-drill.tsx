@@ -1,151 +1,189 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { cn } from '@/components/ui'
-import { GameButton, HudPill, PixelPanel, buzz, useGameMotion } from './index'
+import { useGameMotion } from './index'
+import { Cta, DomeSay, M3Stage, Panel, sfx, useDragDrop } from './counter-shell'
 
 export type DrillItem = { label: string; bin: string }
 export type DrillBin = { id: string; label: string }
 
+const SECONDS = 30
+
+/** ตัวอย่างชื่อโดเมนจริงตามนามสกุล ให้สายพานเหมือนงานจริง (S20) */
+const EXAMPLE: Record<string, string> = {
+  '.com': 'lazada.com',
+  '.net': 'speedtest.net',
+  '.org': 'wikipedia.org',
+  '.shop': 'kanom.shop',
+  '.co.th': 'shopee.co.th',
+  '.in.th': 'baanrao.in.th',
+  '.ไทย': 'ร้านเรา.ไทย',
+  '.ac.th': 'kmutnb.ac.th',
+  '.go.th': 'moe.go.th',
+  '.or.th': 'redcross.or.th',
+  '.net.th': 'tot.net.th',
+  '.mi.th': 'navy.mi.th',
+}
+
 /**
- * ดริลสายพานคัดแยก: ของวิ่งเข้ามาทีละชิ้น แตะกล่องปลายทางที่ใช่
- * ผิด = สั่นเบา ๆ แล้วลองใหม่ (ไม่มีหมดเวลา) · เฉลยมาจากข้อมูลสาธารณะที่ส่งเข้ามาเท่านั้น
+ * S20 สายพานคัดแยก 30 วินาที: ป้ายโดเมนไหลมาทีละชิ้น ลากลงถังที่ใช่ (หรือแตะถัง)
+ * ผิด = สั่นแล้วลองใหม่ · เฉลยมาจากข้อมูลสาธารณะ (คู่มือ) ที่ส่งเข้ามาเท่านั้น
  */
 export function ConveyorDrill({
   items,
   bins,
-  title,
   onDone,
+  onExit,
 }: {
   items: DrillItem[]
   bins: DrillBin[]
-  title: string
   onDone: (stats: { total: number; firstTry: number }) => void
+  onExit?: () => void
 }) {
-  const { reduce, spring } = useGameMotion()
+  const { reduce } = useGameMotion()
+  const [started, setStarted] = useState(false)
   const [idx, setIdx] = useState(0)
   const [firstTry, setFirstTry] = useState(0)
   const [missed, setMissed] = useState(false)
-  const [shakeKey, setShakeKey] = useState(0)
+  const [shake, setShake] = useState(0)
   const [flash, setFlash] = useState<{ bin: string; ok: boolean } | null>(null)
-  const [sent, setSent] = useState<number[]>([])
+  const [seconds, setSeconds] = useState(SECONDS)
+  const [expired, setExpired] = useState(false)
 
   const item = items[idx]
-  const done = idx >= items.length
+  const done = idx >= items.length || expired
+
+  useEffect(() => {
+    if (!started || done) return
+    const id = window.setInterval(() => {
+      setSeconds((v) => {
+        if (v <= 1) {
+          window.clearInterval(id)
+          setExpired(true)
+          sfx('bad')
+          return 0
+        }
+        return v - 1
+      })
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [started, done])
+
+  useEffect(() => {
+    if (!flash) return
+    const id = window.setTimeout(() => setFlash(null), 450)
+    return () => window.clearTimeout(id)
+  }, [flash])
 
   function sort(binId: string) {
-    if (!item) return
-    buzz()
+    if (!item || expired || !started) return
     if (binId === item.bin) {
+      sfx('ok')
       setFlash({ bin: binId, ok: true })
       if (!missed) setFirstTry((n) => n + 1)
-      setSent((s) => [...s, idx])
       setMissed(false)
       setIdx((i) => i + 1)
+      if (idx + 1 >= items.length) sfx('win')
     } else {
+      sfx('bad')
       setFlash({ bin: binId, ok: false })
       setMissed(true)
-      setShakeKey((k) => k + 1)
+      setShake((k) => k + 1)
     }
   }
 
+  const dd = useDragDrop({ onDrop: (_item, zone) => sort(zone) })
+  const p = item ? dd.itemProps(`drill-${idx}`) : null
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 p-3">
-      <div className="flex items-center gap-2">
-        <HudPill tone="dark" className="whitespace-nowrap">{title}</HudPill>
-        <div className="flex min-w-0 flex-1 gap-1" aria-hidden="true">
-          {items.map((_, i) => (
-            <span
-              key={i}
-              className={cn('h-2 flex-1 rounded-sm', sent.includes(i) ? 'bg-[#ffcf4a]' : 'bg-white/25')}
-            />
-          ))}
-        </div>
-        <HudPill tone="gold" className="whitespace-nowrap tabular-nums">
-          {Math.min(idx + 1, items.length)}/{items.length}
-        </HudPill>
-      </div>
-
-      <p className="rounded-xl border-2 border-[#6d4bd1] bg-[#1d1038] px-3 py-2 text-label font-bold text-pretty text-[#efe6ff]" aria-live="polite">
-        {done
-          ? 'คัดครบแล้ว'
-          : missed
-            ? 'ยังไม่ใช่กล่องนี้ ลองกล่องอื่นดูนะ'
-            : 'แตะกล่องที่ชิ้นนี้ควรไปอยู่'}
-      </p>
-
-      {/* สายพาน */}
-      <div className="relative flex min-h-48 flex-1 items-end overflow-hidden rounded-2xl pb-[4.25rem] border-[3px] border-[#3a2a63] bg-[#150b2b]">
-        <div
-          aria-hidden="true"
-          className={cn(
-            'absolute inset-x-0 bottom-6 h-10 border-y-4 border-[#4a3a7a] bg-[#2a1748]',
-            '[background-image:repeating-linear-gradient(90deg,#3a2a63_0_14px,transparent_14px_28px)]',
-            !reduce && 'motion-safe:animate-[belt_1.2s_linear_infinite]',
-          )}
-        />
-        <style>{'@keyframes belt{from{background-position:0 0}to{background-position:-28px 0}}'}</style>
-        <AnimatePresence mode="wait">
-          {item ? (
-            <motion.div
-              key={`${idx}`}
-              initial={reduce ? false : { x: '120%' }}
-              animate={{ x: 0 }}
-              exit={reduce ? undefined : { y: -60, opacity: 0, scale: 0.7 }}
-              transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 18 }}
-              className="mx-auto"
-            >
+    <M3Stage
+      pill={`สายพานคัดแยก · ${Math.min(idx + (done ? 0 : 1), items.length)}/${items.length}`}
+      onBack={onExit}
+      label="สายพานคัดแยก 30 วินาที"
+      dock={
+        !started ? (
+          <Cta tone="gold" onClick={() => setStarted(true)}>
+            เริ่มจับเวลา 30 วินาที →
+          </Cta>
+        ) : done ? (
+          <Cta onClick={() => onDone({ total: items.length, firstTry })}>{expired ? 'ไปต่อ ลองกับลูกค้าจริง →' : 'คัดครบแล้ว ไปต่อ →'}</Cta>
+        ) : (
+          <Cta disabled>ลากป้ายลงถัง หรือแตะถัง</Cta>
+        )
+      }
+    >
+      <Panel
+        className="m3s-drill"
+        kicker="ฝึกหมวดที่พลาด"
+        aside={
+          <span className={cn('m3s-clock', seconds <= 10 && started && !done && 'is-hurry')} role="timer" aria-label={`เหลือ ${seconds} วินาที`}>
+            <i style={{ width: `${(seconds / SECONDS) * 100}%` }} />
+            <b>{seconds} วินาที</b>
+          </span>
+        }
+      >
+        <div className="m3s-belt">
+          <div className={cn('m3s-belt-track', started && !done && !reduce && 'is-moving')} aria-hidden />
+          <AnimatePresence mode="wait">
+            {item && !expired ? (
               <motion.div
-                key={shakeKey}
-                animate={!reduce && shakeKey > 0 ? { x: [0, -10, 10, -6, 6, 0] } : undefined}
-                transition={{ duration: 0.35 }}
-                dir="auto"
-                className="rounded-xl border-[3px] border-[#b8860b] bg-[#fff6dc] px-5 py-3 text-title font-extrabold text-[#2a1748] shadow-[0_5px_0_#b8860b]"
+                key={idx}
+                className="m3s-belt-slot"
+                initial={reduce ? false : { x: '120%' }}
+                animate={{ x: 0 }}
+                exit={reduce ? undefined : { y: 60, opacity: 0, scale: 0.6 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 24 }}
               >
-                {item.label}
+                <button
+                  key={`${idx}-${shake}`}
+                  type="button"
+                  {...p}
+                  className={cn('m3s-parcel', p?.className, shake > 0 && missed && 'is-shake')}
+                  aria-label={`ป้าย ${EXAMPLE[item.label] ?? item.label}`}
+                >
+                  <span dir="auto">{EXAMPLE[item.label] ?? item.label}</span>
+                </button>
               </motion.div>
-            </motion.div>
-          ) : (
-            <motion.p
-              initial={reduce ? false : { scale: 0.6, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={spring}
-              className="mx-auto text-title-sm font-extrabold text-[#ffcf4a]"
-            >
-              ถูกตั้งแต่ครั้งแรก {firstTry} จาก {items.length}
-            </motion.p>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {!done ? (
-        <div className="grid grid-cols-3 gap-2 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
-          {bins.map((b) => (
-            <motion.button
-              key={b.id}
-              type="button"
-              whileTap={reduce ? undefined : { scale: 0.94, y: 2 }}
-              animate={
-                flash?.bin === b.id
-                  ? { backgroundColor: flash.ok ? '#2f9e5a' : '#ffb870' }
-                  : { backgroundColor: '#fff6dc' }
-              }
-              onAnimationComplete={() => flash?.bin === b.id && setFlash(null)}
-              onClick={() => sort(b.id)}
-              className="min-h-16 rounded-xl border-[3px] border-[#7a5a3a] px-1.5 py-2 text-label font-extrabold text-[#3a2a18] shadow-[0_4px_0_#5c4228] focus-visible:outline-3 focus-visible:outline-focus"
-            >
-              {b.label}
-            </motion.button>
-          ))}
+            ) : (
+              <motion.p key="end" className="m3s-belt-end" initial={reduce ? false : { scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                {expired ? `หมดเวลา คัดได้ ${idx} จาก ${items.length}` : `ถูกตั้งแต่ครั้งแรก ${firstTry} จาก ${items.length}`}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
-      ) : (
-        <PixelPanel variant="dark" className="p-2.5">
-          <GameButton variant="gold" className="w-full" onClick={() => onDone({ total: items.length, firstTry })}>
-            ไปฝึกกับลูกค้า
-          </GameButton>
-        </PixelPanel>
-      )}
-    </div>
+        <div className="m3s-bins">
+          {bins.map((b, i) => {
+            const z = dd.zoneProps(b.id)
+            return (
+              <button
+                key={b.id}
+                type="button"
+                data-drop={b.id}
+                className={cn(z.className, 'm3s-bin', `cat-${i}`, flash?.bin === b.id && (flash.ok ? 'is-ok' : 'is-bad'))}
+                onClick={() => sort(b.id)}
+                disabled={!started || done}
+              >
+                <span className="m3s-bin-lid" aria-hidden />
+                <b>{b.label}</b>
+                <small>ชั้น {i + 1}</small>
+              </button>
+            )
+          })}
+        </div>
+      </Panel>
+      <DomeSay live>
+        {!started
+          ? 'ป้ายโดเมนจริงจะไหลมาบนสายพาน ลากลงถังหมวดที่ใช่ภายใน 30 วินาที'
+          : done
+            ? expired
+              ? 'หมดเวลาแล้ว ไม่เป็นไร ไปลองกับลูกค้าจริงกัน'
+              : 'คัดได้ไวมาก ไปต่อกันเลย'
+            : flash && !flash.ok
+              ? 'ยังไม่ใช่ถังนี้ ดูท้ายชื่อแล้วนึกว่าใครจดได้'
+              : 'ดูท้ายชื่อ แล้วนึกถึงตึก 3 ชั้น'}
+      </DomeSay>
+    </M3Stage>
   )
 }
