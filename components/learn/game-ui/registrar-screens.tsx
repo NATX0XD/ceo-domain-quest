@@ -35,7 +35,7 @@ type RdapRow = {
   domain: string
   status: 'registered' | 'not-found' | 'unknown'
   label: string
-  source: 'rdap' | 'sample'
+  source: 'rdap' | 'sample' | 'offline'
   registeredAt?: string
   expiresAt?: string
   simulated?: boolean
@@ -341,7 +341,7 @@ function DetectiveCard({ row, onClose }: { row: RdapRow; onClose: () => void }) 
           <dt className="text-[#6b5a43]">วันหมดอายุ</dt>
           <dd className="text-right font-extrabold">{thaiDate(row.expiresAt) ?? 'ระบบไม่ได้แจ้ง'}</dd>
           <dt className="text-[#6b5a43]">ที่มา</dt>
-          <dd className="text-right font-extrabold">{row.source === 'rdap' ? 'ระบบทะเบียนจริง (RDAP)' : 'ข้อมูลตัวอย่าง'}</dd>
+          <dd className="text-right font-extrabold">{row.source === 'sample' ? 'ข้อมูลตัวอย่าง' : 'ระบบทะเบียนจริง (RDAP)'}</dd>
         </dl>
         <GameButton variant="primary" onClick={onClose}>
           ปิด

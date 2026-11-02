@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { z } from 'zod'
-import { attempt } from '@/lib/rate-limit'
+import { attempt } from '../../../../lib/rate-limit'
+import { offlineStatus } from '../../../../lib/domain-offline'
 import { errorResponse, readStudentSession, unauthorized } from '../../_lib/session-cookie'
 
 /**
@@ -9,7 +10,8 @@ import { errorResponse, readStudentSession, unauthorized } from '../../_lib/sess
  * ตรวจนามสกุลชุดเดียว: .com .shop .in.th .co.th
  * - 200 = ถูกจดแล้ว (คืนวันที่จดและวันหมดอายุถ้ามี)
  * - 404 = "ไม่พบการจด" — ⚠️ ห้ามใช้คำว่า "ว่าง" เพราะบางชื่อถูกสงวนไว้
- * - อื่น ๆ หรือเกิน 4 วินาที = ยังตรวจไม่ได้ (source: 'sample' ให้หน้าจอแสดงป้ายข้อมูลตัวอย่าง)
+ * - อื่น ๆ หรือเกิน 4 วินาที / นักเรียนค้นถี่เกินโควตา = ใช้รายชื่อสำรองที่ตรวจไว้แล้ว (source: 'offline')
+ *   เกมจึงไม่ค้างแม้ registry จำกัดการเรียกตอนทั้งห้องกดพร้อมกัน
  *
  * ⚠️ ส่งออกไปแค่ชื่อโดเมน ไม่ส่งข้อมูลนักเรียน และไม่คืนข้อมูลส่วนตัวของเจ้าของโดเมนจริง
  * ⚠️ แคชผลต่อชื่อ 10 นาที และจำกัดจำนวนครั้งต่อนักเรียน กันโดน registry จำกัดการเรียก
@@ -30,6 +32,43 @@ const BOOTSTRAP_URL = 'https://data.iana.org/rdap/dns.json'
 const SHOP_RDAP_FALLBACK = 'https://rdap.gmoregistry.net/rdap/'
 /** ต่อนักเรียนต่อ 10 นาที (หนึ่งครั้งตรวจ 4 นามสกุล) */
 const MAX_LOOKUPS_PER_STUDENT = 40
+/**
+ * เผื่อโควตาไว้ 20% (เจ้าของสั่ง): ใช้ถึง 80% แล้วสลับไปรายชื่อสำรองทันที ไม่รอให้ชนเพดาน
+ * - ต่อนักเรียน: 32 จาก 40 ครั้ง / 10 นาที
+ * - ต่อ registry ทั้งเซิร์ฟเวอร์ (ทั้งห้องใช้ IP เดียวกัน): 48 จาก 60 คำขอ / นาที
+ * registry ไม่ได้ประกาศเพดานไว้ ตัวเลข 60/นาที เป็นงบที่เราตั้งเองแบบระวัง
+ * ถ้า registry ตอบ 429 ให้พักเจ้านั้น 2 นาที ใช้รายชื่อสำรองระหว่างพัก
+ */
+const RESERVE_RATIO = 0.8
+const STUDENT_SOFT_LIMIT = Math.floor(MAX_LOOKUPS_PER_STUDENT * RESERVE_RATIO)
+const HOST_BUDGET_PER_MIN = 60
+const HOST_SOFT_LIMIT = Math.floor(HOST_BUDGET_PER_MIN * RESERVE_RATIO)
+const HOST_COOLDOWN_MS = 2 * 60 * 1000
+
+const hostUse = new Map<string, { windowStart: number; count: number; coolUntil: number }>()
+
+/** จองคำขอหนึ่งครั้งกับ registry เจ้านี้ — false = ใช้ถึง 80% ของงบหรือกำลังพักหลังโดน 429 */
+function takeHostSlot(host: string, now: number): boolean {
+  const use = hostUse.get(host) ?? { windowStart: now, count: 0, coolUntil: 0 }
+  if (now < use.coolUntil) return false
+  if (now - use.windowStart >= 60_000) {
+    use.windowStart = now
+    use.count = 0
+  }
+  if (use.count >= HOST_SOFT_LIMIT) {
+    hostUse.set(host, use)
+    return false
+  }
+  use.count++
+  hostUse.set(host, use)
+  return true
+}
+
+function coolHost(host: string, now: number) {
+  const use = hostUse.get(host) ?? { windowStart: now, count: 0, coolUntil: 0 }
+  use.coolUntil = now + HOST_COOLDOWN_MS
+  hostUse.set(host, use)
+}
 
 const NameSchema = z
   .string()
@@ -45,7 +84,7 @@ interface RdapTldResult {
   domain: string
   status: RdapStatus
   label: string
-  source: 'rdap' | 'sample'
+  source: 'rdap' | 'sample' | 'offline'
   registeredAt?: string
   expiresAt?: string
 }
@@ -58,6 +97,7 @@ const LABEL: Record<RdapStatus, string> = {
 
 const resultCache = new Map<string, { at: number; result: RdapTldResult }>()
 let bootstrap: { at: number; services: [string[], string[]][] } | null = null
+let bootstrapTriedAt = 0
 
 async function fetchWithTimeout(url: string): Promise<Response> {
   const controller = new AbortController()
@@ -84,7 +124,9 @@ async function rdapBaseFor(tld: Tld): Promise<string> {
   if (tld === 'in.th' || tld === 'co.th') return 'https://rdap.thains.co.th/'
 
   const now = Date.now()
-  if (!bootstrap || now - bootstrap.at > BOOTSTRAP_TTL_MS) {
+  // โหลดไม่สำเร็จก็จำเวลาไว้ ไม่ยิง IANA ซ้ำทุกคำขอ (ลองใหม่ทุก 10 นาที)
+  if ((!bootstrap || now - bootstrap.at > BOOTSTRAP_TTL_MS) && now - bootstrapTriedAt > CACHE_TTL_MS) {
+    bootstrapTriedAt = now
     try {
       const res = await fetchWithTimeout(BOOTSTRAP_URL)
       if (res.ok) {
@@ -106,6 +148,10 @@ const RdapEventsSchema = z.object({
     .optional(),
 })
 
+function offline(domain: string, tld: Tld): RdapTldResult {
+  return { tld: `.${tld}`, domain, ...offlineStatus(domain), source: 'offline' }
+}
+
 async function lookup(label: string, tld: Tld): Promise<RdapTldResult> {
   const domain = `${label}.${tld}`
   const now = Date.now()
@@ -115,7 +161,10 @@ async function lookup(label: string, tld: Tld): Promise<RdapTldResult> {
   let result: RdapTldResult
   try {
     const base = await rdapBaseFor(tld)
+    const host = new URL(base).host
+    if (!takeHostSlot(host, now)) return offline(domain, tld)
     const res = await fetchWithTimeout(`${base}domain/${encodeURIComponent(domain)}`)
+    if (res.status === 429) coolHost(host, now)
     if (res.status === 200) {
       const body = RdapEventsSchema.safeParse(await res.json().catch(() => ({})))
       const events = body.success ? (body.data.events ?? []) : []
@@ -131,14 +180,14 @@ async function lookup(label: string, tld: Tld): Promise<RdapTldResult> {
     } else if (res.status === 404) {
       result = { tld: `.${tld}`, domain, status: 'not-found', label: LABEL['not-found'], source: 'rdap' }
     } else {
-      result = { tld: `.${tld}`, domain, status: 'unknown', label: LABEL.unknown, source: 'sample' }
+      result = offline(domain, tld)
     }
   } catch {
-    result = { tld: `.${tld}`, domain, status: 'unknown', label: LABEL.unknown, source: 'sample' }
+    result = offline(domain, tld)
   }
 
-  // เก็บแคชเฉพาะผลจริง ผลที่ตรวจไม่ได้ให้ลองใหม่ได้ครั้งหน้า
-  if (result.status !== 'unknown') resultCache.set(domain, { at: now, result })
+  // เก็บแคชเฉพาะผลจริง ผลสำรองให้ลองของจริงใหม่ได้ครั้งหน้า
+  if (result.source === 'rdap') resultCache.set(domain, { at: now, result })
   if (resultCache.size > 2000) {
     for (const [key, entry] of resultCache) {
       if (now - entry.at >= CACHE_TTL_MS) resultCache.delete(key)
@@ -160,18 +209,16 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const limit = attempt(`rdap:${session.studentId}`, Date.now(), MAX_LOOKUPS_PER_STUDENT)
-  if (!limit.allowed) {
-    return errorResponse('rate-limited', 'ค้นถี่เกินไปแล้ว พักสักครู่แล้วลองใหม่นะ', 429, {
-      resetAt: limit.resetAt,
-    })
-  }
-
-  const results = await Promise.all(TLDS.map((tld) => lookup(parsed.data, tld)))
+  const limit = attempt(`rdap:${session.studentId}`, Date.now(), STUDENT_SOFT_LIMIT)
+  // ค้นถึง 80% ของโควตา ไม่ยิง registry เพิ่ม แต่ตอบจากรายชื่อสำรองแทน เกมจะได้ไม่ค้าง
+  const results = limit.allowed
+    ? await Promise.all(TLDS.map((tld) => lookup(parsed.data, tld)))
+    : TLDS.map((tld) => resultCache.get(`${parsed.data}.${tld}`)?.result ?? offline(`${parsed.data}.${tld}`, tld))
   return NextResponse.json({
     ok: true,
     name: parsed.data,
     results,
-    sample: results.some((r) => r.source === 'sample'),
+    sample: results.some((r) => r.source !== 'rdap'),
+    offline: results.some((r) => r.source === 'offline'),
   })
 }
