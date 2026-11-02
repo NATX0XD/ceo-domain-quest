@@ -300,7 +300,7 @@ function OfficialModeArtwork({
     // กรอบทางการตัดขอบล่าง (ปุ่มส้มในภาพ) ออก แล้วต่อพื้นครีมลงถึงขอบจอ = ลิ้นชักล่างจริง ปุ่มเริ่มเป็น HTML มีระยะหายใจ
     <div className="relative w-full max-w-[720px] select-none [container-type:inline-size]" aria-label={`เลือกวิธีเรียนสำหรับภารกิจที่ ${missionNo}`}>
       <div className="relative z-10 aspect-[1122/1190] w-full">
-        <div className="absolute inset-x-0 top-0 aspect-[1122/1402]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 aspect-[1122/1402]">
           <div aria-hidden="true" className="absolute inset-x-0 top-0 h-[84.88%] overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element -- ภาพทางการจาก UI/ ที่ลบข้อความเฉพาะภารกิจ 1 ออกแล้ว */}
             <img src="/ui/mode/official-popup-blank.webp" alt="" draggable={false} className="absolute left-0 top-0 h-auto w-full max-w-none" />
@@ -315,10 +315,10 @@ function OfficialModeArtwork({
           <h2 id="mode-popup-title" className="absolute left-[18.9%] top-[41.7%] grid h-[7.6%] w-[62.2%] place-items-center text-center text-[5.2cqw] font-extrabold leading-tight text-balance text-[#2a1458]">
             {title}
           </h2>
-          <button type="button" onClick={onClose} aria-label="ปิดและกลับไปแผนที่" className="absolute right-[3.2%] top-[34%] size-[10%] rounded-full bg-transparent" style={{ background: 'transparent', border: 0 }} />
+          <button type="button" onClick={onClose} aria-label="ปิดและกลับไปแผนที่" className="pointer-events-auto absolute right-[3.2%] top-[34%] size-[10%] rounded-full bg-transparent" style={{ background: 'transparent', border: 0 }} />
           {/* ปิดการ์ดในภาพ (มีวงกลม radio ที่ดูเหมือนเลข 0) แล้ววางการ์ด HTML ที่เห็นชัดว่าเลือกอันไหนอยู่ */}
           <div aria-hidden="true" className="absolute inset-x-[5.4%] top-[52.6%] h-[32.28%] rounded-t-[4cqw] bg-[#fdf6ea]" />
-          <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="absolute inset-x-[6.2%] top-[55.6%] grid h-[28.2%] grid-cols-3 gap-[2.2cqw]">
+          <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="pointer-events-auto absolute inset-x-[6.2%] top-[55.6%] grid h-[28.2%] grid-cols-3 gap-[2.2cqw]">
             {MODES.map((mode) => (
               <ModeCard
                 key={mode.id}
@@ -333,7 +333,7 @@ function OfficialModeArtwork({
           </div>
         </div>
       </div>
-      <div className="relative z-20 mx-[2.85%] -mt-px flex flex-col gap-2 bg-[#fdf3e6] px-[3.6%] pb-[calc(20px+env(safe-area-inset-bottom))] pt-[20px] shadow-[inset_2px_0_0_#efe2cc,inset_-2px_0_0_#efe2cc]">
+      <div className="relative z-0 mx-[2.85%] -mt-px flex flex-col gap-2 bg-[#fdf3e6] px-[3.6%] pb-[calc(20px+env(safe-area-inset-bottom))] pt-[20px] shadow-[inset_2px_0_0_#efe2cc,inset_-2px_0_0_#efe2cc]">
         {error ? <p role="alert" className="text-center text-[clamp(12px,3.2vw,16px)] font-bold text-[#b42318]">{error}</p> : null}
         <button
           type="button"

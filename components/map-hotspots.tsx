@@ -240,7 +240,7 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
         {boss.unlocked ? (
           <Link href={boss.href} className="map-boss-button focus-ring" aria-label={`ด่านบอส CEO ${boss.title} ปลดล็อกแล้ว`}>
             <span className="map-boss-art" aria-hidden="true">
-              <img src="/ui/map/ceo-boss-gate.png" alt="" draggable={false} />
+              <img src="/ui/map/ceo-boss-gate.webp" alt="" draggable={false} />
             </span>
             <strong>ด่านบอส CEO</strong>
             <span className="map-boss-status-badge map-boss-status-badge--open" aria-hidden="true">
@@ -250,7 +250,7 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
         ) : (
           <button type="button" className="map-boss-button map-boss-locked focus-ring" onClick={() => setToast(true)} aria-label="ด่านบอส CEO ล็อกอยู่ ต้องผ่านภารกิจ 1 ถึง 4 ก่อน">
             <span className="map-boss-art" aria-hidden="true">
-              <img src="/ui/map/ceo-boss-gate.png" alt="" draggable={false} />
+              <img src="/ui/map/ceo-boss-gate.webp" alt="" draggable={false} />
             </span>
             <strong>ด่านบอส CEO</strong>
             <span className="map-boss-status-badge map-boss-status-badge--locked" aria-hidden="true">
