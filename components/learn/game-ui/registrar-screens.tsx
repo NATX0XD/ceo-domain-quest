@@ -2,9 +2,25 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertIcon, CheckIcon, GlobeIcon, InfoIcon, cn } from '@/components/ui'
-import { CountUp, GameButton, PixelPanel, buzz, useGameMotion } from './index'
-import { INPUT, INPUT_LIGHT, PIXEL_BOX, QuizSheet, SCENE_NOTE, Say, Sheets, thaiDate, type QuizCheck } from './registrar-ui'
+import { CheckIcon, InfoIcon, cn } from '@/components/ui'
+import { CountUp, GameButton, buzz, useGameMotion } from './index'
+import {
+  ArtIcon,
+  ClipPanel,
+  Glyph,
+  INPUT,
+  PixelDome,
+  PixelImg,
+  QuizBody,
+  QuizSheet,
+  SCENE_NOTE,
+  Say,
+  Sheets,
+  Stamp,
+  thaiDate,
+  usePixelSrc,
+  type QuizCheck,
+} from './registrar-ui'
 import {
   ELIGIBLE_TLDS,
   TH_TLDS,
@@ -28,6 +44,25 @@ export function eventQuiz(check: Check, eventId: string): QuizCheck {
   }
 }
 
+/** ไอคอนของการ์ดแต่ละขั้น: ภาพพิกเซล icon-*.webp ถ้ามี ไม่มีใช้ไอคอน 3D เดิม */
+const STEP_ICON: Record<string, [string, string]> = {
+  'st-account': ['icon-account', 'bust-in-silhouette'],
+  'st-menu': ['icon-menu', 'television'],
+  'st-search': ['icon-search', 'magnifying-glass-tilted-left'],
+  'st-form': ['icon-form', 'memo'],
+  'st-docs': ['icon-docs', 'clipboard'],
+  'st-review': ['icon-review', 'eyes'],
+  'st-email': ['icon-mail', 'bell'],
+  'st-pay': ['icon-pay', 'handshake'],
+  'st-confirm': ['icon-confirm', 'check-mark-button'],
+  'st-dns': ['icon-dns', 'gear'],
+}
+
+export function StepIcon({ id, size = 26 }: { id: string; size?: number }) {
+  const [px, fb] = STEP_ICON[id] ?? ['icon-form', 'memo']
+  return <PixelImg name={px} fallback={`/icons/3d/${fb}.webp`} className="m4-step-icon" style={{ width: size, height: size }} />
+}
+
 /** ─── R02 ค้นชื่อจริง + R03 นักสืบโดเมน ─── */
 
 type RdapRow = {
@@ -38,10 +73,11 @@ type RdapRow = {
   source: 'rdap' | 'sample' | 'offline'
   registeredAt?: string
   expiresAt?: string
+  registrar?: string
   simulated?: boolean
 }
 
-const SIM_DATES = { registeredAt: '2021-03-14T00:00:00Z', expiresAt: '2027-03-14T00:00:00Z' }
+const SIM_DATES = { registeredAt: '2021-03-14T00:00:00Z', expiresAt: '2027-03-14T00:00:00Z', registrar: 'ผู้รับจดตัวอย่างในเกม' }
 
 export function SearchScreen({
   data,
@@ -72,7 +108,7 @@ export function SearchScreen({
   const [takenName, setTakenName] = useState<string | null>(null)
   const injected = useRef(false)
   const [detail, setDetail] = useState<RdapRow | null>(null)
-  const [sheet, setSheet] = useState<'detect' | 'taken' | null>(null)
+  const [mode, setMode] = useState<'results' | 'detect' | 'taken' | 'info'>('results')
   const [detectDone, setDetectDone] = useState(false)
   const [retryAt, setRetryAt] = useState<number | null>(null)
   const [clockNow, setClockNow] = useState(() => Date.now())
@@ -91,7 +127,7 @@ export function SearchScreen({
   }, [retryAt])
 
   async function search() {
-    if (retrySeconds > 0) return
+    if (retrySeconds > 0 || busy) return
     const value = name.trim().toLowerCase()
     if (!NAME_RE.test(value)) {
       setErr('ใช้ได้เฉพาะ a-z ตัวเลข และขีดกลาง ยาว 1-63 ตัว ไม่ขึ้นต้นหรือลงท้ายด้วยขีด')
@@ -137,22 +173,107 @@ export function SearchScreen({
   }
 
   function open(r: RdapRow) {
+    buzz()
     setDetail(r)
-    if (!detectDone) setSheet('detect')
-    else if (!takenDone && takenEvent) setSheet('taken')
+    if (!detectDone) setMode('detect')
+    else if (!takenDone && takenEvent) setMode('taken')
+    else setMode('info')
   }
 
   const canUseHere = takenDone && queried !== takenName
 
+  if ((mode === 'detect' || mode === 'info') && detail) {
+    return (
+      <div className={`${SCROLL} m4-screen`}>
+        <ClipPanel title="นักสืบโดเมน">
+          <p className="m4-domain-pill">{detail.domain}</p>
+          <dl className="m4-facts">
+            <div>
+              <Glyph kind="check" className="text-[#2f9e57]" />
+              <dt>สถานะ</dt>
+              <dd className="text-[#1d7a3e]">ถูกจดแล้ว ใช้งานอยู่</dd>
+            </div>
+            <div>
+              <Glyph kind="calendar" className="text-[#6b4fd8]" />
+              <dt>วันที่จด</dt>
+              <dd>{thaiDate(detail.registeredAt) ?? 'ระบบไม่ได้แจ้ง'}</dd>
+            </div>
+            <div>
+              <Glyph kind="clock" className="text-[#6b4fd8]" />
+              <dt>วันหมดอายุ</dt>
+              <dd>{thaiDate(detail.expiresAt) ?? 'ระบบไม่ได้แจ้ง'}</dd>
+            </div>
+            <div>
+              <Glyph kind="building" className="text-[#6b4fd8]" />
+              <dt>
+                ผู้รับจด <small>(registrar)</small>
+              </dt>
+              <dd className="break-words">{detail.registrar ?? 'ระบบไม่ได้แจ้ง'}</dd>
+            </div>
+          </dl>
+          {detail.simulated ? <p className="mt-1 text-label text-[#6b5a43]">ชื่อนี้เป็นเหตุการณ์จำลองในเกม</p> : null}
+        </ClipPanel>
+        {mode === 'detect' ? (
+          <>
+            <Say mood="thinking" className="m4-say-right">{data.detective.question}</Say>
+            <QuizBody
+              question={data.detective.question}
+              showQuestion={false}
+              choices={data.detective.choices}
+              retry
+              check={async (choice) => {
+                const r = await check({ kind: 'detect', choice })
+                return r && r.kind === 'detect' ? r : null
+              }}
+              onDone={() => {
+                setDetectDone(true)
+                setMode(takenEvent && !takenDone ? 'taken' : 'results')
+              }}
+            />
+          </>
+        ) : (
+          <GameButton className="w-full" onClick={() => setMode('results')}>
+            ‹ กลับไปผลค้น
+          </GameButton>
+        )}
+      </div>
+    )
+  }
+
+  if (mode === 'taken' && takenEvent) {
+    return (
+      <div className={`${SCROLL} m4-screen`}>
+        <ClipPanel title={takenEvent.title}>
+          <p className="m4-story">
+            {detail?.simulated ? `เมื่อสักครู่มีคนยื่นจดชื่อ ${detail.domain} ไปก่อนแล้ว (เหตุการณ์จำลองในเกม)` : `ชื่อ ${detail?.domain ?? queried} ถูกจดไปแล้ว`}
+          </p>
+        </ClipPanel>
+        <Say mood="thinking">{takenEvent.question}</Say>
+        <QuizBody
+          question={takenEvent.question}
+          showQuestion={false}
+          choices={takenEvent.choices}
+          check={eventQuiz(check, takenEvent.id)}
+          doneLabel="คิดชื่อใหม่ แล้วค้นอีกครั้ง"
+          onDone={(choice, correct) => {
+            onTakenDone(choice, correct)
+            setTakenName(queried)
+            setMode('results')
+            setDetail(null)
+          }}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className={`${SCROLL} m4-screen m4-search-screen`}>
-      <PixelPanel variant="dark" className={cn(PIXEL_BOX, 'm4-clipboard m4-search-form flex flex-col gap-2.5')}>
-        <p className="text-title-sm font-extrabold">ค้นชื่อจริงหลายนามสกุล</p>
-        <p className="text-body text-[#6b4a2b]">{data.search.prompt}</p>
-        <label className="flex flex-col gap-1">
-          <span className="text-label font-bold text-[#6b4a2b]">ชื่อร้านภาษาอังกฤษ</span>
+      <ClipPanel title="ค้นชื่อจริง">
+        <div className="m4-search-row">
+          <ArtIcon px="icon-search" glyph="search" size={28} className="text-[#6b4fd8]" />
           <input
-            className={INPUT}
+            className="m4-search-input"
+            aria-label="ชื่อร้านภาษาอังกฤษ"
             placeholder={data.search.placeholder}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -166,17 +287,93 @@ export function SearchScreen({
               if (e.key === 'Enter') void search()
             }}
           />
-          <span className="text-label text-[#7a5a2c]">{data.search.note}</span>
-        </label>
+          <button type="button" className="m4-search-go" disabled={busy || retrySeconds > 0} onClick={() => void search()}>
+            {busy ? <span aria-hidden="true" className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : 'ค้น'}
+          </button>
+        </div>
         {err ? (
-          <p role="alert" className="text-label font-bold text-[#b5521b]">
+          <p role="alert" className="mt-1.5 text-label font-bold text-[#b5521b]">
             {err}
           </p>
         ) : null}
-        <GameButton variant="primary" loading={busy} disabled={retrySeconds > 0} onClick={() => void search()}>
-          <GlobeIcon width={20} height={20} aria-hidden /> ค้นชื่อจริง
-        </GameButton>
-      </PixelPanel>
+        {rows ? (
+          <p className="m4-real-pill">
+            <Glyph kind="server" size={16} /> ข้อมูลจริงจากระบบทะเบียน
+          </p>
+        ) : (
+          <p className="mt-2 text-label text-pretty text-[#4a3d7a]">
+            {data.search.prompt}
+            <span className="mt-0.5 block text-[#6b5a43]">{data.search.note}</span>
+          </p>
+        )}
+        {rows ? (
+          <ul className="m4-results" aria-label={`ผลค้น ${queried}`}>
+            {rows.map((r, i) => {
+              const thTld = r.tld.endsWith('.th')
+              const mine = eligible.includes(r.tld)
+              const noRight = thTld && r.status !== 'registered' && !mine
+              const tone = r.status === 'registered' ? 'red' : noRight ? 'orange' : r.status === 'not-found' ? 'green' : 'gray'
+              const label = r.status === 'unknown' ? 'ตรวจไม่ได้' : noRight ? (card.ownerType === 'individual' ? 'ต้องเป็นนิติบุคคล' : 'ไม่ตรงกับบัตร') : r.label
+              const pickable = thTld && r.status === 'not-found' && !noRight
+              const sub =
+                r.status === 'registered'
+                  ? 'แตะเพื่อสืบ'
+                  : r.status === 'unknown'
+                    ? 'แตะเพื่อค้นใหม่'
+                    : pickable
+                      ? canUseHere
+                        ? 'ตรงกับบัตร แตะเพื่อยื่นจด'
+                        : 'ตรงกับบัตรของฉัน'
+                      : null
+              const action =
+                r.status === 'registered'
+                  ? () => open(r)
+                  : r.status === 'unknown'
+                    ? () => void search()
+                    : pickable && canUseHere
+                      ? () => onPick(queried, r.tld)
+                      : null
+              const inner = (
+                <>
+                  <span className="m4-result-domain">{r.domain}</span>
+                  <span className={cn('m4-result-status', `is-${tone}`)}>
+                    <span className="flex items-center gap-1">
+                      <Glyph kind={tone === 'green' ? 'check' : tone === 'red' ? 'cross' : 'warn'} size={16} />
+                      {label}
+                    </span>
+                    {sub ? <small>{sub}</small> : null}
+                  </span>
+                </>
+              )
+              return (
+                <motion.li
+                  key={`${queried}-${r.domain}`}
+                  initial={reduce ? false : { x: -24, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ ...spring, delay: reduce ? 0 : i * 0.09 }}
+                >
+                  {action ? (
+                    <button type="button" onClick={action} disabled={busy} className={cn('m4-result-row is-action', pickable && canUseHere && 'is-pick', mine && 'is-mine')}>
+                      {inner}
+                    </button>
+                  ) : (
+                    <div className={cn('m4-result-row', mine && 'is-mine')}>{inner}</div>
+                  )}
+                </motion.li>
+              )
+            })}
+          </ul>
+        ) : null}
+        {rows ? (
+          <p className={cn('mt-2 text-label font-bold text-pretty', canUseHere ? 'text-[#4a3d7a]' : 'text-[#8a4b00]')}>
+            {canUseHere
+              ? 'ไม่พบการจด แปลว่าระบบทะเบียนยังไม่มีชื่อนี้ แตะแถวนามสกุลตามบัตรเพื่อยื่นจด'
+              : takenDone
+                ? 'ชื่อนี้ถูกจดแล้วที่นามสกุลตามบัตร คิดชื่อใหม่ แล้วค้นอีกครั้ง'
+                : 'แตะแถวที่ถูกจดแล้ว เพื่อสืบข้อมูลก่อนเลือกชื่อไปยื่นจด'}
+          </p>
+        ) : null}
+      </ClipPanel>
 
       {note ? (
         <p role="status" className={cn(SCENE_NOTE, 'flex items-start gap-2 text-[#b5521b]')}>
@@ -188,190 +385,14 @@ export function SearchScreen({
         </p>
       ) : null}
 
-      {rows ? (
-        <PixelPanel variant="paper" className="m4-clipboard m4-results-card flex flex-col gap-2 p-3" aria-label="ผลค้นชื่อจริง">
-          <p className="flex flex-wrap items-baseline gap-x-2">
-            <span className="text-body font-extrabold">ผลค้น {queried}</span>
-            <span className="whitespace-nowrap text-label text-[#6b5a43]">ข้อมูลจริงจากระบบทะเบียน</span>
-          </p>
-          <ul className="flex flex-col gap-2">
-            {rows.map((r, i) => {
-              const thTld = r.tld.endsWith('.th')
-              const noRight = thTld && r.status !== 'registered' && !eligible.includes(r.tld)
-              const tone = r.status === 'registered' ? 'red' : noRight ? 'orange' : r.status === 'not-found' ? 'green' : 'gray'
-              const label = noRight ? 'ไม่มีสิทธิ์ตามบัตร' : r.label
-              return (
-                <motion.li
-                  key={`${queried}-${r.domain}`}
-                  initial={reduce ? false : { x: -24, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ ...spring, delay: reduce ? 0 : i * 0.08 }}
-                  className={cn(
-                    'flex flex-col gap-1.5 rounded-xl border-2 px-2.5 py-2',
-                    tone === 'red' && 'border-[#d97a6a] bg-[#ffe9e3]',
-                    tone === 'green' && 'border-quest-500 bg-quest-50',
-                    tone === 'orange' && 'border-[#d9a066] bg-[#fff0dc]',
-                    tone === 'gray' && 'border-[#c9b68c] bg-[#f1e6c8]',
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <span aria-hidden="true" className="shrink-0">
-                      {tone === 'green' ? <CheckIcon width={22} height={22} className="text-quest-700" /> : tone === 'gray' ? <InfoIcon width={22} height={22} /> : <AlertIcon width={22} height={22} className="text-spark-700" />}
-                    </span>
-                    <span className="min-w-0 flex-1 text-body font-extrabold break-all">{r.domain}</span>
-                    <span className={cn('m4-status-pill', `is-${tone}`)}>
-                      {r.status === 'unknown' ? 'ตรวจไม่ได้' : label}
-                      {r.source === 'sample' && r.status !== 'unknown' ? <small> ตัวอย่าง</small> : null}
-                    </span>
-                  </div>
-                  {r.status === 'registered' ? (
-                    <button
-                      type="button"
-                      onClick={() => open(r)}
-                      className="min-h-11 rounded-lg border-2 border-[#7a5a3a] bg-white px-3 text-label font-extrabold focus-visible:outline-3 focus-visible:outline-focus"
-                    >
-                      ดู {r.domain}
-                    </button>
-                  ) : r.status === 'unknown' ? (
-                    <button
-                      type="button"
-                      disabled={busy || retrySeconds > 0}
-                      onClick={() => void search()}
-                      className="min-h-11 rounded-lg border-2 border-[#7a5a3a] bg-white px-3 text-label font-extrabold focus-visible:outline-3 focus-visible:outline-focus disabled:opacity-60"
-                    >
-                      ลองค้นอีกครั้ง
-                    </button>
-                  ) : thTld && r.status === 'not-found' && !noRight ? (
-                    <button
-                      type="button"
-                      disabled={!canUseHere}
-                      onClick={() => onPick(queried, r.tld)}
-                      className="min-h-11 rounded-lg border-2 border-[#3b1d8f] bg-[#7c4dff] px-3 text-label font-extrabold text-white focus-visible:outline-3 focus-visible:outline-focus disabled:opacity-45"
-                    >
-                      ใช้ {r.domain} ยื่นจด
-                    </button>
-                  ) : null}
-                </motion.li>
-              )
-            })}
-          </ul>
-          <p className="text-label text-[#6b5a43]">
-            ไม่พบการจด หมายถึงระบบทะเบียนยังไม่มีชื่อนี้ แต่บางชื่ออาจถูกสงวนไว้ · ชื่อเดียวกันคนละนามสกุลถือเป็นคนละชื่อ
-          </p>
-          {!canUseHere ? (
-            <p className="text-label font-bold text-[#8a4b00]">
-              {takenDone ? 'ชื่อนี้ถูกจดแล้วที่นามสกุลตามบัตร คิดชื่อใหม่ แล้วค้นอีกครั้ง' : 'เปิดดูข้อมูลของชื่อที่ถูกจดแล้วก่อน แล้วจึงเลือกชื่อไปยื่นจด'}
-            </p>
-          ) : null}
-        </PixelPanel>
-      ) : null}
-
-      {rows ? (
-        <Say who="dome">ชื่อเดียวกัน ทำไมแต่ละนามสกุลได้ผลไม่เหมือนกัน คิดดูก่อนเลือกชื่อ</Say>
-      ) : null}
-
-      <Sheets>
-        {detail && !sheet ? (
-          <DetectiveCard key="card" row={detail} onClose={() => setDetail(null)} />
-        ) : null}
-        {sheet === 'detect' && detail ? (
-          <QuizSheet
-            key="detect"
-            kicker="นักสืบโดเมน"
-            icon="/icons/3d/magnifying-glass-tilted-left.webp"
-            facts={[
-              { icon: '/icons/3d/check-mark-button.webp', label: 'สถานะ', value: 'ถูกจดแล้ว' },
-              { icon: '/icons/3d/memo.webp', label: 'วันที่จด', value: thaiDate(detail.registeredAt) ?? 'ระบบไม่ได้แจ้ง' },
-              { icon: '/icons/3d/alarm-clock.webp', label: 'วันหมดอายุ', value: thaiDate(detail.expiresAt) ?? 'ระบบไม่ได้แจ้ง' },
-              ...(detail.simulated ? [{ icon: '/icons/3d/warning.webp', label: 'แหล่งข้อมูล', value: 'ข้อมูลตัวอย่างในเกม' }] : []),
-            ]}
-            title={detail.domain}
-            story={`สถานะ ถูกจดแล้ว · จดเมื่อ ${thaiDate(detail.registeredAt) ?? 'ไม่ทราบ'} · หมดอายุ ${thaiDate(detail.expiresAt) ?? 'ไม่ทราบ'}${detail.simulated ? ' (ข้อมูลตัวอย่าง)' : ''}`}
-            question={data.detective.question}
-            choices={data.detective.choices}
-            retry
-            check={async (choice) => {
-              const r = await check({ kind: 'detect', choice })
-              return r && r.kind === 'detect' ? r : null
-            }}
-            onDone={() => {
-              setDetectDone(true)
-              setSheet(takenEvent && !takenDone ? 'taken' : null)
-            }}
-          />
-        ) : null}
-        {sheet === 'taken' && takenEvent ? (
-          <QuizSheet
-            key="taken"
-            title={takenEvent.title}
-            story={detail?.simulated ? `เมื่อสักครู่มีคนยื่นจดชื่อ ${detail.domain} ไปก่อนแล้ว (เหตุการณ์จำลองในเกม)` : `ชื่อ ${detail?.domain ?? queried} ถูกจดไปแล้ว`}
-            question={takenEvent.question}
-            choices={takenEvent.choices}
-            check={eventQuiz(check, takenEvent.id)}
-            onDone={(choice, correct) => {
-              onTakenDone(choice, correct)
-              setTakenName(queried)
-              setSheet(null)
-              setDetail(null)
-            }}
-            doneLabel="คิดชื่อใหม่ แล้วค้นอีกครั้ง"
-          />
-        ) : null}
-      </Sheets>
+      {rows ? <Say mood="thinking">ชื่อเดียวกัน ทำไมแต่ละนามสกุลผลไม่เหมือนกันนะ</Say> : null}
     </div>
-  )
-}
-
-function DetectiveCard({ row, onClose }: { row: RdapRow; onClose: () => void }) {
-  const { reduce, spring } = useGameMotion()
-  return (
-    <motion.div className="m4-detective-modal absolute inset-0 z-40 flex items-end bg-black/55" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-label="ข้อมูลโดเมน"
-        initial={reduce ? false : { y: '100%' }}
-        animate={{ y: 0 }}
-        exit={reduce ? undefined : { y: '100%' }}
-        transition={spring}
-        className="m4-detective-card flex w-full flex-col gap-3 rounded-t-3xl border-[3px] border-b-0 border-[#7a5a3a] bg-[#fff8e6] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-[#3a2a18]"
-      >
-        <p className="text-label font-bold text-[#7a5a2c]">นักสืบโดเมน</p>
-        <p className="text-title-sm font-extrabold break-all">{row.domain}</p>
-        <dl className="grid grid-cols-2 gap-y-1.5 text-body">
-          <dt className="text-[#6b5a43]">สถานะ</dt>
-          <dd className="text-right font-extrabold">ถูกจดแล้ว</dd>
-          <dt className="text-[#6b5a43]">วันที่จด</dt>
-          <dd className="text-right font-extrabold">{thaiDate(row.registeredAt) ?? 'ระบบไม่ได้แจ้ง'}</dd>
-          <dt className="text-[#6b5a43]">วันหมดอายุ</dt>
-          <dd className="text-right font-extrabold">{thaiDate(row.expiresAt) ?? 'ระบบไม่ได้แจ้ง'}</dd>
-          <dt className="text-[#6b5a43]">ที่มา</dt>
-          <dd className="text-right font-extrabold">{row.source === 'sample' ? 'ข้อมูลตัวอย่าง' : 'ระบบทะเบียนจริง (RDAP)'}</dd>
-        </dl>
-        <GameButton variant="primary" onClick={onClose}>
-          ปิด
-        </GameButton>
-      </motion.div>
-    </motion.div>
   )
 }
 
 /** ─── R04 แผงเดินเรื่อง ─── */
 
-/** ไอคอน 3D ของการ์ดแต่ละขั้น (ภาพเท่านั้น ข้อความยังเป็น HTML) */
-const STEP_ICON: Record<string, string> = {
-  'st-account': 'bust-in-silhouette',
-  'st-menu': 'television',
-  'st-search': 'magnifying-glass-tilted-left',
-  'st-form': 'memo',
-  'st-docs': 'clipboard',
-  'st-review': 'eyes',
-  'st-email': 'bell',
-  'st-pay': 'handshake',
-  'st-confirm': 'check-mark-button',
-  'st-dns': 'gear',
-}
-const stepIcon = (id: string) => `/icons/3d/${STEP_ICON[id] ?? 'memo'}.webp`
+type Drag = { id: string; x: number; y: number; ox: number; oy: number; phase: 'drag' | 'snap' | 'back' }
 
 export function RouteBoard({
   data,
@@ -388,11 +409,12 @@ export function RouteBoard({
 }) {
   const { reduce, spring } = useGameMotion()
   const total = data.steps.length
-  const text = useMemo(() => new Map(data.steps.map((s) => [s.id, s.text])), [data.steps])
+  const short = useMemo(() => new Map(data.steps.map((s) => [s.id, s.short ?? s.text])), [data.steps])
+  const full = useMemo(() => new Map(data.steps.map((s) => [s.id, s.text])), [data.steps])
   const nextRef = useRef<HTMLLIElement | null>(null)
   const [shake, setShake] = useState<string | null>(null)
-  const [draggingId, setDraggingId] = useState<string | null>(null)
-  const [dragPoint, setDragPoint] = useState<{ x: number; y: number } | null>(null)
+  const [drag, setDrag] = useState<Drag | null>(null)
+  const [over, setOver] = useState(false)
   const dragStart = useRef<{ x: number; y: number } | null>(null)
   const moved = useRef(false)
   const suppressClick = useRef(false)
@@ -405,34 +427,52 @@ export function RouteBoard({
 
   useEffect(() => {
     if (!hint) return
-    // เด้งการ์ดที่เพิ่งวางผิดให้สั่น
     setShake(placing)
   }, [hint, placing])
 
+  // วางผิด: การ์ดที่ snap ค้างไว้เด้งกลับที่เดิม
   useEffect(() => {
-    if (!draggingId) return
+    if (placing === null) setDrag((d) => (d && d.phase === 'snap' ? { ...d, phase: 'back' } : d))
+  }, [placing])
+
+  const dragging = drag?.phase === 'drag' ? drag.id : null
+  useEffect(() => {
+    if (!dragging) return
+    const hit = (x: number, y: number) => {
+      const t = nextRef.current?.getBoundingClientRect()
+      return !!t && x >= t.left - 8 && x <= t.right + 8 && y >= t.top - 10 && y <= t.bottom + 10
+    }
     const move = (event: PointerEvent) => {
       if (event.pointerType === 'mouse' && event.buttons === 0) return
       const point = { x: event.clientX, y: event.clientY }
-      setDragPoint(point)
       if (!moved.current) {
         const start = dragStart.current
         if (start && Math.hypot(point.x - start.x, point.y - start.y) > 6) moved.current = true
       }
-      if (moved.current) event.preventDefault()
+      if (moved.current) {
+        event.preventDefault()
+        setDrag((d) => (d ? { ...d, x: point.x, y: point.y } : d))
+        setOver(hit(point.x, point.y))
+      }
     }
     const up = (event: PointerEvent) => {
-      const target = nextRef.current?.getBoundingClientRect()
-      const over = target && event.clientX >= target.left && event.clientX <= target.right && event.clientY >= target.top && event.clientY <= target.bottom
-      if (moved.current && over) {
-        suppressClick.current = true
-        buzz()
-        onPlace(draggingId)
-      }
-      setDraggingId(null)
-      setDragPoint(null)
+      const wasMoved = moved.current
       dragStart.current = null
       moved.current = false
+      setOver(false)
+      if (!wasMoved) {
+        setDrag(null)
+        return
+      }
+      suppressClick.current = true
+      if (hit(event.clientX, event.clientY)) {
+        const t = nextRef.current!.getBoundingClientRect()
+        buzz()
+        setDrag((d) => (d ? { ...d, x: t.left + t.width / 2 + 18, y: t.top + t.height / 2, phase: 'snap' } : d))
+        onPlace(dragging)
+      } else {
+        setDrag((d) => (d ? { ...d, phase: 'back' } : d))
+      }
     }
     window.addEventListener('pointermove', move, { passive: false })
     window.addEventListener('pointerup', up)
@@ -442,110 +482,67 @@ export function RouteBoard({
       window.removeEventListener('pointerup', up)
       window.removeEventListener('pointercancel', up)
     }
-  }, [draggingId, onPlace])
+  }, [dragging, onPlace])
 
   function startDrag(event: React.PointerEvent<HTMLButtonElement>, stepId: string) {
-    if (placing) return
+    if (placing || drag) return
     moved.current = false
-    const point = { x: event.clientX, y: event.clientY }
-    dragStart.current = point
-    setDragPoint(point)
-    setDraggingId(stepId)
+    const r = event.currentTarget.getBoundingClientRect()
+    dragStart.current = { x: event.clientX, y: event.clientY }
+    setDrag({ id: stepId, x: event.clientX, y: event.clientY, ox: r.left + r.width / 2, oy: r.top + r.height / 2, phase: 'drag' })
   }
+
+  const ghostTarget = drag ? (drag.phase === 'back' ? { x: drag.ox, y: drag.oy } : { x: drag.x, y: drag.y }) : null
 
   return (
     <div className={`${SCROLL} m4-screen m4-route-screen`}>
       {hint ? (
-        <Say who="dome" mood="greet" className="m4-route-hint">
+        <Say mood="thinking" className="m4-route-hint">
           <span role="status" className="font-bold">
             {hint}
           </span>
         </Say>
       ) : null}
 
-      <PixelPanel variant="paper" className="m4-clipboard m4-route-paper flex min-h-0 flex-1 flex-col p-3">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-title-sm font-extrabold">แผงเดินเรื่อง</p>
-          <p className="rounded-lg bg-[#3b1d8f] px-2.5 py-1 text-label font-extrabold text-white" aria-live="polite">
-            เส้นทาง .th · {placed.length}/{total}
-          </p>
-        </div>
-        <div className="mt-2 grid grid-cols-2 rounded-xl border-2 border-[#7a5a3a] bg-[#ece4ff] p-1" role="tablist" aria-label="เส้นทางการจด">
+      <ClipPanel title="แผงเดินเรื่อง" className="m4-route-paper">
+        <div className="m4-tabs" role="tablist" aria-label="เส้นทางการจด">
           {(['th', 'com'] as const).map((kind) => (
-            <button
-              key={kind}
-              type="button"
-              role="tab"
-              aria-selected={route === kind}
-              onClick={() => {
-                setRoute(kind)
-                if (kind === 'com') setShake(null)
-              }}
-              className={cn('min-h-10 rounded-lg px-2 text-label font-extrabold transition', route === kind ? 'bg-[#6f3ec4] text-white shadow-[0_3px_0_#3b1d8f]' : 'text-[#3b1d8f]')}
-            >
+            <button key={kind} type="button" role="tab" aria-selected={route === kind} onClick={() => setRoute(kind)} className={cn(route === kind && 'is-on')}>
               เส้นทาง .{kind}
             </button>
           ))}
         </div>
         {route === 'com' ? (
-          <p className="mt-2 rounded-xl border-2 border-dashed border-[#b89569] bg-[#fff3c4] px-2.5 py-2 text-label font-semibold text-[#5c4228]">
-            เส้นทาง .com จ่ายก่อนใส่ตะกร้า ไม่ต้องแนบเอกสาร · ในรอบนี้ให้เรียนเส้นทาง .th ตามบัตรนามสกุลของร้าน
-          </p>
+          <p className="m4-com-note">เส้นทาง .com จ่ายก่อนใส่ตะกร้า ไม่ต้องแนบเอกสาร · รอบนี้เดินเส้นทาง .th ตามบัตรนามสกุลของร้าน</p>
         ) : null}
-        <p className="mt-1 text-label text-[#6b5a43] max-[400px]:sr-only">{data.board.instruction}</p>
-        {/* ช่องที่ยังไม่ถึงคิวย่อเป็น 2 คอลัมน์ แผงจึงไม่ดันถาดการ์ดลงใต้จอ */}
-        <ol className="mt-2 flex min-h-0 flex-1 flex-wrap content-start gap-1.5 overflow-y-auto pr-1">
+        <p className="sr-only">{data.board.instruction}</p>
+        <ol className="m4-slots" aria-live="polite">
           {Array.from({ length: total }, (_, i) => {
             const id = placed[i]
             const isNext = i === placed.length
             return (
-              <li key={i} ref={isNext ? nextRef : undefined} className={cn('m4-route-slot flex items-center gap-2', !id && !isNext ? 'w-[calc(50%-0.1875rem)]' : 'w-full', isNext && 'scroll-mt-24 scroll-mb-6')} aria-current={isNext ? 'step' : undefined}>
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    'grid size-9 shrink-0 place-items-center rounded-full border-2 text-body font-extrabold',
-                    id ? 'border-[#3b1d8f] bg-[#7c4dff] text-white' : isNext ? 'border-[#b8860b] bg-[#ffcf4a] text-[#4a3000]' : 'border-[#c9b68c] bg-[#f1e6c8] text-[#5c4228]',
-                  )}
-                >
+              <li key={i} ref={isNext ? nextRef : undefined} className={cn('m4-slot', id && 'is-done', isNext && 'is-next', isNext && over && 'is-over')} aria-current={isNext ? 'step' : undefined}>
+                <span className="m4-slot-no" aria-hidden="true">
                   {i + 1}
                 </span>
                 {id ? (
-                  <motion.span
-                    initial={reduce ? false : { scale: 0.7, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={spring}
-                    className="m4-placed flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border-2 border-[#b9a8ea] bg-[#ece4ff] px-2.5 py-1 text-body font-bold text-pretty"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
-                    <img src={stepIcon(id)} alt="" aria-hidden className="m4-step-icon" />
-                    <span className="min-w-0 flex-1">{text.get(id)}</span>
-                    <CheckIcon width={20} height={20} aria-hidden className="shrink-0 text-quest-700" />
+                  <motion.span initial={reduce ? false : { scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring} className="m4-slot-card" title={full.get(id)}>
+                    <StepIcon id={id} size={22} />
+                    <span className="min-w-0 flex-1 truncate">{short.get(id)}</span>
+                    <Glyph kind="check" size={18} className="text-[#2f9e57]" />
                   </motion.span>
                 ) : (
-                  <motion.span
-                    animate={isNext && !reduce ? { boxShadow: ['0 0 0 0 rgba(255,207,74,0.0)', '0 0 0 5px rgba(255,207,74,0.55)', '0 0 0 0 rgba(255,207,74,0.0)'] } : undefined}
-                    transition={isNext ? { duration: 1.6, repeat: Infinity } : undefined}
-                    className={cn(
-                      'grid min-h-11 min-w-0 flex-1 place-items-center rounded-xl border-2 border-dashed text-body font-extrabold',
-                      isNext ? 'border-[#b8860b] bg-[#fff3c4] text-[#5c4228]' : 'border-[#d9c7a0] bg-[#f6eed8] text-[#6b5a43]',
-                    )}
-                  >
-                    {isNext ? 'วางการ์ดขั้นที่ ' + (i + 1) + ' ที่นี่' : '?'}
-                  </motion.span>
+                  <span className="m4-slot-empty">{isNext ? (over ? 'ปล่อยเลย' : '?') : '?'}</span>
                 )}
               </li>
             )
           })}
         </ol>
-      </PixelPanel>
+      </ClipPanel>
 
-      {/* ถาดอยู่ใน flow ของแผงเสมอ จึงกันพื้นที่ไว้จริงและไม่บังแถวความคืบหน้าบนมือถือ */}
-      <div className={cn(PIXEL_BOX, 'm4-card-tray relative shrink-0 p-2.5')}>
-        <p className="flex items-baseline justify-between gap-2 px-0.5">
-          <span className="text-label font-extrabold text-[#6a35b8]">ลากการ์ดไปวางช่องที่กะพริบ หรือแตะ</span>
-          <span className="whitespace-nowrap text-label text-[#6b4a2b]">เหลือ {tray.length} ใบ เลื่อนดู</span>
-        </p>
-        <ul className="-mx-1 mt-2 flex snap-x gap-2 overflow-x-auto px-1 pb-1.5" aria-label="ตัวเลือกขั้นตอน">
+      <div className="m4-tray">
+        <p className="m4-tray-tag">ตัวเลือกขั้นตอน (ลากไปวางในช่อง หรือแตะ)</p>
+        <ul className="m4-tray-grid" aria-label="ตัวเลือกขั้นตอน">
           {tray.map((s) => (
             <motion.li
               key={s.id}
@@ -553,12 +550,13 @@ export function RouteBoard({
               animate={shake === s.id && !reduce ? { x: [0, -8, 8, -5, 5, 0] } : { x: 0 }}
               transition={{ duration: 0.35 }}
               onAnimationComplete={() => setShake((v) => (v === s.id ? null : v))}
-              className="flex w-[46%] max-w-56 shrink-0 snap-start"
+              className={cn(drag?.id === s.id && 'is-lifted')}
             >
               <button
                 type="button"
                 disabled={placing !== null}
-                aria-grabbed={draggingId === s.id}
+                aria-label={s.text}
+                aria-grabbed={drag?.id === s.id}
                 onPointerDown={(event) => startDrag(event, s.id)}
                 onClick={() => {
                   if (suppressClick.current) {
@@ -568,24 +566,28 @@ export function RouteBoard({
                   buzz()
                   onPlace(s.id)
                 }}
-                className="m4-tray-card flex min-h-16 w-full items-center gap-2 rounded-xl border-2 border-[#b8860b] bg-[#fff6dc] px-2.5 py-1.5 text-left text-label font-bold text-pretty text-[#2a1748] shadow-[0_3px_0_#b8860b] focus-visible:outline-3 focus-visible:outline-focus disabled:opacity-60"
+                className="m4-tray-card"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
-                <img src={stepIcon(s.id)} alt="" aria-hidden className="m4-step-icon" draggable={false} />
-                <span className="min-w-0 flex-1">{s.text}</span>
+                <StepIcon id={s.id} size={26} />
+                <span>{s.short ?? s.text}</span>
               </button>
             </motion.li>
           ))}
         </ul>
       </div>
-      {draggingId && dragPoint ? (
-        <div className="m4-drag-ghost rounded-xl border-2 border-[#b8860b] bg-[#fff6dc] px-2.5 py-2 text-label font-bold text-[#2a1748] shadow-[0_3px_0_#b8860b]" style={{ left: dragPoint.x, top: dragPoint.y }}>
-          <span className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
-            <img src={stepIcon(draggingId)} alt="" aria-hidden className="m4-step-icon" />
-            {text.get(draggingId)}
-          </span>
-        </div>
+      {drag && ghostTarget ? (
+        <motion.div
+          className="m4-drag-ghost"
+          initial={false}
+          animate={ghostTarget}
+          transition={drag.phase === 'drag' || reduce ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 26 }}
+          onAnimationComplete={() => drag.phase === 'back' && setDrag(null)}
+        >
+          <div className={cn('m4-tray-card is-ghost', drag.phase === 'snap' && 'is-snap')}>
+            <StepIcon id={drag.id} size={26} />
+            <span>{short.get(drag.id)}</span>
+          </div>
+        </motion.div>
       ) : null}
     </div>
   )
@@ -604,12 +606,11 @@ export function MiniStep({
   title: string
   body: string
   action: string
-  /** ถ้ามีค่า จะทำงานเองแล้วเปิดปุ่มไปต่อเมื่อครบเวลา */
   autoMs?: number
   onDone: () => void
   reason?: string
 }) {
-  const { reduce, spring } = useGameMotion()
+  const { reduce } = useGameMotion()
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle')
   const timer = useRef<number | null>(null)
   useEffect(() => () => void (timer.current && window.clearTimeout(timer.current)), [])
@@ -621,30 +622,26 @@ export function MiniStep({
 
   return (
     <div className={`${SCROLL} m4-screen m4-mini-screen`}>
-      <PixelPanel variant="paper" className="m4-clipboard flex flex-col gap-3" initial={reduce ? false : { y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring}>
-        <p className="text-title-sm font-extrabold">{title}</p>
+      <ClipPanel title={title}>
         <p className="text-body text-pretty">{body}</p>
-        <div className="h-3 overflow-hidden rounded-full border-2 border-[#7a5a3a] bg-[#f1e6c8]" aria-hidden="true">
+        <div className="m4-meter mt-3" aria-hidden="true">
           <motion.div
-            className="h-full bg-[#7c4dff]"
             initial={{ width: '0%' }}
             animate={{ width: state === 'idle' ? '0%' : state === 'busy' ? '70%' : '100%' }}
             transition={reduce ? { duration: 0 } : { duration: state === 'busy' ? (autoMs ?? 900) / 1000 : 0.25 }}
           />
         </div>
         {state === 'done' ? (
-          <p role="status" className="flex items-start gap-2 text-body font-extrabold text-quest-700">
+          <p role="status" className="mt-2 flex items-start gap-2 text-body font-extrabold text-[#1d7a3e]">
             <CheckIcon width={22} height={22} aria-hidden className="mt-0.5 shrink-0" />
             <span>เรียบร้อย{reason ? ` · ${reason}` : ''}</span>
           </p>
         ) : null}
-      </PixelPanel>
+      </ClipPanel>
       {state === 'done' ? (
-        <GameButton variant="gold" onClick={onDone}>
-          ไปต่อ
-        </GameButton>
+        <GameButton onClick={onDone}>ไปต่อ ›</GameButton>
       ) : (
-        <GameButton variant="primary" loading={state === 'busy'} onClick={run}>
+        <GameButton loading={state === 'busy'} onClick={run}>
           {action}
         </GameButton>
       )}
@@ -652,7 +649,7 @@ export function MiniStep({
   )
 }
 
-/** ─── R05 ฟอร์มและเอกสาร ─── */
+/** ─── R05 ใบขอจด: ข้อมูลผู้ขอ + แนบเอกสาร ─── */
 
 export type FormValue = { applicant: string; email: string; years: 1 | 2 | 3 }
 
@@ -666,50 +663,58 @@ export function FormPanel({ domain, value, onChange, onDone }: { domain: string;
   }
   return (
     <div className={`${SCROLL} m4-screen m4-form-screen`}>
-      <PixelPanel variant="paper" className="m4-clipboard m4-form-paper flex flex-col gap-3">
-        <p className="text-title-sm font-extrabold">ใบขอจดทะเบียน {domain}</p>
-        <label className="flex flex-col gap-1">
-          <span className="text-label font-bold">ชื่อผู้ขอจด</span>
-          <input className={INPUT_LIGHT} value={value.applicant} maxLength={60} onChange={(e) => onChange({ ...value, applicant: e.target.value })} autoComplete="off" />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-label font-bold">อีเมลรับผลตรวจ</span>
-          <input className={INPUT_LIGHT} type="email" value={value.email} maxLength={80} onChange={(e) => onChange({ ...value, email: e.target.value })} autoComplete="off" autoCapitalize="none" spellCheck={false} />
-        </label>
-        <fieldset>
-          <legend className="text-label font-bold">จำนวนปีที่จด</legend>
-          <div role="radiogroup" className="mt-1 grid grid-cols-3 gap-2">
-            {([1, 2, 3] as const).map((y) => (
-              <button
-                key={y}
-                type="button"
-                role="radio"
-                aria-checked={value.years === y}
-                onClick={() => {
-                  buzz()
-                  onChange({ ...value, years: y })
-                }}
-                className={cn('min-h-12 rounded-xl border-2 text-body font-extrabold focus-visible:outline-3 focus-visible:outline-focus', value.years === y ? 'border-[#3b1d8f] bg-[#ece4ff] shadow-[0_3px_0_#3b1d8f]' : 'border-[#c9b68c] bg-white')}
-              >
-                {y} ปี
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        {err ? (
-          <p role="alert" className="text-label font-bold text-spark-700">
-            {err}
-          </p>
-        ) : null}
-      </PixelPanel>
-      <GameButton variant="gold" onClick={next}>
-        บันทึกข้อมูลผู้ขอจด
-      </GameButton>
+      <ClipPanel title={<span className="m4-title-domain">ใบขอจด {domain}</span>}>
+        <div className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="m4-field-label">ชื่อผู้ขอ</span>
+            <input className={INPUT} value={value.applicant} maxLength={60} onChange={(e) => onChange({ ...value, applicant: e.target.value })} autoComplete="off" />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="m4-field-label">อีเมล</span>
+            <input className={INPUT} type="email" value={value.email} maxLength={80} onChange={(e) => onChange({ ...value, email: e.target.value })} autoComplete="off" autoCapitalize="none" spellCheck={false} />
+          </label>
+          <YearsPicker value={value.years} onChange={(years) => onChange({ ...value, years })} />
+          {err ? (
+            <p role="alert" className="text-label font-bold text-spark-700">
+              {err}
+            </p>
+          ) : null}
+        </div>
+      </ClipPanel>
+      <GameButton onClick={next}>บันทึกข้อมูลผู้ขอจด</GameButton>
     </div>
   )
 }
 
+function YearsPicker({ value, onChange }: { value: 1 | 2 | 3; onChange: (y: 1 | 2 | 3) => void }) {
+  return (
+    <fieldset>
+      <legend className="m4-field-label">ระยะเวลาจดทะเบียน</legend>
+      <div role="radiogroup" className="mt-1 grid grid-cols-3 gap-2">
+        {([1, 2, 3] as const).map((y) => (
+          <button
+            key={y}
+            type="button"
+            role="radio"
+            aria-checked={value === y}
+            onClick={() => {
+              buzz()
+              onChange(y)
+            }}
+            className={cn('m4-radio', value === y && 'is-on')}
+          >
+            <span className="m4-radio-dot" aria-hidden="true" />
+            {y} ปี
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  )
+}
+
 export type Submission = { tld: string; docId: string }
+
+const DOC_ART: Record<string, string> = { 'doc-id': 'doc-idcard', 'doc-company': 'doc-company', 'doc-trade': 'doc-trade' }
 
 export function DocsPanel({
   data,
@@ -717,6 +722,7 @@ export function DocsPanel({
   initialTld,
   initialDoc,
   note,
+  form,
   onSubmit,
 }: {
   data: RegistrarData
@@ -725,6 +731,8 @@ export function DocsPanel({
   initialTld: string
   initialDoc?: string
   note?: string
+  /** ข้อมูลผู้ขอที่กรอกไว้ขั้นก่อน (แสดงเป็นสรุปบนใบขอจด) */
+  form?: FormValue
   onSubmit: (s: Submission) => void
 }) {
   const { reduce, spring } = useGameMotion()
@@ -735,79 +743,93 @@ export function DocsPanel({
   return (
     <div className={`${SCROLL} m4-screen m4-docs-screen`}>
       {note ? (
-        <Say who="dome" mood="greet">
+        <Say mood="thinking">
           <span className="font-bold">{note}</span>
         </Say>
       ) : null}
-      <PixelPanel variant="paper" className="m4-clipboard m4-docs-paper flex flex-col gap-3">
-        <p className="text-title-sm font-extrabold">แนบเอกสารยืนยันตัวตน</p>
-        <fieldset>
-          <legend className="text-label font-bold">นามสกุลที่ขอจด ({domainLabel})</legend>
-          <div role="radiogroup" className="mt-1 grid grid-cols-3 gap-2">
-            {TH_TLDS.map((t) => (
-              <button
-                key={t}
-                type="button"
-                role="radio"
-                aria-checked={tld === t}
-                onClick={() => {
-                  buzz()
-                  setTld(t)
-                  setReviewed(false)
-                }}
-                className={cn('min-h-12 rounded-xl border-2 text-label font-extrabold focus-visible:outline-3 focus-visible:outline-focus', tld === t ? 'border-[#3b1d8f] bg-[#ece4ff] shadow-[0_3px_0_#3b1d8f]' : 'border-[#c9b68c] bg-white')}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend className="text-label font-bold">ถาดเอกสาร เลือก 1 ใบให้ตรงกับนามสกุล</legend>
-          <div role="radiogroup" className="mt-1 grid grid-cols-3 gap-2">
-            {data.docs.map((d) => {
-              const on = doc === d.id
-              return (
-                <motion.button
-                  key={d.id}
+      <ClipPanel title={<span className="m4-title-domain">ใบขอจด {domainLabel}</span>}>
+        <div className="flex flex-col gap-2.5">
+          {form ? (
+            <dl className="m4-form-summary">
+              <div>
+                <dt>ชื่อผู้ขอ</dt>
+                <dd>{form.applicant || '-'}</dd>
+              </div>
+              <div>
+                <dt>อีเมล</dt>
+                <dd>{form.email || '-'}</dd>
+              </div>
+              <div>
+                <dt>ระยะเวลา</dt>
+                <dd>{form.years} ปี</dd>
+              </div>
+            </dl>
+          ) : null}
+          <fieldset>
+            <legend className="m4-field-label">นามสกุลที่ขอจด</legend>
+            <div role="radiogroup" className="mt-1 grid grid-cols-3 gap-2">
+              {TH_TLDS.map((t) => (
+                <button
+                  key={t}
                   type="button"
                   role="radio"
-                  aria-checked={on}
-                  aria-label={d.label}
-                  whileTap={reduce ? undefined : { scale: 0.97 }}
-                  animate={on && !reduce ? { y: -3 } : { y: 0 }}
-                  transition={spring}
+                  aria-checked={tld === t}
                   onClick={() => {
                     buzz()
-                    setDoc(d.id)
+                    setTld(t)
                     setReviewed(false)
                   }}
-                  className={cn('m4-doc-card relative flex min-h-28 flex-col items-center gap-1.5 rounded-md border-4 px-1.5 py-2 text-center text-label font-extrabold leading-tight focus-visible:outline-3 focus-visible:outline-focus', on ? 'border-[#3b1d8f] bg-[#ece4ff] shadow-[0_4px_0_#3b1d8f]' : 'border-[#0e0720] bg-white shadow-[0_4px_0_#c9b68c]')}
+                  className={cn('m4-radio', tld === t && 'is-on')}
                 >
-                  <DocArt id={d.id} />
-                  <span className="text-pretty">{d.label}</span>
-                  {on ? (
-                    <span aria-hidden="true" className="absolute -top-2 -right-2 grid size-7 -rotate-12 place-items-center rounded-full border-2 border-[#0e0720] bg-quest-500 text-white shadow-[0_2px_0_#0e0720]">
-                      <CheckIcon width={16} height={16} />
+                  <span className="m4-radio-dot" aria-hidden="true" />
+                  {t}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset className="m4-attach">
+            <legend>แนบเอกสาร</legend>
+            <div role="radiogroup" className="grid grid-cols-3 gap-2">
+              {data.docs.map((d) => {
+                const on = doc === d.id
+                return (
+                  <motion.button
+                    key={d.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    aria-label={d.label}
+                    whileTap={reduce ? undefined : { scale: 0.96 }}
+                    animate={on && !reduce ? { y: -4 } : { y: 0 }}
+                    transition={spring}
+                    onClick={() => {
+                      buzz()
+                      setDoc(d.id)
+                      setReviewed(false)
+                    }}
+                    className={cn('m4-doc-card', on && 'is-on')}
+                  >
+                    <DocImage id={d.id} />
+                    <span className="text-pretty">{d.label}</span>
+                    <span aria-hidden="true" className="m4-doc-tick">
+                      {on ? <CheckIcon width={14} height={14} /> : null}
                     </span>
-                  ) : null}
-                </motion.button>
-              )
-            })}
-          </div>
-        </fieldset>
-        {reviewed ? (
-          <p role="status" className="rounded-xl bg-[#f1e6c8] p-3 text-label font-semibold">
-            ตรวจก่อนส่ง: ขอจด {domainLabel} พร้อมแนบ {data.docs.find((d) => d.id === doc)?.label} ถ้าตรวจแล้วถูกต้องกดส่งคำขอได้
-          </p>
-        ) : null}
-      </PixelPanel>
+                  </motion.button>
+                )
+              })}
+            </div>
+          </fieldset>
+          {reviewed ? (
+            <p role="status" className="m4-review-note">
+              ตรวจก่อนส่ง: ขอจด <b>{domainLabel}</b> แนบ <b>{data.docs.find((d) => d.id === doc)?.label}</b> ถ้าถูกต้องกดส่งคำขอได้
+            </p>
+          ) : null}
+        </div>
+      </ClipPanel>
       {reviewed ? (
-        <GameButton variant="gold" onClick={() => doc && onSubmit({ tld, docId: doc })}>
-          ส่งคำขอให้เจ้าหน้าที่
-        </GameButton>
+        <GameButton onClick={() => doc && onSubmit({ tld, docId: doc })}>ส่งคำขอให้เจ้าหน้าที่ ›</GameButton>
       ) : (
-        <GameButton variant="primary" disabled={!doc} onClick={() => setReviewed(true)}>
+        <GameButton disabled={!doc} onClick={() => setReviewed(true)}>
           ตรวจข้อมูลก่อนส่ง
         </GameButton>
       )}
@@ -815,7 +837,17 @@ export function DocsPanel({
   )
 }
 
-/** ─── R06 กล่องอีเมล (ขั้นรับอีเมลแจ้งผล) ─── */
+function DocImage({ id }: { id: string }) {
+  const src = usePixelSrc(DOC_ART[id] ?? 'doc-trade', '')
+  return (
+    <span className="m4-doc-art">
+      {/* eslint-disable-next-line @next/next/no-img-element -- ภาพเอกสารสถิตใน public */}
+      {src ? <img src={src} alt="" aria-hidden draggable={false} className="m4-px" /> : <DocArt id={id} />}
+    </span>
+  )
+}
+
+/** ─── R06 กล่องอีเมล ─── */
 
 export function EmailScreen({
   data,
@@ -823,6 +855,7 @@ export function EmailScreen({
   domainName,
   ownerType,
   submission,
+  form,
   docsEvent,
   docsDone,
   onDocsDone,
@@ -834,6 +867,7 @@ export function EmailScreen({
   domainName: string
   ownerType: 'individual' | 'company'
   submission: Submission
+  form?: FormValue
   docsEvent: RegistrarEvent | undefined
   docsDone: boolean
   onDocsDone: (choice: number, correct: boolean) => void
@@ -846,7 +880,7 @@ export function EmailScreen({
   const [round, setRound] = useState(0)
   const [mail, setMail] = useState<{ outcome: 'approve' | 'more' | 'reject'; message: string } | null>(null)
   const [fail, setFail] = useState(false)
-  const [sheet, setSheet] = useState(false)
+  const [asking, setAsking] = useState(false)
   const [resubmit, setResubmit] = useState(false)
   const [rev, setRev] = useState(0)
   const [wait, setWait] = useState(true)
@@ -870,7 +904,7 @@ export function EmailScreen({
       if (!live) return
       if (!r || r.kind !== 'docs') return setFail(true)
       setMail({ outcome: r.outcome, message: r.message })
-      if (r.outcome === 'more' && !docsDone) setSheet(true)
+      if (r.outcome === 'more' && !docsDone) setAsking(true)
     })()
     return () => {
       live = false
@@ -884,6 +918,7 @@ export function EmailScreen({
       <DocsPanel
         data={data}
         domainName={domainName}
+        form={form}
         initialTld={mail?.outcome === 'reject' ? (ownerType === 'company' ? '.co.th' : '.in.th') : submission.tld}
         note={mail?.outcome === 'reject' ? 'กลับไปเลือกนามสกุลที่ร้านมีสิทธิ์จดตามบัตร แล้วแนบเอกสารใหม่' : 'ส่งเอกสารที่ถูกต้องและชัดเจนอีกครั้ง'}
         onSubmit={(s) => {
@@ -897,102 +932,110 @@ export function EmailScreen({
     )
   }
 
-  const tone = mail?.outcome === 'approve' ? 'ok' : mail?.outcome === 'reject' ? 'no' : 'more'
+  const subject = mail?.outcome === 'approve' ? 'อนุมัติคำขอ' : mail?.outcome === 'reject' ? 'ไม่อนุมัติคำขอ' : 'ขอเอกสารเพิ่ม'
   return (
     <div className={`${SCROLL} m4-screen m4-email-screen`}>
-      <PixelPanel variant="dark" className={cn(PIXEL_BOX, 'm4-email-top flex flex-col gap-1')}>
-        <p className="text-label font-extrabold text-[#6a35b8]">กล่องอีเมล</p>
-        <p className="text-label text-[#6b4a2b]">รอเจ้าหน้าที่ตรวจคำขอ {domainLabel}</p>
-      </PixelPanel>
-      {wait ? (
-        <PixelPanel variant="paper" className="flex items-center gap-3">
-          <span aria-hidden="true" className="size-6 animate-spin rounded-full border-4 border-[#7c4dff] border-t-transparent" />
-          <p className="text-body font-bold" role="status">
-            เจ้าหน้าที่กำลังตรวจคำขอและเอกสาร
-          </p>
-        </PixelPanel>
+      <motion.div className="m4-laptop" initial={reduce ? false : { y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring}>
+        <div className="m4-laptop-screen">
+          <div className="m4-mail-bar">
+            <Glyph kind="mail" size={18} />
+            <b>กล่องอีเมล</b>
+            <span aria-hidden="true">•••</span>
+          </div>
+          <div className="m4-mail-body">
+            <ul className="m4-mail-list" aria-hidden="true">
+              {[0, 1, 2, 3].map((i) => (
+                <li key={i} className={cn(i === 0 && 'is-on', i === 0 && !wait && mail && 'is-new')}>
+                  <Glyph kind="mail" size={14} />
+                  {i === 0 ? <small>ผู้รับจด</small> : <i />}
+                </li>
+              ))}
+            </ul>
+            <div className="m4-mail-read" aria-live="polite">
+              {wait ? (
+                <p className="flex items-center gap-2 text-label font-bold" role="status">
+                  <span aria-hidden="true" className="size-4 shrink-0 animate-spin rounded-full border-2 border-[#6b4fd8] border-t-transparent" />
+                  เจ้าหน้าที่กำลังตรวจคำขอ {domainLabel}
+                </p>
+              ) : fail ? (
+                <div className="flex flex-col gap-2">
+                  <p role="alert" className="text-label font-bold text-spark-700">
+                    ตรวจอีเมลไม่ได้ตอนนี้ ลองใหม่อีกครั้ง
+                  </p>
+                  <button type="button" className="m4-mini-btn" onClick={() => setRev((n) => n + 1)}>
+                    ลองใหม่
+                  </button>
+                </div>
+              ) : mail ? (
+                <motion.div initial={reduce ? false : { y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring} className="relative">
+                  <p className="m4-mail-from">
+                    <Glyph kind="mail" size={16} /> <b>ผู้ให้บริการรับจดทะเบียน</b>
+                  </p>
+                  <p className="m4-mail-subject">
+                    เรื่อง: <b className={cn(mail.outcome === 'approve' ? 'text-[#1d7a3e]' : mail.outcome === 'reject' ? 'text-[#b3261e]' : 'text-[#8a4b00]')}>{subject}</b>
+                  </p>
+                  <p className="text-label text-pretty">{mail.message}</p>
+                  <p className="mt-1 text-[11px] text-pretty text-[#6b5a43]">
+                    คำขอ: {domainLabel} · แนบ {data.docs.find((d) => d.id === submission.docId)?.label ?? 'เอกสาร'}
+                  </p>
+                  {mail.outcome === 'approve' ? <Stamp kind="approve" label="อนุมัติ" className="m4-mail-stamp" /> : null}
+                  {mail.outcome === 'reject' ? <Stamp kind="reject" label="ไม่อนุมัติ" className="m4-mail-stamp" /> : null}
+                </motion.div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+        <div className="m4-laptop-base" aria-hidden="true" />
+      </motion.div>
+
+      {asking && docsEvent && mail ? (
+        <div className="flex flex-col gap-2">
+          <Say mood="thinking">{docsEvent.question}</Say>
+          <QuizBody
+            question={docsEvent.question}
+            showQuestion={false}
+            choices={docsEvent.choices}
+            check={eventQuiz(check, docsEvent.id)}
+            onDone={(choice, correct) => {
+              onDocsDone(choice, correct)
+              setAsking(false)
+            }}
+          />
+        </div>
       ) : null}
-      {fail ? (
-        <PixelPanel variant="paper" className="flex flex-col gap-2">
-          <p role="alert" className="text-body font-bold text-spark-700">
-            ตรวจอีเมลไม่ได้ตอนนี้ ลองใหม่อีกครั้ง
-          </p>
-          <GameButton variant="primary" onClick={() => setRev((n) => n + 1)}>
-            ลองใหม่
-          </GameButton>
-        </PixelPanel>
-      ) : null}
-      {mail ? (
-        <motion.div initial={reduce ? false : { y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring}>
-          <PixelPanel
-            variant="paper"
-            className={cn('m4-email-message flex flex-col gap-2', tone === 'ok' && 'border-quest-600', tone === 'no' && 'border-spark-600')}
-          >
-            <p className="text-label font-bold text-[#7a5a2c]">อีเมลจากผู้ให้บริการรับจดทะเบียน</p>
-            <p className={cn('text-title-sm font-extrabold', tone === 'ok' ? 'text-quest-700' : tone === 'no' ? 'text-spark-700' : 'text-[#8a4b00]')}>
-              {tone === 'ok' ? 'ผลตรวจ: อนุมัติ' : tone === 'no' ? 'ผลตรวจ: ไม่อนุมัติ' : 'ผลตรวจ: ขอเอกสารเพิ่ม'}
-            </p>
-            <p className="text-body text-pretty">{mail.message}</p>
-            <p className="text-label text-pretty text-[#6b5a43]">
-              คำขอที่ส่ง: {domainLabel} · แนบ {data.docs.find((d) => d.id === submission.docId)?.label ?? 'เอกสาร'}
-            </p>
-          </PixelPanel>
-        </motion.div>
-      ) : null}
+
       <div className="m4-outcomes" aria-label="ผลที่อาจเกิดขึ้น">
         <p>ผลที่อาจเกิดขึ้น</p>
         <ul>
           {([
-            ['approve', 'check-mark-button', 'อนุมัติ', 'เอกสารถูกต้อง'],
-            ['more', 'memo', 'ขอเอกสารเพิ่ม', 'ไม่ครบหรือไม่ชัด'],
-            ['reject', 'warning', 'ไม่อนุมัติ', 'ไม่มีสิทธิ์ตามบัตร'],
+            ['approve', 'check', 'อนุมัติ', 'เอกสารถูกต้อง ดำเนินการต่อ'],
+            ['more', 'list', 'ขอเอกสารเพิ่ม', 'เอกสารไม่ครบหรือไม่ชัด'],
+            ['reject', 'cross', 'ไม่อนุมัติ', 'ไม่มีสิทธิ์ตามบัตร'],
           ] as const).map(([k, icon, t, d]) => (
             <li key={k} className={cn(`is-${k}`, mail?.outcome === k && 'is-now')} aria-current={mail?.outcome === k ? 'true' : undefined}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
-              <img src={`/icons/3d/${icon}.webp`} alt="" aria-hidden />
+              <Glyph kind={icon} size={22} />
               <b>{t}</b>
               <small>{d}</small>
             </li>
           ))}
         </ul>
       </div>
-      {mail?.outcome === 'approve' ? (
-        <GameButton variant="gold" onClick={onApproved}>
-          ได้รับอนุมัติ ไปชำระค่าธรรมเนียม
-        </GameButton>
+      {mail?.outcome === 'approve' ? <GameButton onClick={onApproved}>ได้รับอนุมัติ ไปชำระค่าธรรมเนียม ›</GameButton> : null}
+      {mail && mail.outcome !== 'approve' && !asking ? (
+        <GameButton onClick={() => setResubmit(true)}>{mail.outcome === 'reject' ? 'กลับไปเลือกนามสกุลที่มีสิทธิ์' : 'เลือกเอกสารที่ถูกแล้วส่งใหม่'}</GameButton>
       ) : null}
-      {mail && mail.outcome !== 'approve' && !sheet ? (
-        <GameButton variant="primary" onClick={() => setResubmit(true)}>
-          {mail.outcome === 'reject' ? 'กลับไปเลือกนามสกุลที่มีสิทธิ์' : 'เลือกเอกสารที่ถูกแล้วส่งใหม่'}
-        </GameButton>
-      ) : null}
-      <Sheets>
-        {sheet && docsEvent && mail ? (
-          <QuizSheet
-            key="docs"
-            title={docsEvent.title}
-            story={mail.message}
-            question={docsEvent.question}
-            choices={docsEvent.choices}
-            check={eventQuiz(check, docsEvent.id)}
-            onDone={(choice, correct) => {
-              onDocsDone(choice, correct)
-              setSheet(false)
-            }}
-          />
-        ) : null}
-      </Sheets>
     </div>
   )
 }
 
-/** ─── R07 ชำระเงิน ─── */
+/** ─── R07 ใบแจ้งค่าธรรมเนียม ─── */
 
 export function PayScreen({
   data,
   check,
   coins,
   years,
+  domain,
   payEvent,
   payDone,
   onPayEventDone,
@@ -1003,13 +1046,14 @@ export function PayScreen({
   check: Check
   coins: number
   years: number
+  domain: string
   payEvent: RegistrarEvent | undefined
   payDone: boolean
   onPayEventDone: (choice: number, correct: boolean) => void
   onPaid: (amount: number) => void
   onContinue: () => void
 }) {
-  const { reduce, spring } = useGameMotion()
+  const { reduce } = useGameMotion()
   const amount = data.fee.pricePerYear * years
   const [paid, setPaid] = useState(false)
   const [burst, setBurst] = useState(false)
@@ -1027,83 +1071,79 @@ export function PayScreen({
 
   return (
     <div className={`${SCROLL} m4-screen m4-pay-screen`}>
-      <PixelPanel variant="paper" className="m4-clipboard m4-invoice relative" initial={reduce ? false : { y: 60, rotate: 2, opacity: 0 }} animate={{ y: 0, rotate: 0, opacity: 1 }} transition={spring}>
-        <div className="flex min-h-9 items-center justify-between gap-2">
-          <p className="text-label font-extrabold tracking-wide text-[#7a5a2c]">ใบแจ้งค่าธรรมเนียม</p>
-          {paid ? (
-            <motion.span
-              initial={reduce ? false : { scale: 2.4, opacity: 0, rotate: -20 }}
-              animate={{ scale: 1, opacity: 1, rotate: -6 }}
-              transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 460, damping: 18 }}
-              className="shrink-0 whitespace-nowrap rounded-lg border-[3px] border-quest-700 bg-quest-50 px-2.5 text-body font-extrabold text-quest-700"
-              aria-hidden="true"
-            >
-              จ่ายแล้ว
-            </motion.span>
-          ) : null}
+      <ClipPanel title="ใบแจ้งค่าธรรมเนียม" className="m4-invoice">
+        {asked ? <Stamp kind="approve" label="อนุมัติแล้ว" className="m4-invoice-stamp" /> : null}
+        <p className="m4-field-label">ชื่อโดเมน</p>
+        <p className="m4-invoice-domain">{domain}</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <div>
+            <p className="m4-field-label">ระยะเวลาจดทะเบียน</p>
+            <p className="m4-invoice-box">{years} ปี</p>
+          </div>
+          <div>
+            <p className="m4-field-label">ค่าธรรมเนียม</p>
+            <p className="m4-invoice-box">{amount.toLocaleString('th-TH')} บาท</p>
+          </div>
         </div>
-        <p className="mt-1 text-body text-pretty">{data.fee.text}</p>
-        <dl className="mt-3 grid grid-cols-2 gap-y-1.5 border-t-2 border-dashed border-[#d9c7a0] pt-3 text-body">
-          <dt className="text-[#6b5a43]">จำนวนปี</dt>
-          <dd className="text-right font-extrabold">{years} ปี</dd>
-          <dt className="text-[#6b5a43]">ยอดที่ต้องจ่าย</dt>
-          <dd className="text-right font-extrabold">{amount.toLocaleString('th-TH')} เหรียญ</dd>
-          <dt className="text-[#6b5a43]">เหรียญในกระเป๋า</dt>
-          <dd className="text-right font-extrabold" aria-live="polite">
+        <p className="mt-1 text-center text-label font-bold text-[#4a3d7a]">รวมภาษีแล้ว · ในเกมจ่ายเป็นเหรียญ 1 เหรียญ = 1 บาท</p>
+        <p className="mt-1 flex items-center justify-between gap-2 border-t-2 border-dashed border-[#cfc4f3] pt-1.5 text-label font-bold">
+          <span>เหรียญในกระเป๋า</span>
+          <span aria-live="polite" className="tabular-nums">
             <CountUp to={coins} suffix=" เหรียญ" />
-          </dd>
-        </dl>
-        <p className="mt-3 flex items-start gap-2 text-label text-[#6b5a43]">
-          <InfoIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0" />
-          <span>{data.fee.note}</span>
+          </span>
         </p>
+        {paid ? <Stamp kind="paid" label="ชำระแล้ว" delay={0.1} className="m4-paid-stamp" /> : null}
         <AnimatePresence>
           {burst
-            ? Array.from({ length: 7 }, (_, i) => (
+            ? Array.from({ length: 8 }, (_, i) => (
                 <motion.span
                   key={i}
                   aria-hidden="true"
-                  initial={{ x: 0, y: 40, opacity: 1, scale: 1 }}
-                  animate={{ x: (i - 3) * 22, y: -90 - (i % 3) * 18, opacity: 0, scale: 0.7, rotate: 180 }}
-                  transition={{ duration: 1.1, delay: i * 0.06, ease: 'easeOut' }}
-                  className="pointer-events-none absolute right-1/2 bottom-6 size-6 rounded-full border-2 border-[#b8860b] bg-[#ffe27a]"
+                  initial={{ x: 0, y: 60, opacity: 1, scale: 1 }}
+                  animate={{ x: (i - 3.5) * 24, y: -110 - (i % 3) * 22, opacity: 0, scale: 0.7, rotate: 180 }}
+                  transition={{ duration: reduce ? 0 : 1.1, delay: i * 0.05, ease: 'easeOut' }}
+                  className="m4-coin m4-coin-fly"
                 />
               ))
             : null}
         </AnimatePresence>
-      </PixelPanel>
+      </ClipPanel>
 
-      <PixelPanel variant="dark" className={cn(PIXEL_BOX, 'm4-pay-compare flex flex-col gap-1')}>
-        <p className="text-label font-extrabold text-[#6a35b8]">เทียบกับเส้นทาง .com</p>
-        <p className="text-label text-pretty text-[#6b4a2b]">{data.fee.comNote}</p>
-        <div className="mt-1 grid grid-cols-2 gap-2 text-label">
-          <p className="rounded-lg bg-[#2a1748] p-2">
-            <span className="block font-extrabold text-[#6a35b8]">.th</span>ตรวจก่อน จ่ายหลังอนุมัติ
-          </p>
-          <p className="rounded-lg bg-[#2a1748] p-2">
-            <span className="block font-extrabold text-[#6a35b8]">.com</span>จ่ายก่อน ใช้ได้ทันที ({data.fee.comSample} เหรียญตัวอย่าง)
-          </p>
+      <div className="m4-pay-row">
+        <div className="m4-sign-dome">
+          <PixelDome mood="sign" size={96} />
+          <span className="m4-dome-sign">
+            เส้นทาง .th
+            <br />
+            จ่ายหลังอนุมัติ
+          </span>
         </div>
-      </PixelPanel>
+        <div className="m4-compare">
+          <p>เปรียบเทียบทางเลือก</p>
+          <div>
+            <ArtIcon px="icon-globe" glyph="globe" size={24} className="text-[#6b4fd8]" />
+            <span>
+              เส้นทาง .com จ่ายก่อน ใช้ได้ทันที
+              <small> ({data.fee.comSample} เหรียญตัวอย่าง)</small>
+            </span>
+          </div>
+        </div>
+      </div>
 
       {paid ? (
-        <p role="status" className={cn(SCENE_NOTE, 'flex items-center gap-2 text-body font-extrabold text-[#8cf0b0]')}>
-          <CheckIcon width={22} height={22} aria-hidden className="shrink-0" /> จ่ายแล้ว ระบบกำลังออกอีเมลยืนยัน
-        </p>
-      ) : null}
-      {paid ? (
-        <GameButton variant="gold" onClick={onContinue}>
-          ไปรับอีเมลยืนยัน
-        </GameButton>
+        <GameButton onClick={onContinue}>ไปรับอีเมลยืนยัน ›</GameButton>
       ) : (
-        <GameButton variant="primary" disabled={!asked || coins < amount} onClick={pay}>
-          {asked ? `จ่ายด้วยเหรียญ ${amount.toLocaleString('th-TH')} เหรียญ` : 'ตอบเพื่อนก่อนจึงจ่ายได้'}
+        <GameButton disabled={!asked || coins < amount} onClick={pay}>
+          <span className="m4-coin" aria-hidden="true" />
+          {asked ? `จ่าย ${amount.toLocaleString('th-TH')} เหรียญจำลอง` : 'ตอบเพื่อนก่อนจึงจ่ายได้'}
         </GameButton>
       )}
       <Sheets>
         {!asked && payEvent ? (
           <QuizSheet
             key="pay"
+            kicker="เพื่อนถาม"
+            icon="/icons/3d/speech-balloon.webp"
             title={payEvent.title}
             story={payEvent.story}
             question={payEvent.question}
@@ -1131,14 +1171,7 @@ export function DnsScreen({ data, onDone }: { data: RegistrarData; onDone: () =>
   const timer = useRef<number | null>(null)
   useEffect(() => () => void (timer.current && window.clearTimeout(timer.current)), [])
   const ref = data.dns.reference
-  // ข้อความตัวอย่างมีชื่อโฮสต์ยาว ตัดบรรทัดกลางชื่อได้ จึงแยกเป็นรายการ (รูปแบบ "นำ: ... (ท้าย)")
-  const sample = (() => {
-    const t = data.dns.sampleText
-    const i = t.indexOf(':')
-    if (i < 0 || !data.dns.nameserverPlaceholders.every((n) => t.includes(n))) return null
-    const tail = t.match(/\(([^)]*)\)\s*$/)?.[1] ?? ''
-    return { lead: t.slice(0, i).trim(), tail }
-  })()
+  const ph = data.dns.nameserverPlaceholders
 
   function save() {
     const x = a.trim().toLowerCase()
@@ -1147,89 +1180,80 @@ export function DnsScreen({ data, onDone }: { data: RegistrarData; onDone: () =>
     if (x === y) return setErr('Nameserver 2 ตัวต้องไม่ซ้ำกัน')
     setErr(null)
     setState('testing')
-    timer.current = window.setTimeout(() => setState('ok'), reduce ? 200 : 1400)
+    timer.current = window.setTimeout(() => setState('ok'), reduce ? 200 : 1600)
   }
 
   return (
     <div className={`${SCROLL} m4-screen m4-dns-screen`}>
-      <Say who="dome" mood="greet">
-        {data.dns.intro}
-      </Say>
-      <PixelPanel variant="dark" className={cn(PIXEL_BOX, 'm4-clipboard m4-dns-paper flex flex-col gap-3')}>
-        <p className="text-body font-extrabold text-[#8cf0b0]">ตั้งค่า DNS ของโดเมน</p>
-        {sample ? (
-          <div className="rounded-xl bg-[#1b0f36] p-2.5">
-            <p className="text-label text-pretty text-[#6b4a2b]">{sample.lead}</p>
-            <ul className="mt-1 flex flex-col gap-0.5">
-              {data.dns.nameserverPlaceholders.map((n, i) => (
-                <li key={n} className="flex flex-wrap items-baseline gap-x-2 text-label">
-                  <span className="whitespace-nowrap text-[#6b4a2b]">Nameserver {i + 1}</span>
-                  <span className="font-mono font-bold whitespace-nowrap text-[#3b2414]">{n}</span>
-                </li>
-              ))}
-            </ul>
-            {sample.tail ? <p className="mt-1 text-label text-[#6b4a2b]">{sample.tail}</p> : null}
+      <ClipPanel title="ตั้งค่า DNS">
+        <p className="-mt-1 text-center text-label font-semibold text-pretty text-[#4a3d7a]">{data.dns.intro}</p>
+        <div className="mt-2 flex flex-col gap-2">
+          {([['Nameserver 1', a, setA, 0], ['Nameserver 2', b, setB, 1]] as const).map(([label, val, set, i]) => (
+            <label key={label} className="flex flex-col gap-1">
+              <span className="m4-field-label">{label}</span>
+              <input className={cn(INPUT, 'font-mono')} placeholder={ph[i]} value={val} onChange={(e) => set(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} disabled={state !== 'edit'} />
+            </label>
+          ))}
+        </div>
+        <div className="m4-ns-sample">
+          <p>ผู้ให้บริการเว็บส่งมา (แตะเพื่อใส่)</p>
+          <div>
+            {ph.map((n, i) => (
+              <button
+                key={n}
+                type="button"
+                disabled={state !== 'edit'}
+                onClick={() => {
+                  buzz()
+                  if (i === 0) setA(n)
+                  else setB(n)
+                }}
+              >
+                {n}
+              </button>
+            ))}
           </div>
-        ) : (
-          <p className="text-label text-pretty text-[#6b4a2b]">{data.dns.sampleText}</p>
-        )}
-        {([['Nameserver 1', a, setA, 0], ['Nameserver 2', b, setB, 1]] as const).map(([label, val, set, i]) => (
-          <label key={label} className="flex flex-col gap-1">
-            <span className="text-label font-bold">{label}</span>
-            <input className={cn(INPUT, 'font-mono')} placeholder={data.dns.nameserverPlaceholders[i]} value={val} onChange={(e) => set(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} disabled={state !== 'edit'} />
-          </label>
-        ))}
+        </div>
         {err ? (
-          <p role="alert" className="text-label font-bold text-[#b5521b]">
+          <p role="alert" className="mt-1 text-label font-bold text-[#b5521b]">
             {err}
           </p>
         ) : null}
-        <div className="m4-dns-flow rounded-xl border-2 border-dashed border-[#5b4698] p-2.5">
-          <p className="text-label font-bold text-[#6a35b8]">
-            ดูของจริง: Nameserver ของ <span className="font-mono whitespace-nowrap">{ref.domain}</span>
+        <div className="m4-real-box">
+          <p>
+            <b>ดูของจริง</b> ตัวอย่างจาก <span className="font-mono">{ref.domain}</span> ใช้
           </p>
-          <ul className="mt-1 font-mono text-label text-[#6b4a2b]">
-            {ref.nameservers.map((n) => (
-              <li key={n} className="whitespace-nowrap">{n}</li>
-            ))}
-          </ul>
-          <p className="mt-1 text-label text-[#7a5a2c]">ตรวจเมื่อ {ref.checkedAt}</p>
+          <p className="font-mono">{ref.nameservers.slice(0, 2).join(' · ')}</p>
+          <small>ตรวจเมื่อ {ref.checkedAt}</small>
         </div>
-        <ol className="m4-dns-diagram" aria-label="ชื่อเว็บชี้ไปที่ DNS แล้วไปถึงเว็บร้าน">
+        <ol className={cn('m4-dns-diagram', state !== 'edit' && 'is-run', state === 'ok' && 'is-live')} aria-label="ชื่อเว็บชี้ไปที่ DNS แล้วไปถึงเว็บร้าน">
           {([
-            ['/icons/3d/television.webp', 'ชื่อเว็บ'],
-            ['/icons/3d/gear.webp', 'DNS'],
-            ['/setup/bakery.webp', 'เว็บร้าน'],
-          ] as const).map(([src, label], i) => (
-            <li key={label} className={cn(state === 'ok' && 'is-live')} style={{ transitionDelay: `${i * 120}ms` }}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- ภาพสถิตใน public */}
-              <img src={src} alt="" aria-hidden />
+            ['globe', 'icon-globe', 'ชื่อเว็บ'],
+            ['server', 'icon-server', 'DNS'],
+            ['shop', 'icon-shop', 'เว็บร้าน'],
+          ] as const).map(([g, px, label]) => (
+            <li key={label}>
+              <span className="m4-dns-node">
+                <ArtIcon px={px} glyph={g} size={32} />
+              </span>
               <span>{label}</span>
             </li>
           ))}
         </ol>
-      </PixelPanel>
-      {state === 'testing' ? (
-        <p role="status" className={cn(SCENE_NOTE, 'flex items-center gap-2 text-body text-[#3b2414]')}>
-          <span aria-hidden="true" className="size-5 shrink-0 animate-spin rounded-full border-4 border-[#7c4dff] border-t-transparent" />
-          กำลังทดสอบเปิดเว็บ
-        </p>
-      ) : null}
+      </ClipPanel>
       {state === 'ok' ? (
-        <motion.div role="status" initial={reduce ? false : { scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring} className="overflow-hidden rounded-2xl border-[3px] border-[#8cf0b0] bg-[#0e0720]">
-          <div className="flex items-center gap-2 bg-[#241446] px-3 py-1.5 text-label font-bold">
-            <span aria-hidden="true" className="size-2.5 rounded-full bg-[#8cf0b0]" />
-            เว็บเปิดได้แล้ว
-          </div>
-          <p className="p-3 text-body font-extrabold text-[#8cf0b0]">{data.dns.successText}</p>
+        <motion.div role="status" initial={reduce ? false : { scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring} className="m4-live-banner">
+          <Glyph kind="check" size={30} />
+          <span>
+            <b>เว็บเปิดได้แล้ว</b>
+            <small>{data.dns.successText}</small>
+          </span>
         </motion.div>
       ) : null}
       {state === 'ok' ? (
-        <GameButton variant="gold" onClick={onDone}>
-          ข้ามเวลาไป 1 ปี
-        </GameButton>
+        <GameButton onClick={onDone}>ข้ามเวลาไป 1 ปี ›</GameButton>
       ) : (
-        <GameButton variant="primary" loading={state === 'testing'} onClick={save}>
+        <GameButton loading={state === 'testing'} onClick={save}>
           บันทึกและทดสอบ
         </GameButton>
       )}
@@ -1243,24 +1267,24 @@ function DocArt({ id }: { id: string }) {
     <svg viewBox="0 0 48 36" width={48} height={36} aria-hidden="true" shapeRendering="crispEdges">
       {id === 'doc-id' ? (
         <>
-          <rect x="1" y="3" width="46" height="30" fill="#bfe3ff" stroke="#0e0720" strokeWidth="2" />
-          <rect x="5" y="9" width="12" height="14" fill="#7c4dff" />
-          <rect x="21" y="10" width="22" height="3" fill="#0e0720" />
+          <rect x="1" y="3" width="46" height="30" fill="#bfe3ff" stroke="#24164f" strokeWidth="2" />
+          <rect x="5" y="9" width="12" height="14" fill="#6b4fd8" />
+          <rect x="21" y="10" width="22" height="3" fill="#24164f" />
           <rect x="21" y="16" width="18" height="3" fill="#6b5a43" />
           <rect x="21" y="22" width="14" height="3" fill="#6b5a43" />
         </>
       ) : id === 'doc-company' ? (
         <>
-          <rect x="6" y="1" width="36" height="34" fill="#fff6dc" stroke="#0e0720" strokeWidth="2" />
-          <rect x="12" y="7" width="24" height="3" fill="#0e0720" />
+          <rect x="6" y="1" width="36" height="34" fill="#fff6dc" stroke="#24164f" strokeWidth="2" />
+          <rect x="12" y="7" width="24" height="3" fill="#24164f" />
           <rect x="12" y="14" width="24" height="2" fill="#6b5a43" />
           <rect x="12" y="19" width="16" height="2" fill="#6b5a43" />
           <circle cx="34" cy="27" r="5" fill="#ffcf4a" stroke="#b8860b" strokeWidth="2" />
         </>
       ) : (
         <>
-          <rect x="6" y="1" width="36" height="34" fill="#e6f7e0" stroke="#0e0720" strokeWidth="2" />
-          <rect x="10" y="5" width="28" height="7" fill="#4caf50" />
+          <rect x="6" y="1" width="36" height="34" fill="#e6f7e0" stroke="#24164f" strokeWidth="2" />
+          <rect x="10" y="5" width="28" height="7" fill="#c0392b" />
           <rect x="12" y="17" width="24" height="2" fill="#6b5a43" />
           <rect x="12" y="22" width="20" height="2" fill="#6b5a43" />
           <rect x="12" y="27" width="12" height="2" fill="#6b5a43" />
@@ -1269,3 +1293,4 @@ function DocArt({ id }: { id: string }) {
     </svg>
   )
 }
+

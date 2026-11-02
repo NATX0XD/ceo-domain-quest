@@ -34,7 +34,7 @@ const PublicSchema = z.object({
   intro: z.string().min(1),
   search: z.object({ prompt: z.string(), placeholder: z.string(), note: z.string() }),
   board: z.object({ instruction: z.string().min(1) }),
-  steps: z.array(z.object({ id: z.string().min(1), text: z.string().min(1) })).length(10),
+  steps: z.array(z.object({ id: z.string().min(1), text: z.string().min(1), short: z.string().min(1).max(40).optional() })).length(10),
   events: z
     .array(
       z.object({

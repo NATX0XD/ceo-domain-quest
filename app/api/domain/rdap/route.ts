@@ -87,6 +87,8 @@ interface RdapTldResult {
   source: 'rdap' | 'sample' | 'offline'
   registeredAt?: string
   expiresAt?: string
+  /** ชื่อผู้รับจด (registrar) จาก entity role 'registrar' ถ้า registry แจ้ง — ไม่ใช่ข้อมูลเจ้าของโดเมน */
+  registrar?: string
 }
 
 const LABEL: Record<RdapStatus, string> = {
@@ -146,7 +148,23 @@ const RdapEventsSchema = z.object({
   events: z
     .array(z.object({ eventAction: z.string(), eventDate: z.string() }))
     .optional(),
+  entities: z.array(z.unknown()).optional(),
 })
+
+/** ดึงชื่อผู้รับจดจาก vCard ของ entity ที่มี role 'registrar' (ไม่แตะ entity ของเจ้าของโดเมน) */
+function registrarName(entities: unknown[] | undefined): string | undefined {
+  for (const e of entities ?? []) {
+    if (!e || typeof e !== 'object') continue
+    const ent = e as { roles?: unknown; vcardArray?: unknown }
+    if (!Array.isArray(ent.roles) || !ent.roles.includes('registrar')) continue
+    const card = Array.isArray(ent.vcardArray) ? ent.vcardArray[1] : null
+    if (!Array.isArray(card)) continue
+    const fn = card.find((f) => Array.isArray(f) && f[0] === 'fn')
+    const name = Array.isArray(fn) && typeof fn[3] === 'string' ? fn[3].trim() : ''
+    if (name) return name.slice(0, 80)
+  }
+  return undefined
+}
 
 function offline(domain: string, tld: Tld): RdapTldResult {
   return { tld: `.${tld}`, domain, ...offlineStatus(domain), source: 'offline' }
@@ -176,6 +194,7 @@ async function lookup(label: string, tld: Tld): Promise<RdapTldResult> {
         source: 'rdap',
         registeredAt: events.find((e) => e.eventAction === 'registration')?.eventDate,
         expiresAt: events.find((e) => e.eventAction === 'expiration')?.eventDate,
+        registrar: body.success ? registrarName(body.data.entities) : undefined,
       }
     } else if (res.status === 404) {
       result = { tld: `.${tld}`, domain, status: 'not-found', label: LABEL['not-found'], source: 'rdap' }

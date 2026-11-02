@@ -75,6 +75,28 @@ describe('GET /api/domain/rdap ระบบสำรอง', () => {
     expect(verisign).toBe(48)
   })
 
+  it('registry ตอบ 200 → คืนวันที่และชื่อผู้รับจด (registrar) ไม่คืนข้อมูลเจ้าของ', async () => {
+    fetchMock.mockImplementation(async () =>
+      new Response(
+        JSON.stringify({
+          events: [
+            { eventAction: 'registration', eventDate: '2019-03-12T00:00:00Z' },
+            { eventAction: 'expiration', eventDate: '2027-03-12T00:00:00Z' },
+          ],
+          entities: [
+            { roles: ['registrant'], vcardArray: ['vcard', [['fn', {}, 'text', 'Owner Person']]] },
+            { roles: ['registrar'], vcardArray: ['vcard', [['version', {}, 'text', '4.0'], ['fn', {}, 'text', 'Example Registrar Co.']]] },
+          ],
+        }),
+        { status: 200 },
+      ),
+    )
+    const body = await (await GET(req('mockreg'))).json()
+    const com = body.results.find((r: { tld: string }) => r.tld === '.com')
+    expect(com).toMatchObject({ status: 'registered', source: 'rdap', registrar: 'Example Registrar Co.', expiresAt: '2027-03-12T00:00:00Z' })
+    expect(JSON.stringify(body)).not.toContain('Owner Person')
+  })
+
   it('ยังไม่เข้าห้อง → 401', async () => {
     mocks.readStudentSession.mockResolvedValue(null)
     expect((await GET(req('abc'))).status).toBe(401)

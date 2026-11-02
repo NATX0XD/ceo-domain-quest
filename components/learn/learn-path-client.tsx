@@ -1357,7 +1357,7 @@ export function LearnPathClient({
                   onFinish={() => go('done')}
                 />
               ) : path.do.kind === 'registrar' && registrarData ? (
-                <RegistrarGame data={registrarData} card={registrarCard} onSubmit={submitDo} onStep={checkRegistrar} />
+                <RegistrarGame data={registrarData} card={registrarCard} onSubmit={submitDo} onStep={checkRegistrar} onFinish={() => go('done')} />
               ) : (
                 <Card tone="spark" padding="sm">
                   <p className="flex items-center gap-2 text-label font-bold text-ink">

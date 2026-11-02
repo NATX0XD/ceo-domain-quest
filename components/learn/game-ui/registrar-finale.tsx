@@ -1,22 +1,70 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { motion } from 'motion/react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Reorder, motion, useDragControls } from 'motion/react'
 import { AlertIcon, CheckIcon, cn } from '@/components/ui'
-import { CountUp, GameButton, PixelPanel, Stars, buzz, useGameMotion } from './index'
-import { PIXEL_BOX, QuizSheet, SCENE_NOTE, Say, Sheets } from './registrar-ui'
-import { eventQuiz, type Check } from './registrar-screens'
+import { CountUp, GameButton, Stars, buzz, useGameMotion } from './index'
+import { ArtIcon, BossSprite, ClipPanel, Glyph, PixelDome, PixelImg, QuizBody, SCENE_NOTE, Say } from './registrar-ui'
+import { StepIcon, eventQuiz, type Check } from './registrar-screens'
 import type { ExplainPayload, RegistrarData, RegistrarDetail, RegistrarEvent, RegistrarResult, RubricRow } from '../registrar-types'
 
 const SCROLL = 'flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3'
 const MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+const DAY = 24 * 60 * 60 * 1000
 
 /** ─── R09 ข้ามเวลา 1 ปี ─── */
+
+function CalendarFlip({ onDone }: { onDone: () => void }) {
+  const { reduce } = useGameMotion()
+  // หน้าปฏิทินรายเดือนจากวันนี้ ไปถึงวันที่เหลือ 30 วันก่อนครบ 1 ปี
+  const pages = useMemo(() => {
+    const now = Date.now()
+    const end = new Date(now + 335 * DAY)
+    const list = Array.from({ length: 11 }, (_, k) => {
+      const d = new Date(now)
+      d.setMonth(d.getMonth() + k)
+      return d
+    })
+    list.push(end)
+    return list
+  }, [])
+  const last = pages.length - 1
+  const end = pages[last]!
+  const step = 0.17
+  useEffect(() => {
+    const t = window.setTimeout(onDone, reduce ? 200 : 600 + last * step * 1000 + 300)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return (
+    <div className="m4-calendar" role="img" aria-label={`ข้ามเวลาไปถึงวันที่ ${end.getDate()} ${MONTHS[end.getMonth()]} ${end.getFullYear() + 543}`}>
+      <span className="m4-calendar-rings" aria-hidden="true" />
+      {pages.map((d, k) => {
+        const flip = k < last
+        return (
+          <motion.div
+            key={k}
+            className="m4-calendar-page"
+            style={{ zIndex: pages.length - k }}
+            initial={false}
+            animate={flip && !reduce ? { rotateX: -105, y: -18, opacity: 0 } : { rotateX: 0, opacity: flip ? 0 : 1 }}
+            transition={reduce ? { duration: 0 } : { duration: 0.22, delay: 0.5 + k * step, ease: 'easeIn' }}
+          >
+            <small>พ.ศ. {d.getFullYear() + 543}</small>
+            <b>{d.getDate()}</b>
+            <span>{MONTHS[d.getMonth()]}</span>
+          </motion.div>
+        )
+      })}
+    </div>
+  )
+}
 
 export function TimeScreen({
   data,
   check,
   coins,
+  domain,
   expireEvent,
   onAnswer,
   onSpend,
@@ -25,24 +73,19 @@ export function TimeScreen({
   data: RegistrarData
   check: Check
   coins: number
+  domain: string
+  years?: number
   expireEvent: RegistrarEvent | undefined
   onAnswer: (choice: number, correct: boolean) => void
   onSpend: (amount: number) => void
   onDone: () => void
 }) {
   const { reduce, spring } = useGameMotion()
-  const year = new Date().getFullYear() + 543
   const [view, setView] = useState<'calendar' | 'choose' | 'renewed' | 'lapsed' | 'restored'>('calendar')
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
   const [err, setErr] = useState<string | null>(null)
   const fee = data.fee.pricePerYear
-
-  useEffect(() => {
-    if (view !== 'calendar') return
-    const t = window.setTimeout(() => setView('choose'), reduce ? 300 : 2400)
-    return () => window.clearTimeout(t)
-  }, [view, reduce])
 
   async function decide(choice: 0 | 1) {
     if (!expireEvent) return
@@ -59,96 +102,79 @@ export function TimeScreen({
     } else setView('lapsed')
   }
 
-  if (view === 'calendar') {
-    return (
-      <div className="grid min-h-0 flex-1 place-items-center p-6" role="status" aria-label={`ข้ามเวลาไป 1 ปี เป็นปี ${year + 1}`}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-56 overflow-hidden rounded-2xl border-[3px] border-[#7a5a3a] bg-[#fff8e6] text-center text-[#3a2a18] shadow-[0_6px_0_#5c4228] [perspective:600px]">
-            <div className="bg-[#c44a4a] py-1 text-label font-extrabold tracking-widest text-white">ปฏิทิน</div>
-            <div className="relative h-28">
-              {(reduce ? [11] : Array.from({ length: 12 }, (_, i) => i)).map((m) => (
-                <motion.div
-                  key={m}
-                  className="absolute inset-0 grid place-items-center bg-[#fff8e6] [transform-origin:top] [backface-visibility:hidden]"
-                  style={{ zIndex: 12 - m }}
-                  initial={{ rotateX: 0 }}
-                  animate={{ rotateX: reduce ? 0 : -180 }}
-                  transition={{ duration: 0.16, delay: m * 0.16, ease: 'easeIn' }}
-                >
-                  <span className="text-title font-extrabold">{MONTHS[m]}</span>
-                </motion.div>
-              ))}
-              <div className="absolute inset-0 grid place-items-center bg-[#fff8e6]">
-                <span className="text-title font-extrabold text-brand-700">{year + 1}</span>
-              </div>
-            </div>
-          </div>
-          <p className={cn(SCENE_NOTE, 'px-4 text-title-sm font-extrabold text-[#6a35b8]')}>ผ่านไป 1 ปี</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className={SCROLL}>
+    <div className={`${SCROLL} m4-screen m4-time-screen`}>
+      <motion.p
+        className="m4-year-sign"
+        initial={reduce ? false : { y: -30, scale: 0.6, opacity: 0 }}
+        animate={{ y: 0, scale: 1, opacity: 1 }}
+        transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 14 }}
+      >
+        1 ปีต่อมา
+      </motion.p>
+      <div className="m4-time-row">
+        <PixelDome mood={view === 'renewed' || view === 'restored' ? 'happy' : 'worried'} size={110} />
+        <CalendarFlip onDone={() => setView((v) => (v === 'calendar' ? 'choose' : v))} />
+      </div>
+
       {view === 'choose' ? (
         <>
-          <PixelPanel variant="paper" className="flex flex-col gap-2 m4-board" initial={reduce ? false : { y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring}>
-            <p className="text-label font-bold text-[#7a5a2c]">แจ้งเตือนจากผู้ให้บริการ</p>
-            <p className="text-title-sm font-extrabold text-balance">ชื่อเว็บจะหมดอายุในอีก</p>
-            <p className="m4-days">
+          <ClipPanel className="m4-expire-card">
+            <span className="m4-globe-tile mx-auto" aria-hidden="true">
+              <ArtIcon px="icon-globe" glyph="globe" size={38} />
+            </span>
+            <p className="m4-expire-domain">{domain}</p>
+            <p className="text-center text-body font-bold">จะหมดอายุในอีก</p>
+            <motion.p className="m4-days" initial={reduce ? false : { scale: 1.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ ...spring, delay: reduce ? 0 : 0.2 }}>
               <b>30</b> วัน
-            </p>
-            <p className="text-body text-pretty">{expireEvent?.story}</p>
-            <p className="text-body font-bold">{expireEvent?.question}</p>
-          </PixelPanel>
+            </motion.p>
+            <p className="text-center text-label text-pretty text-[#4a3d7a]">{expireEvent?.question}</p>
+          </ClipPanel>
           {err ? (
             <p role="alert" className={cn(SCENE_NOTE, 'text-[#b5521b]')}>
               {err}
             </p>
           ) : null}
-          <GameButton variant="gold" loading={busy} disabled={coins < fee} onClick={() => void decide(0)}>
-            ต่ออายุ ({fee.toLocaleString('th-TH')} เหรียญ)
-          </GameButton>
-          <GameButton variant="dark" disabled={busy} onClick={() => void decide(1)}>
-            ปล่อยไว้ก่อน
-          </GameButton>
+          <div className="m4-dock-pair">
+            <GameButton loading={busy} disabled={coins < fee} onClick={() => void decide(0)}>
+              <span className="m4-coin" aria-hidden="true" />
+              ต่ออายุ {fee.toLocaleString('th-TH')} เหรียญ
+            </GameButton>
+            <GameButton variant="paper" disabled={busy} onClick={() => void decide(1)}>
+              ปล่อยไว้ก่อน
+            </GameButton>
+          </div>
           {coins < fee ? <p className={cn(SCENE_NOTE, 'text-[#b5521b]')}>เหรียญไม่พอต่ออายุ ต้องเลือกปล่อยไว้</p> : null}
         </>
       ) : null}
 
       {view === 'renewed' ? (
         <>
-          <PixelPanel variant="paper" className="flex flex-col gap-2 m4-board">
-            <p className="flex items-center gap-2 text-title-sm font-extrabold text-quest-700">
+          <ClipPanel>
+            <p className="flex items-center gap-2 text-title-sm font-extrabold text-[#1d7a3e]">
               <CheckIcon width={24} height={24} aria-hidden /> ต่ออายุแล้ว เว็บยังอยู่
             </p>
-            <p className="text-body text-pretty">{note}</p>
-          </PixelPanel>
-          <GameButton variant="gold" onClick={onDone}>
-            ไปอธิบายให้บอสฟัง
-          </GameButton>
+            <p className="mt-1 text-body text-pretty">{note}</p>
+          </ClipPanel>
+          <GameButton onClick={onDone}>ไปอธิบายให้บอสฟัง ›</GameButton>
         </>
       ) : null}
 
       {view === 'lapsed' || view === 'restored' ? (
         <>
-          <motion.div initial={reduce ? false : { scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring} className={cn('overflow-hidden rounded-2xl border-[3px] bg-[#0e0720]', view === 'lapsed' ? 'border-[#d97a6a]' : 'border-[#8cf0b0]')}>
-            <div className={cn('flex items-center gap-2 px-3 py-1.5 text-label font-bold', view === 'lapsed' ? 'bg-[#3a1620]' : 'bg-[#123326]')}>
-              <span aria-hidden="true" className={cn('size-2.5 shrink-0 rounded-full', view === 'lapsed' ? 'bg-[#ff8a7a]' : 'bg-[#8cf0b0]')} />
+          <motion.div initial={reduce ? false : { scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring} className={cn('m4-site-state', view === 'lapsed' ? 'is-down' : 'is-up')}>
+            <p>
+              <span aria-hidden="true" />
               {view === 'lapsed' ? 'หน้าเว็บของร้าน: ถูกระงับ' : 'หน้าเว็บของร้าน: กลับมาแล้ว'}
-            </div>
-            <p className="p-3 text-body font-bold text-pretty">
-              {view === 'lapsed' ? 'ชื่อนี้หมดอายุและถูกระงับ เปิดเว็บไม่ได้ และอาจมีคนอื่นมาจดต่อ' : 'กู้คืนชื่อสำเร็จ เว็บเปิดได้อีกครั้ง'}
             </p>
+            <b>{view === 'lapsed' ? 'ชื่อนี้หมดอายุและถูกระงับ เปิดเว็บไม่ได้ และอาจมีคนอื่นมาจดต่อ' : 'กู้คืนชื่อสำเร็จ เว็บเปิดได้อีกครั้ง'}</b>
           </motion.div>
-          <PixelPanel variant="paper" className="flex flex-col gap-2">
+          <ClipPanel pop={false}>
             <p className="text-body text-pretty">{note}</p>
-            <p className="border-t-2 border-dashed border-[#d9c7a0] pt-2 text-label text-[#6b5a43]">การปล่อยหมดอายุบันทึกไว้ว่าพลาด แต่ไม่ตัดคะแนนหนัก</p>
-          </PixelPanel>
+            <p className="mt-2 border-t-2 border-dashed border-[#cfc4f3] pt-2 text-label text-[#6b5a43]">การปล่อยหมดอายุบันทึกไว้ว่าพลาด แต่ไม่ตัดคะแนนหนัก</p>
+          </ClipPanel>
           {view === 'lapsed' ? (
             <GameButton
-              variant="gold"
               disabled={coins < data.fee.restoreFee}
               onClick={() => {
                 onSpend(data.fee.restoreFee)
@@ -158,12 +184,10 @@ export function TimeScreen({
               เลือกใหม่: กู้คืนชื่อ {data.fee.restoreFee.toLocaleString('th-TH')} เหรียญ
             </GameButton>
           ) : (
-            <GameButton variant="gold" onClick={onDone}>
-              ไปอธิบายให้บอสฟัง
-            </GameButton>
+            <GameButton onClick={onDone}>ไปอธิบายให้บอสฟัง ›</GameButton>
           )}
           {view === 'lapsed' && coins < data.fee.restoreFee ? (
-            <GameButton variant="dark" onClick={onDone}>
+            <GameButton variant="paper" onClick={onDone}>
               เหรียญไม่พอกู้คืน ไปอธิบายให้บอสฟัง
             </GameButton>
           ) : null}
@@ -174,6 +198,69 @@ export function TimeScreen({
 }
 
 /** ─── R10 อธิบายให้บอสฟัง ─── */
+
+function ExplainRow({
+  id,
+  index,
+  text,
+  reasoned,
+  focused,
+  count,
+  onFocus,
+  onMove,
+}: {
+  id: string
+  index: number
+  text: string
+  reasoned: boolean
+  focused: boolean
+  count: number
+  onFocus: () => void
+  onMove: (dir: -1 | 1) => void
+}) {
+  const controls = useDragControls()
+  const { reduce } = useGameMotion()
+  return (
+    <Reorder.Item
+      value={id}
+      dragListener={false}
+      dragControls={controls}
+      className={cn('m4-explain-row', focused && 'is-focus')}
+      whileDrag={reduce ? undefined : { scale: 1.03, boxShadow: '0 10px 18px rgb(36 22 79 / .28)', zIndex: 5 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 34 }}
+    >
+      <span className="m4-explain-no" aria-hidden="true">
+        {index + 1}
+      </span>
+      <button type="button" className="m4-explain-text" aria-pressed={focused} onClick={onFocus}>
+        <StepIcon id={id} size={22} />
+        <span className="min-w-0 flex-1 text-pretty">{text}</span>
+        <span className={cn('m4-reason-dot', reasoned && 'is-on')} aria-label={reasoned ? 'เลือกเหตุผลแล้ว' : 'ยังไม่เลือกเหตุผล'} />
+      </button>
+      <button
+        type="button"
+        className="m4-explain-handle"
+        aria-label={`ย้ายขั้นที่ ${index + 1} ลากขึ้นลง หรือกดลูกศรขึ้นลง`}
+        onPointerDown={(e) => {
+          e.preventDefault()
+          buzz()
+          controls.start(e)
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowUp' && index > 0) {
+            e.preventDefault()
+            onMove(-1)
+          } else if (e.key === 'ArrowDown' && index < count - 1) {
+            e.preventDefault()
+            onMove(1)
+          }
+        }}
+      >
+        <span aria-hidden="true" />
+      </button>
+    </Reorder.Item>
+  )
+}
 
 export function ExplainScreen({
   data,
@@ -192,10 +279,9 @@ export function ExplainScreen({
 }) {
   const { reduce, spring } = useGameMotion()
   const ex = data.explain
-  const [order, setOrder] = useState<string[]>([])
+  const [order, setOrder] = useState<string[]>(() => ex.chips.map((c) => c.id))
   const [reasons, setReasons] = useState<Record<string, number>>({})
   const [renewal, setRenewal] = useState<number | null>(null)
-  const [typed, setTyped] = useState(false)
   const [text, setText] = useState('')
   const [focus, setFocus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -204,9 +290,20 @@ export function ExplainScreen({
   const top = useRef<HTMLDivElement | null>(null)
 
   const chipText = new Map(ex.chips.map((c) => [c.id, c.text]))
-  const pool = ex.chips.filter((c) => !order.includes(c.id))
-  const meter = Math.min(10, order.length + Math.min(2, Object.keys(reasons).length) + (renewal !== null ? 1 : 0) + (text.trim().length >= 60 ? 1 : 0))
-  const payload: ExplainPayload = { order, reasons, renewal, text: typed && text.trim() ? text.trim() : undefined }
+  const reasonCount = Object.keys(reasons).length
+  const meter = Math.min(10, 4 + Math.min(4, Math.round((reasonCount / Math.max(1, order.length)) * 4)) + (renewal !== null ? 1 : 0) + (text.trim().length >= 40 ? 1 : 0))
+  const payload: ExplainPayload = { order, reasons, renewal, text: text.trim() ? text.trim() : undefined }
+
+  function move(id: string, dir: -1 | 1) {
+    setOrder((o) => {
+      const i = o.indexOf(id)
+      const j = i + dir
+      if (i < 0 || j < 0 || j >= o.length) return o
+      const next = [...o]
+      ;[next[i], next[j]] = [next[j]!, next[i]!]
+      return next
+    })
+  }
 
   async function submit() {
     setBusy(true)
@@ -221,30 +318,32 @@ export function ExplainScreen({
   const passing = res !== null && res.total >= 7 && eventsCorrect >= 3
 
   return (
-    <div className={SCROLL}>
+    <div className={`${SCROLL} m4-screen m4-explain-screen`}>
       <div ref={top} />
-      <Say who="boss">{res ? (passing ? 'เข้าใจชัดเจน ขอบใจที่อธิบาย' : 'ยังมีบางจุดที่อยากให้ลองอีกรอบ') : ex.prompt}</Say>
+      <div className="m4-boss-row">
+        <BossSprite mood={passing ? 'smile' : 'neutral'} size={128} />
+        <motion.p className="m4-boss-bubble" initial={reduce ? false : { scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ ...spring, delay: reduce ? 0 : 0.3 }} key={res ? 'r' : 'p'}>
+          {res ? (passing ? 'เข้าใจชัดเจน ขอบใจที่อธิบาย' : 'ยังมีบางจุดที่อยากให้ลองอีกรอบ') : ex.prompt}
+        </motion.p>
+      </div>
 
       {res ? (
         <>
-          <PixelPanel variant="paper" className="flex flex-col gap-2.5 m4-board" initial={reduce ? false : { scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring}>
-            <div className="flex items-baseline justify-between gap-2">
-              <p className="text-body font-extrabold">คะแนนคำอธิบาย</p>
-              <p className="shrink-0 whitespace-nowrap text-title-sm font-extrabold text-[#3b1d8f]">
-                <CountUp to={res.total} /> <span className="text-body">/ 10</span>
-              </p>
-            </div>
-            <p className="-mt-2 text-label text-[#6b5a43]">ต้องได้อย่างน้อย 7</p>
-            <ul className="flex flex-col gap-2">
+          <ClipPanel title="คะแนนคำอธิบาย">
+            <p className="text-center text-title-sm font-extrabold text-[#3d2a8a]">
+              <CountUp to={res.total} /> <span className="text-body">/ 10</span>
+              <span className="block text-label font-bold text-[#6b5a43]">ต้องได้อย่างน้อย 7</span>
+            </p>
+            <ul className="mt-2 flex flex-col gap-2">
               {res.rubric.map((r) => (
                 <li key={r.id} className="flex items-start gap-2">
                   <span aria-hidden="true" className="mt-0.5 shrink-0">
-                    {r.got >= r.max ? <CheckIcon width={20} height={20} className="text-quest-700" /> : <AlertIcon width={20} height={20} className="text-spark-700" />}
+                    {r.got >= r.max ? <CheckIcon width={20} height={20} className="text-[#1d7a3e]" /> : <AlertIcon width={20} height={20} className="text-spark-700" />}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-start justify-between gap-2">
                       <span className="min-w-0 text-body font-bold text-pretty">{r.label}</span>
-                      <span className="shrink-0 whitespace-nowrap rounded-md bg-[#ece4ff] px-1.5 text-label font-extrabold text-[#3b1d8f]">
+                      <span className="m4-score-chip">
                         {r.got}/{r.max}
                       </span>
                     </span>
@@ -253,113 +352,81 @@ export function ExplainScreen({
                 </li>
               ))}
             </ul>
-            <p className="flex items-start justify-between gap-2 border-t-2 border-dashed border-[#d9c7a0] pt-2">
-              <span className="min-w-0 text-label font-bold text-pretty text-[#3a2a18]">รับมือเหตุการณ์ถูก (ต้องอย่างน้อย 3)</span>
-              <span className="shrink-0 whitespace-nowrap rounded-md bg-[#ece4ff] px-1.5 text-label font-extrabold text-[#3b1d8f]">
+            <p className="mt-2 flex items-start justify-between gap-2 border-t-2 border-dashed border-[#cfc4f3] pt-2">
+              <span className="min-w-0 text-label font-bold text-pretty">รับมือเหตุการณ์ถูก (ต้องอย่างน้อย 3)</span>
+              <span className="m4-score-chip">
                 {eventsCorrect}/{eventsTotal}
               </span>
             </p>
-          </PixelPanel>
+          </ClipPanel>
           {res.followUp.question ? (
-            <PixelPanel variant="dark" className={cn(PIXEL_BOX, "flex flex-col gap-1.5")}>
-              <p className="text-label font-extrabold text-[#6a35b8]">บอสถามต่อ</p>
+            <ClipPanel tone="lilac" pop={false}>
+              <p className="text-label font-extrabold text-[#6b4fd8]">บอสถามต่อ</p>
               <p className="text-body font-bold text-pretty">{res.followUp.question}</p>
-              {res.followUp.reason ? <p className="text-label text-pretty text-[#6b4a2b]">คำตอบที่บอสอยากได้ยิน: {res.followUp.reason}</p> : null}
-            </PixelPanel>
+              {res.followUp.reason ? <p className="mt-1 text-label text-pretty text-[#4a3d7a]">คำตอบที่บอสอยากได้ยิน: {res.followUp.reason}</p> : null}
+            </ClipPanel>
           ) : null}
-          {passing ? (
-            <GameButton variant="gold" onClick={() => onProceed(payload)}>
-              รับใบรับรองจดชื่อเว็บ
-            </GameButton>
-          ) : (
-            <GameButton variant="gold" onClick={onRepair}>
-              ไปรอบซ่อมเฉพาะจุดที่พลาด
-            </GameButton>
-          )}
+          {passing ? <GameButton onClick={() => onProceed(payload)}>รับใบรับรองจดชื่อเว็บ ›</GameButton> : <GameButton onClick={onRepair}>ไปรอบซ่อมเฉพาะจุดที่พลาด ›</GameButton>}
         </>
       ) : (
-        <PixelPanel variant="paper" className="flex flex-col gap-3">
-          <p className="text-title-sm font-extrabold">อธิบายขั้นตอนให้บอสฟัง</p>
-          <div>
-            <p className="text-label font-bold">แตะชิปตามลำดับที่ต้องทำ</p>
-            <ul className="mt-1.5 flex flex-wrap gap-2" aria-label="ชิปขั้นตอน">
-              {pool.map((c) => (
-                <li key={c.id}>
-                  <motion.button
-                    type="button"
-                    layout={!reduce}
-                    whileTap={reduce ? undefined : { scale: 0.95 }}
-                    onClick={() => {
-                      buzz()
-                      setOrder((o) => [...o, c.id])
-                    }}
-                    className="min-h-11 rounded-xl border-2 border-[#b8860b] bg-[#fff6dc] px-3 py-1.5 text-label font-bold text-pretty shadow-[0_3px_0_#b8860b] focus-visible:outline-3 focus-visible:outline-focus"
-                  >
-                    {c.text}
-                  </motion.button>
-                </li>
-              ))}
-              {pool.length === 0 ? <li className="text-label text-[#6b5a43]">วางชิปครบแล้ว</li> : null}
-            </ul>
+        <ClipPanel title="อธิบายขั้นตอนให้บอสฟัง">
+          <p className="-mt-1 mb-1.5 text-center text-label font-semibold text-[#4a3d7a]">ลาก ⋮⋮ เรียงขั้นให้ถูก แล้วแตะแต่ละขั้นเพื่อเลือกเหตุผล</p>
+          <Reorder.Group axis="y" values={order} onReorder={setOrder} className="m4-explain-list" aria-label="ลำดับขั้นตอน">
+            {order.map((id, i) => (
+              <ExplainRow
+                key={id}
+                id={id}
+                index={i}
+                count={order.length}
+                text={chipText.get(id) ?? id}
+                reasoned={reasons[id] !== undefined}
+                focused={focus === id}
+                onFocus={() => {
+                  buzz()
+                  setFocus(id)
+                }}
+                onMove={(dir) => move(id, dir)}
+              />
+            ))}
+          </Reorder.Group>
+
+          <div className="m4-explain-section">
+            <p className="m4-field-label">
+              อธิบายเหตุผลของแต่ละขั้น <span className="font-semibold text-[#6b5a43]">(เลือกแล้ว {reasonCount}/{order.length})</span>
+            </p>
+            {focus ? (
+              <fieldset className="m4-reason-box">
+                <legend>
+                  {ex.reasonPrompt}: {chipText.get(focus)}
+                </legend>
+                <div role="radiogroup" className="flex flex-col gap-1.5">
+                  {(ex.reasonChoices[focus] ?? []).map((c, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      role="radio"
+                      aria-checked={reasons[focus] === i}
+                      onClick={() => {
+                        buzz()
+                        setReasons((r) => ({ ...r, [focus]: i }))
+                        // ไปขั้นถัดไปที่ยังไม่มีเหตุผลให้อัตโนมัติ
+                        const nextId = order.find((x) => x !== focus && reasons[x] === undefined)
+                        if (nextId && !reduce) window.setTimeout(() => setFocus(nextId), 260)
+                      }}
+                      className={cn('m4-choice is-small', reasons[focus] === i && 'is-on')}
+                    >
+                      <span className="min-w-0 flex-1 text-pretty">{c}</span>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            ) : (
+              <p className="text-label text-[#6b5a43]">แตะขั้นในรายการด้านบนเพื่อเลือกเหตุผลของขั้นนั้น</p>
+            )}
           </div>
 
-          <ol className="flex flex-col gap-1.5" aria-label="ลำดับที่เรียงไว้">
-            {order.map((id, i) => (
-              <li key={id} className="flex items-center gap-2">
-                <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#3b1d8f] text-label font-extrabold text-white">
-                  {i + 1}
-                </span>
-                <button
-                  type="button"
-                  aria-pressed={focus === id}
-                  onClick={() => setFocus(focus === id ? null : id)}
-                  className={cn('flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border-2 px-2.5 py-1 text-left text-label font-bold text-pretty focus-visible:outline-3 focus-visible:outline-focus', focus === id ? 'border-[#3b1d8f] bg-[#ece4ff]' : 'border-[#c9b68c] bg-white')}
-                >
-                  <span className="min-w-0 flex-1">{chipText.get(id)}</span>
-                  {reasons[id] !== undefined ? <CheckIcon width={18} height={18} aria-hidden className="shrink-0 text-quest-700" /> : null}
-                </button>
-                <button
-                  type="button"
-                  aria-label={`เอาขั้นที่ ${i + 1} ออก`}
-                  onClick={() => {
-                    setOrder((o) => o.filter((x) => x !== id))
-                    setFocus((f) => (f === id ? null : f))
-                  }}
-                  className="grid size-11 shrink-0 place-items-center rounded-xl border-2 border-[#c9b68c] bg-[#f1e6c8] text-body font-extrabold focus-visible:outline-3 focus-visible:outline-focus"
-                >
-                  ×
-                </button>
-              </li>
-            ))}
-          </ol>
-
-          {focus ? (
-            <fieldset className="rounded-xl bg-[#f1e6c8] p-2.5">
-              <legend className="px-1 text-label font-extrabold">{ex.reasonPrompt}: {chipText.get(focus)}</legend>
-              <div role="radiogroup" className="flex flex-col gap-1.5">
-                {(ex.reasonChoices[focus] ?? []).map((c, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    role="radio"
-                    aria-checked={reasons[focus] === i}
-                    onClick={() => {
-                      buzz()
-                      setReasons((r) => ({ ...r, [focus]: i }))
-                    }}
-                    className={cn('min-h-11 rounded-lg border-2 px-2.5 py-1.5 text-left text-label font-semibold text-pretty focus-visible:outline-3 focus-visible:outline-focus', reasons[focus] === i ? 'border-[#3b1d8f] bg-[#ece4ff]' : 'border-[#c9b68c] bg-white')}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-          ) : order.length > 0 ? (
-            <p className="text-label text-[#6b5a43]">แตะขั้นในลำดับเพื่อเลือกเหตุผลของขั้นนั้น</p>
-          ) : null}
-
-          <fieldset>
-            <legend className="text-label font-extrabold">{ex.renewalQuestion}</legend>
+          <fieldset className="m4-explain-section">
+            <legend className="m4-field-label">{ex.renewalQuestion}</legend>
             <div role="radiogroup" className="mt-1 flex flex-col gap-1.5">
               {ex.renewalChoices.map((c, i) => (
                 <button
@@ -371,50 +438,41 @@ export function ExplainScreen({
                     buzz()
                     setRenewal(i)
                   }}
-                  className={cn('min-h-11 rounded-lg border-2 px-2.5 py-1.5 text-left text-label font-semibold text-pretty focus-visible:outline-3 focus-visible:outline-focus', renewal === i ? 'border-[#3b1d8f] bg-[#ece4ff]' : 'border-[#c9b68c] bg-white')}
+                  className={cn('m4-choice is-small', renewal === i && 'is-on')}
                 >
-                  {c}
+                  <span className="min-w-0 flex-1 text-pretty">{c}</span>
                 </button>
               ))}
             </div>
           </fieldset>
 
-          {typed ? (
-            <label className="flex flex-col gap-1">
-              <span className="text-label font-extrabold">{ex.textLabel}</span>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                rows={4}
-                maxLength={1500}
-                placeholder={ex.textPlaceholder}
-                className="min-h-24 w-full rounded-xl border-2 border-[#7a5a3a] bg-white p-2.5 text-body text-[#3a2a18] focus-visible:outline-3 focus-visible:outline-focus"
-              />
-            </label>
-          ) : (
-            <button type="button" onClick={() => setTyped(true)} className="min-h-11 rounded-xl border-2 border-dashed border-[#7a5a3a] px-3 text-label font-extrabold focus-visible:outline-3 focus-visible:outline-focus">
-              พิมพ์อธิบายเองเพิ่ม (ระดับท้าทาย)
-            </button>
-          )}
+          <label className="m4-explain-section flex flex-col gap-1">
+            <span className="m4-field-label">{ex.textLabel}</span>
+            <textarea value={text} onChange={(e) => setText(e.target.value)} rows={2} maxLength={1500} placeholder={ex.textPlaceholder} className="m4-textarea" />
+          </label>
 
-          <div>
-            <div className="flex items-center justify-between text-label font-extrabold">
+          <div className="m4-explain-section">
+            <div className="flex items-center justify-between gap-2 text-label font-extrabold">
               <span>ความครบถ้วน</span>
-              <span aria-live="polite">{meter}/10</span>
+              <span aria-live="polite" className="tabular-nums">
+                {meter}/10
+              </span>
             </div>
-            <div className="mt-1 h-4 overflow-hidden rounded-md border-2 border-[#3b1d8f] bg-[#ece4ff]" role="progressbar" aria-valuemin={0} aria-valuemax={10} aria-valuenow={meter} aria-label="ความครบถ้วนของคำอธิบาย">
-              <motion.div className="h-full bg-[#7c4dff]" animate={{ width: `${meter * 10}%` }} transition={reduce ? { duration: 0 } : { duration: 0.3 }} />
+            <div className="m4-blocks" role="progressbar" aria-valuemin={0} aria-valuemax={10} aria-valuenow={meter} aria-label="ความครบถ้วนของคำอธิบาย">
+              {Array.from({ length: 10 }, (_, i) => (
+                <motion.span key={i} animate={{ backgroundColor: i < meter ? '#6b4fd8' : '#e4ddfb' }} transition={reduce ? { duration: 0 } : { duration: 0.2, delay: i * 0.02 }} />
+              ))}
             </div>
           </div>
           {err ? (
-            <p role="alert" className="text-label font-bold text-spark-700">
+            <p role="alert" className="mt-2 text-label font-bold text-spark-700">
               {err}
             </p>
           ) : null}
-          <GameButton variant="primary" disabled={order.length === 0} loading={busy} onClick={() => void submit()}>
+          <GameButton className="mt-3 w-full" loading={busy} onClick={() => void submit()}>
             ส่งคำอธิบาย
           </GameButton>
-        </PixelPanel>
+        </ClipPanel>
       )}
     </div>
   )
@@ -436,15 +494,17 @@ export function RepairScreen({
   const [i, setI] = useState(0)
   const ev = missed[i]
   return (
-    <div className={SCROLL}>
+    <div className={`${SCROLL} m4-screen`}>
       <Say who="boss">รอบซ่อม เล่นเฉพาะเหตุการณ์ที่ยังรับมือไม่ถูก ตอบใหม่แล้วค่อยกลับไปอธิบายอีกครั้ง</Say>
-      <Sheets>
-        {ev ? (
-          <QuizSheet
-            key={ev.id}
-            kicker={`รอบซ่อม ${i + 1}/${missed.length}`}
-            title={ev.title}
-            story={ev.story}
+      {ev ? (
+        <motion.div key={ev.id} className="flex flex-col gap-3" initial={{ x: 30, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+          <ClipPanel title={ev.title}>
+            <p className="text-center text-label font-bold text-[#6b4fd8]">
+              รอบซ่อม {i + 1}/{missed.length}
+            </p>
+            <p className="m4-story">{ev.story}</p>
+          </ClipPanel>
+          <QuizBody
             question={ev.question}
             choices={ev.choices}
             check={eventQuiz(check, ev.id)}
@@ -455,13 +515,13 @@ export function RepairScreen({
             }}
             doneLabel={i + 1 >= missed.length ? 'กลับไปอธิบายให้บอสฟัง' : 'เหตุการณ์ถัดไป'}
           />
-        ) : null}
-      </Sheets>
+        </motion.div>
+      ) : null}
     </div>
   )
 }
 
-/** ─── R11 จบด่านบอส ─── */
+/** ─── R11 ผ่านด่าน ─── */
 
 export function ClearScreen({ result, shop, domain }: { result: RegistrarResult; shop: string; domain: string }) {
   const { reduce, spring } = useGameMotion()
@@ -472,43 +532,52 @@ export function ClearScreen({ result, shop, domain }: { result: RegistrarResult;
     : stars >= 3
       ? 'ครบ 3 ดาว: ทุกขั้นถูกตั้งแต่ครั้งแรก และอธิบายให้บอสได้ 9 จาก 10 ขึ้นไป'
       : stars === 2
-        ? 'ได้ 2 ดาว: ผ่านเกณฑ์ แต่ยังมีขั้นที่ต้องแก้ หรืออธิบายได้ต่ำกว่า 9 จาก 10 อีกนิดเดียวจะได้ 3 ดาว'
-        : 'ได้ 1 ดาว: ผ่านเกณฑ์หลังเข้ารอบซ่อมเหตุการณ์ ดาวสูงสุดของรอบซ่อมคือ 1 ดวง เล่นใหม่ให้ถูกตั้งแต่ครั้งแรกเพื่อได้ 3 ดาว'
+        ? 'ได้ 2 ดาว: ผ่านเกณฑ์ แต่ยังมีขั้นที่ต้องแก้ หรืออธิบายได้ต่ำกว่า 9 จาก 10'
+        : 'ได้ 1 ดาว: ผ่านหลังเข้ารอบซ่อม เล่นใหม่ให้ถูกตั้งแต่ครั้งแรกเพื่อได้ 3 ดาว'
+  const stats: { icon: 'list' | 'shield' | 'book'; label: string; value: string }[] = d?.order && d.events && d.explanation
+    ? [
+        { icon: 'list', label: 'เรียงขั้นตอนถูก', value: `${d.order.correct}/${d.order.total}` },
+        { icon: 'shield', label: 'รับมือเหตุการณ์', value: `${d.events.correct}/${d.events.total}` },
+        { icon: 'book', label: 'อธิบายครบ', value: `${d.explanation.points}/10` },
+      ]
+    : []
   return (
-    <div className={SCROLL}>
-      <Say who="boss">{result.passed ? 'ยินดีด้วย ร้านของเธอมีชื่อเว็บเป็นของตัวเองแล้ว' : 'ยังไม่ถึงเกณฑ์ ลองกลับไปอธิบายอีกรอบได้เลย'}</Say>
-      <PixelPanel variant="paper" className="flex flex-col items-center gap-2 text-center" initial={reduce ? false : { scale: 0.85, y: 40, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} transition={spring}>
-        <p className="text-label font-extrabold tracking-widest text-[#7a5a2c]">ใบรับรอง</p>
-        <p className="text-title font-extrabold text-balance text-[#3b1d8f]">จดชื่อเว็บสำเร็จ</p>
-        <p className="text-body">
-          {shop} ใช้ชื่อ <span className="font-extrabold [overflow-wrap:anywhere]">{domain}</span>
+    <div className={`${SCROLL} m4-screen m4-clear-screen`}>
+      <ClipPanel title={result.passed ? 'จดชื่อเว็บสำเร็จ' : 'ยังไม่ถึงเกณฑ์'}>
+        <p className="m4-domain-pill" title={shop}>
+          {domain}
         </p>
-        <Stars count={stars} />
-        {why ? <p className="text-label font-bold text-pretty text-[#3a2a18]">{why}</p> : null}
-        <p className="text-title-sm font-extrabold">
-          <CountUp to={result.score} /> <span className="text-label font-bold text-[#6b5a43]">จาก 100</span>
-        </p>
-        {d?.order && d.events && d.explanation ? (
-          <ul className="flex w-full flex-col gap-0.5 border-t-2 border-dashed border-[#d9c7a0] pt-2 text-left text-body text-[#4a3a26]">
-            <li>วางการ์ดถูกครั้งแรก {d.order.points}/20</li>
-            <li>รับมือเหตุการณ์ {d.events.correct}/{d.events.total} ได้ {d.events.points}/30</li>
-            <li>อธิบายให้บอส {d.explanation.points}/10 ได้ {Math.round(d.explanation.points * 5)}/50</li>
+        <div className="m4-stars">
+          <Stars count={stars} size={46} />
+        </div>
+        {stats.length ? (
+          <ul className="m4-stats">
+            {stats.map((s, i) => (
+              <motion.li key={s.label} initial={reduce ? false : { x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...spring, delay: reduce ? 0 : 1.2 + i * 0.15 }}>
+                <Glyph kind={s.icon} size={22} className="text-[#6b4fd8]" />
+                <span>{s.label}</span>
+                <b>{s.value}</b>
+              </motion.li>
+            ))}
           </ul>
         ) : null}
-        {result.passed ? <p className="rounded-lg bg-[#ece4ff] px-3 py-1 text-label font-extrabold text-[#3b1d8f]">ได้ป้าย CEO ตัวจริง</p> : null}
-      </PixelPanel>
-      {result.passed ? (
-        <motion.img
-          src="/dome/mascot/dome-celebrate.webp"
-          alt=""
-          aria-hidden
-          draggable={false}
-          className="m4-clear-dome"
-          initial={reduce ? false : { y: 40, opacity: 0, scale: 0.8 }}
-          animate={reduce ? { opacity: 1 } : { y: [0, -8, 0], opacity: 1, scale: 1 }}
-          transition={reduce ? { duration: 0 } : { y: { duration: 1.8, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }, default: { type: 'spring', stiffness: 220, damping: 16, delay: 0.3 } }}
-        />
-      ) : null}
+        {result.passed ? (
+          <motion.div className="m4-title-badge" initial={reduce ? false : { scale: 0.5, opacity: 0, rotate: -6 }} animate={{ scale: 1, opacity: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 14, delay: reduce ? 0 : 1.8 }}>
+            <span className="m4-medal" aria-hidden="true">
+              <PixelImg name="badge-ceo" fallback="/icons/3d/crown.webp" />
+            </span>
+            <span>
+              <small>ได้รับฉายา</small>
+              <b>CEO ตัวจริง</b>
+            </span>
+          </motion.div>
+        ) : null}
+        <p className="mt-2 text-center text-label font-bold text-[#4a3d7a]">
+          คะแนน <CountUp to={result.score} /> จาก 100{why ? ` · ${why}` : ''}
+        </p>
+        {!result.passed ? <p className="mt-1 text-center text-label text-[#6b5a43]">ลองกลับไปอธิบายให้บอสฟังอีกรอบได้เลย</p> : null}
+      </ClipPanel>
+      {result.passed ? <PixelDome mood="cheer" size={130} className="m4-clear-dome" /> : null}
     </div>
   )
 }

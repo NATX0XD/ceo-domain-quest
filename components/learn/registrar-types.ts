@@ -8,6 +8,8 @@
 export interface RegistrarStep {
   id: string
   text: string
+  /** ป้ายสั้นบนการ์ดแผงเดินเรื่อง (ไม่มีใช้ text) */
+  short?: string
 }
 
 export interface RegistrarEvent {
