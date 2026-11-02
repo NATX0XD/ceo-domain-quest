@@ -133,7 +133,7 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
         }
       >
         <img
-          src={imageState === 1 ? '/ui/map/official-map.webp' : `/ui/map/state-${imageState}.webp`}
+          src={`/ui/map/state-${imageState}.webp`}
           alt="แผนที่ภารกิจ เกาะภารกิจที่ 1 ถึง 4 เชื่อมต่อกันด้วยสะพาน"
           className="map-artwork"
           draggable={false}
