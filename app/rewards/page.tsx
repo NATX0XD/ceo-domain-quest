@@ -1,15 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import './rewards.css'
 import { SignInGate } from '@/components/student-shell'
 import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
 import { BottomNav } from '@/components/bottom-nav'
 import {
-  AchievementBadge,
   AlertIcon,
   Card,
   CheckIcon,
   ChevronRightIcon,
-  CrownIcon,
   DomeAvatar,
   InfoIcon,
   ProgressBar,
@@ -18,7 +17,6 @@ import {
   SpeechBubble,
   StarIcon,
   StatBadge,
-  TargetIcon,
 } from '@/components/ui'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { lessonSummary } from '@/components/server/lesson-progress'
@@ -34,18 +32,7 @@ const OUTCOME_LABEL = {
   exceeded: 'เกินเป้าที่ตั้งไว้',
 } as const
 
-/**
- * รางวัลของฉัน (แท็บ "รางวัล" ในแถบล่าง)
- *
- * ## จบในจอเดียว + บอกวิธีเก็บดาวเพิ่ม
- *
- * FLOW-1 จับได้ว่าหน้านี้ "ดูอย่างเดียว ไม่บอกว่าเก็บดาวเพิ่มยังไง" และยาวจนต้องเลื่อน
- * รอบนี้จอหลักเหลือ ดาวรวม · ตราภารกิจ · บรรทัดสั่งงานว่าจะเก็บดาวถัดไปจากไหน
- * ส่วนรายละเอียด (เป้าหมายที่ตั้งเอง · ด่านบอส) ย้ายไปอยู่ในแผ่นเลื่อน
- *
- * ดาว เป้าหมาย และสถานะการส่งภารกิจใหญ่ อ่านจาก `lessonSummary()` ทั้งหมด
- * ⚠️ ดาวของภารกิจใหญ่เป็น null โดยตั้งใจ (ครูยังไม่ประเมิน) ห้ามแสดงเป็น 0
- */
+/** ห้องถ้วยรางวัล — ใช้ข้อมูล progress เดิม แต่จัดลำดับให้เห็นดาวและเหรียญในจอเดียว */
 export default async function RewardsPage() {
   const session = await readStudentSession()
   if (!session) return <SignInGate />
@@ -57,40 +44,40 @@ export default async function RewardsPage() {
     data.goalStars && data.goalStars > 0
       ? Math.min(Math.round((data.totalStars / data.goalStars) * 100), 100)
       : null
-
-  /** ดาวดวงต่อไปหาได้จากไหน — ตอบคำถามที่หน้านี้เคยไม่ตอบ (FLOW-1 ตาราง /rewards) */
   const nextStar = data.missions.find((m) => m.stars < perMissionMax) ?? null
   const nowLine = nextStar
-    ? `เก็บดาวเพิ่มได้ที่ภารกิจ "${nextStar.title}" ตอนนี้ได้ ${nextStar.stars} จาก ${perMissionMax} ดวง`
+    ? `เหรียญถัดไปอยู่ที่ “${nextStar.title}” เก็บเพิ่มได้อีก ${perMissionMax - nextStar.stars} ดวง`
     : data.bigMissionSubmitted
-      ? 'ดาวภารกิจย่อยเต็มแล้วครับ ที่เหลือมาจากด่านบอสซึ่งครูเป็นคนยืนยัน'
-      : `ดาวภารกิจย่อยเต็มแล้วครับ ส่งใบเสนอที่ด่านบอสได้ดาวเพิ่มอีกสูงสุด ${data.bigMissionMaxStars} ดวง`
+      ? 'เหรียญภารกิจย่อยครบแล้ว เหลือรอครูยืนยันดาวด่านบอสครับ'
+      : `เหรียญภารกิจย่อยครบแล้ว ไปเก็บดาวเพิ่มที่ด่านบอสได้อีกสูงสุด ${data.bigMissionMaxStars} ดวง`
   const nextHref = nextStar ? `/mission/${nextStar.id}` : '/ceo'
 
   return (
     <AppShell
       fit
-      className="student-world student-display media-shell"
+      className="student-world student-display media-shell rewards-world"
       header={
-        <AppHeader className="pb-2" backHref="/home">
-          <div className="flex items-center gap-3">
-            <h1 className="min-w-0 flex-1 truncate text-title-sm font-extrabold text-ink">รางวัลของฉัน</h1>
-            <span className="shrink-0 rounded-full bg-reward-100 px-3 py-1 text-note font-bold text-reward-700">
-              ดาวเป็นของเราคนเดียว
-            </span>
+        <AppHeader className="rw-header" divider={false}>
+          <div className="rw-header-row">
+            <div className="rw-title-lockup">
+              <span className="rw-eyebrow">ห้องเก็บรางวัล</span>
+              <h1>ห้องถ้วยรางวัล</h1>
+            </div>
+            <span className="rw-star-pill"><StarIcon width={17} height={17} aria-hidden />{data.totalStars}</span>
           </div>
+          <p className="rw-header-hint">ทุกดาวเป็นร่องรอยว่าคุณผ่านด่านไหนมาแล้ว</p>
         </AppHeader>
       }
       footer={
         <>
-          <AppFooter divider={false} className="pb-2">
-            <div className="mb-2 flex items-center gap-2">
+          <AppFooter divider={false} className="rw-footer">
+            <div className="rw-dome-tip">
               <DomeAvatar mood={nothingYet ? 'cheer' : 'celebrate'} size={44} decorative />
-              <SpeechBubble speaker="dome" tail="left" className="min-w-0 flex-1 px-3 py-2">
-                <span className="break-words text-label font-bold text-ink">{nowLine}</span>
+              <SpeechBubble speaker="dome" tail="left" className="rw-speech">
+                <span>{nowLine}</span>
               </SpeechBubble>
             </div>
-            <Link href={nextHref} className="btn-go">
+            <Link href={nextHref} className="rw-primary-cta">
               {nextStar ? 'ไปเก็บดาวต่อ' : 'ไปด่านบอส CEO'}
               <ChevronRightIcon width={22} height={22} aria-hidden />
             </Link>
@@ -99,159 +86,93 @@ export default async function RewardsPage() {
         </>
       }
     >
-      <div className="relative isolate flex h-full min-h-0 flex-col gap-2 scene-sky px-4 pt-2 pb-1">
+      <div className="rw-main">
         <SceneDecor density="light" />
-        {/* ดาวรวมทั้งคาบ — ตัวเลขที่ต้องอ่านได้ในแวบเดียว */}
-        <div className="shrink-0 rounded-2xl bg-reward-100 px-4 py-3 text-center shadow-soft-2">
-          <p className="text-note font-bold text-reward-700">ดาวที่เก็บได้ทั้งคาบ</p>
-          <p className="text-title font-black text-ink tabular-nums">
-            <StarIcon width={26} height={26} aria-hidden className="mr-1 inline align-[-4px]" />
-            {data.totalStars}
-            <span className="text-body-lg font-extrabold text-ink-muted"> / {data.maxStars}</span>
-          </p>
-          <div className="mt-1.5">
-            <ProgressBar
-              value={data.totalStars}
-              max={data.maxStars}
-              label="ดาวที่เก็บได้จากดาวทั้งหมด"
-              hideLabel
-              tone="quest"
-            />
+
+        <section className="rw-star-meter" aria-label={`ดาวสะสม ${data.totalStars} จาก ${data.maxStars} ดวง`}>
+          <div className="rw-meter-orbit" aria-hidden="true"><span /><span /><span /></div>
+          <div className="rw-meter-top">
+            <div>
+              <span className="rw-section-kicker">พลังดาว</span>
+              <h2>ดาวสะสมของฉัน</h2>
+            </div>
+            <div className="rw-meter-total">
+              <StarIcon width={30} height={30} aria-hidden />
+              <strong>{data.totalStars}</strong>
+              <span>/ {data.maxStars}</span>
+            </div>
           </div>
+          <ProgressBar className="rw-meter-progress" value={data.totalStars} max={data.maxStars} label="ดาวที่เก็บได้จากดาวทั้งหมด" hideLabel showValue={false} tone="quest" size="lg" />
+          <p className="rw-meter-note">{data.totalStars === data.maxStars ? 'เต็มหีบแล้ว ทุกด่านส่องแสงเลย' : `อีก ${Math.max(0, data.maxStars - data.totalStars)} ดวง จะเต็มหีบดาว`}</p>
+        </section>
+
+        <div className="rw-medal-heading">
+          <div>
+            <span className="rw-section-kicker">ของสะสม</span>
+            <h2>เหรียญประจำภารกิจ</h2>
+          </div>
+          <span className="rw-medal-count">{data.missions.filter((mission) => mission.passed).length}/{data.missions.length} ผ่านแล้ว</span>
         </div>
 
-        {/* ตราภารกิจ — กินพื้นที่ที่เหลือ หนึ่งช่องต่อหนึ่งภารกิจ */}
         {data.missions.length === 0 ? (
-          <div className="my-auto rounded-2xl bg-surface-raised p-5 text-center shadow-soft-1">
-            <p className="text-body font-bold text-ink">ยังไม่มีภารกิจในห้องนี้</p>
-            <p className="mt-1 text-label text-ink-muted">
-              ครูยังไม่เปิดภารกิจของคาบนี้ เปิดเมื่อไรตราภารกิจจะมาโผล่ตรงนี้เอง
-            </p>
-          </div>
+          <div className="rw-empty-state"><p>ยังไม่มีเหรียญในหีบ</p><span>ครูยังไม่เปิดภารกิจของคาบนี้ เปิดเมื่อไรเหรียญจะมาอยู่ตรงนี้เอง</span></div>
         ) : (
-          <ul className="grid min-h-0 flex-1 grid-cols-2 gap-2">
-            {data.missions.map((mission) => (
-              <li key={mission.id} className="min-h-0">
-                <div
-                  className={`flex h-full min-h-0 flex-col items-center justify-center gap-1 rounded-2xl p-2 text-center shadow-soft-1 ${
-                    mission.passed ? 'bg-reward-100' : 'bg-surface-raised'
-                  }`}
-                >
-                  <AchievementBadge size={56} earned={mission.passed} />
-                  <p className="line-clamp-2 text-note font-extrabold text-ink">{mission.title}</p>
-                  <p className="flex items-center gap-1 text-note font-bold text-reward-700 tabular-nums">
-                    <StarIcon width={14} height={14} aria-hidden />
-                    {mission.stars}/{perMissionMax}
-                    <span className="sr-only">
-                      {mission.passed ? 'ผ่านแล้ว' : mission.attempts > 0 ? 'ยังทำอยู่' : 'ยังไม่เริ่ม'}
-                    </span>
-                  </p>
+          <ul className="rw-medal-grid">
+            {data.missions.map((mission, index) => (
+              <li key={mission.id}>
+                <div className={`rw-medal-card ${mission.passed ? 'is-earned' : 'is-locked'}`}>
+                  <span className="rw-medal-number">0{index + 1}</span>
+                  <div className="rw-medal-visual">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/ui/rewards/mission-medal.webp" alt={mission.passed ? `เหรียญภารกิจ ${mission.title} ที่ได้รับแล้ว` : `เหรียญภารกิจ ${mission.title} ที่ยังล็อกอยู่`} width={118} height={108} draggable={false} />
+                    {!mission.passed ? <span className="rw-lock-mark" aria-hidden="true">ล็อก</span> : null}
+                  </div>
+                  <p className="rw-medal-title">{mission.title}</p>
+                  <p className="rw-medal-stars"><StarIcon width={14} height={14} aria-hidden />{mission.stars}/{perMissionMax}</p>
                 </div>
               </li>
             ))}
           </ul>
         )}
 
-        <nav aria-label="รายละเอียดเพิ่มเติม" className="chip-row shrink-0 justify-center">
+        <nav aria-label="ของสะสมเพิ่มเติม" className="rw-chip-row">
           <Sheet
             id="sheet-goal"
             triggerVariant="chip"
-            triggerIcon={<TargetIcon width={18} height={18} aria-hidden />}
+            triggerIcon={<span className="rw-chip-art"><img src="/ui/rewards/goal-plaque.webp" alt="" width={42} height={30} /></span>}
             trigger="เป้าที่ตั้งเอง"
             title="เป้าหมายที่ตั้งเอง"
+            triggerClassName="rw-chip rw-chip-goal"
           >
             {data.goalName && data.goalStars !== null ? (
-              <Card>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-body font-bold text-ink">{data.goalName}</span>
-                  <StatBadge
-                    kind="count"
-                    value={`เป้า ${data.goalStars} ดาว`}
-                    label="เป้าหมายดาวที่ตั้งเอง"
-                    hideLabel
-                    size="sm"
-                  />
-                </div>
-                {goalPercent !== null ? (
-                  <ProgressBar
-                    className="mt-3"
-                    value={goalPercent}
-                    label="ความคืบหน้าเทียบเป้าหมายที่ตั้งเอง"
-                    hideLabel
-                    tone="brand"
-                  />
-                ) : null}
+              <Card className="rw-sheet-card">
+                <div className="rw-sheet-card-head"><img src="/ui/rewards/goal-plaque.webp" alt="" width={96} height={64} /><div><p className="text-body font-bold text-ink">{data.goalName}</p><StatBadge className="mt-1" kind="count" value={`เป้า ${data.goalStars} ดาว`} label="เป้าหมายดาวที่ตั้งเอง" hideLabel size="sm" /></div></div>
+                {goalPercent !== null ? <ProgressBar className="mt-3" value={goalPercent} label="ความคืบหน้าเทียบเป้าหมายที่ตั้งเอง" hideLabel tone="brand" /> : null}
                 <p className="mt-3 flex items-start gap-2 text-label font-semibold text-ink">
-                  {data.outcome === null ? (
-                    <InfoIcon width={20} height={20} aria-hidden className="shrink-0 text-ink-subtle" />
-                  ) : data.outcome === 'below' ? (
-                    <AlertIcon width={20} height={20} aria-hidden className="shrink-0 text-spark-600" />
-                  ) : (
-                    <CheckIcon width={20} height={20} aria-hidden className="shrink-0 text-quest-600" />
-                  )}
+                  {data.outcome === null ? <InfoIcon width={20} height={20} aria-hidden className="shrink-0 text-ink-subtle" /> : data.outcome === 'below' ? <AlertIcon width={20} height={20} aria-hidden className="shrink-0 text-spark-600" /> : <CheckIcon width={20} height={20} aria-hidden className="shrink-0 text-quest-600" />}
                   <span>{data.outcome ? OUTCOME_LABEL[data.outcome] : 'ยังไม่มีข้อมูล'}</span>
                 </p>
               </Card>
             ) : (
-              <div className="rounded-xl bg-surface-sunken p-4">
-                <p className="text-body font-bold text-ink">ยังไม่ได้ตั้งเป้าหมาย</p>
-                <p className="mt-1 text-label text-ink-muted">
-                  ตั้งเองว่าคาบนี้อยากได้กี่ดาว แล้วกลับมาดูความคืบหน้าตรงนี้
-                </p>
-                <Link href="/profile" className="btn-base mt-3 w-full rounded-xl bg-brand-100 text-label font-bold text-brand-700">
-                  ไปตั้งเป้าหมายของตัวเอง
-                </Link>
-              </div>
+              <div className="rw-sheet-empty"><p>ยังไม่ได้ตั้งเป้าหมาย</p><span>ตั้งเองว่าคาบนี้อยากได้กี่ดาว แล้วกลับมาดูความคืบหน้าตรงนี้</span><Link href="/profile" className="btn-base mt-3 w-full rounded-xl bg-brand-100 text-label font-bold text-brand-700">ไปตั้งเป้าหมายของตัวเอง</Link></div>
             )}
           </Sheet>
 
           <Sheet
             id="sheet-boss"
             triggerVariant="chip"
-            triggerIcon={<CrownIcon width={18} height={18} aria-hidden />}
+            triggerIcon={<span className="rw-chip-art"><img src="/ui/rewards/boss-plaque.webp" alt="" width={42} height={30} /></span>}
             trigger="ด่านบอส"
             title="ด่านบอส CEO"
-            triggerClassName="bg-reward-100 text-reward-700 hover:bg-reward-300"
+            triggerClassName="rw-chip rw-chip-boss"
           >
-            <Card tone={data.bigMissionSubmitted ? 'quest' : 'spark'}>
-              <div className="flex items-start gap-3">
-                <AchievementBadge size={64} earned={data.bigMissionSubmitted} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-body font-bold text-ink">
-                    {data.bigMissionSubmitted ? 'ส่งงานให้ครูแล้ว' : 'ยังไม่ได้ส่งงานนำเสนอ'}
-                  </p>
-                  <StatBadge
-                    className="mt-2"
-                    kind="star"
-                    value={data.bigMissionStars}
-                    max={data.bigMissionMaxStars}
-                    label="ดาวด่านบอส CEO"
-                    hideLabel
-                    size="sm"
-                  />
-                  <p className="mt-2 text-label text-pretty text-ink-muted">
-                    {!data.bigMissionSubmitted
-                      ? `ส่งงานแล้วได้ดาวทันทีสูงสุด ${data.bigMissionMaxStars} ดวง`
-                      : data.bigMissionPendingTeacher
-                        ? `ได้ ${data.bigMissionStars} ดาวจากคะแนนที่ระบบเสนอ · รอครูยืนยัน ครูปรับขึ้นลงได้`
-                        : `ได้ ${data.bigMissionStars} ดาว · ครูยืนยันคะแนนแล้ว`}
-                  </p>
-                </div>
-              </div>
-              <Link href="/ceo" className="btn-base mt-4 w-full rounded-xl bg-brand-600 text-body font-bold text-ink-onbrand">
-                {data.bigMissionSubmitted ? 'ดูงานที่ส่งไป' : 'ไปด่านบอส CEO'}
-                <ChevronRightIcon width={20} height={20} aria-hidden />
-              </Link>
+            <Card tone={data.bigMissionSubmitted ? 'quest' : 'spark'} className="rw-sheet-card">
+              <div className="rw-sheet-card-head"><img className={data.bigMissionSubmitted ? '' : 'is-dimmed'} src="/ui/rewards/boss-plaque.webp" alt={data.bigMissionSubmitted ? 'ป้ายด่านบอสที่ส่งงานแล้ว' : 'ป้ายด่านบอสที่ยังล็อกอยู่'} width={96} height={72} /><div className="min-w-0 flex-1"><p className="text-body font-bold text-ink">{data.bigMissionSubmitted ? 'ส่งงานให้ครูแล้ว' : 'ยังไม่ได้ส่งงานนำเสนอ'}</p><StatBadge className="mt-2" kind="star" value={data.bigMissionStars} max={data.bigMissionMaxStars} label="ดาวด่านบอส CEO" hideLabel size="sm" /><p className="mt-2 text-label text-pretty text-ink-muted">{!data.bigMissionSubmitted ? `ส่งงานแล้วได้ดาวทันทีสูงสุด ${data.bigMissionMaxStars} ดวง` : data.bigMissionPendingTeacher ? `ได้ ${data.bigMissionStars} ดาวจากคะแนนที่ระบบเสนอ · รอครูยืนยัน ครูปรับขึ้นลงได้` : `ได้ ${data.bigMissionStars} ดาว · ครูยืนยันคะแนนแล้ว`}</p></div></div>
+              <Link href="/ceo" className="btn-base mt-4 w-full rounded-xl bg-brand-600 text-body font-bold text-ink-onbrand">{data.bigMissionSubmitted ? 'ดูงานที่ส่งไป' : 'ไปด่านบอส CEO'}<ChevronRightIcon width={20} height={20} aria-hidden /></Link>
             </Card>
           </Sheet>
 
-          <Link
-            href="/result"
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-brand-100 px-3 text-label font-bold text-brand-700 hover:bg-brand-200 focus-ring"
-          >
-            <CheckIcon width={18} height={18} aria-hidden />
-            เกียรติบัตร
-          </Link>
+          <Link href="/result" className="rw-chip rw-chip-certificate"><span className="rw-chip-art"><img src="/ui/rewards/certificate-plaque.webp" alt="" width={42} height={30} /></span>เกียรติบัตร</Link>
         </nav>
       </div>
     </AppShell>
