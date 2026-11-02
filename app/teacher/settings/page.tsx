@@ -50,7 +50,7 @@ export default async function TeacherSettingsPage({
         items={[
           { value: 'room', label: 'ห้องเรียน', content: (
         <div className="grid items-start gap-4 lg:grid-cols-2">
-          <TeacherRoomClient roomCode={data.selectedRoomCode} joinPath={joinPath} />
+          <TeacherRoomClient roomCode={data.selectedRoomCode} joinPath={joinPath} classroomId={data.selectedId} />
 
           {qrSvg ? (
             <Card icon={<Icon3d name="door" size={22} />} tone="teal" title="สแกนเข้าห้อง" className="text-center">

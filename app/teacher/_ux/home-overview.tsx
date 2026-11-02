@@ -113,8 +113,12 @@ export function HomeOverview({
   const active = todos.filter((t) => t.count > 0)
   const clear = todos.filter((t) => t.count === 0 && !(t.key === 'requests' && requestCount === null))
 
+  const openBoard = () => {
+    if (classroomId) window.open(`/board?classroomId=${classroomId}&mode=join`, '_blank', 'noopener')
+  }
+
   const actions: { label: string; benefit: string; icon: Icon3dName; href?: string; onClick?: () => void }[] = [
-    { label: 'ชวนนักเรียนเข้าห้อง', benefit: 'ลิงก์และ QR ให้สแกนเข้าห้อง', icon: 'door', onClick: () => setShare((v) => !v) },
+    { label: 'ชวนนักเรียนเข้าห้อง', benefit: 'เปิดจอหน้าห้อง QR ใหญ่ให้สแกน (แท็บใหม่)', icon: 'door', onClick: openBoard },
     { label: 'ตั้งค่าด่าน', benefit: 'ปรับเกณฑ์ผ่านและตัวช่วยของแต่ละด่าน', icon: 'gear', href: `/teacher/missions${q}` },
     { label: 'ดูรายงาน', benefit: 'ผลเรียนรวมทั้งห้อง จุดที่ยังอ่อน', icon: 'bar-chart', href: `/teacher/report${q}` },
     { label: 'พิมพ์เกียรติบัตร/รายงาน', benefit: 'เลือกนักเรียนแล้วสั่งพิมพ์ได้เลย', icon: 'printer', href: `/teacher/student${q}` },
@@ -134,6 +138,7 @@ export function HomeOverview({
         <button type="button" onClick={() => void copyLink()} disabled={!joinPath} className={`${BTN} max-w-xs bg-[var(--c-brand)] disabled:opacity-50`}>
           {copied ? 'คัดลอกลิงก์แล้ว ✓' : 'คัดลอกลิงก์เข้าห้อง'}
         </button>
+        <button type="button" onClick={openBoard} className={`${BTN} mt-2 max-w-xs bg-[var(--c-brand)]`}>เปิดจอหน้าห้อง (QR ใหญ่)</button>
       </div>
     </div>
   )
@@ -237,7 +242,7 @@ export function HomeOverview({
             const cls = 't3-card flex w-full items-center gap-3 p-3.5 transition-transform hover:-translate-y-0.5 focus-ring'
             return (
               <li key={a.label}>
-                {a.href ? <Link href={a.href} className={cls}>{inner}</Link> : <button type="button" onClick={a.onClick} aria-expanded={share} className={cls}>{inner}</button>}
+                {a.href ? <Link href={a.href} className={cls}>{inner}</Link> : <button type="button" onClick={a.onClick} className={cls}>{inner}</button>}
               </li>
             )
           })}

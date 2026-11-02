@@ -74,6 +74,16 @@ export default async function TeacherShowcasePage({
           ) },
           { value: 'screen', label: 'ขึ้นจอหน้าห้อง', content: (
             <>
+        {data.selectedId ? (
+          <section className="t2-card">
+            <h3 className="t2-card-title">จอหน้าห้อง (โปรเจกเตอร์)</h3>
+            <p className="mt-0 mb-3 text-[15px] text-[var(--c-ink-2)]">ปักหมุดผลงานด้านล่าง แล้วเปิดจอผลงานในแท็บใหม่ ฉายเป็นสไลด์เต็มจอ ไม่มีดาว ไม่มีคะแนน และซ่อนชื่อเจ้าของตามที่เลือก</p>
+            <div className="flex flex-wrap gap-3">
+              <a href={`/board?classroomId=${data.selectedId}&mode=showcase`} target="_blank" rel="noopener" className="inline-flex h-11 items-center rounded-xl bg-[var(--c-brand)] px-5 text-[15px] font-bold text-white focus-ring">เปิดจอผลงาน</a>
+              <a href={`/board?classroomId=${data.selectedId}&mode=join`} target="_blank" rel="noopener" className="inline-flex h-11 items-center rounded-xl border border-[var(--c-brand)] bg-white px-5 text-[15px] font-bold text-[var(--c-brand)] focus-ring">เปิดจอชวนเข้าห้อง</a>
+            </div>
+          </section>
+        ) : null}
         <TeacherShowcaseClient
           classroomId={data.selectedId}
           candidates={pending

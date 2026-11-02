@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import QRCode from 'qrcode'
 import { BoardScreenClient } from '@/components/board-screen-client'
 import { TeacherLoginClient } from '@/components/teacher-login-client'
@@ -16,11 +18,14 @@ function one(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value
 }
 
+const BG_PATH = '/ui/teacher/join-poster-bg.webp'
+
 /**
- * T-04 จอหน้าห้อง — เปิดเป็นแท็บแยกหรือจอที่สองของเครื่องครู
+ * จอหน้าห้อง — เปิดเป็นแท็บแยกหรือจอที่สอง ใช้ได้โดยไม่ต้องมีการควบคุมคาบสด
+ * ?mode=join (ค่าเริ่มต้น) ชวนเข้าห้อง · ?mode=showcase ผลงานเด่น
  *
- * ⚠️ **ห้ามมีชื่อคนคู่กับคะแนน ดาว หรือสถานะรายคนบนหน้านี้ทุกช่วง** (หลักไม่มีกระดานจัดอันดับ)
- * ⚠️ ต้องเป็นครูที่ล็อกอินและเป็นเจ้าของห้องเท่านั้น (ห้องคนอื่นเปิดไม่ได้)
+ * ⚠️ ห้ามมีชื่อคนคู่กับคะแนน ดาว หรือสถานะรายคนบนหน้านี้
+ * ⚠️ ต้องเป็นครูที่ล็อกอินและเป็นเจ้าของห้องเท่านั้น
  */
 export default async function BoardPage({
   searchParams,
@@ -44,17 +49,16 @@ export default async function BoardPage({
       <AppShell width="full" mainClassName="grid place-items-center">
         <div className="flex flex-col items-center gap-4 px-8 py-10 text-center">
           <h1 className="text-title font-extrabold text-ink">ยังไม่มีห้องเรียน</h1>
-          <p className="text-body-lg text-ink-muted">
-            เปิดห้องที่หน้าครูก่อน แล้วค่อยกลับมาเปิดจอนี้
-          </p>
+          <p className="text-body-lg text-ink-muted">สร้างห้องที่หน้าครูก่อน แล้วค่อยกลับมาเปิดจอนี้</p>
         </div>
       </AppShell>
     )
   }
 
-  const joinPath = `/join?code=${classroom.room_code}`
-  const joinUrl = `${process.env.APP_BASE_URL ?? 'http://localhost:3000'}${joinPath}`
-  const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 360 })
+  const joinUrl = `${process.env.APP_BASE_URL ?? 'http://localhost:3000'}/join?code=${classroom.room_code}`
+  const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 720 })
+  const hasBg = existsSync(join(process.cwd(), 'public', BG_PATH))
+  const mode = one(sp.mode) === 'showcase' ? 'showcase' : 'join'
 
   return (
     <BoardScreenClient
@@ -62,6 +66,9 @@ export default async function BoardPage({
       roomCode={classroom.room_code}
       joinUrl={joinUrl}
       qrSvg={qrSvg}
+      bgUrl={hasBg ? BG_PATH : null}
+      mode={mode}
+      backHref={`/teacher?classroomId=${classroom.id}`}
     />
   )
 }

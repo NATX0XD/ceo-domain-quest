@@ -7,6 +7,7 @@ import { CloseIcon } from '../../../components/ui'
 import { TeacherDeviceRecommendation } from '@/components/teacher-device-recommendation'
 import { Icon3d, type Icon3dName } from './v2'
 import { Avatar, ToastProvider } from './ui'
+import { createRoomRequest, createdRoomHref } from './create-room'
 
 /**
  * โครงแดชบอร์ดของครู (redesign C1) — เมนูข้าง (ยุบได้ / มือถือเป็นลิ้นชัก) + แถบบน (breadcrumb · สลับห้อง · บัญชี) + เนื้อหา
@@ -81,7 +82,6 @@ export function TeacherShell({
   const [term, setTerm] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [mSearch, setMSearch] = useState(false)
-  const [copied, setCopied] = useState(false)
   const bellRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const [navigating, setNavigating] = useState(false)
@@ -206,16 +206,26 @@ export function TeacherShell({
   const flat = groups.flatMap((g) => g.items)
 
   const tab = params.get('tab')
-  const copyJoin = async () => {
-    if (!selected) return
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/join?code=${selected.roomCode}`)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    } catch {
-      router.push(`/teacher/settings${q}`)
-    }
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const createRoom = async () => {
+    if (creating) return
+    setCreating(true)
+    setCreateError(null)
+    setSwitcher(false)
+    const r = await createRoomRequest()
+    setCreating(false)
+    if (r.ok) { router.push(createdRoomHref(r.id)); router.refresh() }
+    else setCreateError(r.message)
   }
+  const createdBanner = params.get('created') === '1' && classroomId ? (
+    <section role="status" className="mx-4 mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--c-brand)] bg-[var(--c-brand-soft)] p-4 sm:mx-6">
+      <p className="m-0 min-w-0 flex-1 basis-60 text-[15px] font-bold text-[var(--c-ink)]">สร้างห้องใหม่แล้ว และสลับมาที่ห้องนี้ให้แล้ว ชวนนักเรียนเข้าห้องได้เลย</p>
+      <button type="button" onClick={() => window.open(`/board?classroomId=${classroomId}&mode=join`, '_blank', 'noopener')} className="inline-flex h-10 items-center rounded-xl bg-[var(--c-brand)] px-4 text-[15px] font-bold text-white focus-ring">เปิดจอชวนเข้าห้อง</button>
+      <button type="button" onClick={() => window.open(`/board?classroomId=${classroomId}&mode=showcase`, '_blank', 'noopener')} className="inline-flex h-10 items-center rounded-xl border border-[var(--c-brand)] bg-white px-4 text-[15px] font-bold text-[var(--c-brand)] focus-ring">เปิดจอผลงาน</button>
+      <button type="button" onClick={() => router.replace(`${pathname}?classroomId=${classroomId}`)} className="inline-flex h-10 items-center rounded-xl px-3 text-[14px] font-semibold text-[var(--c-ink-2)] focus-ring">ปิด</button>
+    </section>
+  ) : null
   const nextReview = () => {
     const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('main a[href*="/teacher/review?"][href*="submission="]'))
     if (links.length === 0) return
@@ -227,7 +237,7 @@ export function TeacherShell({
   const topAction: TopAction | null = !classroomId
     ? null
     : pathname === '/teacher'
-      ? { label: copied ? 'คัดลอกลิงก์แล้ว ✓' : 'ชวนนักเรียนเข้าห้อง', icon: 'door', run: () => void copyJoin() }
+      ? { label: 'ชวนนักเรียนเข้าห้อง', icon: 'door', run: () => { window.open(`/board?classroomId=${classroomId}&mode=join`, '_blank', 'noopener') } }
       : pathname.startsWith('/teacher/review')
         ? { label: 'ตรวจถัดไป', icon: 'memo', run: nextReview, disabled: badges.review === 0 }
         : pathname.startsWith('/teacher/student') && params.get('studentId')
@@ -478,12 +488,25 @@ export function TeacherShell({
                         </li>
                       )
                     })}
+                    <li role="presentation" className="mt-1 border-t border-[var(--c-line)] pt-1">
+                      <button
+                        type="button"
+                        onClick={() => void createRoom()}
+                        disabled={creating}
+                        className="flex min-h-11 w-full items-center gap-2 rounded-xl px-2.5 text-left text-[14px] font-bold text-[var(--c-brand)] hover:bg-surface-sunken focus-ring disabled:opacity-50"
+                      >
+                        {creating ? 'กำลังสร้างห้อง…' : '+ สร้างห้องใหม่'}
+                      </button>
+                    </li>
                   </ul>
                 ) : null}
               </div>
             ) : (
-              <span className="shrink-0 text-[14px] text-ink-muted">ยังไม่มีห้องเรียน</span>
+              <button type="button" onClick={() => void createRoom()} disabled={creating} className="shrink-0 rounded-xl border border-[var(--c-brand)] px-3 py-2 text-[14px] font-bold text-[var(--c-brand)] focus-ring disabled:opacity-50">
+                {creating ? 'กำลังสร้างห้อง…' : '+ สร้างห้องใหม่'}
+              </button>
             )}
+            {createError ? <span role="alert" className="shrink-0 text-[13px] font-semibold text-[var(--s-danger-ink)]">{createError}</span> : null}
 
             {topAction ? (
               <button
@@ -549,6 +572,7 @@ export function TeacherShell({
 
           {/* เนื้อหา — ชั้นเดียวที่เลื่อนได้ */}
           <main className="teacher-cms-main t3-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-busy={navigating || undefined}>
+            {createdBanner}
             {children}
           </main>
         </div>

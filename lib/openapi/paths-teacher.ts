@@ -486,6 +486,21 @@ access token ของ Supabase **ไม่ถูกส่งกลับไป�
     }),
   },
 
+  '/api/teacher/projector': {
+    get: op({
+      id: 'projectorData',
+      summary: 'ข้อมูลจอหน้าห้อง (จำนวนนักเรียนที่เข้าห้อง + ผลงานที่ปักหมุด)',
+      tags: [TEACHER],
+      security: TEACHER_ONLY,
+      description: 'อ่านอย่างเดียว · ไม่มีดาว ไม่มีคะแนน · ซ่อนชื่อเจ้าของตามที่ครูเลือก · ไม่ใช่ห้อง/ไม่ใช่เจ้าของ = 404',
+      parameters: [classroomQuery],
+      responses: {
+        ...ok('ข้อมูลจอหน้าห้อง', obj({ ok: bool('สำเร็จ'), joined: { type: 'integer', description: 'จำนวนนักเรียนที่เข้าห้อง' }, showcase: { type: 'array', items: { type: 'object' }, description: 'ผลงานที่ปักหมุด { domain, reason, nickname|null }' } })),
+        ...failures([400, ['bad-request']], [401, ['unauthorized']], [404, ['not-found']]),
+      },
+    }),
+  },
+
   '/api/teacher/flags': {
     get: op({
       id: 'flagsList',

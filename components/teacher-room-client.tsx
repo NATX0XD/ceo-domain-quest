@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { AlertIcon, CheckIcon, ShareIcon } from '@/components/ui'
 import { Icon3d } from '@/app/teacher/_ux/v2'
 import { Button, Card, EmptyState } from '@/app/teacher/_ux/ui'
+import { createRoomRequest, createdRoomHref } from '@/app/teacher/_ux/create-room'
 
 /**
  * ปุ่มเปิดห้องใหม่ + ป้ายรหัสห้องตัวใหญ่สำหรับฉายขึ้นจอ
@@ -15,10 +16,13 @@ import { Button, Card, EmptyState } from '@/app/teacher/_ux/ui'
 export function TeacherRoomClient({
   roomCode,
   joinPath,
+  classroomId,
 }: {
   roomCode: string | null
   joinPath: string
+  classroomId?: string | null
 }) {
+  const boardPath = `/board?classroomId=${classroomId ?? ''}`
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,19 +32,10 @@ export function TeacherRoomClient({
     if (busy) return
     setBusy(true)
     setError(null)
-    try {
-      const res = await fetch('/api/teacher/classroom', { method: 'POST' })
-      const data = (await res.json().catch(() => null)) as { message?: string } | null
-      if (!res.ok) {
-        setError(data?.message ?? 'เปิดห้องไม่สำเร็จ ลองใหม่อีกครั้ง')
-        return
-      }
-      router.refresh()
-    } catch {
-      setError('ต่อเน็ตไม่ได้ ลองใหม่อีกครั้ง')
-    } finally {
-      setBusy(false)
-    }
+    const r = await createRoomRequest()
+    setBusy(false)
+    if (r.ok) { router.push(createdRoomHref(r.id)); router.refresh() }
+    else setError(r.message)
   }
 
   async function copyLink() {
@@ -54,11 +49,10 @@ export function TeacherRoomClient({
     }
   }
 
-  /* ยังไม่มีห้อง → นี่คือปุ่มหลักหนึ่งเดียวของหน้า · มีห้องแล้ว → ลดเป็นปุ่มรอง
-     เพื่อไม่ให้ครูเผลอกดเปิดห้องใหม่ทับห้องที่กำลังฉายอยู่ */
+  /* ปุ่มหลักของแท็บ · ห้องเดิมไม่หาย สร้างแล้วสลับไปห้องใหม่ให้อัตโนมัติ */
   const createRoomButton = (
-    <Button kind={roomCode ? 'secondary' : 'primary'} onClick={createRoom} disabled={busy} className="w-full">
-      {busy ? 'กำลังเปิดห้อง…' : 'เปิดห้องใหม่'}
+    <Button kind="primary" onClick={createRoom} disabled={busy} className="w-full">
+      {busy ? 'กำลังสร้างห้อง…' : '+ สร้างห้องใหม่'}
     </Button>
   )
 
@@ -76,6 +70,8 @@ export function TeacherRoomClient({
               {copied ? 'คัดลอกแล้ว' : 'คัดลอกลิงก์'}
             </Button>
             {createRoomButton}
+            <Button kind="secondary" onClick={() => window.open(`${boardPath}&mode=join`, '_blank', 'noopener')} className="w-full">เปิดจอชวนเข้าห้อง</Button>
+            <Button kind="secondary" onClick={() => window.open(`${boardPath}&mode=showcase`, '_blank', 'noopener')} className="w-full">เปิดจอผลงาน</Button>
           </div>
         </Card>
       ) : (
