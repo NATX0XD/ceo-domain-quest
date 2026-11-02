@@ -7,3 +7,8 @@ declare module 'react-dom/server' {
   export function renderToStaticMarkup(element: ReactNode): string
   export function renderToString(element: ReactNode): string
 }
+
+declare module 'react-dom' {
+  import type { ReactNode, ReactPortal } from 'react'
+  export function createPortal(children: ReactNode, container: Element | DocumentFragment, key?: string | null): ReactPortal
+}

@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, useReducedMotion } from 'motion/react'
 import type { LearnModeId } from './learn-path-api'
 
@@ -80,7 +81,12 @@ export function ModePopup({
 }: ModePopupProps) {
   const reduce = useReducedMotion()
   const closeRef = useRef<HTMLButtonElement>(null)
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
   const spring = { type: 'spring' as const, stiffness: 320, damping: 26 }
+
+  useEffect(() => {
+    setPortalTarget(document.body)
+  }, [])
 
   useEffect(() => {
     closeRef.current?.focus({ preventScroll: true })
@@ -97,11 +103,11 @@ export function ModePopup({
   // ทุกภารกิจใช้กรอบภาพทางการเดียวกัน ข้อความเฉพาะภารกิจวางเป็นข้อความสดทับ
   const officialM1 = drawer
 
-  return (
+  const popup = (
     <motion.div
       className={
         drawer
-          ? 'fixed inset-0 z-[60] flex items-end justify-center overflow-y-auto overscroll-contain bg-[#1b1030]/55 p-0'
+          ? 'fixed inset-0 z-[1000] flex items-end justify-center overflow-y-auto overscroll-contain bg-[#1b1030]/55 p-0'
           : 'fixed inset-0 z-[60] flex items-end justify-center overflow-y-auto bg-[#1d0f3a]/85 px-3 pb-4 pt-6 backdrop-blur-xl sm:items-center'
       }
       onMouseDown={(event) => {
@@ -275,6 +281,8 @@ export function ModePopup({
       </motion.section>
     </motion.div>
   )
+
+  return drawer && portalTarget ? createPortal(popup, portalTarget) : popup
 }
 
 function OfficialModeArtwork({
