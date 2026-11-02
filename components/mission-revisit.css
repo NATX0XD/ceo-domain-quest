@@ -1,0 +1,146 @@
+/* กล่อง "เล่นภารกิจนี้แล้ว" — ภาษาเดียวกับกล่องออกจากด่าน (student-navigation.css) */
+
+.mr-dialog {
+  width: min(calc(100% - 2rem), 28rem);
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.mr-dialog::backdrop {
+  background: rgb(39 23 12 / .58);
+}
+
+.mr-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: .75rem 1rem;
+  padding: 1.1rem;
+  border: 3px solid #6b2d12;
+  border-radius: 1.5rem;
+  background: #fff1d6;
+  box-shadow: 0 8px 0 #3b1707, inset 0 2px 0 rgb(255 255 255 / .8);
+  color: #3b1707;
+}
+
+.mr-close {
+  position: absolute;
+  top: -.85rem;
+  right: -.85rem;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 3px solid #6b2d12;
+  border-radius: 9999px;
+  background: #fffaf0;
+  box-shadow: 0 3px 0 #6b2d12;
+  color: #6b2d12;
+  cursor: pointer;
+}
+
+.mr-close:active { transform: translateY(2px); box-shadow: 0 1px 0 #6b2d12; }
+
+.mr-dome {
+  align-self: end;
+  width: 7rem !important;
+  height: auto !important;
+  max-width: none;
+  object-fit: contain;
+}
+
+.mr-copy { align-self: center; min-width: 0; }
+
+.mr-kicker {
+  margin: 0 0 .2rem;
+  color: #a85d28;
+  font-size: .75rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+
+.mr-copy h2 { margin: 0; font-size: 1.25rem; font-weight: 900; line-height: 1.2; }
+
+.mr-stars {
+  display: flex;
+  gap: .2rem;
+  margin: .4rem 0 0;
+}
+
+.mr-stars img {
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+  max-width: none;
+}
+
+.mr-stars img.is-off { filter: grayscale(1) opacity(.35); }
+
+.mr-copy p:last-child { margin: .4rem 0 0; font-size: .875rem; line-height: 1.5; }
+
+.mr-actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .6rem;
+}
+
+.mr-actions.is-single { grid-template-columns: 1fr; }
+
+.mr-actions button {
+  min-height: 3rem;
+  border: 3px solid #6b2d12;
+  border-radius: 1rem;
+  font-size: .95rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.mr-replay {
+  background: linear-gradient(180deg, #ffc51b, #ff7411);
+  box-shadow: 0 4px 0 #4a1f0a;
+  color: #4a1f0a;
+}
+
+.mr-view {
+  background: #fffaf0;
+  box-shadow: 0 4px 0 #6b2d12;
+  color: #6b2d12;
+}
+
+.mr-actions button:active { transform: translateY(2px); box-shadow: 0 2px 0 #4a1f0a; }
+
+@media (max-width: 380px) {
+  .mr-card { grid-template-columns: 5.5rem minmax(0, 1fr); gap: .5rem .7rem; padding: .9rem; }
+  .mr-dome { width: 5.5rem !important; }
+  .mr-copy h2 { font-size: 1.1rem; }
+  .mr-copy p:last-child { font-size: .8rem; }
+}
+
+/*
+ * จอภารกิจ / จอผลด่านบอส — ปุ่มย้อนกลับอยู่ในฉากแล้ว (แถวเดียวกับแท็บ 1-2-3-4)
+ * แถบหัวของ shell เหลือแค่นาฬิกาคาบ (ถ้าครูเปิด) จึงไม่ต้องมีแถบครีมแยกอีก
+ * ต้อง !important เพราะกฎแถบครีมใน globals.css ใช้ :not(:has()) ซ้อนหลายชั้น
+ */
+.mission-world-shell > .app-shell-header,
+.ceo-world-shell > .app-shell-header:not(:has(.student-back-button)) {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.mission-top-back.student-back-button {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.mission-top-back.student-back-button img {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.mr-dialog:focus { outline: none; }

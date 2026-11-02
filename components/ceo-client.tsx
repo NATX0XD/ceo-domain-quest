@@ -6,7 +6,8 @@ import { PageHeading, SignInGate, StudentShell } from '@/components/student-shel
 import { PageStateCard } from '@/components/page-state-card'
 import './ceo-done.css'
 import { AppFooter } from '@/components/app-shell'
-import { useExitConfirm } from '@/components/student-navigation'
+import { StudentBackButton, useExitConfirm } from '@/components/student-navigation'
+import '@/components/mission-revisit.css'
 import { GradeStatusCard } from '@/components/grade-status-client'
 import { Sheet, SheetChip } from '@/components/sheet-client'
 import {
@@ -558,7 +559,6 @@ export function CeoClient({
     return (
       <StudentShell
         className="ceo-world-shell"
-        backHref="/map"
         /**
          * หลังส่งแล้ว "สิ่งที่ต้องทำต่อ" มีได้สองอย่าง ปุ่มในแถบท้ายจึงเปลี่ยนตามสถานะ
          * ครูส่งกลับมาให้แก้ = แก้แล้วส่งใหม่ · ไม่ได้ส่งกลับ = ไปขั้นต่อไป (ทบทวนตัวเอง)
@@ -590,6 +590,10 @@ export function CeoClient({
           </AppFooter>
         }
       >
+        {/* ปุ่มย้อนกลับอยู่ในฉาก ไม่มีแถบหัวสีครีมแยก (แบบเดียวกับจอผลภารกิจ) */}
+        <div className="-mt-2 mb-2 flex">
+          <StudentBackButton href="/map" className="mission-top-back" label="กลับแผนที่" />
+        </div>
         <PageStateCard
           className="ceo-done-hero"
           tone={revision ? 'warm' : 'done'}

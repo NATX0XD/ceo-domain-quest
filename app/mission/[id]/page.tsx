@@ -19,6 +19,7 @@ import { studentNextStep } from '@/components/server/next-step'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { LearnPathClient } from '@/components/learn/learn-path-client'
 import { M2Flow } from '@/components/learn/m2-flow'
+import { ReplayMarker } from '@/components/mission-revisit'
 import { PASS_SCORE, findLearnPath, loadLearnState, type LearnState } from '@/components/server/learn-path'
 import { publicCounterData } from '@/components/server/learn-counter'
 import { publicRegistrarData } from '@/components/server/learn-registrar'
@@ -41,10 +42,13 @@ export async function generateMetadata({
 
 export default async function MissionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ replay?: string | string[] }>
 }) {
   const { id } = await params
+  const { replay } = await searchParams
   const mission = findMission(id)
   if (!mission) notFound()
 
@@ -74,25 +78,38 @@ export default async function MissionPage({
     } catch (err) {
       console.error('[mission] loadLearnState', err)
     }
-    if (learnState && !learnState.done) {
+    /**
+     * เล่นซ้ำ (`?replay=1` จากกล่อง "เล่นภารกิจนี้แล้ว") — เปิดเส้นทางเรียนอีกรอบตั้งแต่ต้น
+     * ผลรอบใหม่ลงเป็นแถวใหม่ ตัวอ่านสถานะเก็บคะแนนที่ดีที่สุดไว้ จึงไม่ทำให้ผลเดิมแย่ลง
+     */
+    const replaying = replay === '1' && Boolean(learnState?.done)
+    if (learnState && (!learnState.done || replaying)) {
+      const shownState: LearnState = replaying ? { warmup: learnState.warmup, chosen: null, done: null } : learnState
+      const marker = replaying ? <ReplayMarker studentId={session.studentId} missionId={mission.id} /> : null
       if (mission.id === 'm2') {
         return (
-          <M2Flow
-            missionTitle={mission.title}
-            path={studentLearnPath}
-            state={learnState}
-            recommendedMode={recommendedMode}
-          />
+          <>
+            {marker}
+            <M2Flow
+              missionTitle={mission.title}
+              path={studentLearnPath}
+              state={shownState}
+              recommendedMode={recommendedMode}
+            />
+          </>
         )
       }
       const kind = studentLearnPath.do.kind
       return (
+        <>
+        {marker}
         <LearnPathClient
           missionId={mission.id}
           studentId={session.studentId}
           missionTitle={mission.title}
           path={studentLearnPath}
-          state={learnState}
+          state={shownState}
+          replay={replaying}
           passScore={PASS_SCORE}
           gameData={kind === 'game' ? buildGameData(studentMission, session.studentId) : null}
           counterData={kind === 'counter' ? publicCounterData() : null}
@@ -100,6 +117,7 @@ export default async function MissionPage({
           registrarCard={kind === 'registrar' ? await registrarCardFor(session.studentId) : null}
           recommendedMode={recommendedMode}
         />
+        </>
       )
     }
   }
@@ -185,6 +203,7 @@ export default async function MissionPage({
       nextStep={nextStep}
       passedAnswer={passedAnswer}
       stationSection={await buildStationSection(mission.id, session.studentId)}
+      replayHref={learnPath ? `/mission/${encodeURIComponent(mission.id)}?replay=1` : null}
     />
   )
 }

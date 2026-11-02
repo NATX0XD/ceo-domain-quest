@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import type { MissionId } from '@/lib/db/repo'
 import { logEvent } from '@/lib/db/repo'
-import { recordMissionAnswer, setMissionStarsDb } from '@/components/server/game-state'
+import { loadMissionRow, recordMissionAnswer, setMissionStarsDb } from '@/components/server/game-state'
 import { ai } from '@/components/server/ai'
 import { findLearnPath, scoreOpenAnswers } from '@/components/server/learn-path'
 
@@ -159,8 +159,11 @@ async function exitResult(studentId: string, input: z.infer<typeof ExitSchema>):
   const passed = grade !== 'C'
   const stars = grade === 'A' ? 3 : grade === 'B' ? 2 : 0
   await logEvent(studentId, 'learn-m2-exit', { missionId: 'm2', score, exitScore, grade, passed, answers: input.answers, repair: input.repair })
+  // เล่นซ้ำหลังผ่านแล้ว = เก็บดาวที่ดีที่สุดไว้ รอบใหม่ที่ได้น้อยกว่าห้ามลดดาวเดิม
+  const before = await loadMissionRow(studentId, 'm2' as MissionId)
   await recordMissionAnswer(studentId, 'm2' as MissionId, passed, 'game')
-  await setMissionStarsDb(studentId, 'm2' as MissionId, stars)
+  const keptStars = before.passed ? Math.max(before.stars, stars) : stars
+  if (!before.passed || keptStars !== before.stars) await setMissionStarsDb(studentId, 'm2' as MissionId, keptStars)
   if (passed) await logEvent(studentId, 'learn-done', { missionId: 'm2', mode: 'do', score })
   return { kind: 'exit', score, exitScore, grade, passed, stars }
 }

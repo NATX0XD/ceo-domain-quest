@@ -89,6 +89,8 @@ export interface LearnPathClientProps {
   registrarData?: RegistrarData | null
   registrarCard?: RegistrarCard | null
   recommendedMode?: LearnModeId | null
+  /** รอบเล่นซ้ำหลังผ่านแล้ว (`?replay=1`) — จบแล้วต้องออกจาก URL เล่นซ้ำ ไม่ใช่ refresh วนเข้ารอบใหม่ */
+  replay?: boolean
 }
 
 export function LearnPathClient({
@@ -103,17 +105,22 @@ export function LearnPathClient({
   registrarData,
   registrarCard,
   recommendedMode = null,
+  replay = false,
 }: LearnPathClientProps) {
   const router = useRouter()
+  /** เรียนจบแล้วให้เซิร์ฟเวอร์วาดจอภารกิจใหม่ — รอบเล่นซ้ำต้องทิ้ง ?replay=1 ไปด้วย */
+  const reloadMission = () => (replay ? router.replace(`/mission/${encodeURIComponent(missionId)}`) : router.refresh())
   const isM1 = missionId === 'm1'
   const sound = useM1Sound()
   const singleMode = path.modes.length === 1 && path.modes[0] === 'do'
+  /** ด่าน 3 (เคาน์เตอร์) กับด่าน 4 (จดโดเมน) มีจอกติกาในเกมเองแล้ว — ข้ามจอ "เป้าหมายด่านนี้" เข้าเกมเลย */
+  const directGame = singleMode && (path.do.kind === 'counter' || path.do.kind === 'registrar')
 
   // กลับมาเปิดหน้าใหม่ = ทำต่อจากจุดเดิมที่บันทึกไว้
   const [step, setStep] = useState<Step>(() =>
-    singleMode ? (state.chosen === 'do' ? 'do' : 'intro') : (state.chosen ?? 'result'),
+    singleMode ? (state.chosen === 'do' || directGame ? 'do' : 'intro') : (state.chosen ?? 'result'),
   )
-  const [mode, setMode] = useState<LearnModeId | null>(state.chosen)
+  const [mode, setMode] = useState<LearnModeId | null>(state.chosen ?? (directGame ? 'do' : null))
   const [picked, setPicked] = useState<LearnModeId | null>(state.chosen ?? recommendedMode ?? 'do')
 
   const [sceneIdx, setSceneIdx] = useState(0)
@@ -173,7 +180,7 @@ export function LearnPathClient({
     try {
       const raw = sessionStorage.getItem(storeKey)
       const saved = raw ? (JSON.parse(raw) as Record<string, unknown>) : null
-      if (saved && !state.done) {
+      if (saved && !state.done && !replay) {
         const savedMode = saved.mode === 'watch' || saved.mode === 'read' || saved.mode === 'do' ? saved.mode : null
         const steps: Step[] = ['intro', 'result', 'watch', 'read', 'read-handoff', 'questions', 'do']
         const savedStep = steps.find((x) => x === saved.step)
@@ -181,12 +188,14 @@ export function LearnPathClient({
           savedStep === 'watch' || savedStep === 'read' || savedStep === 'read-handoff' || savedStep === 'questions' || savedStep === 'do'
         const usableSavedStep = singleMode
           ? savedStep === 'intro' || savedStep === 'do'
-            ? savedStep
+            ? directGame
+              ? 'do'
+              : savedStep
             : null
           : savedStep
         if (usableSavedStep && (!needsMode || savedMode)) {
           setStep(usableSavedStep)
-          setMode(savedMode)
+          setMode(savedMode ?? (directGame ? 'do' : null))
           if (typeof saved.brief === 'boolean') setBrief(saved.brief)
           if (typeof saved.qIdx === 'number') setQIdx(Math.max(0, Math.min(questions.length - 1, saved.qIdx)))
           if (typeof saved.sceneIdx === 'number') setSceneIdx(Math.max(0, Math.min(lastScene, saved.sceneIdx)))
@@ -372,7 +381,7 @@ export function LearnPathClient({
     } catch {
       /* ข้าม */
     }
-    router.refresh()
+    reloadMission()
   }
 
   /* ------------------------------------------------------------ ปุ่มล่าง */
@@ -596,7 +605,7 @@ export function LearnPathClient({
         variant="success"
         size="lg"
         fullWidth
-        onClick={() => router.refresh()}
+        onClick={reloadMission}
         trailingIcon={<ChevronRightIcon width={22} height={22} />}
       >
         ไปต่อ

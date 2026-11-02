@@ -16,6 +16,7 @@ export function MissionPassCard({
   passedCount,
   totalMissions,
   maxStars = 3,
+  kicker,
 }: {
   missionNo: number
   stars: number
@@ -25,6 +26,8 @@ export function MissionPassCard({
   passedCount: number
   totalMissions: number
   maxStars?: number
+  /** บรรทัดเล็กเหนือจำนวนดาว — ค่าเริ่มต้น "ภารกิจที่ N สำเร็จ" (จอที่หัวจอบอกแล้วส่งชื่อภารกิจมาแทน) */
+  kicker?: string
 }) {
   const reduce = useReducedMotion()
   const shown = Math.max(0, Math.min(maxStars, stars))
@@ -66,7 +69,7 @@ export function MissionPassCard({
         draggable={false}
       />
       <div className="shrink-0">
-        <p className="text-label font-extrabold text-[#7a4b00]">ภารกิจที่ {missionNo} สำเร็จ</p>
+        <p className="text-label font-extrabold text-[#7a4b00]">{kicker ?? `ภารกิจที่ ${missionNo} สำเร็จ`}</p>
         <p className="font-display text-[1.6rem] font-extrabold leading-tight text-[#3a1a6e]">ได้ {shown} จาก {maxStars} ดาว!</p>
       </div>
       <ul className="flex w-full shrink-0 flex-col gap-1.5 text-left">

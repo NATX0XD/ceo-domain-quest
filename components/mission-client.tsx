@@ -34,7 +34,8 @@ import {
 } from '@/components/ui'
 import type { ReactNode } from 'react'
 import { MissionPassCard } from '@/components/mission-pass-card'
-import { useExitConfirm } from '@/components/student-navigation'
+import { StudentBackButton, useExitConfirm } from '@/components/student-navigation'
+import { MissionRevisitDialog, useRevisitPrompt } from '@/components/mission-revisit'
 
 /**
  * หน้าจอภารกิจย่อย — **แสดงผลอย่างเดียว**
@@ -103,6 +104,7 @@ export function MissionClient({
   nextStep: _nextStep,
   passedAnswer = null,
   stationSection = null,
+  replayHref = null,
 }: {
   studentId: string
   mission: MissionWithoutHints
@@ -144,6 +146,8 @@ export function MissionClient({
   passedAnswer?: string | null
   /** ส่วนเสริมของภารกิจนั้น เช่น สำนักงานจดทะเบียนของ m3 (เรนเดอร์จากฝั่งเซิร์ฟเวอร์) */
   stationSection?: ReactNode
+  /** เล่นภารกิจนี้ซ้ำได้ที่ไหน (เส้นทางเรียนของภารกิจ) — null = ไม่มีรอบเล่นซ้ำ */
+  replayHref?: string | null
 }) {
   const router = useRouter()
   const exit = useExitConfirm({
@@ -170,6 +174,8 @@ export function MissionClient({
   /** ผลรายช่องจากเซิร์ฟเวอร์ — ผิดตรงไหนบอกตรงจุด ไม่ได้บอกว่าช่องนั้นต้องใส่อะไร */
   const [slotResults, setSlotResults] = useState<Record<string, boolean> | null>(null)
   const checking = check.kind === 'checking'
+  /** เปิดภารกิจที่ผ่านแล้วซ้ำ = ถามก่อนว่าจะดูผลหรือเล่นใหม่ */
+  const revisit = useRevisitPrompt({ studentId, missionId: mission.id, passedOnLoad: passedFromServer })
 
   const passed = check.kind === 'correct'
   const showStuck = wrongCount > 2 && !passed
@@ -448,7 +454,6 @@ export function MissionClient({
     <>
       <StudentShell
       className="mission-world-shell flex h-full min-h-0 flex-col gap-2 pt-3! pb-2!"
-      onBack={exit.request}
       footer={
         <AppFooter>
           {passed ? (
@@ -482,6 +487,12 @@ export function MissionClient({
     >
       {/* แถวบน: ความคืบหน้า 4 ภารกิจ + ดาวสะสม — ค่าทั้งหมดมาจากฐานข้อมูล */}
       <div className="flex shrink-0 items-center gap-2">
+        {/* ปุ่มย้อนกลับอยู่ในฉาก แถวเดียวกับแท็บภารกิจ — ไม่มีแถบหัวแยกอีก */}
+        <StudentBackButton
+          className="mission-top-back"
+          {...(passed ? { href: '/map' } : { onClick: exit.request })}
+          label="กลับแผนที่"
+        />
         <ol className="flex min-w-0 flex-1 gap-1.5">
           {progressRows.map((row, i) => (
             <li key={row.id} className="flex-1">
@@ -511,7 +522,7 @@ export function MissionClient({
       {/* อยู่ตรงไหนของคาบ + อยู่ภารกิจที่เท่าไร — จอที่เด็กอยู่นานที่สุดต้องบอกเองทั้งคู่ (flow-1.md ข้อ 21)
           ใช้ชิปเดียวกับจออื่น จะได้เป็นภาษาเดียวกันทั้งระบบ ไม่ใช่ตัวหนังสือเทาลอย ๆ */}
       <StageLine
-        stage="ขั้นที่ 3 · ลุยภารกิจ"
+        stage={passed ? 'ขั้นที่ 3 · ผลภารกิจ' : 'ขั้นที่ 3 · ลุยภารกิจ'}
         remain={`ภารกิจที่ ${myIndex + 1} จาก ${progressRows.length}`}
         icon={<QuestIcon width={14} height={14} />}
       />
@@ -529,8 +540,13 @@ export function MissionClient({
         *    เพราะ instruction ของไฟล์เนื้อหาเขียนคำตอบไว้ตรง ๆ ("ให้ได้เป็น www.…")
         *    เอามาขึ้นหัวจอเมื่อไหร่คือเฉลยข้อตรวจทันที
         */}
+      {/* ผ่านแล้ว = จอผล หัวจอต้องบอกผล ไม่ใช่โจทย์ (ไม่งั้นเด็กงงว่าต้องตอบอะไรอีก) */}
       <h1 className="mission-question-card shrink-0 rounded-2xl bg-surface-raised px-3 py-2 text-title-sm font-extrabold text-balance text-ink shadow-soft-1 ring-1 ring-line ring-inset">
-        {assemble ? mission.channels.game.title : mission.check.question}
+        {passed
+          ? `ภารกิจที่ ${myIndex + 1} สำเร็จ`
+          : assemble
+            ? mission.channels.game.title
+            : mission.check.question}
       </h1>
 
       {/**
@@ -544,6 +560,7 @@ export function MissionClient({
         {passed ? (
           <MissionPassCard
             missionNo={myIndex + 1}
+            kicker={mission.title}
             stars={myStars}
             answerLabel={myAnswerLabel}
             explanation={check.kind === 'correct' ? check.explanation : null}
@@ -916,6 +933,17 @@ export function MissionClient({
       </Sheet>
       </StudentShell>
       {exit.dialog}
+      <MissionRevisitDialog
+        open={revisit.open}
+        missionNo={myIndex + 1}
+        stars={myStars}
+        replayHref={replayHref}
+        onViewResult={revisit.close}
+        onReplay={() => {
+          revisit.close()
+          if (replayHref) router.push(replayHref)
+        }}
+      />
     </>
   )
 }
