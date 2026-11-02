@@ -1,7 +1,8 @@
 // สร้าง content/known-domains.json — รายชื่อโดเมนที่ตรวจกับ RDAP จริงแล้ว ใช้เป็นข้อมูลสำรองของเกม m4
 // ตอนค้นออนไลน์ไม่ได้ (registry จำกัดการเรียก หรือนักเรียนค้นถี่เกิน)
-// รัน: node scripts/build-known-domains.mjs   (ช้าโดยตั้งใจ เว้นช่วงต่อ registry)
-import { writeFileSync } from 'node:fs'
+// รัน: node scripts/build-known-domains.mjs          (ช้าโดยตั้งใจ เว้นช่วงต่อ registry)
+//      node scripts/build-known-domains.mjs --fill   ตรวจเฉพาะชื่อที่รอบก่อนตรวจไม่สำเร็จ แล้วรวมเข้าไฟล์เดิม
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 
 const LABELS = [
   // แบรนด์ที่นักเรียนน่าจะลองพิมพ์
@@ -43,17 +44,22 @@ async function check(domain, tld) {
   return null
 }
 
-const registered = []
-const notFound = []
+const OUT = new URL('../content/known-domains.json', import.meta.url)
+const fill = process.argv.includes('--fill') && existsSync(OUT)
+const prev = fill ? JSON.parse(readFileSync(OUT, 'utf8')) : { registered: [], notFound: [] }
+const registered = [...prev.registered]
+const notFound = [...prev.notFound]
+const done = new Set([...registered, ...notFound])
 let skipped = 0
 for (const label of LABELS) {
   for (const tld of TLDS) {
     const domain = `${label}.${tld}`
+    if (done.has(domain)) continue
     const status = await check(domain, tld)
     if (status === 'registered') registered.push(domain)
     else if (status === 'not-found') notFound.push(domain)
     else skipped++
-    await sleep(tld === 'shop' ? 900 : 350)
+    await sleep(tld === 'shop' ? 900 : fill ? 2000 : 350)
   }
   process.stdout.write('.')
 }
@@ -63,5 +69,5 @@ const out = {
   registered: registered.sort(),
   notFound: notFound.sort(),
 }
-writeFileSync(new URL('../content/known-domains.json', import.meta.url), JSON.stringify(out, null, 2) + '\n')
+writeFileSync(OUT, JSON.stringify(out, null, 2) + '\n')
 console.log(`\nregistered ${registered.length} · not-found ${notFound.length} · skipped ${skipped}`)

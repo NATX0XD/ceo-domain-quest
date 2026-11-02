@@ -173,7 +173,8 @@ export function GameButton({
         onClick?.()
       }}
       className={cn(
-        'game-button inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 text-body font-extrabold',
+        // ขอบซ้าย/ขวาของภาพปุ่มกินที่ราว 1.5rem ต่อข้าง เว้นที่ให้ตัวอักษรไม่ทับลวดลายขอบ
+        'game-button inline-flex min-h-12 min-w-44 items-center justify-center gap-2 rounded-xl px-9 text-body font-extrabold',
         'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus',
         'disabled:cursor-not-allowed disabled:opacity-50',
         `game-button--${skin}`,
