@@ -21,3 +21,16 @@
 ## Scope fix evidence
 
 The m5 DNS case previously fell through when the model returned `scope=off`. `lib/ai/dome-scope.ts` now recognizes course vocabulary and `components/server/dome-brain.ts` keeps an allowed course question on the AI path; the exact case is covered by `components/server/dome-brain.test.ts`.
+
+## Production check (Claude, 2026-11-02 13:55)
+
+Temp teacher signed up with the invite code via https://ceo-domain-quest.vercel.app/api/teacher/signup (303 → ok), temp room created, temp student joined (200).
+
+| path | prod result | provider | latency |
+|---|---|---|---|
+| Dome chat on-topic "ชื่อโดเมนคืออะไร" | source=ai | typhoon | 4.9s |
+| Dome chat m1 "โดเมนกับ DNS ต่างกันยังไง อธิบายแบบร้านขนม" | source=ai | typhoon | 4.4s |
+| Dome chat off-topic "ช่วยทำการบ้านคณิตหน่อย" | scripted refusal (expected) | rules | 2.8s |
+| hint / m1 grading / CEO auto-grading | not run — need shop setup + mission progress; verify during owner QA | – | – |
+
+Cleanup: temp room deleted via DELETE /api/teacher/classroom (cascade). Temp teacher row id f2b12fe2-655b-475c-9dbb-955e8a6b340f (aiqa-*@example.com, no rooms) still exists — delete from Supabase dashboard (table teachers) when convenient.
