@@ -34,7 +34,16 @@
       "id": "w-profanity",
       "level": 2,
       "category": "คำหยาบรุนแรง",
-      "terms": ["เย็ด", "ควย", "หี", "แตด", "จัญไร", "ระยำ", "fuck", "shit", "bitch", "asshole"]
+      "terms": ["เย็ด", "ควย", "หี", "แตด", "จัญไร", "ระยำ", "เงี่ยน", "ส้นตีน", "fuck", "shit", "bitch", "asshole"]
+    },
+    {
+      "id": "w-profanity-embedded",
+      "level": 2,
+      "category": "คำหยาบรุนแรง",
+      "_note": "embedded = จับแม้ซ่อนกลางคำ (ชื่อเว็บไม่มีช่องว่าง เช่น mykuyyshop) · allow = คำปกติที่มีคำต้องห้ามอยู่ข้างใน (ก๋วยเตี๋ยว) ตัดออกก่อนเทียบ",
+      "embedded": true,
+      "terms": ["kuy", "khuy", "fuck", "fck", "shit", "bitch", "porn", "yedmae", "yedhee", "aisus", "eesus", "aihia", "eehia", "heeya"],
+      "allow": ["kuytiew", "kuyteow", "kuyteaw", "kuytiao"]
     },
     {
       "id": "w-sexual",

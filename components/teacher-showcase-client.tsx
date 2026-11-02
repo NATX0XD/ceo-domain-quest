@@ -29,6 +29,8 @@ interface PendingRow {
   id: string
   nickname: string
   domain: string
+  /** ชื่อเว็บ/เหตุผลติดตัวกรองคำ — ผนังผลงานของนักเรียนซ่อนชิ้นนี้จากเพื่อน */
+  hiddenFromPeers?: boolean
 }
 
 export function TeacherShowcaseClient({
@@ -114,6 +116,12 @@ export function TeacherShowcaseClient({
                 <p className="min-w-0 text-label text-ink">
                   <span className="font-extrabold">{row.nickname}</span>
                   <span className="ml-2 font-bold break-all text-brand-700">{row.domain}</span>
+                  {row.hiddenFromPeers ? (
+                    <span className="t2-chip ml-2" title="ชื่อเว็บหรือเหตุผลติดตัวกรองคำ">
+                      <AlertIcon width={14} height={14} aria-hidden />
+                      ติดตัวกรองคำ · ไม่ขึ้นให้เพื่อนเห็น
+                    </span>
+                  ) : null}
                 </p>
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <button

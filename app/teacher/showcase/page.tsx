@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { listPendingReview } from '@/lib/db/repo'
 import { TeacherShowcaseClient } from '@/components/teacher-showcase-client'
 import { TeacherFlagsClient } from '@/components/teacher-flags-client'
+import { showcaseSafeForPeers } from '@/components/server/showcase-safety'
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
 import { PageBody, PageHead } from '../_ux/page-head'
 import { Icon3d, InfoTip } from '../_ux/v2'
@@ -57,6 +58,12 @@ export default async function TeacherShowcasePage({
               id: row.id,
               nickname: row.nickname,
               domain: `${row.domain_name}${row.tld}`,
+              // ติดตัวกรองคำ = เพื่อนไม่เห็นบนผนังผลงาน ครูยังเห็นและปักหมุดเองได้ถ้าจะใช้สอน
+              hiddenFromPeers: !showcaseSafeForPeers({
+                domainName: row.domain_name,
+                tld: row.tld,
+                reasonText: row.reason_text,
+              }),
             }))}
         />
 

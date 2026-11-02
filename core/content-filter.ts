@@ -121,6 +121,13 @@ const wordGroups = filterJson.words as ReadonlyArray<{
   level: number
   category: string
   terms: readonly string[]
+  /**
+   * true = เทียบแบบหาชิ้นส่วนกลางคำ แม้เป็นคำอังกฤษ — ใช้กับคำหยาบที่ชอบซ่อนในชื่อเว็บ
+   * (ชื่อเว็บไม่มีช่องว่าง เช่น mykuyyshop.in.th) ซึ่งการเทียบแบบมีขอบเขตของคำจับไม่ได้
+   */
+  embedded?: boolean
+  /** คำปกติที่มีคำต้องห้ามอยู่ข้างใน (เช่น kuytiew = ก๋วยเตี๋ยว) ตัดออกจากข้อความก่อนเทียบกลุ่มนี้ */
+  allow?: readonly string[]
 }>
 
 const personalPatterns = filterJson.personalInfoPatterns as ReadonlyArray<{
@@ -195,10 +202,10 @@ function escapeRegex(value: string): string {
  *
  * ส่วนคำไทยเขียนติดกันไม่มีช่องว่างอยู่แล้ว จึงยังเทียบแบบหาชิ้นส่วนเหมือนเดิม
  */
-function containsTerm(haystack: string, term: string): boolean {
+function containsTerm(haystack: string, term: string, embedded = false): boolean {
   const needle = normalizedTerm(term)
   if (needle.length === 0) return false
-  if (!/^[a-z0-9-]+$/.test(needle)) return haystack.includes(needle)
+  if (embedded || !/^[a-z0-9-]+$/.test(needle)) return haystack.includes(needle)
   return new RegExp(`(?<![a-z0-9])${escapeRegex(needle)}(?![a-z0-9])`).test(haystack)
 }
 
@@ -228,8 +235,13 @@ function findPersonalInfo(text: string): FilterMatch[] {
 function findBannedWords(normalized: string): FilterMatch[] {
   const found: FilterMatch[] = []
   for (const group of wordGroups) {
+    let haystack = normalized
+    for (const allowed of group.allow ?? []) {
+      const word = normalizedTerm(allowed)
+      if (word.length > 0) haystack = haystack.split(word).join(' ')
+    }
     for (const term of group.terms) {
-      if (containsTerm(normalized, term)) {
+      if (containsTerm(haystack, term, group.embedded === true)) {
         found.push({
           ruleId: group.id,
           category: group.category,

@@ -1,7 +1,8 @@
-import { getActiveClassSession, getStudent, listStudentPhaseUnlocks } from '@/lib/db/repo'
+import { getActiveClassSession, getProfile, getStudent, listStudentPhaseUnlocks } from '@/lib/db/repo'
 
 /**
- * ประตูของแบบทดสอบก่อน/หลังเรียน (T-12) — **ครูเป็นคนกดเปิด** (สเปกข้อ 3.1 แถวก่อนคาบ/หลังคาบ)
+ * ประตูของแบบทดสอบก่อน/หลังเรียน (T-12) — ชุดก่อนเรียน **ครูเป็นคนกดเปิด**
+ * ชุดหลังเรียนเปิดเองทันทีเมื่อทำชุดก่อนเรียนแล้ว (สวิตช์ครูยังเปิดได้ แต่ไม่บล็อกนักเรียน)
  *
  * ใช้สวิตช์ของคาบโดยตรง: `class_sessions.pretest_enabled` และ `posttest_enabled`
  * (เดิมผูกกับ `phase` ชั่วคราวเพราะยังไม่มีคอลัมน์ ตอนนี้ฝั่ง DB ทำมาแล้วจึงเลิกผูกกับ phase
@@ -21,13 +22,14 @@ export interface TestGate {
   reason: string | null
   /** ครูเปิดให้คนนี้ก่อนทั้งห้องหรือเปล่า */
   unlockedForStudent: boolean
+  /** ครูกดเปิด (ทั้งห้องหรือรายคน) — false = เปิดเองเพราะทำแบบทดสอบก่อนเรียนแล้ว */
+  byTeacher?: boolean
 }
 
 const CLOSED_MESSAGE: Record<TestKind, string> = {
   pretest:
     'แบบทดสอบก่อนเรียนจะเปิดตอนครูกดเปิดให้ทั้งห้องก่อนเริ่มคาบ ระหว่างนี้ยังไม่ต้องทำอะไรครับ',
-  posttest:
-    'แบบทดสอบหลังเรียนจะเปิดตอนครูกดเปิดให้ทั้งห้องหลังจบคาบ ระหว่างนี้เก็บดาวภารกิจอื่นต่อได้เลย',
+  posttest: 'ทำแบบทดสอบก่อนเรียนก่อนนะ แล้วแบบทดสอบหลังเรียนจะเปิดให้เอง',
 }
 
 export async function testGate(studentId: string, kind: TestKind): Promise<TestGate> {
@@ -50,7 +52,19 @@ export async function testGate(studentId: string, kind: TestKind): Promise<TestG
     kind === 'pretest' ? session?.pretest_enabled === true : session?.posttest_enabled === true
 
   if (enabled || unlockedForStudent) {
-    return { open: true, reason: null, unlockedForStudent }
+    return { open: true, reason: null, unlockedForStudent, byTeacher: true }
+  }
+
+  /**
+   * แบบทดสอบหลังเรียน **ไม่ต้องรอครูเปิด** (เจ้าของสั่ง) — ทำได้ทันทีที่ทำชุดก่อนเรียนแล้ว
+   * เด็กที่จบด่านบอสเร็วจะได้ทำต่อเลย ไม่ต้องนั่งรอทั้งห้อง · สวิตช์ของครูยังเปิดให้ได้ แต่ไม่ใช่ประตู
+   * ต้องมีคะแนนก่อนเรียนก่อน ไม่งั้นเทียบก่อน-หลัง (E1/E2) ไม่ได้
+   */
+  if (kind === 'posttest') {
+    const profile = await getProfile(studentId)
+    if (profile && profile.pre_test_score !== null) {
+      return { open: true, reason: null, unlockedForStudent, byTeacher: false }
+    }
   }
 
   return { open: false, reason: CLOSED_MESSAGE[kind], unlockedForStudent }

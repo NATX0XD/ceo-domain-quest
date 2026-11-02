@@ -319,8 +319,8 @@ describe('ไฟล์ที่เหลือในคลังก็ต้อ�
     }
   })
 
-  it('ตัวกรองคำ 9 กลุ่ม ระดับ 1 ถึง 3 เรียงจากเบาไปหนัก และทุกกลุ่มมีคำอยู่จริง', () => {
-    expect(contentFilterJson.words).toHaveLength(9)
+  it('ตัวกรองคำ 10 กลุ่ม ระดับ 1 ถึง 3 เรียงจากเบาไปหนัก และทุกกลุ่มมีคำอยู่จริง', () => {
+    expect(contentFilterJson.words).toHaveLength(10)
     const levels = contentFilterJson.words.map((w) => w.level)
     expect(levels).toEqual([...levels].sort((a, b) => a - b))
     expect(Math.min(...levels)).toBe(1)

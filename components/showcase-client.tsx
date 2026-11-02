@@ -125,6 +125,22 @@ export function ShowcaseFeedbackForm({ myNickname }: { myNickname: string }) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  /** ชื่อเล่นเพื่อนที่มีผลงานบนผนัง — แตะเลือกได้ ไม่ต้องพิมพ์ให้ตรงตัวสะกด */
+  const [friends, setFriends] = useState<string[]>([])
+
+  useEffect(() => {
+    let alive = true
+    fetch('/api/me/showcase')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { showcase?: ShowcaseItem[] } | null) => {
+        if (!alive || !data?.showcase) return
+        setFriends([...new Set(data.showcase.map((item) => item.nickname))])
+      })
+      .catch(() => undefined)
+    return () => {
+      alive = false
+    }
+  }, [])
 
   const ready =
     toNickname.trim().length > 0 &&
@@ -169,7 +185,7 @@ export function ShowcaseFeedbackForm({ myNickname }: { myNickname: string }) {
     'focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus'
 
   return (
-    <Card as="section" tone="brand" className="mt-6">
+    <Card as="section" tone="brand">
       <h2 className="text-title-sm font-bold text-balance text-ink">
         ให้ความเห็นเพื่อน (ทำหรือไม่ทำก็ได้)
       </h2>
@@ -177,9 +193,35 @@ export function ShowcaseFeedbackForm({ myNickname }: { myNickname: string }) {
         ชม 1 ข้อ เสนอแนะ 1 ข้อ เขียนเป็นข้อเสนอ ไม่ใช่คำตำหนิ · ชื่อของเราในห้องนี้คือ {myNickname}
       </p>
 
+      {friends.length > 0 ? (
+        <div className="mt-4">
+          <p className="text-body font-bold text-ink">เลือกเพื่อน</p>
+          <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="เลือกเพื่อนที่จะเขียนถึง">
+            {friends.map((name) => {
+              const picked = toNickname.trim() === name
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  aria-pressed={picked}
+                  onClick={() => setToNickname(name)}
+                  className={`min-h-11 rounded-full px-4 text-label font-bold ring-2 ring-inset focus-ring ${
+                    picked
+                      ? 'bg-quest-600 text-white ring-quest-700'
+                      : 'bg-surface-raised text-brand-700 ring-brand-200 hover:bg-brand-50'
+                  }`}
+                >
+                  {name}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ) : null}
+
       <TextField
         id="to-nickname"
-        className="mt-5"
+        className="mt-4"
         label="ชื่อเล่นของเพื่อน"
         type="text"
         value={toNickname}

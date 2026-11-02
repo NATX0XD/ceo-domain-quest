@@ -1,10 +1,10 @@
-import { getProfile } from '@/lib/db/repo'
+import { getProfile, listSubmissions } from '@/lib/db/repo'
 import { posttestGate, pretestGate } from '@/components/server/posttest-gate'
 
 /**
  * ป้ายเตือนแบบทดสอบบนหน้า /home และ /map
  *  - ยังไม่ได้ทำ pretest -> เชิญทำ (ครูยังไม่เปิด = บอกว่ารอ) · ภารกิจล็อกจนกว่าจะส่ง
- *  - ครูเปิด posttest แล้วและยังไม่ได้ทำ -> เชิญทำ
+ *  - ส่งใบเสนอ CEO แล้ว (หรือครูเปิด posttest) และยังไม่ได้ทำ -> เชิญทำ
  * ตัดสินจากฐานข้อมูลและสวิตช์ของครูเท่านั้น
  */
 export type TestNudge = {
@@ -19,7 +19,17 @@ export async function loadTestNudge(studentId: string): Promise<TestNudge | null
   const profile = await getProfile(studentId)
   if (profile && profile.post_test_score === null) {
     const post = await posttestGate(studentId)
-    if (post.open) {
+    /**
+     * ประตูหลังเรียนเปิดเองหลังทำชุดก่อนเรียน — แต่ป้ายเชิญขึ้นเมื่อส่งใบเสนอ CEO แล้ว
+     * (หรือครูกดเปิดเอง) ไม่งั้นป้ายจะชวนทำข้อสอบหลังเรียนตั้งแต่ยังไม่ได้เรียน
+     */
+    const finishedBoss =
+      post.open && post.byTeacher !== true
+        ? (await listSubmissions(studentId).catch(() => [])).some(
+            (row) => row.emphasis_criterion !== null,
+          )
+        : false
+    if (post.open && (post.byTeacher === true || finishedBoss)) {
       return { kind: 'posttest', href: '/posttest', title: 'แบบทดสอบหลังเรียน', waiting: false }
     }
   }

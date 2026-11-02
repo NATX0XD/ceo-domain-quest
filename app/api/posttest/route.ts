@@ -13,7 +13,7 @@ import { errorResponse, readJsonBody, readStudentSession, unauthorized } from '.
  * ⚠️ ตรวจคำตอบที่เซิร์ฟเวอร์เท่านั้นผ่าน core/quiz.ts — เฉลยอยู่ใน content/quiz-answers.json
  *    ห้ามส่งเฉลยหรือรายข้อที่ผิดกลับไปเบราว์เซอร์ (คืนแค่คะแนนรวม)
  * ⚠️ studentId จากคุกกี้ dbq_student เท่านั้น
- * ⚠️ ครูเป็นคนกดเปิด — ดู components/server/posttest-gate.ts · ทำซ้ำไม่ได้ (409)
+ * ⚠️ ไม่ต้องรอครูเปิด (ทำได้หลังชุดก่อนเรียน) — ดู components/server/posttest-gate.ts · ทำซ้ำไม่ได้ (409)
  */
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

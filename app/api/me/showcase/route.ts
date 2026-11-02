@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getStudent, listClassroomShowcase } from '@/lib/db/repo'
+import { showcaseSafeForPeers } from '@/components/server/showcase-safety'
 import { readStudentSession, unauthorized } from '../../_lib/session-cookie'
 
 /**
@@ -31,13 +32,18 @@ export async function GET() {
   ])
 
   const myNickname = me?.nickname ?? null
-  const showcase = myNickname === null ? items : items.filter((row) => row.nickname !== myNickname)
+  const others = myNickname === null ? items : items.filter((row) => row.nickname !== myNickname)
+  /**
+   * ผลงานที่ชื่อเว็บหรือเหตุผลติดตัวกรองคำ (เช่นคำหยาบซ่อนในชื่อเว็บ) ไม่ขึ้นให้เพื่อนเห็น
+   * ครูยังเห็นที่ /teacher/showcase พร้อมป้าย "ไม่ขึ้นให้เพื่อนเห็น" · ไม่แตะคะแนนของใคร
+   */
+  const showcase = others.filter(showcaseSafeForPeers)
 
   return NextResponse.json({
     count: showcase.length,
     /** ไม่มีการจัดอันดับ เรียงตามชื่อเล่นเท่านั้น */
     showcase,
     /** งานของตัวเองถูกตัดออกไปกี่ชิ้น — หน้าจอเอาไปบอกได้ว่า "งานของเราอยู่ที่หน้าผลของฉัน" */
-    ownHidden: items.length - showcase.length,
+    ownHidden: items.length - others.length,
   })
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { getQuizSet } from '@/core/quiz'
 import { PosttestClient } from '@/components/posttest-client'
 import { SignInGate } from '@/components/student-shell'
@@ -14,7 +15,7 @@ export const dynamic = 'force-dynamic'
  * แบบทดสอบหลังเรียน 10 ข้อ (สเปกข้อ 3.1 แถวหลังคาบ)
  *
  * ไม่มีหน้านี้ = ไม่มีคะแนนหลังเรียน = คำนวณ E2 ไม่ได้ = ตอบกรรมการเรื่องประสิทธิภาพสื่อไม่ได้
- * ⚠️ ครูเป็นคนกดเปิด (posttestGate) · โจทย์ส่งไปเฉพาะตอนเปิดแล้วและยังไม่เคยทำ
+ * ⚠️ ไม่ต้องรอครูเปิด — ทำได้ทันทีหลังทำชุดก่อนเรียน (posttestGate) · โจทย์ส่งไปเฉพาะตอนยังไม่เคยทำ
  * ⚠️ เฉลยอยู่ใน content/quiz-answers.json อ่านเฉพาะตอนตรวจที่ POST /api/posttest เท่านั้น
  */
 export default async function PosttestPage() {
@@ -32,6 +33,8 @@ export default async function PosttestPage() {
 
   const all = getQuizSet('post')
   const done = profile?.post_test_score ?? null
+  // ยังไม่ได้ทำชุดก่อนเรียน = เทียบก่อน-หลังไม่ได้ ส่งไปทำชุดก่อนเรียนก่อน
+  if (!gate.open && done === null) redirect('/pretest')
   const questions =
     gate.open && done === null
       ? all.map((q) => ({ id: q.id, question: q.question, choices: q.choices }))

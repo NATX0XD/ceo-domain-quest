@@ -174,6 +174,35 @@ describe('ข้อความที่เพื่อนเห็นบนผ�
   })
 })
 
+describe('คำหยาบที่ซ่อนในชื่อเว็บและคำไทยแบบเลี่ยง (ผนังผลงานเพื่อน)', () => {
+  it('ชื่อเว็บที่ซ่อนคำหยาบกลางคำไม่ขึ้นจอเพื่อน', () => {
+    expect(safeToShowPeers('mykuyyhaieieie.in.th')).toBe(false)
+    expect(safeToShowPeers('KUYshop.com')).toBe(false)
+    expect(safeToShowPeers('k.u.y-store.co.th')).toBe(false)
+    expect(safeToShowPeers('superfuckshop.com')).toBe(false)
+    expect(checkContent('mykuyyhaieieie.in.th').level).toBe(2)
+  })
+
+  it('คำหยาบไทยและแบบเว้นวรรค/ยืดตัวอักษรถูกจับ', () => {
+    for (const text of ['ควย', 'ค ว ย', 'ควยยยย', 'เหี้ยมาก', 'สัสส', 'เย็ดแม่', 'เงี่ยน']) {
+      expect(safeToShowPeers(text)).toBe(false)
+    }
+  })
+
+  it('ชื่อเว็บปกติไม่ถูกกันผิดพลาด (ก๋วยเตี๋ยว sushi phuket)', () => {
+    for (const text of [
+      'kuytiewnaimon.com',
+      'sushiyummy.co.th',
+      'phuketseafood.com',
+      'beamdrip.com',
+      'fasaisecond.com',
+      'ชื่อนี้ตรงกับป้ายหน้าร้าน ลูกค้าพิมพ์ตามได้ทันที',
+    ]) {
+      expect(safeToShowPeers(text)).toBe(true)
+    }
+  })
+})
+
 describe('ปิดบางส่วนสำหรับให้ครูดู', () => {
   it('เก็บตัวแรกและตัวท้ายของคำไว้ ครูพอเดาบริบทได้', () => {
     const masked = maskText('คำหยาบมาก นะ')

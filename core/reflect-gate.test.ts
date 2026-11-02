@@ -37,10 +37,11 @@ describe('ลำดับ บอส -> posttest -> reflect ถูกเดิน
     expect(read('components/server/next-step.ts')).not.toContain("href: '/reflect'")
     expect(read('app/showcase/page.tsx')).not.toContain('href="/reflect"')
   })
-  it('ส่ง posttest เสร็จแล้วไป /reflect และมีหน้ารอครูเปิดที่ถามซ้ำเอง', () => {
+  it('ส่ง posttest เสร็จแล้วไป /reflect และไม่มีหน้ารอครูเปิดอีกแล้ว (ยังไม่ทำชุดก่อนเรียน = ส่งไป /pretest)', () => {
     const src = read('components/posttest-client.tsx')
     expect(src).toContain('ctaHref="/reflect"')
     expect(src).toContain('router.refresh()')
-    expect(src).toContain('รอครูเปิดแบบทดสอบหลังเรียนนะ')
+    expect(src).not.toContain('รอครูเปิดแบบทดสอบหลังเรียนนะ')
+    expect(read('app/posttest/page.tsx')).toContain("redirect('/pretest')")
   })
 })
