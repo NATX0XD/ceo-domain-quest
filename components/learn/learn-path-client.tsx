@@ -1344,6 +1344,8 @@ export function LearnPathClient({
                   onSubmit={submitDo}
                   onCheck={checkCounter}
                   level={undefined}
+                  onExit={exit.request}
+                  onFinish={() => go('done')}
                 />
               ) : path.do.kind === 'registrar' && registrarData ? (
                 <RegistrarGame data={registrarData} card={registrarCard} onSubmit={submitDo} onStep={checkRegistrar} />
