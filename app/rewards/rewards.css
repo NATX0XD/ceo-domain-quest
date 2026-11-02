@@ -121,3 +121,6 @@
   .rw-primary-cta:hover,
   .rw-medal-card.is-earned:hover .rw-medal-visual img { transform: none; }
 }
+/* ฉากเดียวต่อเนื่องทั้งหน้า: ภาพเกาะอยู่ที่ตัวหน้า หัวกับเนื้อหาโปร่ง ไม่มีรอยตัดสี */
+.rewards-world.student-world.media-shell { background: linear-gradient(180deg, rgb(32 169 243 / .12), rgb(255 241 214 / .82)), url('/landing/sea-bg.webp') center top / cover; }
+.rewards-world.student-world.media-shell .app-shell-main { background: transparent !important; }
