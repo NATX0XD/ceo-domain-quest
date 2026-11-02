@@ -2132,3 +2132,20 @@ html:has(.student-stage) { background-color: #3f3350; }
 .student-world.intro-shell .intro-world-scene { background: transparent !important; }
 .student-world.intro-shell .app-shell-footer > .surface-veil { background: transparent !important; border-color: transparent !important; backdrop-filter: none !important; }
 .student-world.intro-shell .intro-layer-dome { width: 30%; height: 27%; inset: auto 5% 0 auto; }
+
+/* ============================================================================
+   Short viewports (in-browser iPhone: Safari ~660, Chrome ~620, SE ~560 tall).
+   Fixed shell never lets browser bars collapse, so compact the shell chrome by HEIGHT.
+   Tall screens (>= 800) are untouched. Page-specific rules live next to their screens.
+   ============================================================================ */
+@media (max-height: 760px) {
+  .app-shell-footer > .surface-veil,
+  .app-shell-footer > div:not(.game-bottom-nav) { padding-top: .45rem; padding-bottom: .45rem; }
+  .app-shell-footer .game-button { min-height: 0 !important; }
+  .app-shell-footer .game-button:not(.game-button--xs):not(.game-button--sm):not(.game-button--md):not(.game-button--icon) { --gb-h: 3.25rem; }
+}
+@media (max-height: 680px) {
+  .app-shell-footer > .surface-veil,
+  .app-shell-footer > div:not(.game-bottom-nav) { padding-top: .35rem; padding-bottom: .35rem; }
+  .app-shell-footer .game-button:not(.game-button--xs):not(.game-button--sm):not(.game-button--md):not(.game-button--icon) { --gb-h: 3rem; }
+}

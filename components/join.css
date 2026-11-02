@@ -71,3 +71,40 @@
 .jn-tab-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
 .jn-tab-text small { font-size: .75rem; font-weight: 800; opacity: .85; }
 @media (max-height: 760px) { .jn-tabs, .jn-sub { margin-bottom: .35rem; } }
+
+/* ---- short viewports (in-browser iPhone: ~660 / ~620 / ~560 tall) ----
+   The framed art is percentage-positioned, so on short heights it hides the inputs.
+   Below 760px the stage becomes ordinary flow: plaque, then panel; main scrolls if still too tall. */
+@media (max-height: 760px) {
+  .media-join-main { padding-top: 2.9rem; padding-bottom: .6rem; }
+  .media-join-main > a { top: .35rem; min-height: 2.25rem; padding: 0 .7rem; font-size: .85rem; box-shadow: 0 2px 0 #6b2d12; }
+  .media-join-main .jn-tabs { max-width: 22rem; padding: .2rem; margin-bottom: .35rem; border-width: 2px; box-shadow: 0 3px 0 rgb(107 45 18 / .35); }
+  .media-join-main .jn-tab { min-height: 2.35rem; font-size: .9rem; gap: .25rem; }
+  .media-join-main .jn-tab img { width: 1.4rem; height: 1.4rem; }
+  .media-join-main .jn-tab-text small { font-size: .65rem; }
+  .media-join-main .jn-sub { margin-bottom: .35rem; padding: .1rem .7rem; font-size: .8rem; }
+  .media-join-main .join-frame-stage { flex: none; display: flex; flex-direction: column; align-items: center; width: min(100%, 26rem); }
+  .media-join-main .join-frame-art { position: static; z-index: 0; width: 9rem; height: 3.4rem; margin-bottom: -.9rem; object-fit: cover; object-position: 50% 10%; }
+  .media-join-main .join-title-plaque { position: relative; inset: auto; width: 74%; min-height: 2.4rem; padding: .15rem .6rem; border-width: 2px; border-radius: .85rem; box-shadow: 0 3px 0 #421a0a, inset 0 2px 0 rgb(255 241 214 / .35); margin-bottom: -.7rem; }
+  .media-join-main .join-title-plaque h1 { font-size: 1.15rem; line-height: 1.2; }
+  .media-join-main .join-frame-panel { position: relative; inset: auto; width: 100%; padding: 1.05rem .85rem .7rem; border-width: 3px; border-radius: 1.25rem; box-shadow: inset 0 2px 0 rgb(255 255 255 / .8), 0 4px 0 rgb(107 45 18 / .45); }
+  .media-join-main .join-frame-panel form { margin-top: 0; gap: .45rem; }
+  .media-join-main .join-frame-panel .mt-2 { margin-top: .25rem; }
+  .media-join-main .join-frame-panel .min-h-14 { min-height: 3rem; }
+  .media-join-main .join-frame-panel .h-16 { height: 3.25rem; }
+  .media-join-main .join-frame-panel .text-body { font-size: .95rem; line-height: 1.3; }
+  .media-join-main .join-frame-panel .text-label { line-height: 1.3; }
+  .media-join-main .jn-hint { padding: .35rem .6rem; font-size: .8rem; line-height: 1.3; border-radius: .8rem; }
+  .media-join-main .jn-hint img { width: 1.4rem; height: 1.4rem; }
+}
+@media (max-height: 640px) { .media-join-main .join-frame-art { display: none; } }
+@media (max-height: 680px) {
+  .media-join-main .join-title-plaque { min-height: 2.1rem; }
+  .media-join-main .join-title-plaque h1 { font-size: 1.05rem; }
+  .media-join-main .jn-sub { display: none; }
+  .media-join-main .join-frame-panel { padding-top: .95rem; }
+}
+@media (max-height: 600px) {
+  .media-join-main .join-frame-panel form { gap: .3rem; }
+  .media-join-main .join-frame-panel .min-h-14 { min-height: 2.85rem; }
+}

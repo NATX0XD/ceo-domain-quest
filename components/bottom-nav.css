@@ -194,3 +194,15 @@
   .game-bottom-nav__icon-wrap { transition: none; }
   .game-bottom-nav__link:hover .game-bottom-nav__icon-wrap { transform: none; }
 }
+
+/* short viewports: slimmer menu so content keeps the height (tall screens unchanged) */
+@media (max-height: 700px) {
+  .app-shell:has(> .app-shell-footer > .game-bottom-nav) { --bn-fade: 18px; }
+  .game-bottom-nav { padding-bottom: calc(3px + var(--safe-bottom, 0px)); }
+  .game-bottom-nav__list { min-height: 56px; padding: 4px; border-radius: 20px; }
+  .game-bottom-nav__link { min-height: 48px; }
+  .game-bottom-nav__link.is-active { min-height: 54px; margin-top: -10px; }
+  .game-bottom-nav__icon-wrap { width: 30px; height: 30px; }
+  .game-bottom-nav__icon { width: 28px; height: 28px; }
+  .game-bottom-nav__label { font-size: .7rem; line-height: 1.1; }
+}
