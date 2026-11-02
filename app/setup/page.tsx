@@ -9,6 +9,9 @@ import { PageStateCard, PageStateTip } from '@/components/page-state-card'
 import './setup-locked.css'
 import { isShopProfileLocked, loadShopProfile } from '@/components/server/game-state'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
+import { resolveShopArt } from '@/components/server/shop-art-file'
+import { shopArtFallbackSrc } from '@/components/shop-art'
+import { ShopArtImg } from '@/components/shop-art-img'
 
 export const metadata: Metadata = { title: 'ตั้งค่าร้าน — CEO Domain Quest' }
 
@@ -54,7 +57,7 @@ export default async function SetupPage() {
             body="เริ่มทำภารกิจไปแล้ว จึงแก้ข้อมูลร้านไม่ได้ ถ้าจำเป็นต้องแก้ให้ยกมือบอกครู"
           >
             <div className="setup-locked-shop">
-              <img src="/ui/home/shop-stage-5.webp" alt="" />
+              <ShopArtImg src={resolveShopArt(profile?.businessTypeId, 5)} fallback={shopArtFallbackSrc(5)} alt="" />
               <div>
                 <p>ร้านของเรา</p>
                 <strong>{profile?.shopName ?? 'ยังไม่มีข้อมูล'}</strong>
@@ -67,6 +70,7 @@ export default async function SetupPage() {
     )
   }
 
-  const options = businessTypes.map((b) => ({ id: b.id, label: b.label, icon: b.icon }))
+  // ภาพตัวอย่างร้านขั้น 1 ของแต่ละประเภท — เช็กไฟล์ที่เซิร์ฟเวอร์ ประเภทที่ยังไม่มีภาพได้ภาพกลาง
+  const options = businessTypes.map((b) => ({ id: b.id, label: b.label, icon: b.icon, art: resolveShopArt(b.id, 1) }))
   return <SetupForm businessTypes={options} />
 }

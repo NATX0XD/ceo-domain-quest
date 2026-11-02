@@ -14,6 +14,9 @@ import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { TestNudgeCard } from '@/components/test-nudge'
 import { loadTestNudge } from '@/components/server/test-nudge'
 import { requireShopProfile } from '@/components/server/shop-gate'
+import { resolveShopArt } from '@/components/server/shop-art-file'
+import { shopArtFallbackSrc, shopArtStageFromLevel } from '@/components/shop-art'
+import { ShopArtImg } from '@/components/shop-art-img'
 
 export const metadata: Metadata = { title: 'หน้าหลัก — CEO Domain Quest' }
 
@@ -63,7 +66,9 @@ export default async function HomePage() {
             : { href: '/result', label: 'ดูผลและเกียรติบัตร' }
 
   const level = shopStageFromCleared(summary.stagesCleared, summary.stagesTotal)
-  const shopArtStage = Math.min(5, Math.max(1, level + 1))
+  const shopArtStage = shopArtStageFromLevel(level)
+  const shopArt = resolveShopArt(profile?.businessTypeId, shopArtStage)
+  const shopArtFallback = shopArtFallbackSrc(shopArtStage)
   const cleared = Math.min(PATH_STAGES.length, Math.max(0, summary.stagesCleared))
   const activePathStage = Math.min(PATH_STAGES.length - 1, cleared)
   const businessType = BUSINESS_TYPE_LABEL[profile?.businessTypeId ?? ''] ?? 'ร้านค้าของฉัน'
@@ -78,8 +83,7 @@ export default async function HomePage() {
         <AppHeader className="home-header" divider={false}>
           <div className="home-hero">
             <span className="home-hero-avatar" aria-hidden="true">
-              {/* eslint-disable-next-line @next/next/no-img-element -- ภาพร้านของผู้เล่นเป็นรูปประจำตัว */}
-              <img src={`/ui/home/shop-stage-${shopArtStage}.webp`} alt="" draggable={false} style={{ width: 62, height: 62 }} />
+              <ShopArtImg src={shopArt} fallback={shopArtFallback} alt="" style={{ width: 62, height: 62 }} />
             </span>
             <div className="home-hero-sign">
               <p className="home-greeting">สวัสดี {nickname}</p>
@@ -125,11 +129,11 @@ export default async function HomePage() {
             <span className="home-cloud home-cloud-one" aria-hidden="true" />
             <span className="home-cloud home-cloud-two" aria-hidden="true" />
             <span className="home-spark home-spark-one" aria-hidden="true">✦</span>
-            <img
-              src={`/ui/home/shop-stage-${shopArtStage}.webp`}
+            <ShopArtImg
+              src={shopArt}
+              fallback={shopArtFallback}
               alt={`ภาพร้านของฉัน ระดับ ${shopArtStage} จาก 5`}
               className="home-shop-art"
-              draggable={false}
             />
           </div>
 

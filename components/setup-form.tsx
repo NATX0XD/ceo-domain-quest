@@ -6,6 +6,8 @@ import { Section } from '@/components/student-shell'
 import { AppFooter, AppShell } from '@/components/app-shell'
 import { SessionClock } from '@/components/session-clock'
 import { GameHeader } from '@/components/learn/game-header'
+import { shopArtFallbackSrc } from '@/components/shop-art'
+import { ShopArtImg } from '@/components/shop-art-img'
 import {
   Button,
   CheckIcon,
@@ -28,7 +30,7 @@ type Audience = 'thai' | 'international'
 export function SetupForm({
   businessTypes,
 }: {
-  businessTypes: { id: string; label: string; icon: string }[]
+  businessTypes: { id: string; label: string; icon: string; art?: string }[]
 }) {
   const router = useRouter()
   const [shopName, setShopName] = useState('')
@@ -51,8 +53,9 @@ export function SetupForm({
     () => businessTypes.find((business) => business.id === businessTypeId),
     [businessTypes, businessTypeId],
   )
-  // ภาพร้านชุดเดียวกับหน้า /home — นักเรียนใหม่เริ่มที่ร้านขั้น 1 แล้วร้านโตตามภารกิจที่ผ่าน
-  const previewImage = '/ui/home/shop-stage-1.webp'
+  // ภาพร้านชุดเดียวกับหน้า /home — นักเรียนใหม่เริ่มที่ร้านขั้น 1 ของประเภทที่เลือก แล้วร้านโตตามภารกิจที่ผ่าน
+  const previewFallback = shopArtFallbackSrc(1)
+  const previewImage = selectedBusiness?.art ?? previewFallback
 
   async function handleSubmit() {
     if (!ready || isRegisteredCompany === null || audience === null || saving) return
@@ -128,7 +131,7 @@ export function SetupForm({
 
       <div className="setup-panel setup-preview" aria-live="polite">
         <div className="setup-preview-scene">
-          <img src={previewImage} alt="" draggable={false} className="setup-preview-art" />
+          <ShopArtImg src={previewImage} fallback={previewFallback} alt="" className="setup-preview-art" />
         </div>
         <div className="setup-preview-sign">
           <span>{selectedBusiness?.label.split('/')[0]?.trim() ?? 'ร้านของเรา'}</span>

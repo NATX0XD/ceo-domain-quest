@@ -8,6 +8,9 @@ import { PageStateCard, PageStateTip } from '@/components/page-state-card'
 import './my-site.css'
 import { loadShopProfile } from '@/components/server/game-state'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
+import { resolveShopArt } from '@/components/server/shop-art-file'
+import { shopArtFallbackSrc } from '@/components/shop-art'
+import { ShopArtImg } from '@/components/shop-art-img'
 
 export const metadata: Metadata = { title: 'เว็บไซต์ของฉัน — CEO Domain Quest' }
 
@@ -84,7 +87,7 @@ export default async function MySitePage() {
       <div className={domain === null ? 'flex h-full min-h-0 w-full flex-col px-4 py-4' : 'w-full px-4 pt-4 pb-6'}>
       {domain === null ? (
         <PageStateCard
-          art="/ui/home/shop-stage-1.webp"
+          art={resolveShopArt(profile?.businessTypeId, 1)}
           title="ยังไม่มีชื่อเว็บที่ส่ง"
           body="ส่งชื่อเว็บก่อน แล้วหน้านี้จะกลายเป็นเว็บไซต์ร้านของเรา"
         >
@@ -109,7 +112,7 @@ export default async function MySitePage() {
                 ไม่ใช่กล่องข้อความบนพื้นขาวธรรมดา */}
             <div className="panel-hero rounded-none px-5 py-6 text-center">
               <span aria-hidden="true" className="panel-hero-glow" />
-              <img src="/ui/home/shop-stage-5.webp" alt="" className="ms-hero-shop" />
+              <ShopArtImg src={resolveShopArt(profile?.businessTypeId, 5)} fallback={shopArtFallbackSrc(5)} alt="" className="ms-hero-shop" />
               <p className="relative text-title font-black text-balance">
                 {shopName ?? 'ร้านของฉัน'}
               </p>

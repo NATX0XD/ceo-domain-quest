@@ -101,3 +101,33 @@ export const STAGE_REVEAL: Record<ShopStageLevel, number> = {
   4: 1,
   5: 1,
 }
+
+/* ── ภาพร้านหน้า /home แยกตามประเภท 5 ขั้น ────────────────────────────────────
+   ไฟล์ `public/ui/home/shop/<ประเภท>-<ขั้น>.webp` (720×720 โปร่งใส)
+   ประเภทไหนยังไม่มีไฟล์ → ใช้ภาพกลาง `public/ui/home/shop-stage-<ขั้น>.webp` แทน
+   (ฝั่งเซิร์ฟเวอร์เช็กไฟล์ด้วย `components/server/shop-art-file.ts`
+    ฝั่งเบราว์เซอร์สลับเองตอนโหลดไม่ขึ้นด้วย `components/shop-art-img.tsx`)          */
+
+export type ShopArtStage = 1 | 2 | 3 | 4 | 5
+
+/** ขั้นภาพ 1–5 — ค่าแปลก ๆ (NaN, ติดลบ, เกิน) ถูกบีบเข้าช่วง */
+export function shopArtStageClamp(stage: number): ShopArtStage {
+  if (!Number.isFinite(stage)) return 1
+  return Math.min(SHOP_STAGE_MAX, Math.max(1, Math.round(stage))) as ShopArtStage
+}
+
+/** ขั้นภาพของหน้า /home: ยังไม่ผ่านด่านไหน = ขั้น 1 แล้วโตทีละขั้นตามด่านที่ผ่าน */
+export function shopArtStageFromLevel(level: number): ShopArtStage {
+  return shopArtStageClamp((Number.isFinite(level) ? level : 0) + 1)
+}
+
+/** ภาพร้านกลาง (ไม่แยกประเภท) — ใช้เป็นภาพสำรองเสมอ */
+export function shopArtFallbackSrc(stage: number): string {
+  return `/ui/home/shop-stage-${shopArtStageClamp(stage)}.webp`
+}
+
+/** ภาพร้านของประเภทนี้ที่ขั้นนี้ — ประเภทที่ไม่รู้จัก/ยังไม่เลือก คืนภาพกลาง */
+export function shopArtSrc(typeId: string | null | undefined, stage: number): string {
+  if (!BUSINESS_KIND_IDS.includes(typeId as BusinessKindId)) return shopArtFallbackSrc(stage)
+  return `/ui/home/shop/${typeId}-${shopArtStageClamp(stage)}.webp`
+}
