@@ -1,0 +1,4 @@
+# ไม่ส่งไฟล์ที่เว็บไม่ใช้ขึ้น Vercel (ภาพ QA/เอกสาร ~1.7 GB ทำ Deployment Storage เต็ม)
+docs/
+UI/
+.playwright-cli/
