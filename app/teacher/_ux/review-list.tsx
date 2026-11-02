@@ -1,6 +1,9 @@
 import rubric from '@/content/rubric.json'
-import { listGradeJobsBySubmissions, listPendingReview, listSubmissions, type Submission } from '@/lib/db/repo'
-import { BulkConfirm, TeacherConfirmScore, type BulkItem, type RubricDimensionView } from '@/components/teacher-confirm-client'
+import bigMission from '@/content/big-mission.json'
+import businessTypes from '@/content/business-types.json'
+import { rubricDimensions, resolveEmphasisDimension } from '@/lib/ai/rubric'
+import { getProfile, listGradeJobsBySubmissions, listPendingReview, listSubmissions, type Submission } from '@/lib/db/repo'
+import { BulkConfirm, TeacherConfirmScore, type BulkItem, type RubricDimensionView, type RubricGuide } from '@/components/teacher-confirm-client'
 import Link from 'next/link'
 import { AlertIcon } from '@/components/ui'
 import { Avatar, EmptyState, StatusBadge } from './ui'
@@ -34,6 +37,31 @@ interface AiScoreBag extends Partial<AiSourceInfo> {
   maxScore?: number
   feedback?: string
   dimensions?: RubricDimensionView[]
+}
+
+/** เกณฑ์ต่อด้านสำหรับหน้าตรวจ — มาจาก content/rubric.json ไฟล์เดียวกับที่ตัวตรวจคะแนนใช้ */
+const GUIDES: Record<string, RubricGuide> = Object.fromEntries(
+  rubricDimensions.map((d) => [
+    d.id,
+    {
+      question: d.question,
+      levels: d.levels.map((l) => ({
+        score: l.score,
+        label: l.label,
+        descriptor: l.descriptor,
+        teacherCheck: (l as { teacherCheck?: string }).teacherCheck,
+      })),
+    },
+  ]),
+)
+
+function Fact({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) {
+  return (
+    <div className={wide ? 'min-w-0 sm:col-span-2' : 'min-w-0'}>
+      <dt className="text-[12px] leading-4 font-semibold text-ink-muted">{label}</dt>
+      <dd className="m-0 text-[15px] leading-5 font-bold text-ink">{children}</dd>
+    </div>
+  )
 }
 
 /** ตัดคำแนะนำให้เหลือ 1-2 ประโยคสั้น ๆ */
@@ -168,6 +196,7 @@ export async function ReviewList({
   const nextRow = pending[activeIdx + 1] ?? pending[activeIdx - 1] ?? null
   const nextHref = nextRow ? `/teacher/review?classroomId=${classroomId}&submission=${nextRow.id}` : null
   const activeJobs = await listGradeJobsBySubmissions([active.id]).catch(() => [])
+  const profile = await getProfile(active.student_id).catch(() => null)
 
   const bulkItems: BulkItem[] = pending.flatMap((r) => {
     if (isTeacherConfirmed(r)) return []
@@ -183,21 +212,21 @@ export async function ReviewList({
   })
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-      <nav aria-label="คิวงานให้ครูดู" className="t3-card overflow-hidden lg:sticky lg:top-4">
+    <div className="grid items-start gap-4 min-[1100px]:grid-cols-[240px_minmax(0,1fr)]">
+      <nav aria-label="คิวงานให้ครูดู" className="t3-card relative min-w-0 overflow-hidden min-[1100px]:sticky min-[1100px]:top-4">
         <div className="flex items-center justify-between border-b border-[var(--c-line)] px-3 py-2">
           <h2 className="m-0 text-[15px] font-bold">คิวงาน</h2>
           <span className="rounded-full bg-[var(--c-brand)] px-2 text-[13px] leading-5 font-bold text-white tabular-nums">{pending.length}</span>
         </div>
-        <ul className="t3-scroll m-0 max-h-[52vh] list-none overflow-y-auto p-1.5">
+        <ul className="t3-scroll m-0 flex list-none gap-1.5 overflow-x-auto p-1.5 min-[1100px]:max-h-[52vh] min-[1100px]:flex-col min-[1100px]:overflow-x-hidden min-[1100px]:overflow-y-auto">
           {pending.map((q) => {
             const on = q.id === active.id
             return (
-              <li key={q.id}>
+              <li key={q.id} className="shrink-0 min-[1100px]:shrink">
                 <Link
                   href={`/teacher/review?classroomId=${classroomId}&submission=${q.id}`}
                   aria-current={on ? 'true' : undefined}
-                  className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-[var(--c-brand-soft)]"
+                  className="flex w-48 items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-[var(--c-brand-soft)] min-[1100px]:w-auto"
                   style={on ? { background: 'var(--c-brand-soft)', boxShadow: 'inset 3px 0 0 var(--c-brand)' } : undefined}
                 >
                   <Avatar name={q.nickname ?? '?'} size={30} />
@@ -237,9 +266,37 @@ export async function ReviewList({
               <StatusBadge status="passed">{confirmedNow ? 'ครูยืนยันแล้ว' : 'ได้เกียรติบัตรแล้ว · ครูดูย้อนหลัง'}</StatusBadge>
             </div>
 
-            {row.reason_text ? (
-              <p className="mt-3 mb-0 rounded-lg bg-[var(--c-sunken)] p-3 text-body whitespace-pre-line text-ink">{row.reason_text}</p>
-            ) : null}
+            <details className="mt-3 rounded-xl bg-[var(--c-sunken)] px-3 py-2">
+              <summary className="cursor-pointer text-[14px] font-bold text-ink">โจทย์ที่นักเรียนได้รับ</summary>
+              <p className="m-0 mt-1.5 text-[14px] leading-5 text-ink-muted">
+                <strong className="text-ink">{bigMission.title}</strong> — {bigMission.objective} นักเรียนต้องเลือกชื่อโดเมน + นามสกุล แล้วเขียนเหตุผล 3 ข้อ (ชื่อ · นามสกุล · ลูกค้า)
+              </p>
+            </details>
+
+            <section aria-label="สิ่งที่นักเรียนส่ง" className="mt-3 rounded-2xl border border-[var(--c-line)] p-3.5">
+              <h3 className="m-0 text-[13px] leading-5 font-bold tracking-wide text-[var(--c-brand)]">สิ่งที่นักเรียนส่ง</h3>
+              <p className="m-0 mt-1 text-[12px] leading-4 font-semibold text-ink-muted">ชื่อโดเมนที่เสนอ</p>
+              <p className="m-0 text-[26px] leading-9 font-extrabold break-all text-brand-700">{row.domain_name}<span className="text-[var(--c-accent,#7a5cf0)]">{row.tld}</span></p>
+              <dl className="m-0 mt-2 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+                {profile?.business_name ? <Fact label="ชื่อร้าน">{profile.business_name}</Fact> : null}
+                {profile?.business_type ? <Fact label="ประเภทธุรกิจ">{businessTypes.items.find((t) => t.id === profile.business_type)?.label ?? profile.business_type}</Fact> : null}
+                {profile?.audience ? <Fact label="กลุ่มลูกค้า">{profile.audience === 'international' ? 'มีลูกค้าต่างชาติด้วย' : 'ลูกค้าในไทย'}</Fact> : null}
+                {profile?.is_registered_company !== null && profile?.is_registered_company !== undefined ? (
+                  <Fact label="สถานะร้าน">{profile.is_registered_company ? 'จดทะเบียนเป็นนิติบุคคลแล้ว' : 'ยังไม่ได้จดทะเบียนนิติบุคคล'}</Fact>
+                ) : null}
+                {row.emphasis_criterion ? (
+                  <Fact label="ด้านที่ขอให้ครูดูเป็นพิเศษ (×2)">
+                    {rubricDimensions.find((d) => d.id === resolveEmphasisDimension(row.emphasis_criterion))?.name ?? row.emphasis_criterion}
+                  </Fact>
+                ) : null}
+              </dl>
+              {row.reason_text ? (
+                <div className="mt-3">
+                  <p className="m-0 text-[12px] leading-4 font-semibold text-ink-muted">เหตุผลที่นักเรียนเขียน</p>
+                  <p className="m-0 mt-1 rounded-lg bg-[var(--c-sunken)] p-3 text-body whitespace-pre-line text-ink">{row.reason_text}</p>
+                </div>
+              ) : null}
+            </section>
 
             {domeText ? (
               <p className="mt-3 mb-0 flex items-start gap-2 text-label text-ink-muted">
@@ -272,6 +329,7 @@ export async function ReviewList({
               roundsUsed={Math.max(0, versions.length - 1)}
               maxRounds={MAX_REVISION_ROUNDS}
               nextHref={nextHref}
+              guides={GUIDES}
             />
 
             {older.length > 0 ? (

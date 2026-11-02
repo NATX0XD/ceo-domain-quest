@@ -88,24 +88,24 @@ export function HomeOverview({
   const byStatus = (st: PassStatus) => students.filter((s) => cardStatus(s) === st).length
   const notStarted = byStatus('notstarted')
 
-  const chips: { key: string; count: number | null; icon: Icon3dName; title: string; href: string }[] = [
-    { key: 'review', count: pendingCount, icon: 'memo', title: 'งานให้ครูดู', href: `/teacher/review${q}` },
-    { key: 'requests', count: requestCount, icon: 'speech-balloon', title: 'คำขอ', href: `/teacher/requests${q}` },
-    { key: 'help', count: help.length, icon: 'warning', title: 'นักเรียนอาจต้องช่วย', href: `/teacher/student${q}` },
-    { key: 'showcase', count: showcaseCount, icon: 'glowing-star', title: 'ผลงานรอคัด', href: `/teacher/showcase${q}` },
+  const chips: { key: string; count: number | null; icon: Icon3dName; title: string; href: string; tone: string }[] = [
+    { key: 'review', count: pendingCount, icon: 'memo', title: 'งานให้ครูดู', href: `/teacher/review${q}`, tone: 'purple' },
+    { key: 'requests', count: requestCount, icon: 'speech-balloon', title: 'คำขอ', href: `/teacher/requests${q}`, tone: 'blue' },
+    { key: 'help', count: help.length, icon: 'warning', title: 'นักเรียนอาจต้องช่วย', href: `/teacher/student${q}`, tone: 'amber' },
+    { key: 'showcase', count: showcaseCount, icon: 'glowing-star', title: 'ผลงานรอคัด', href: `/teacher/showcase${q}`, tone: 'rose' },
   ]
 
   const openBoard = () => {
     if (classroomId) window.open(`/board?classroomId=${classroomId}&mode=join`, '_blank', 'noopener')
   }
 
-  const actions: { label: string; icon: Icon3dName; href?: string; onClick?: () => void }[] = [
-    { label: 'ชวนนักเรียนเข้าห้อง', icon: 'door', onClick: openBoard },
-    { label: 'ตั้งค่าด่าน', icon: 'gear', href: `/teacher/missions${q}` },
-    { label: 'ดูรายงาน', icon: 'bar-chart', href: `/teacher/report${q}` },
-    { label: 'พิมพ์เกียรติบัตร/รายงาน', icon: 'printer', href: `/teacher/student${q}` },
-    { label: 'ฉายผลงานเด่น', icon: 'television', href: `/teacher/showcase${q ? q + "&" : "?"}tab=screen` },
-    { label: 'จัดการห้อง', icon: 'clipboard', href: `/teacher/settings${q}` },
+  const actions: { label: string; icon: Icon3dName; tone: string; href?: string; onClick?: () => void }[] = [
+    { label: 'ชวนนักเรียนเข้าห้อง', tone: 'green', icon: 'door', onClick: openBoard },
+    { label: 'ตั้งค่าด่าน', tone: 'gray', icon: 'gear', href: `/teacher/missions${q}` },
+    { label: 'ดูรายงาน', tone: 'blue', icon: 'bar-chart', href: `/teacher/report${q}` },
+    { label: 'พิมพ์เกียรติบัตร/รายงาน', tone: 'orange', icon: 'printer', href: `/teacher/student${q}` },
+    { label: 'ฉายผลงานเด่น', tone: 'rose', icon: 'television', href: `/teacher/showcase${q ? q + "&" : "?"}tab=screen` },
+    { label: 'จัดการห้อง', tone: 'teal', icon: 'clipboard', href: `/teacher/settings${q}` },
   ]
 
   const sharePanel = (
@@ -155,7 +155,34 @@ export function HomeOverview({
           </div>
         </section>
       ) : (
-        <section aria-label="สรุปห้องนี้" className="flex flex-col gap-3">
+        <section aria-label="สรุปห้องนี้" className="flex flex-col gap-4">
+          <div className="relative overflow-hidden rounded-3xl border border-[#ddd5f7] p-5 sm:p-6" style={{ background: 'linear-gradient(115deg,#e9e3fb 0%,#f3eefe 55%,#fdeee3 100%)' }}>
+            <div className="relative z-10 sm:max-w-[calc(100%-11rem)]">
+              <p className="m-0 pr-24 text-[13px] leading-5 font-bold tracking-wide text-[var(--c-brand)] sm:pr-0">โดมสรุปให้ครู</p>
+              <h2 className="m-0 mt-0.5 text-[24px] leading-8 font-extrabold text-[var(--c-ink)] sm:text-[28px] sm:leading-9">ภาพรวมห้องเรียน</h2>
+              <dl className="m-0 mt-4 grid grid-cols-3 gap-2 sm:gap-4">
+                {([
+                  ['เข้าห้อง', total, 'คน'],
+                  ['ได้เกียรติบัตร', ceoDone, 'คน'],
+                  ['ความคืบหน้าเฉลี่ย', avg, '%'],
+                ] as const).map(([label, value, unit]) => (
+                  <div key={label} className="min-w-0 rounded-2xl bg-white/70 px-3 py-2.5 backdrop-blur-sm">
+                    <dd className="m-0 text-[28px] leading-8 font-extrabold text-[var(--c-brand)] tabular-nums sm:text-[34px] sm:leading-10">{value}<span className="ml-0.5 text-[14px] font-bold text-[var(--c-ink-3)]">{unit}</span></dd>
+                    <dt className="text-[12px] leading-4 font-semibold text-[var(--c-ink-2)] sm:text-[13px]">{label}</dt>
+                  </div>
+                ))}
+              </dl>
+              {dome.slice(1, 3).length > 0 ? (
+                <ul className="m-0 mt-3 flex list-none flex-col gap-1 p-0 text-[14px] leading-5 text-[var(--c-ink-2)]">
+                  {dome.slice(1, 3).map((line) => (
+                    <li key={line} className="flex items-start gap-2"><span aria-hidden className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[var(--c-accent,#7a5cf0)]" />{line}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/dome/mascot/dome-happy.webp" alt="" width={160} height={160} className="pointer-events-none absolute top-2 right-3 z-0 h-auto w-20 sm:top-auto sm:right-6 sm:bottom-0 sm:w-40" />
+          </div>
           <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-4">
             {chips.map((c) => {
               const zero = c.count === 0
@@ -163,48 +190,38 @@ export function HomeOverview({
                 <li key={c.key} className="min-w-0">
                   <Link
                     href={c.href}
+                    data-tone={c.tone}
                     className="t3-card flex h-[68px] items-center gap-2 px-2.5 transition-transform hover:-translate-y-0.5 focus-ring"
-                    style={zero ? { opacity: 0.7 } : undefined}
+                    style={{ borderColor: zero ? undefined : 'var(--tn-soft)', background: zero ? undefined : 'linear-gradient(0deg,var(--tn-soft),#fff 220%)' }}
                   >
-                    <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--c-brand-soft)]"><Icon3d name={c.icon} size={22} /></span>
+                    <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-xl" style={{ background: 'var(--tn-soft)' }}><Icon3d name={c.icon} size={22} /></span>
                     <span className="min-w-0 flex-1 text-[14px] leading-[18px] font-bold text-[var(--c-ink)]">{c.title}</span>
                     {zero ? (
                       <span aria-label="เรียบร้อย" className="text-[16px] font-bold text-[var(--s-success)]">✓</span>
                     ) : (
-                      <span className="min-w-7 rounded-full bg-[var(--c-brand)] px-2 text-center text-[14px] leading-6 font-extrabold text-white tabular-nums">{c.count ?? '–'}</span>
+                      <span className="min-w-7 rounded-full px-2 text-center text-[14px] leading-6 font-extrabold text-white tabular-nums" style={{ background: 'var(--tn)' }}>{c.count ?? '–'}</span>
                     )}
                   </Link>
                 </li>
               )
             })}
           </ul>
-          <div className="t3-card flex items-center gap-3 px-4 py-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icons/icon-192.png" alt="" width={44} height={44} className="size-11 shrink-0 rounded-xl" />
-            <div className="min-w-0 flex-1">
-              <p className="m-0 text-[13px] leading-5 font-bold text-[var(--c-brand)]">โดมสรุปห้องนี้</p>
-              <ul className="m-0 flex list-none flex-wrap gap-x-5 gap-y-0.5 p-0 text-[14px] leading-5 text-[var(--c-ink-2)]">
-                {dome.slice(0, 3).map((line) => <li key={line} className="min-w-0">{line}</li>)}
-              </ul>
-            </div>
-          </div>
         </section>
       )}
 
       <section aria-labelledby="can-do">
-        <h2 id="can-do" className="m-0 mb-2 text-[16px] leading-6 font-bold text-[var(--c-ink)]">ครูทำอะไรได้บ้าง</h2>
-        <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 min-[560px]:grid-cols-3">
+        <h2 id="can-do" className="m-0 mb-2 text-[15px] leading-6 font-bold text-[var(--c-ink)]">ครูทำอะไรได้บ้าง</h2>
+        <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0 min-[700px]:grid-cols-3">
           {actions.map((a) => {
             const inner = (
               <>
-                <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-lg bg-[var(--c-brand-soft)]"><Icon3d name={a.icon} size={20} /></span>
+                <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xl" style={{ background: 'var(--tn-soft)' }}><Icon3d name={a.icon} size={22} /></span>
                 <span className="min-w-0 flex-1 text-left text-[14px] leading-5 font-bold text-[var(--c-ink)]">{a.label}</span>
-                <span aria-hidden className="text-[18px] text-[var(--c-ink-3)]">›</span>
               </>
             )
-            const cls = 't3-card flex min-h-12 w-full items-center gap-2.5 px-3 py-1 transition-transform hover:-translate-y-0.5 focus-ring'
+            const cls = 't3-card flex min-h-14 w-full items-center gap-3 px-3 py-1.5 transition-transform hover:-translate-y-0.5 focus-ring'
             return (
-              <li key={a.label}>
+              <li key={a.label} data-tone={a.tone}>
                 {a.href ? <Link href={a.href} className={cls}>{inner}</Link> : <button type="button" onClick={a.onClick} className={cls}>{inner}</button>}
               </li>
             )

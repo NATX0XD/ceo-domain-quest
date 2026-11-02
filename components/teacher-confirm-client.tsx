@@ -23,6 +23,12 @@ export interface RubricDimensionView {
   emphasized: boolean
 }
 
+/** คำอธิบายเกณฑ์ต่อด้าน — อ่านจาก content/rubric.json ผ่าน lib/ai/rubric (แหล่งเดียวกับตัวตรวจ) */
+export interface RubricGuide {
+  question: string
+  levels: { score: number; label: string; descriptor: string; teacherCheck?: string }[]
+}
+
 export const DEFAULT_NOTE = 'ครูตรวจแล้ว ยืนยันคะแนนนี้'
 
 export function TeacherConfirmScore({
@@ -34,6 +40,7 @@ export function TeacherConfirmScore({
   roundsUsed = 0,
   maxRounds = 3,
   nextHref = null,
+  guides = {},
 }: {
   submissionId: string
   /** ไม่ใช้แสดงแล้ว (ปุ่มยืนยันใช้ผลรวมรายด้านเอง) เก็บไว้ให้ผู้เรียกเดิมไม่พัง */
@@ -53,6 +60,8 @@ export function TeacherConfirmScore({
     note?: string | null
     dimensionScores?: Record<string, number> | null
   } | null
+  /** เกณฑ์ต่อด้าน (id ด้าน → คำถามที่ครูควรดู + คำอธิบายแต่ละระดับ) */
+  guides?: Record<string, RubricGuide>
   /** คะแนนรายด้านที่ระบบเสนอ ครูแก้ได้ทีละด้าน ไม่ใช่แก้ได้แค่ตัวเลขรวม */
   dimensions: RubricDimensionView[]
 }) {
@@ -72,7 +81,6 @@ export function TeacherConfirmScore({
   const [done, setDone] = useState(confirmed)
   const [open, setOpen] = useState(false)
   const [reviseDims, setReviseDims] = useState<string[]>([])
-  const [reviseNote, setReviseNote] = useState('')
   const [allowExtra, setAllowExtra] = useState(false)
   const [sentBack, setSentBack] = useState(false)
   /** ค่าที่เซิร์ฟเวอร์ตอบกลับหลังบันทึก = แถวจริงใน DB (UPDATE ... RETURNING) */
@@ -150,10 +158,6 @@ export function TeacherConfirmScore({
       setError('เลือกด้านที่ต้องแก้อย่างน้อย 1 ด้าน')
       return
     }
-    if (reviseNote.trim().length === 0) {
-      setError('เขียนบอกผู้เรียนสั้น ๆ ว่าให้แก้อะไร')
-      return
-    }
     setBusy(true)
     setError(null)
     try {
@@ -165,7 +169,7 @@ export function TeacherConfirmScore({
           dimensionIds: reviseDims,
           // ส่งคะแนนรายด้านที่ครูให้ไว้ตอนนี้ไปด้วย ผู้เรียนจะได้เห็นว่าอยู่ตรงไหนของแต่ละด้าน
           dimensions: dimensions.length > 0 ? dimScores : undefined,
-          note: reviseNote.trim(),
+          note: note.trim() || 'ครูขอให้ลองปรับด้านที่เลือกอีกนิด แล้วส่งใหม่ได้เลย',
           allowExtraRound: allowExtra,
         }),
       })
@@ -186,112 +190,142 @@ export function TeacherConfirmScore({
   const saved = savedFromServer ?? savedScores
   const changed = dimensions.some((d) => (dimScores[d.id] ?? d.score) !== d.score)
 
+  function openSendBack() {
+    if (!open && reviseDims.length === 0) {
+      const low = dimensions.filter((d) => (dimScores[d.id] ?? d.score) < 3).map((d) => d.id)
+      setReviseDims(low.length > 0 ? low : dimensions.slice(0, 1).map((d) => d.id))
+    }
+    setOpen((v) => !v)
+  }
+
   return (
-    <div className="mt-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => void confirm(true)}
-          disabled={busy}
-          className="t2-btn focus-ring"
-          data-kind="primary"
-        >
+    <div className="mt-4">
+      {dimensions.length > 0 ? (
+        <ul className="m-0 flex list-none flex-col gap-3 p-0">
+          {dimensions.map((d) => {
+            const g = guides[d.id]
+            const cur = dimScores[d.id] ?? d.score
+            const levels: RubricGuide['levels'] = g?.levels.length ? [...g.levels].sort((x, y) => y.score - x.score) : [3, 2, 1].map((n) => ({ score: n, label: '', descriptor: '' }))
+            const curLevel = levels.find((l) => l.score === cur)
+            const hint = [d.evidence, d.suggestion].map((t) => (t ?? '').trim()).filter(Boolean).join(' · ')
+            return (
+              <li key={d.id} className="rounded-2xl border border-[var(--c-line)] bg-white p-3.5">
+                <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                  <div className="min-w-0 flex-1 basis-60">
+                    <p className="m-0 flex flex-wrap items-center gap-2 text-[16px] leading-6 font-extrabold text-ink">
+                      {d.name}
+                      {d.emphasized ? (
+                        <span
+                          className="t2-chip"
+                          data-tone="yellow"
+                          title="นักเรียนเลือกให้ครูดูด้านนี้เป็นพิเศษ คะแนนด้านนี้จึงนับ 2 เท่าในคะแนนรวม"
+                        >
+                          ×2 นักเรียนเลือกเน้น
+                        </span>
+                      ) : null}
+                    </p>
+                    {g?.question ? <p className="m-0 mt-0.5 text-[14px] leading-5 text-ink-muted"><strong className="text-ink">ดูอะไร</strong> {g.question}</p> : null}
+                  </div>
+                  <div role="radiogroup" aria-label={`ระดับด้าน ${d.name}`} className="grid shrink-0 grid-flow-col gap-1 rounded-xl bg-[var(--c-sunken)] p-1 max-[520px]:w-full max-[520px]:auto-cols-fr">
+                    {levels.map((l) => {
+                      const on = l.score === cur
+                      return (
+                        <button
+                          key={l.score}
+                          type="button"
+                          role="radio"
+                          aria-checked={on}
+                          title={l.descriptor || undefined}
+                          onClick={() => setDimScores({ ...dimScores, [d.id]: l.score })}
+                          className="relative flex min-h-11 min-w-[5.25rem] flex-col items-center justify-center rounded-lg px-2.5 text-center transition-colors focus-ring"
+                          style={on ? { background: 'var(--c-brand)', color: '#fff', boxShadow: '0 1px 3px rgba(40,30,90,.3)' } : { color: 'var(--c-ink-2)' }}
+                        >
+                          <span className="text-[16px] leading-5 font-extrabold tabular-nums">{l.score}</span>
+                          {l.label ? <span className="text-[12px] leading-4 font-semibold">{l.label}</span> : null}
+                          {l.score === d.score ? (
+                            <span aria-label="ระบบเสนอ" title="คะแนนที่ระบบเสนอ" className="absolute -top-1 -right-1 size-3 rounded-full border-2 border-white" style={{ background: 'var(--s-success, #1f8f5c)' }} />
+                          ) : null}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+                {curLevel?.descriptor ? (
+                  <p className="m-0 mt-2 rounded-lg bg-[var(--c-sunken)] px-3 py-2 text-[14px] leading-5 text-ink-muted">
+                    <strong className="text-ink">ระดับ {cur} {curLevel.label}</strong> {curLevel.descriptor}
+                    {curLevel.teacherCheck ? <span className="mt-1 block text-brand-700">วิธีเช็ก: {curLevel.teacherCheck}</span> : null}
+                  </p>
+                ) : null}
+                {hint ? <p className="m-0 mt-2 text-[13px] leading-5 text-ink-muted">ข้อสังเกตของระบบ: {hint}</p> : null}
+              </li>
+            )
+          })}
+        </ul>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-2xl bg-[var(--c-brand-soft)] px-4 py-2.5">
+        <p className="m-0 text-[15px] font-bold text-ink">
+          รวมถ่วงน้ำหนัก <span className="text-[22px] font-extrabold text-[var(--c-brand)] tabular-nums">{computedTotal}</span> / {maxScore}
+          {changed ? <span className="ml-2 text-[13px] font-semibold text-ink-muted">ปรับจากที่ระบบเสนอ</span> : null}
+        </p>
+        <p className="m-0 text-[13px] text-ink-muted">จุดเขียวคือระดับที่ระบบเสนอ · กดเลือกระดับได้เลย</p>
+      </div>
+
+      <label htmlFor={`note-${submissionId}`} className="mt-3 block text-label font-bold text-ink">
+        ข้อความถึงนักเรียน (ไม่บังคับ)
+      </label>
+      <textarea
+        id={`note-${submissionId}`}
+        rows={2}
+        maxLength={500}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="เช่น เหตุผลชัดมาก ลองเพิ่มว่าลูกค้าเป็นใครอีกนิด"
+        className="mt-1 w-full rounded-xl border border-[var(--c-line)] bg-white p-2.5 text-body text-ink outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus"
+      />
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button type="button" onClick={() => void confirm(true)} disabled={busy} className="t2-btn focus-ring" data-kind="primary">
           <CheckIcon width={20} height={20} aria-hidden />
-          {busy ? 'กำลังบันทึก…' : done ? 'ยืนยันอีกครั้ง' : changed ? `ยืนยันคะแนนที่ปรับ ${computedTotal}/${maxScore}` : 'ยืนยันคะแนนนี้'}
+          {busy ? 'กำลังบันทึก…' : done ? `ยืนยันอีกครั้ง ${computedTotal}/${maxScore}` : `ยืนยันคะแนน ${computedTotal}/${maxScore}`}
         </button>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className="t2-btn focus-ring"
-          data-kind="soft"
-        >
-          ปรับคะแนน
+        <button type="button" onClick={openSendBack} aria-expanded={open} className="t2-btn focus-ring" data-kind="soft">
+          ส่งกลับให้แก้
         </button>
+        <span className="text-note text-ink-muted">แก้มาแล้ว {roundsUsed}/{maxRounds} รอบ</span>
       </div>
 
       {open ? (
         <div className="mt-3 rounded-xl border border-[var(--c-line)] bg-[var(--c-bg)] p-3">
-          {dimensions.length > 0 ? (
-            <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-              {dimensions.map((d) => (
-                <li key={d.id} className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-1.5" title={`${d.evidence} · ${d.suggestion}`}>
-                  <p className="m-0 min-w-0 flex-1 text-label font-bold text-ink">
-                    {d.name}
-                    {d.emphasized ? <span className="t2-chip ml-2" data-tone="yellow">×2</span> : null}
-                    <span className="ml-2 text-note font-medium text-ink-muted">ระบบ {d.score} · {d.levelLabel}</span>
-                  </p>
-                  <select
-                    aria-label={`คะแนนด้าน ${d.name}`}
-                    value={dimScores[d.id] ?? d.score}
-                    onChange={(e) => setDimScores({ ...dimScores, [d.id]: Number(e.target.value) })}
-                    className="min-h-10 min-w-16 shrink-0 rounded-xl bg-[var(--c-brand-soft)] px-3 text-body font-extrabold text-[var(--c-brand)] ring-2 ring-[var(--c-brand-ring)] ring-inset outline-none focus-ring"
-                  >
-                    {[1, 2, 3].map((v) => (
-                      <option key={v} value={v}>{v}</option>
-                    ))}
-                  </select>
-                </li>
-              ))}
-              <li className="text-right text-label font-extrabold text-ink">รวมถ่วงน้ำหนัก {computedTotal} / {maxScore}</li>
-            </ul>
+          <p className="m-0 text-label font-bold text-ink">ให้นักเรียนแก้ด้านไหน</p>
+          <p className="m-0 mt-0.5 text-note text-ink-muted">นักเรียนส่งใหม่เป็นฉบับใหม่ ฉบับเดิมยังอยู่ให้ครูเทียบ ใช้ข้อความด้านบนเป็นความเห็น (ไม่เขียนก็ได้)</p>
+          <ul className="mt-2 flex list-none flex-wrap gap-2 p-0">
+            {dimensions.map((d) => (
+              <li key={d.id}>
+                <label className="flex min-h-10 items-center gap-2 rounded-lg bg-white px-3 text-label text-ink">
+                  <input
+                    type="checkbox"
+                    className="shrink-0 accent-brand-600"
+                    checked={reviseDims.includes(d.id)}
+                    onChange={(e) =>
+                      setReviseDims((prev) => (e.target.checked ? [...prev, d.id] : prev.filter((id) => id !== d.id)))
+                    }
+                  />
+                  <span className="min-w-0">{d.name}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          {roundsUsed >= maxRounds ? (
+            <label className="mt-2 flex min-h-10 items-center gap-3 rounded-lg bg-spark-50 px-3 text-label text-ink">
+              <input type="checkbox" className="shrink-0 accent-brand-600" checked={allowExtra} onChange={(e) => setAllowExtra(e.target.checked)} />
+              <span>รอบแก้ครบแล้ว — ติ๊กเพื่อเปิดให้แก้เพิ่มอีก 1 รอบ</span>
+            </label>
           ) : null}
-
-          <label htmlFor={`note-${submissionId}`} className="mt-2 block text-label font-bold text-ink">
-            ข้อความถึงนักเรียน (ไม่บังคับ)
-          </label>
-          <textarea
-            id={`note-${submissionId}`}
-            rows={2}
-            maxLength={500}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="เช่น เหตุผลชัดมาก ลองเพิ่มว่าลูกค้าเป็นใครอีกนิด"
-            className="mt-1 w-full rounded-xl border border-[var(--c-line)] bg-white p-2.5 text-body text-ink outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus"
-          />
-
-          <details className="mt-2">
-            <summary className="flex min-h-10 cursor-pointer items-center text-label font-bold text-brand-700">
-              ส่งกลับให้แก้ · แก้มาแล้ว {roundsUsed}/{maxRounds} รอบ
-            </summary>
-            <p className="mt-1 text-note text-ink-muted">เลือกด้านที่ต้องแก้ นักเรียนส่งใหม่เป็นฉบับใหม่ ฉบับเดิมยังอยู่ให้ครูเทียบ</p>
-            <ul className="mt-2 flex list-none flex-col gap-1.5 p-0">
-              {dimensions.map((d) => (
-                <li key={d.id}>
-                  <label className="flex min-h-10 items-center gap-3 rounded-lg bg-white px-3 text-label text-ink">
-                    <input
-                      type="checkbox"
-                      className="shrink-0 accent-brand-600"
-                      checked={reviseDims.includes(d.id)}
-                      onChange={(e) =>
-                        setReviseDims((prev) => (e.target.checked ? [...prev, d.id] : prev.filter((id) => id !== d.id)))
-                      }
-                    />
-                    <span className="min-w-0">{d.name}</span>
-                  </label>
-                </li>
-              ))}
-            </ul>
-            <textarea
-              aria-label="บอกนักเรียนว่าให้แก้อะไร"
-              rows={2}
-              maxLength={500}
-              value={reviseNote}
-              onChange={(e) => setReviseNote(e.target.value)}
-              placeholder="บอกนักเรียนสั้น ๆ ว่าให้แก้อะไร (บังคับ)"
-              className="mt-2 w-full rounded-xl border border-[var(--c-line)] bg-white p-2.5 text-body text-ink outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus"
-            />
-            {roundsUsed >= maxRounds ? (
-              <label className="mt-2 flex min-h-10 items-center gap-3 rounded-lg bg-spark-50 px-3 text-label text-ink">
-                <input type="checkbox" className="shrink-0 accent-brand-600" checked={allowExtra} onChange={(e) => setAllowExtra(e.target.checked)} />
-                <span>รอบแก้ครบแล้ว — ติ๊กเพื่อเปิดให้แก้เพิ่มอีก 1 รอบ</span>
-              </label>
-            ) : null}
-            <button type="button" onClick={sendBack} disabled={busy} className="t2-btn mt-2 focus-ring" data-kind="soft">
-              {busy ? 'กำลังส่งกลับ…' : 'ส่งกลับให้แก้'}
-            </button>
-            {sentBack ? <p className="mt-2 text-label font-bold text-quest-700">ส่งกลับให้แก้แล้ว งานจะกลับเข้าคิวเมื่อนักเรียนส่งฉบับใหม่</p> : null}
-          </details>
+          <button type="button" onClick={sendBack} disabled={busy} className="t2-btn mt-2 focus-ring" data-kind="primary">
+            {busy ? 'กำลังส่งกลับ…' : 'ส่งกลับตอนนี้'}
+          </button>
+          {sentBack ? <p className="mt-2 text-label font-bold text-quest-700">ส่งกลับให้แก้แล้ว งานจะกลับเข้าคิวเมื่อนักเรียนส่งฉบับใหม่</p> : null}
         </div>
       ) : null}
 
