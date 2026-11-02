@@ -58,7 +58,7 @@ export function SideDrawer({
       <button type="button" aria-label="ปิดรายละเอียด" className="absolute inset-0 bg-black/35" onClick={onClose} />
       <div
         className="relative flex h-full w-full max-w-[480px] flex-col shadow-soft-3"
-        style={{ background: '#fffdf8', borderRadius: '28px 0 0 28px' }}
+        style={{ background: '#fff' }}
       >
         <div className="flex h-16 shrink-0 items-center justify-between gap-2 px-5">
           <h2 className="min-w-0 truncate text-title-sm font-extrabold text-ink">{title}</h2>

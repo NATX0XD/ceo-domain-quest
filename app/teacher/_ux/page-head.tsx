@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react'
-import { HighlightTitle } from './v2'
 
 /**
- * หัวของหน้าในแดชบอร์ดครู — ชื่อหน้าสั้นบนป้ายเหลือง + บรรทัดช่วยเหลือบรรทัดเดียว + ปุ่มมุมขวา
- * (visual v2: คำอธิบายยาว ๆ ย้ายไปอยู่ในไอคอน i ของแต่ละการ์ด)
+ * หัวของหน้าในแดชบอร์ดครู — h1 ธรรมดา + คำอธิบายบรรทัดเดียว + ช่องปุ่มมุมขวา (ตกบรรทัดบนมือถือ) + เส้นคั่นล่าง
+ * ชื่อหน้าซ้ำกับ breadcrumb บนแถบบนไม่ได้ — แถบบนบอกตำแหน่ง ส่วนนี้บอกชื่อหน้า
  */
 export function PageHead({
   title,
@@ -17,15 +16,15 @@ export function PageHead({
   return (
     <div className="t2-head">
       <div className="min-w-0">
-        <HighlightTitle title={title} />
+        <h1 className="t2-title">{title}</h1>
         {subtitle ? <p className="t2-sub">{subtitle}</p> : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="flex flex-wrap items-center gap-2">{action}</div> : null}
     </div>
   )
 }
 
 /** กรอบเนื้อหาของหน้า — ระยะขอบเท่ากันทุกหน้าในแดชบอร์ด */
 export function PageBody({ children }: { children: ReactNode }) {
-  return <div className="teacher-page-body mx-auto w-full max-w-[1440px] px-4 py-4 sm:px-6 sm:py-6 xl:px-8">{children}</div>
+  return <div className="teacher-page-body mx-auto w-full max-w-[1200px] px-4 py-6 sm:px-6 lg:px-8">{children}</div>
 }

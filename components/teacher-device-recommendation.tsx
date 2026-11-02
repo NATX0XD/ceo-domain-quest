@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 const STORAGE_KEY = 'dbq-teacher-device-tip-dismissed'
 
+/** แถบแนะนำแบบเงียบ ๆ (ข้อความล้วน) บนจอแคบ — ปิดได้ จำค่าไว้ในเครื่อง */
 export function TeacherDeviceRecommendation() {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -34,28 +35,20 @@ export function TeacherDeviceRecommendation() {
   if (!open) return null
 
   return (
-    <div className="teacher-device-overlay" role="presentation">
-      <section className="teacher-device-dialog" role="dialog" aria-modal="true" aria-labelledby="teacher-device-title">
-        <img
-          src="/ui/teacher/use-computer.webp"
-          alt="โดมชี้ไปที่แล็ปท็อปสำหรับแผงครู และโทรศัพท์มีสัญลักษณ์จำกัดการใช้งาน"
-          className="teacher-device-art"
-        />
-        <div className="teacher-device-copy">
-          <p className="teacher-device-kicker">แผงครูพร้อมลุย</p>
-          <h2 id="teacher-device-title">แนะนำให้ใช้คอมพิวเตอร์</h2>
-          <p>แดชบอร์ดครู กระดานฉาย และรายงานทำงานได้ครบและอ่านง่ายที่สุดบนโน้ตบุ๊กหรือคอมพิวเตอร์</p>
-        </div>
-        <div className="teacher-device-actions">
-          <button type="button" className="game-button game-button--primary" onClick={dismiss}>
-            เข้าใจแล้ว ใช้ต่อบนมือถือ
-          </button>
-          <button type="button" className="game-button game-button--secondary" onClick={copyLink}>
-            {copied ? 'คัดลอกลิงก์แล้ว' : 'ส่งลิงก์ไปเปิดบนคอม'}
-          </button>
-        </div>
-        {copied ? <p className="teacher-device-toast" role="status">คัดลอกลิงก์หน้านี้แล้ว ส่งให้ตัวเองเปิดบนคอมได้เลย</p> : null}
-      </section>
+    <div
+      role="region"
+      aria-label="คำแนะนำการใช้งาน"
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[var(--s-info-soft)] bg-[var(--s-info-soft)] px-4 py-2 text-[14px] text-[var(--s-info-ink)]"
+    >
+      <p className="min-w-0 flex-1">
+        <strong className="font-semibold">ใช้งานได้ดีที่สุดบนคอมพิวเตอร์</strong> แผงครูและรายงานอ่านง่ายกว่าบนจอใหญ่
+      </p>
+      <button type="button" onClick={copyLink} className="font-semibold underline underline-offset-2">
+        {copied ? 'คัดลอกลิงก์แล้ว' : 'คัดลอกลิงก์'}
+      </button>
+      <button type="button" onClick={dismiss} className="font-semibold underline underline-offset-2">
+        ปิด
+      </button>
     </div>
   )
 }

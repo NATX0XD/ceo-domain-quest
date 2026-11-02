@@ -3,7 +3,7 @@ import { listClassroomsByTeacher } from '@/lib/db/repo'
 import { getServiceClient } from '@/lib/db/client'
 import { readTeacherSession } from '@/app/api/_lib/session-cookie'
 import { TeacherShell } from './_ux/shell'
-import { TeacherDeviceRecommendation } from '@/components/teacher-device-recommendation'
+import TeacherLoading from './loading'
 import './teacher-v2.css'
 
 /**
@@ -18,7 +18,7 @@ import './teacher-v2.css'
  */
 export default async function TeacherLayout({ children }: { children: ReactNode }) {
   const session = await readTeacherSession()
-  if (!session) return <><TeacherDeviceRecommendation />{children}</>
+  if (!session) return <>{children}</>
 
   /**
    * อีเมลของครูไว้โชว์บนแถบบน — อ่านแถวของตัวเองด้วย `teacherId` จากคุกกี้เท่านั้น
@@ -39,8 +39,7 @@ export default async function TeacherLayout({ children }: { children: ReactNode 
 
   return (
     <>
-      <TeacherDeviceRecommendation />
-      <Suspense fallback={<>{children}</>}>
+      <Suspense fallback={<TeacherLoading />}>
         <TeacherShell
           teacherEmail={me.data?.name || me.data?.email || 'ครู'}
           classrooms={sorted.map((c) => ({

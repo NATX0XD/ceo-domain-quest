@@ -70,18 +70,6 @@ export function Icon3d({ name, size = 40, className }: { name: Icon3dName; size?
   )
 }
 
-/** ชื่อหน้า — คำสุดท้ายอยู่บนป้ายเหลืองเอียงเล็กน้อย */
-export function HighlightTitle({ title }: { title: string }) {
-  const parts = title.trim().split(/\s+/)
-  const last = parts.length > 1 ? parts.pop() : null
-  return (
-    <h1 className="t2-title">
-      {last ? `${parts.join(' ')} ` : null}
-      <span className="t2-hl">{last ?? title}</span>
-    </h1>
-  )
-}
-
 /** ข้อมูลเสริมที่ไม่ต้องกางให้เห็นตลอด — กดเพื่ออ่าน · Esc/กดที่อื่นเพื่อปิด */
 export function InfoTip({
   text,

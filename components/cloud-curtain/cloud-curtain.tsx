@@ -120,6 +120,8 @@ export function CloudCurtain() {
     }
 
     const onNav = (e: Event) => {
+      // กันไว้อีกชั้น: ฝั่งครูไม่ใช้ม่านเมฆ
+      if (/^\/teacher(\/|$)/.test(window.location.pathname)) return
       navFrom = (e as CustomEvent<string>).detail || window.location.pathname
       clear('fail')
       t.fail = window.setTimeout(open, FAILSAFE_MS)
