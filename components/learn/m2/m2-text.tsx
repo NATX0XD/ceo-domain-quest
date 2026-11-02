@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/components/ui";
-import { KIT, M2Button, M2Screen, ScanArrow } from "./m2-kit";
+import { KIT, M2Button, M2Screen, ScanArrow, withDomains } from "./m2-kit";
 
 type Chrome = { onBack: () => void; soundOn: boolean; onSound: () => void };
 
@@ -255,7 +255,7 @@ export function TextChat({
           ) : (
             <div key={msg.id} className={cn("m2g-msg", `is-${msg.who}`, msg.tone && `tone-${msg.tone}`)}>
               {msg.who === "dome" ? <img src={KIT("dome_cheer")} alt="" aria-hidden /> : null}
-              <p>{msg.body}</p>
+              <p>{typeof msg.body === "string" ? withDomains(msg.body) : msg.body}</p>
             </div>
           ),
         )}

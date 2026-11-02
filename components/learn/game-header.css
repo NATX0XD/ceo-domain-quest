@@ -1,0 +1,87 @@
+/* Shared in-game header (m1–m4): kit2 wood round buttons · wood sign · purple pill.
+ * Reference look = mission 2 storyboard. Self-contained: no parent vars needed. */
+
+.game-header {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 56px;
+  align-items: start;
+  gap: 8px;
+  width: 100%;
+  padding: max(12px, env(safe-area-inset-top)) 14px 0;
+  flex: none;
+}
+.game-round,
+.game-round-spacer {
+  display: block;
+  width: 56px;
+  height: 56px;
+  margin-top: 1px;
+}
+.game-round {
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 3px rgb(60 30 10 / .35));
+  transition: transform .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.game-round:active { transform: scale(.92); }
+.game-round:focus-visible { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 6px #6c43bb; }
+/* beat global img rules (max-width / h-* resets) */
+.game-round > img {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: contain;
+  pointer-events: none;
+}
+.game-header-sign-col { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.game-header-sign {
+  width: 100%;
+  max-width: 260px;
+  height: 58px;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 4px 22px 0;
+  background: url('/ui/kit2/sign-wide.webp') center / 100% 100% no-repeat;
+  font-family: var(--font-display), var(--font-noto-sans-thai), sans-serif;
+  font-size: clamp(1.15rem, 5.4vw, 1.45rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #ffd75e;
+  text-shadow: 0 2px 0 #7a3d0c, 2px 0 0 #7a3d0c, -2px 0 0 #7a3d0c, 0 -2px 0 #7a3d0c, 1px 1px 0 #7a3d0c, -1px -1px 0 #7a3d0c, 1px -1px 0 #7a3d0c, -1px 1px 0 #7a3d0c;
+  white-space: nowrap;
+  filter: drop-shadow(0 3px 2px rgb(60 30 10 / .3));
+}
+.game-header-pill {
+  max-width: 100%;
+  padding: 3px 14px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #8b4fe8;
+  color: #fff;
+  font-family: var(--font-noto-sans-thai), var(--font-display), sans-serif;
+  font-size: .8rem;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 2px 0 rgb(60 20 110 / .35);
+}
+
+/* small phones (360×740) — buttons stay ≥ 44px hit */
+@media (max-height: 760px), (max-width: 370px) {
+  .game-header { grid-template-columns: 50px minmax(0, 1fr) 50px; }
+  .game-round, .game-round-spacer { width: 50px; height: 50px; margin-top: 0; }
+  .game-header-sign { height: 50px; font-size: 1.15rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-round { transition: none; }
+}

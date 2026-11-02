@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/components/ui";
-import { Dome, KIT, M2Button, M2Screen, Stars, useDragBoard } from "./m2-kit";
+import { GameRoundButton } from "../game-header";
+import { Dome, Domain, KIT, M2Button, M2Screen, Stars, useDragBoard } from "./m2-kit";
 
 type Chrome = { onBack: () => void; soundOn: boolean; onSound: () => void };
 
@@ -46,7 +47,7 @@ export function ExitCheck({
         <img className="m2g-exit-dome" src={KIT("dome_cheer")} alt="โดม" draggable={false} />
         <div className="m2g-exit-bubble" key={index}>
           <span>ใน</span>
-          <b>{question.domain}</b>
+          <Domain name={question.domain} />
           <span>{question.ask}</span>
         </div>
       </div>
@@ -96,9 +97,7 @@ export function Ending({
     <div className={cn("m2g-screen m2g-ending", `grade-${grade}`)}>
       <div className="m2g-bg" aria-hidden />
       {grade === "A" ? <div className="m2g-confetti" aria-hidden /> : null}
-      <button type="button" className="m2g-round m2g-ending-back" onClick={chrome.onBack} aria-label="กลับแผนที่">
-        <img src={KIT("icon_back")} alt="" draggable={false} />
-      </button>
+      <GameRoundButton kind="back" className="m2g-ending-back" onClick={chrome.onBack} label="กลับแผนที่" />
       <div className="m2g-ending-top">
         <Stars count={grade === "C" ? 0 : stars} />
         <h1 className="m2g-sign is-wide">{title}</h1>

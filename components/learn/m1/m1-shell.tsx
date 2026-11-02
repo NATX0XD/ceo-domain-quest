@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/components/ui'
 import { buzz } from '../app/fx'
+import { GameHeader } from '../game-header'
 import './m1-shell.css'
 
 /**
@@ -73,39 +74,7 @@ export function M1Shell({
     <div className="m1-shell" data-theme-id="m1" data-scene={scene}>
       <img className="m1-shell-bg" src={SCENE_BG[scene]} alt="" aria-hidden draggable={false} />
       <div className="m1-shell-veil" aria-hidden />
-      <header className="m1-head">
-        {onBack ? (
-          <button type="button" className="m1-round" onClick={onBack} aria-label="ย้อนกลับ">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M19 12H6M11.5 5.5 5 12l6.5 6.5" />
-            </svg>
-          </button>
-        ) : (
-          <span className="m1-round-spacer" aria-hidden />
-        )}
-        <div className="m1-sign-wrap">
-          <div className="m1-sign">
-            <span className="m1-leaf m1-leaf-l" aria-hidden />
-            <span className="m1-leaf m1-leaf-r" aria-hidden />
-            <span className="m1-leaf m1-leaf-l2" aria-hidden />
-            <h1>{sign}</h1>
-          </div>
-          {pill ? <span className="m1-pill">{pill}</span> : null}
-        </div>
-        <button
-          type="button"
-          className={cn('m1-round', !sound && 'is-muted')}
-          onClick={onSound}
-          aria-label={sound ? 'ปิดเสียง' : 'เปิดเสียง'}
-          aria-pressed={sound}
-        >
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden>
-            <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
-            {sound ? <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" strokeWidth="2.4" strokeLinecap="round" /> : null}
-          </svg>
-          {!sound ? <span className="m1-mute-slash" aria-hidden /> : null}
-        </button>
-      </header>
+      <GameHeader className="m1-head" title={sign} subtitle={pill} onBack={onBack} soundOn={sound} onSound={onSound} />
       <ol className="m1-steps" aria-label="ขั้นตอนการเรียน">
         {stages.map((label, i) => (
           <li key={label} className={cn(i < stage && 'is-done', i === stage && 'is-now')} aria-current={i === stage ? 'step' : undefined}>

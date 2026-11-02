@@ -7,7 +7,7 @@ import { useExitConfirm } from "@/components/student-navigation";
 import { ModePopup } from "@/components/learn/mode-popup";
 import { postLearn, type LearnModeId } from "@/components/learn/learn-path-api";
 import type { LearnPath, LearnState } from "@/components/server/learn-path";
-import { Dome, KIT, M2Button, M2Screen, Panel } from "./m2/m2-kit";
+import { Dome, Domain, KIT, M2Button, M2Screen, Panel, withDomains } from "./m2/m2-kit";
 import { SimFinale, SimStage1, SimStage2, SimStage3, SimStage4, SimStorm, SimTutorial, type SimResult } from "./m2/m2-sim";
 import {
   ChoiceCards,
@@ -53,9 +53,7 @@ const STOP_QUESTIONS = [
     ask: (
       <>
         มะลิต่อชิ้นการ์ดเป็น
-        <br />
-        <b>com.kanombanyai.shop</b>
-        <br />
+        <Domain name="com.kanombanyai.shop" />
         ชิ้นไหนควรอยู่ขวาสุด?
       </>
     ),
@@ -374,9 +372,7 @@ export function M2Flow({
           >
             <Dome tag="สถานการณ์ใหม่" className="m2g-dome-row top">
               มีคนส่งลิงก์มาให้มะลิว่า
-              <br />
-              <b>kanombanyai.net</b>
-              <br />
+              <Domain name="kanombanyai.net" />
               เป็นเว็บร้านยายใช่ไหม?
             </Dome>
             <ChoiceCards
@@ -391,7 +387,7 @@ export function M2Flow({
             />
             {postResult ? (
               <Panel className="m2g-reveal" title="เฉลย">
-                <p>{postResult.explanation}</p>
+                <p>{withDomains(postResult.explanation)}</p>
               </Panel>
             ) : null}
           </M2Screen>
@@ -429,7 +425,7 @@ export function M2Flow({
             </Panel>
             {postFeedback ? (
               <Panel className={postFeedback.correct ? "m2g-reveal is-good" : "m2g-reveal"} title={postFeedback.correct ? "คำตอบนี้ใช้ได้" : done ? "สรุปจากโดม" : "ลองเพิ่มอีกนิด"}>
-                <p>{postFeedback.feedback}</p>
+                <p>{withDomains(postFeedback.feedback ?? "")}</p>
                 {!postFeedback.correct && !done ? <p>คำใบ้: {postFeedback.hint ?? question?.hint}</p> : null}
               </Panel>
             ) : null}

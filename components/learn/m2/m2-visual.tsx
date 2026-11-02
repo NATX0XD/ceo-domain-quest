@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/components/ui";
-import { KIT, M2Button, M2Screen, Nail, placeUnique, useDragBoard } from "./m2-kit";
+import { KIT, M2Button, M2Screen, Nail, placeUnique, useDragBoard, withDomains } from "./m2-kit";
 
 type Chrome = { onBack: () => void; soundOn: boolean; onSound: () => void };
 
@@ -173,11 +173,15 @@ export function ClipPlayer({
               <i />
             </span>
           </>
-        ) : (
-          <p className="m2g-sub">
+        ) : null}
+      </div>
+      {/* caption bar under the frame: fixed height, hidden while a gold-dot question is up */}
+      <div className="m2g-caption" aria-live="polite">
+        {stopNo === null ? (
+          <p className="m2g-sub" key={index}>
             <b>{shot.who}:</b> {shot.line}
           </p>
-        )}
+        ) : null}
       </div>
       <div className="m2g-player-bar">
         <button
@@ -330,7 +334,7 @@ export function ChoiceCards({
             aria-pressed={picked === choice.id}
           >
             <span className="m2g-choice-letter">{"ABCD"[index]}</span>
-            <span className="m2g-choice-text">{choice.label}</span>
+            <span className="m2g-choice-text">{withDomains(choice.label)}</span>
             {state === "good" ? <img src={KIT("icon_check")} alt="ถูก" /> : null}
             {state === "bad" ? <img src={KIT("icon_cross")} alt="ผิด" /> : null}
           </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   useCallback,
   useRef,
   useState,
@@ -8,8 +9,57 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/components/ui";
+import { GameHeader } from "../game-header";
 
 export const KIT = (name: string) => `/learn/m2/kit/${name}.webp`;
+
+
+/* ── Domain text: break only after a dot, never inside a label ─────────── */
+
+function DomainLabels({ name }: { name: string }) {
+  return (
+    <>
+      {name.split(".").map((label, i) => (
+        <Fragment key={i}>
+          {i > 0 ? (
+            <>
+              .<wbr />
+            </>
+          ) : null}
+          <span className="m2g-domain-label">{label}</span>
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+/** ชื่อเว็บไฮไลต์บรรทัดของตัวเอง ย่อฟอนต์ให้พอดีกว้าง ตัดบรรทัดได้เฉพาะหลังจุด */
+export function Domain({ name, className }: { name: string; className?: string }) {
+  return (
+    <span className={cn("m2g-domain", className)}>
+      <b style={{ "--dlen": name.length } as CSSProperties}>
+        <DomainLabels name={name} />
+      </b>
+    </span>
+  );
+}
+
+const DOMAIN_RE = /([a-z0-9-]+(?:\.[a-z0-9-]+)+)/gi;
+
+/** ข้อความที่มีชื่อเว็บปนอยู่ ตัดบรรทัดชื่อเว็บได้เฉพาะหลังจุด */
+export function withDomains(text: string): ReactNode {
+  const parts = text.split(DOMAIN_RE);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) =>
+    i % 2 === 1 ? (
+      <span key={i} className="m2g-domain-inline">
+        <DomainLabels name={part} />
+      </span>
+    ) : (
+      part
+    ),
+  );
+}
 
 /* ── Screen shell: full-bleed scene + top row (back · wood sign · sound) ── */
 
@@ -40,35 +90,7 @@ export function M2Screen({
     <div className={cn("m2g-screen", `tone-${tone}`, className)} onClick={onTap}>
       <div className="m2g-bg" aria-hidden />
       {tone === "storm" ? <div className="m2g-rain" aria-hidden /> : null}
-      <header className="m2g-top">
-        <button
-          type="button"
-          className="m2g-round"
-          onClick={(event) => {
-            event.stopPropagation();
-            onBack();
-          }}
-          aria-label="ย้อนกลับ"
-        >
-          <img src={KIT("icon_back")} alt="" draggable={false} />
-        </button>
-        <div className="m2g-sign-col">
-          <h1 className="m2g-sign">{title}</h1>
-          {subtitle ? <span className="m2g-pill">{subtitle}</span> : null}
-        </div>
-        <button
-          type="button"
-          className={cn("m2g-round", !soundOn && "is-muted")}
-          onClick={(event) => {
-            event.stopPropagation();
-            onSound();
-          }}
-          aria-label={soundOn ? "ปิดเสียง" : "เปิดเสียง"}
-          aria-pressed={soundOn}
-        >
-          <img src={KIT("icon_sound")} alt="" draggable={false} />
-        </button>
-      </header>
+      <GameHeader title={title} subtitle={subtitle} onBack={onBack} soundOn={soundOn} onSound={onSound} />
       <main className="m2g-body">{children}</main>
       {footer ? <div className="m2g-foot">{footer}</div> : null}
     </div>
@@ -129,7 +151,7 @@ export function Dome({
       {children ? (
         <div className="m2g-bubble" role="status">
           {tag ? <span className={cn("m2g-bubble-tag", `tone-${tagTone}`)}>{tag}</span> : null}
-          <div className="m2g-bubble-text">{children}</div>
+          <div className="m2g-bubble-text">{typeof children === "string" ? withDomains(children) : children}</div>
         </div>
       ) : null}
     </div>
