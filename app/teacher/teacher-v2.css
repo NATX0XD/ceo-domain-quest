@@ -1112,3 +1112,104 @@
   .teacher-cms .home-overview__chips .t3-card,
   .teacher-cms .home-overview__actions .t3-card { transition: none; }
 }
+
+/* ---------- showcase / works wall ---------- */
+.teacher-cms .showcase-hero { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; gap: 1rem; min-height: 13.5rem; margin-bottom: 1.15rem; padding: 1.7rem clamp(1.25rem, 3vw, 2.6rem); border: 1px solid rgb(255 255 255 / .48); border-radius: 1.75rem; background: linear-gradient(112deg, #282064, #5435a8 58%, #8452c6); color: #fff; box-shadow: 0 1.15rem 2.8rem rgb(47 31 104 / .22), inset 0 1px 0 rgb(255 255 255 / .22); }
+.teacher-cms .showcase-hero::before { position: absolute; inset: 0; z-index: -1; content: ''; background: linear-gradient(90deg, rgb(20 13 62 / .74), rgb(45 26 103 / .38) 52%, rgb(75 40 139 / .2)), url('/ui/teacher/showcase-bg.webp') center / cover; opacity: .56; mix-blend-mode: screen; }
+.teacher-cms .showcase-hero::after { position: absolute; right: 25%; bottom: -5rem; z-index: -1; width: 17rem; height: 11rem; content: ''; border-radius: 50%; background: rgb(173 143 255 / .24); filter: blur(2rem); }
+.teacher-cms .showcase-hero__copy { position: relative; z-index: 1; max-width: 39rem; }
+.teacher-cms .showcase-hero__eyebrow { display: inline-flex; align-items: center; gap: .45rem; margin-bottom: .65rem; color: #e6dcff; font-size: .78rem; font-weight: 800; letter-spacing: .09em; }
+.teacher-cms .showcase-hero__eyebrow span { color: #ffd96e; font-size: 1.05rem; }
+.teacher-cms .showcase-hero h1 { margin: 0; color: #fff; font-size: clamp(2rem, 4vw, 3.25rem); line-height: .98; letter-spacing: -.055em; font-weight: 900; text-wrap: balance; }
+.teacher-cms .showcase-hero p { max-width: 30rem; margin: .7rem 0 0; color: #eee9ff; font-size: clamp(.95rem, 1.5vw, 1.08rem); line-height: 1.5; font-weight: 650; }
+.teacher-cms .showcase-hero__dome { position: absolute; right: clamp(2rem, 12vw, 10rem); bottom: -1.4rem; z-index: 0; width: clamp(10rem, 21vw, 17rem); max-height: 15rem; object-fit: contain; object-position: bottom; filter: drop-shadow(0 .7rem 1rem rgb(23 12 70 / .32)); }
+.teacher-cms .showcase-hero__stats { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, minmax(4.5rem, 1fr)); gap: .5rem; margin-left: auto; align-self: flex-end; width: min(100%, 20rem); }
+.teacher-cms .showcase-hero__stats div { display: grid; gap: .12rem; min-height: 4.1rem; padding: .7rem .8rem; border: 1px solid rgb(255 255 255 / .24); border-radius: .95rem; background: rgb(29 19 77 / .3); backdrop-filter: blur(8px); }
+.teacher-cms .showcase-hero__stats strong { font-size: 1.65rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.teacher-cms .showcase-hero__stats span { color: #ddd5fa; font-size: .75rem; font-weight: 700; }
+.teacher-cms .showcase-section-heading, .teacher-cms .showcase-screen__heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.teacher-cms .showcase-section-kicker { margin: 0 0 .2rem; color: var(--t2-brand); font-size: .76rem; font-weight: 900; letter-spacing: .07em; }
+.teacher-cms .showcase-section-title { margin: 0; color: var(--t2-ink); font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.2; font-weight: 900; letter-spacing: -.025em; text-wrap: balance; }
+.teacher-cms .showcase-section-subtitle { margin: .42rem 0 0; color: var(--t2-muted); font-size: .9rem; line-height: 1.45; }
+.teacher-cms .showcase-moderation, .teacher-cms .showcase-screen { display: grid; gap: 1rem; }
+.teacher-cms .showcase-filterbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .55rem; border: 1px solid var(--t2-line); border-radius: 1rem; background: rgb(255 253 248 / .8); }
+.teacher-cms .showcase-filter { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.45rem; padding: 0 .85rem; border: 1px solid transparent; border-radius: .75rem; background: transparent; color: var(--t2-muted); font: inherit; font-size: .86rem; font-weight: 800; cursor: pointer; transition: background-color 160ms ease, color 160ms ease, transform 160ms ease; }
+.teacher-cms .showcase-filter:hover { transform: translateY(-1px); background: #f2eefb; color: var(--t2-ink); }
+.teacher-cms .showcase-filter[data-active='true'] { background: var(--t2-brand); color: #fff; box-shadow: 0 .25rem .7rem rgb(90 57 163 / .2); }
+.teacher-cms .showcase-filter span { min-width: 1.45rem; padding: .1rem .35rem; border-radius: .45rem; background: rgb(255 255 255 / .55); font-size: .75rem; text-align: center; font-variant-numeric: tabular-nums; }
+.teacher-cms .showcase-filter[data-tone='amber'] span { background: #fbe5b8; color: #7a4e00; }
+.teacher-cms .showcase-filterbar__summary { margin-left: auto; padding: 0 .4rem; color: var(--t2-muted); font-size: .78rem; font-weight: 700; }
+.teacher-cms .showcase-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.teacher-cms .showcase-work-card { min-width: 0; overflow: hidden; border: 1px solid var(--t2-line); border-radius: 1.35rem; background: #fffdf9; box-shadow: 0 .55rem 1.8rem rgb(68 48 39 / .08); transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
+.teacher-cms .showcase-work-card:hover { transform: translateY(-3px); border-color: #c9b9ee; box-shadow: 0 .9rem 2.2rem rgb(68 48 39 / .13); }
+.teacher-cms .showcase-work-card[data-flagged='true'] { border-color: #dfad43; box-shadow: 0 0 0 2px rgb(223 173 67 / .14), 0 .6rem 1.7rem rgb(116 75 15 / .1); }
+.teacher-cms .showcase-work-card__art { position: relative; display: grid; place-items: center; min-height: 10.2rem; overflow: hidden; background: radial-gradient(circle at 50% 25%, #f2ebff, #ded4fb 72%); }
+.teacher-cms .showcase-work-card__art::after { position: absolute; right: 12%; bottom: .5rem; left: 12%; height: 1.1rem; content: ''; border-radius: 50%; background: rgb(69 45 127 / .14); filter: blur(.7rem); }
+.teacher-cms .showcase-work-card__art > img { position: relative; z-index: 1; width: 72%; height: 9rem; object-fit: contain; filter: drop-shadow(0 .45rem .5rem rgb(67 41 129 / .16)); }
+.teacher-cms .showcase-work-card__topline { position: absolute; top: .7rem; right: .7rem; left: .7rem; z-index: 2; display: flex; align-items: flex-start; justify-content: space-between; gap: .35rem; }
+.teacher-cms .showcase-flag, .teacher-cms .showcase-clean, .teacher-cms .showcase-pin-state { display: inline-flex; align-items: center; gap: .25rem; padding: .35rem .52rem; border-radius: .55rem; font-size: .68rem; line-height: 1; font-weight: 900; }
+.teacher-cms .showcase-flag { border: 1px solid #e2b252; background: #fff5d8; color: #7b5104; }
+.teacher-cms .showcase-clean { background: #e0f2e2; color: #286338; }
+.teacher-cms .showcase-pin-state { margin-left: auto; background: #fff; color: var(--t2-brand); box-shadow: 0 .2rem .6rem rgb(35 19 78 / .12); }
+.teacher-cms .showcase-work-card__body { display: grid; gap: .32rem; padding: 1rem; }
+.teacher-cms .showcase-domain { margin: 0; overflow-wrap: anywhere; color: var(--t2-ink); font-size: 1.35rem; line-height: 1.05; font-weight: 900; letter-spacing: -.035em; }
+.teacher-cms .showcase-owner { margin: 0; color: var(--t2-muted); font-size: .82rem; }
+.teacher-cms .showcase-owner strong { color: var(--t2-ink); }
+.teacher-cms .showcase-reason { display: -webkit-box; min-height: 2.7rem; margin: .35rem 0 .55rem; overflow: hidden; color: var(--t2-muted); font-size: .86rem; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.teacher-cms .showcase-work-card__actions { display: grid; gap: .5rem; margin-top: auto; }
+.teacher-cms .showcase-visibility, .teacher-cms .showcase-pin-button { display: flex; align-items: center; gap: .55rem; min-height: 2.7rem; padding: 0 .7rem; border: 1px solid var(--t2-line); border-radius: .78rem; background: #fff; color: var(--t2-ink); font: inherit; font-size: .83rem; font-weight: 850; cursor: pointer; transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease; }
+.teacher-cms .showcase-visibility:hover, .teacher-cms .showcase-pin-button:hover { transform: translateY(-1px); border-color: #bdabe8; background: #f8f5ff; }
+.teacher-cms .showcase-visibility[data-visible='true'] { border-color: #b9d9be; background: #f0f8f1; color: #286338; }
+.teacher-cms .showcase-visibility small { margin-left: auto; color: currentColor; font-size: .68rem; font-weight: 900; opacity: .7; }
+.teacher-cms .showcase-switch { display: grid; width: 2.1rem; height: 1.2rem; padding: .15rem; border-radius: 999px; background: #c4c5cc; transition: background-color 160ms ease; }
+.teacher-cms .showcase-switch span { width: .9rem; height: .9rem; border-radius: 50%; background: #fff; box-shadow: 0 .1rem .25rem rgb(0 0 0 / .18); transition: transform 160ms ease; }
+.teacher-cms .showcase-visibility[data-visible='true'] .showcase-switch { background: #3a9850; }
+.teacher-cms .showcase-visibility[data-visible='true'] .showcase-switch span { transform: translateX(.9rem); }
+.teacher-cms .showcase-pin-button { justify-content: center; border-color: #d4c8ef; background: #f4f0ff; color: var(--t2-brand); }
+.teacher-cms .showcase-pin-button[data-pinned='true'] { border-color: #e5c4c1; background: #fff8f7; color: #963d35; }
+.teacher-cms .showcase-empty { display: grid; place-items: center; gap: .35rem; min-height: 15rem; padding: 2rem; border: 1px dashed #cfc2e7; border-radius: 1.3rem; background: linear-gradient(135deg, #fcfaff, #f7f2ff); color: var(--t2-muted); text-align: center; }
+.teacher-cms .showcase-empty strong { color: var(--t2-ink); font-size: 1rem; }
+.teacher-cms .showcase-empty span { max-width: 28rem; font-size: .88rem; line-height: 1.5; }
+.teacher-cms .showcase-empty--wide { min-height: 16rem; }
+.teacher-cms .showcase-error { display: flex; align-items: center; gap: .45rem; margin: 0; color: #9a332e; font-size: .85rem; font-weight: 700; }
+.teacher-cms .showcase-screen { padding: 1.25rem; border: 1px solid var(--t2-line); border-radius: 1.4rem; background: #fffdf9; box-shadow: var(--t2-shadow); }
+.teacher-cms .showcase-screen__actions { display: flex; flex-wrap: wrap; gap: .65rem; }
+.teacher-cms .showcase-open-button { display: inline-flex; align-items: center; gap: .5rem; min-height: 3rem; padding: 0 1rem; border: 1px solid #d1c5ed; border-radius: .85rem; background: #f8f5ff; color: var(--t2-brand); font-size: .92rem; font-weight: 900; text-decoration: none; transition: transform 160ms ease, background-color 160ms ease; }
+.teacher-cms .showcase-open-button:hover { transform: translateY(-2px); background: #eee8ff; }
+.teacher-cms .showcase-open-button[data-primary] { border-color: #4d329d; background: linear-gradient(135deg, #4d329d, #7950c6); color: #fff; box-shadow: 0 .45rem 1rem rgb(77 50 157 / .22); }
+.teacher-cms .showcase-open-button[data-primary]:hover { background: linear-gradient(135deg, #42298c, #6842b5); }
+.teacher-cms .showcase-open-button span { margin-left: .2rem; opacity: .7; }
+.teacher-cms .showcase-projector { overflow: hidden; border: 1px solid #35226d; border-radius: 1.2rem; background: #17112d; box-shadow: 0 1rem 2.5rem rgb(35 21 79 / .2); }
+.teacher-cms .showcase-projector__chrome { display: flex; align-items: center; gap: .35rem; height: 2rem; padding: 0 .75rem; background: #24194b; color: #cabfff; }
+.teacher-cms .showcase-projector__chrome > span { width: .45rem; height: .45rem; border-radius: 50%; background: #e897a4; }
+.teacher-cms .showcase-projector__chrome > span:nth-child(2) { background: #f3ca74; }
+.teacher-cms .showcase-projector__chrome > span:nth-child(3) { background: #8ad19e; }
+.teacher-cms .showcase-projector__chrome em { margin-left: auto; font-size: .58rem; font-style: normal; font-weight: 900; letter-spacing: .12em; }
+.teacher-cms .showcase-projector__empty { display: grid; place-items: center; gap: .4rem; min-height: 18rem; padding: 2rem; color: #d9d0ff; text-align: center; background: radial-gradient(circle at 50% 30%, #493583, #21183f 70%); }
+.teacher-cms .showcase-projector__empty strong { color: #fff; font-size: 1.12rem; }
+.teacher-cms .showcase-projector__empty span { max-width: 28rem; color: #bdb2e8; font-size: .86rem; line-height: 1.5; }
+.teacher-cms .showcase-slide-strip { display: flex; gap: .85rem; overflow-x: auto; margin: 0; padding: 1.15rem; list-style: none; scroll-snap-type: x mandatory; }
+.teacher-cms .showcase-slide { flex: 0 0 min(23rem, 78vw); scroll-snap-align: start; overflow: hidden; border: 1px solid rgb(255 255 255 / .16); border-radius: .95rem; background: linear-gradient(145deg, #fffaf0, #efe6ff); box-shadow: 0 .5rem 1.2rem rgb(9 5 30 / .22); }
+.teacher-cms .showcase-slide article { display: grid; grid-template-columns: 7.3rem minmax(0, 1fr); min-height: 9.2rem; }
+.teacher-cms .showcase-slide__art { position: relative; display: grid; place-items: center; overflow: hidden; background: linear-gradient(180deg, #dcd0ff, #aa91e1); }
+.teacher-cms .showcase-slide__art::after { position: absolute; right: 10%; bottom: .8rem; left: 10%; height: .7rem; content: ''; border-radius: 50%; background: rgb(48 29 98 / .22); filter: blur(.45rem); }
+.teacher-cms .showcase-slide__art img { position: relative; z-index: 1; width: 90%; height: 7.5rem; object-fit: contain; }
+.teacher-cms .showcase-slide__number { position: absolute; top: .55rem; left: .55rem; z-index: 2; color: #fff; font-size: .68rem; font-weight: 900; letter-spacing: .08em; }
+.teacher-cms .showcase-slide__copy { min-width: 0; padding: 1rem .9rem; }
+.teacher-cms .showcase-slide__copy .showcase-domain { font-size: 1.1rem; }
+.teacher-cms .showcase-slide__reason { display: -webkit-box; min-height: 2.5rem; margin: .65rem 0 .6rem; overflow: hidden; color: var(--t2-muted); font-size: .78rem; line-height: 1.5; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.teacher-cms .showcase-slide__owner { margin: 0; color: var(--t2-brand); font-size: .75rem; font-weight: 850; }
+.teacher-cms .showcase-slide__controls { display: flex; align-items: center; gap: .35rem; padding: .55rem .65rem; border-top: 1px solid #e1d8f2; background: rgb(255 255 255 / .58); }
+.teacher-cms .showcase-icon-button, .teacher-cms .showcase-slide-action { min-height: 2rem; border: 1px solid #d6cbea; border-radius: .55rem; background: #fff; color: var(--t2-brand); font: inherit; font-size: .72rem; font-weight: 850; cursor: pointer; }
+.teacher-cms .showcase-icon-button { width: 2rem; padding: 0; font-size: 1rem; }
+.teacher-cms .showcase-slide-action { padding: 0 .55rem; }
+.teacher-cms .showcase-slide-action:first-of-type { margin-left: auto; }
+.teacher-cms .showcase-slide-action--danger { color: #9a332e; }
+.teacher-cms .showcase-icon-button:hover:not(:disabled), .teacher-cms .showcase-slide-action:hover:not(:disabled) { background: #f2edff; }
+.teacher-cms .showcase-icon-button:disabled, .teacher-cms .showcase-slide-action:disabled { cursor: not-allowed; opacity: .4; }
+.teacher-cms .showcase-screen__footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; color: var(--t2-muted); font-size: .78rem; font-weight: 700; }
+.teacher-cms .showcase-screen__footer strong { color: var(--t2-brand); font-size: .95rem; }
+.teacher-cms .showcase-likes { display: grid; gap: .7rem; }
+@media (max-width: 900px) { .teacher-cms .showcase-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .teacher-cms .showcase-hero__dome { right: 12%; opacity: .82; } .teacher-cms .showcase-hero__stats { width: min(100%, 18rem); } }
+@media (max-width: 639px) { .teacher-cms .showcase-hero { min-height: 18rem; align-items: flex-start; padding: 1.35rem 1.1rem; } .teacher-cms .showcase-hero__dome { right: -.3rem; bottom: 2.4rem; width: 9.5rem; opacity: .72; } .teacher-cms .showcase-hero__stats { position: absolute; right: 1rem; bottom: 1rem; left: 1rem; width: auto; } .teacher-cms .showcase-hero__stats div { min-height: 3.55rem; padding: .55rem .65rem; } .teacher-cms .showcase-hero__stats strong { font-size: 1.35rem; } .teacher-cms .showcase-grid { grid-template-columns: 1fr; } .teacher-cms .showcase-filterbar { align-items: stretch; } .teacher-cms .showcase-filter { flex: 1 0 calc(50% - .5rem); justify-content: space-between; } .teacher-cms .showcase-filterbar__summary { width: 100%; margin: .2rem 0 0; padding: 0 .35rem; } .teacher-cms .showcase-screen { padding: .85rem; } .teacher-cms .showcase-screen__actions { display: grid; } .teacher-cms .showcase-open-button { justify-content: center; } .teacher-cms .showcase-slide { flex-basis: calc(100vw - 3.7rem); } }
+@media (prefers-reduced-motion: reduce) { .teacher-cms .showcase-work-card, .teacher-cms .showcase-filter, .teacher-cms .showcase-open-button, .teacher-cms .showcase-visibility, .teacher-cms .showcase-pin-button { transition: none; } }

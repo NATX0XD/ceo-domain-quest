@@ -1,23 +1,19 @@
 import type { Metadata } from 'next'
-import { listClassroomCeoWorks, listPendingReview, listTeacherShowcaseLikes } from '@/lib/db/repo'
-import { TeacherShowcaseClient } from '@/components/teacher-showcase-client'
+import { listClassroomCeoWorks, listPendingReview, listPinnedShowcase, listTeacherShowcaseLikes } from '@/lib/db/repo'
+import { loadShopTypes } from '@/app/teacher/_lib/student-cards-data'
+import { shopArtSrc } from '@/components/shop-art'
+import { TeacherShowcaseClient, type ShowcaseCandidate } from '@/components/teacher-showcase-client'
 import { TeacherFlagsClient } from '@/components/teacher-flags-client'
 import { TeacherPeerVisibilityClient, type PeerVisibilityRow } from '@/components/teacher-peer-visibility-client'
 import { showcaseSafeForPeers, showcaseVisibleToPeers } from '@/components/server/showcase-safety'
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
-import { PageBody, PageHead } from '../_ux/page-head'
-import { InfoTip } from '../_ux/v2'
+import { PageBody } from '../_ux/page-head'
 import { UrlTabs } from '../_ux/url-tabs'
-
-import { Icon3d } from '../_ux/v2'
 
 export const metadata: Metadata = { title: 'ผลงานและจอหน้าห้อง — สำหรับครู' }
 export const dynamic = 'force-dynamic'
 
-/**
- * T-04 ปักหมุดผลงานขึ้นจอหน้าห้อง + T-09 ซ่อนความเห็นที่ไม่เหมาะสม
- * รวมไว้หน้าเดียวเพราะเป็นงาน "ของที่จะขึ้นให้ทั้งห้องเห็น" เหมือนกัน
- */
+/** T-04 ปักหมุดผลงานขึ้นจอหน้าห้อง + T-09 ซ่อนความเห็นที่ไม่เหมาะสม */
 export default async function TeacherShowcasePage({
   searchParams,
 }: {
@@ -26,100 +22,114 @@ export default async function TeacherShowcasePage({
   const data = await loadTeacherPage(await searchParams)
   if (!data) return <TeacherSignedOut title="ผลงานและจอหน้าห้อง" />
 
-  const [pending, likes, works] = data.selectedId
+  const result = data.selectedId
     ? await Promise.all([
         listPendingReview(data.teacherId, data.selectedId).then((rows) => rows ?? []),
         listTeacherShowcaseLikes(data.teacherId, data.selectedId),
         listClassroomCeoWorks(data.teacherId, data.selectedId).then((rows) => rows ?? []),
+        listPinnedShowcase(data.teacherId, data.selectedId),
       ])
-    : [[], [], []]
-  /** ผนังผลงานเพื่อนแสดงใบเสนอล่าสุดของแต่ละคน — ครูตั้งการแสดงที่ใบนั้น */
+    : null
+  const likes = result?.[1] ?? []
+  const works = result?.[2] ?? []
+  const pinned = result?.[3] ?? []
+  const shopTypes = await loadShopTypes(works.map((row) => row.student_id))
+  const pinnedIds = new Set(pinned.map((row) => row.submission_id))
+
   const latestWork = new Map<string, (typeof works)[number]>()
   for (const row of works) {
     const prev = latestWork.get(row.nickname)
     if (!prev || row.created_at > prev.created_at) latestWork.set(row.nickname, row)
   }
+
   const peerRows: PeerVisibilityRow[] = [...latestWork.values()]
-    .sort((a, b) => a.nickname.localeCompare(b.nickname, 'th'))
-    .map((row) => ({
-      submissionId: row.id,
-      nickname: row.nickname,
-      domain: `${row.domain_name}${row.tld}`,
-      flagged: !showcaseSafeForPeers({ domainName: row.domain_name, tld: row.tld, reasonText: row.reason_text }),
-      override: row.peer_visible ?? null,
-    }))
-  // ใจที่เพื่อนกดให้บนแกลเลอรี /showcase — ครูเห็นตัวเลข นักเรียนไม่เห็นการจัดอันดับ
+    .map((row) => {
+      const flagged = !showcaseSafeForPeers({ domainName: row.domain_name, tld: row.tld, reasonText: row.reason_text })
+      return {
+        submissionId: row.id,
+        nickname: row.nickname,
+        domain: `${row.domain_name}${row.tld}`,
+        reasonText: row.reason_text,
+        flagged,
+        override: row.peer_visible ?? null,
+        shopArt: shopArtSrc(shopTypes.get(row.student_id), 5),
+        pinned: pinnedIds.has(row.id),
+      }
+    })
+    .sort((a, b) => Number(b.flagged) - Number(a.flagged) || a.nickname.localeCompare(b.nickname, 'th'))
+
+  const candidates: ShowcaseCandidate[] = works.map((row) => ({
+    id: row.id,
+    nickname: row.nickname,
+    domain: `${row.domain_name}${row.tld}`,
+    reason: row.reason_text ?? '',
+    shopArt: shopArtSrc(shopTypes.get(row.student_id), 5),
+  }))
+  const visibleCount = peerRows.filter((row) => {
+    const dot = row.domain.lastIndexOf('.')
+    return showcaseVisibleToPeers({
+      domainName: dot > 0 ? row.domain.slice(0, dot) : row.domain,
+      tld: dot > 0 ? row.domain.slice(dot) : '',
+      reasonText: row.reasonText,
+      peerVisible: row.override,
+    })
+  }).length
+  const hiddenCount = peerRows.length - visibleCount
+  const reviewCount = peerRows.filter((row) => row.flagged).length
   const liked = likes.filter((row) => row.likes > 0).sort((a, b) => a.nickname.localeCompare(b.nickname, 'th'))
 
   return (
     <PageBody>
-      <PageHead
-        tone="amber"
-        icon={<Icon3d name="glowing-star" size={36} />}
-        art="/ui/rewards/mission-medal.webp"
-        title="ผลงานเด่น"
-        subtitle="กลั่นกรองผลงานที่เพื่อนจะเห็น"
-      />
+      <section className="showcase-hero" aria-labelledby="showcase-title">
+        <div className="showcase-hero__copy">
+          <span className="showcase-hero__eyebrow"><span aria-hidden>✦</span> ห้องแกลเลอรีของเรา</span>
+          <h1 id="showcase-title">ผลงานเด่น</h1>
+          <p>เลือกผลงานที่เพื่อนในห้องจะเห็นบนผนังผลงาน</p>
+        </div>
+        <img className="showcase-hero__dome" src="/ui/teacher/hero-dome.webp" alt="โดมถือคลิปบอร์ดและคอมพิวเตอร์" />
+        <div className="showcase-hero__stats" aria-label="สรุปการมองเห็นผลงาน">
+          <div><strong>{visibleCount}</strong><span>แสดง</span></div>
+          <div><strong>{hiddenCount}</strong><span>ซ่อน</span></div>
+          <div><strong>{reviewCount}</strong><span>ต้องดู</span></div>
+        </div>
+      </section>
 
       <UrlTabs
         label="หมวดผลงานเด่น"
         items={[
-          { value: 'moderate', label: 'กลั่นกรอง', content: (
-            <>
-        <TeacherFlagsClient classroomId={data.selectedId} />
-
-        {data.selectedId ? <TeacherPeerVisibilityClient rows={peerRows} /> : null}
-        <section className="t2-note" data-tone="sky"><span><strong>การมองเห็นของเพื่อน</strong> เปิด/ปิด "แสดงให้เพื่อนเห็น" ที่ผลงานแต่ละชิ้น เพื่อเลือกว่าชิ้นไหนขึ้นผนังผลงานให้เพื่อนในห้องดู</span><InfoTip label="เรื่องการมองเห็น" text="ผลงานที่ไม่ผ่านตัวกรองจะถูกซ่อนจากเพื่อนโดยอัตโนมัติ ครูตรวจและยืนยันได้จากหน้านี้" /></section>
-            </>
-          ) },
-          { value: 'screen', label: 'ขึ้นจอหน้าห้อง', content: (
-            <>
-        {data.selectedId ? (
-          <section className="t2-card">
-            <h3 className="t2-card-title">จอหน้าห้อง (โปรเจกเตอร์)</h3>
-            <p className="mt-0 mb-3 text-[15px] text-[var(--c-ink-2)]">ปักหมุดผลงานด้านล่าง แล้วเปิดจอผลงานในแท็บใหม่ ฉายเป็นสไลด์เต็มจอ ไม่มีดาว ไม่มีคะแนน และซ่อนชื่อเจ้าของตามที่เลือก</p>
-            <div className="flex flex-wrap gap-3">
-              <a href={`/board?classroomId=${data.selectedId}&mode=showcase`} target="_blank" rel="noopener" className="inline-flex h-11 items-center rounded-xl bg-[var(--c-brand)] px-5 text-[15px] font-bold text-white focus-ring">เปิดจอผลงาน</a>
-              <a href={`/board?classroomId=${data.selectedId}&mode=join`} target="_blank" rel="noopener" className="inline-flex h-11 items-center rounded-xl border border-[var(--c-brand)] bg-white px-5 text-[15px] font-bold text-[var(--c-brand)] focus-ring">เปิดจอชวนเข้าห้อง</a>
-            </div>
-          </section>
-        ) : null}
-        <TeacherShowcaseClient
-          classroomId={data.selectedId}
-          candidates={pending
-            .filter((row) => row.emphasis_criterion !== null)
-            .map((row) => ({
-              id: row.id,
-              nickname: row.nickname,
-              domain: `${row.domain_name}${row.tld}`,
-              // ติดตัวกรองคำ = เพื่อนไม่เห็นบนผนังผลงาน ครูยังเห็นและปักหมุดเองได้ถ้าจะใช้สอน
-              hiddenFromPeers: !showcaseVisibleToPeers({
-                domainName: row.domain_name,
-                tld: row.tld,
-                reasonText: row.reason_text,
-                peerVisible: row.peer_visible ?? null,
-              }),
-            }))}
-        />
-
-        <section className="t2-card">
-          <h3 className="t2-card-title">ใจจากเพื่อนบนแกลเลอรี</h3>
-          {liked.length === 0 ? (
-            <p className="t2-empty">ยังไม่มีใครกดใจผลงานเพื่อน</p>
-          ) : (
-            <ul className="flex flex-wrap gap-2">
-              {liked.map((row) => (
-                <li key={row.nickname} className="t2-chip">
-                  <span className="font-extrabold">{row.nickname}</span>
-                  <span>♥ {row.likes}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-            </>
-          ) },
+          {
+            value: 'moderate',
+            label: 'กลั่นกรอง',
+            content: (
+              <>
+                <TeacherFlagsClient classroomId={data.selectedId} />
+                {data.selectedId ? (
+                  <TeacherPeerVisibilityClient rows={peerRows} initialPinnedIds={[...pinnedIds]} />
+                ) : (
+                  <section className="showcase-empty showcase-empty--wide"><strong>ยังไม่มีห้องที่เลือก</strong><span>เลือกห้องเรียนจากแถบด้านบนเพื่อเริ่มคัดผลงาน</span></section>
+                )}
+              </>
+            ),
+          },
+          {
+            value: 'screen',
+            label: 'ขึ้นจอหน้าห้อง',
+            content: (
+              <>
+                <TeacherShowcaseClient classroomId={data.selectedId} candidates={candidates} initialPinned={pinned} />
+                <section className="t2-card showcase-likes" aria-label="ใจจากเพื่อนบนแกลเลอรี">
+                  <div><p className="showcase-section-kicker">เสียงจากแกลเลอรี</p><h2 className="showcase-section-title">ใจจากเพื่อน</h2></div>
+                  {liked.length === 0 ? (
+                    <p className="t2-empty">ยังไม่มีใครกดใจผลงานเพื่อน</p>
+                  ) : (
+                    <ul className="flex flex-wrap gap-2">
+                      {liked.map((row) => <li key={row.nickname} className="t2-chip"><span className="font-extrabold">{row.nickname}</span><span>♥ {row.likes}</span></li>)}
+                    </ul>
+                  )}
+                </section>
+              </>
+            ),
+          },
         ]}
       />
     </PageBody>
