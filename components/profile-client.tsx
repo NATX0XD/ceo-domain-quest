@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { StudentShell } from '@/components/student-shell'
+import { StudentAccountPanel } from '@/components/student-account-panel'
 import { AppFooter } from '@/components/app-shell'
 import { QuizStepper } from '@/components/quiz-stepper-client'
 import { DomeTip, FlowNote, StageLine, useFlowFeedback } from '@/components/flow-feedback-client'
@@ -113,6 +114,7 @@ export function ProfileClient({
   }
   goalPolicyNote: string
   initial: {
+    nickname: string
     prefAnswers: Record<string, string>
     suggestion: Suggestion | null
     route: RouteId | null
@@ -312,6 +314,7 @@ export function ProfileClient({
       {stepKey !== 'ask' ? (
         <StageLine stage={`รู้จักตัวเอง · ขั้น ${stepNo} จาก ${stepList.length}`} />
       ) : null}
+      <StudentAccountPanel initialNickname={initial.nickname} />
       <span className="sr-only">
         ใช้เวลาประมาณ {meta.minuteFrom}-{meta.minuteTo} นาที
       </span>

@@ -161,6 +161,7 @@ export default async function ProfilePage() {
         identity={identity}
         goalPolicyNote={selfProfile.goalPolicy.explainerForStudent}
         initial={{
+          nickname,
           prefAnswers: state.prefAnswers,
           suggestion,
           route: (state.route ?? null) as RouteId | null,

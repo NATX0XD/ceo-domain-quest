@@ -35,6 +35,26 @@ const PLAY = 'เล่นภารกิจ'
 const missionParam = pathParam('id', 'รหัสภารกิจ `m1`-`m4`', DEMO.missionId)
 
 export const studentPaths: Record<string, PathItemObject> = {
+  '/api/profile/account': {
+    patch: op({
+      id: 'studentAccountPatch',
+      summary: 'เปลี่ยนชื่อเล่นหรือ PIN ของตัวเอง',
+      tags: [BEFORE],
+      security: STUDENT_ONLY,
+      description: `ชื่อเล่นใหม่ต้องยาว 1-40 ตัวอักษร ผ่านการตรวจแบบเดียวกับตอนเข้าห้อง และไม่ซ้ำในห้องเดียวกัน
+การเปลี่ยนชื่อไม่เปลี่ยน PIN หรือ session เดิม; การเปลี่ยน PIN ต้องส่ง PIN ปัจจุบัน`,
+      requestBody: jsonBody({
+        oneOf: [
+          obj({ nickname: str('ชื่อเล่นใหม่ 1-40 ตัวอักษร', { minLength: 1, maxLength: 40 }) }, { required: ['nickname'] }),
+          obj({ currentPin: str('PIN ปัจจุบัน', { pattern: '^[0-9]{4}$' }), newPin: str('PIN ใหม่ 4 หลัก', { pattern: '^[0-9]{4}$' }) }, { required: ['currentPin', 'newPin'] }),
+        ],
+      }, { nickname: 'ชื่อใหม่' }),
+      responses: {
+        ...ok('บันทึกบัญชีนักเรียนแล้ว', obj({ ok: bool('สำเร็จ'), nickname: str('ชื่อเล่นปัจจุบัน'), message: str('ข้อความสำหรับแสดงผล') })),
+        ...failures([400, ['bad-request']], [401, ['unauthorized', 'invalid-pin']], [409, ['nickname-taken']], [422, ['content-flagged']]),
+      },
+    }),
+  },
   '/api/join': {
     post: op({
       id: 'join',

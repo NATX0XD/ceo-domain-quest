@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { studentNicknameSchema } from '../../../lib/account-validation'
 import { attempt } from '@/lib/rate-limit'
 import { hashPin } from '@/lib/pin'
 import { isValidRoomCode, normalizeRoomCode } from '@/lib/room-code'
@@ -29,7 +30,7 @@ export const dynamic = 'force-dynamic'
 
 const JoinSchema = z.object({
   roomCode: z.string().min(1),
-  nickname: z.string().trim().min(1).max(40),
+  nickname: studentNicknameSchema,
   pin: z.string(),
 })
 

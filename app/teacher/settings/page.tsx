@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import QRCode from 'qrcode'
-import { getActiveClassSession } from '@/lib/db/repo'
+import { getActiveClassSession, getTeacher } from '@/lib/db/repo'
 import { TeacherRoomClient } from '@/components/teacher-room-client'
 import { TeacherPosttestClient } from '@/components/teacher-posttest-client'
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
@@ -9,6 +9,7 @@ import { Icon3d, InfoTip } from '../_ux/v2'
 import { AiSwitch } from '../ai-switch'
 import { DemoModeBanner } from '../demo-mode'
 import { SessionSettings } from './session-settings'
+import { TeacherAccountPanel } from './account-panel'
 
 export const metadata: Metadata = { title: 'ตั้งค่าห้อง — สำหรับครู' }
 export const dynamic = 'force-dynamic'
@@ -34,6 +35,7 @@ export default async function TeacherSettingsPage({
   if (!data) return <TeacherSignedOut title="ตั้งค่าห้อง" />
 
   const activeSession = data.selectedId ? await getActiveClassSession(data.selectedId) : null
+  const teacher = await getTeacher(data.teacherId)
 
   // QR ของลิงก์เข้าห้อง — สร้างเป็น SVG ฝั่งเซิร์ฟเวอร์ ไม่ต้องพึ่ง JS ฝั่งเบราว์เซอร์
   const joinPath = data.selectedRoomCode ? `/join?code=${data.selectedRoomCode}` : '/join'
@@ -47,6 +49,7 @@ export default async function TeacherSettingsPage({
       <PageHead title="ตั้งค่าห้อง" subtitle="รหัสห้อง · สวิตช์ของคาบ · ข้อมูล" />
 
       <div className="t2-stack">
+        {teacher ? <TeacherAccountPanel email={teacher.email} initialDisplayName={teacher.name ?? ''} /> : null}
         {/* E-16 ป้ายโหมดสาธิต + ปุ่มล้างกลับค่าเริ่มต้น — ขึ้นเฉพาะห้องที่ติดป้ายห้องสาธิต */}
         <DemoModeBanner
           classroomId={data.selectedId}

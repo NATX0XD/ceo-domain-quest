@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { teacherPasswordSchema } from '../../../../lib/account-validation'
 import { createClassroomWithUniqueCode, signUpTeacher } from '../../../../lib/db/repo'
 import { genRoomCode } from '../../../../lib/room-code'
 import { attempt } from '../../../../lib/rate-limit'
@@ -13,7 +14,7 @@ const SignupSchema = z
   .object({
     displayName: z.string().trim().min(1).max(80),
     email: z.string().trim().email().max(320),
-    password: z.string().min(10).max(128),
+    password: teacherPasswordSchema,
     confirmPassword: z.string(),
     inviteCode: z.string().min(1).max(256),
   })

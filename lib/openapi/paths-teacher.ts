@@ -52,6 +52,40 @@ const classroomQuery: ParameterObject = query('classroomId', CLASSROOM_ID_SOURCE
 })
 
 export const teacherPaths: Record<string, PathItemObject> = {
+  '/api/teacher/account': {
+    get: op({
+      id: 'teacherAccountGet',
+      summary: 'อ่านบัญชีครูของตัวเอง',
+      tags: [TEACHER],
+      security: TEACHER_ONLY,
+      description: 'ไม่รับพารามิเตอร์และคืนอีเมลกับชื่อที่แสดงของครูจากคุกกี้เท่านั้น',
+      responses: {
+        ...ok('ข้อมูลบัญชีครู', obj({ teacher: obj({ email: str('อีเมล'), displayName: str('ชื่อที่แสดง') }) })),
+        ...failures([401, ['unauthorized', 'not-found']]),
+      },
+    }),
+    patch: op({
+      id: 'teacherAccountPatch',
+      summary: 'เปลี่ยนชื่อหรือรหัสผ่านครู',
+      tags: [TEACHER],
+      security: TEACHER_ONLY,
+      description: 'ชื่อที่แสดงเปลี่ยนได้โดยตรง; การเปลี่ยนรหัสผ่านต้องส่งรหัสผ่านปัจจุบันและรหัสใหม่อย่างน้อย 10 ตัวอักษร',
+      requestBody: jsonBody({
+        oneOf: [
+          obj({ displayName: str('ชื่อที่แสดงใหม่', { minLength: 1, maxLength: 80 }) }, { required: ['displayName'] }),
+          obj({
+            currentPassword: str('รหัสผ่านปัจจุบัน'),
+            newPassword: str('รหัสผ่านใหม่อย่างน้อย 10 ตัวอักษร', { minLength: 10, maxLength: 128 }),
+            confirmPassword: str('ยืนยันรหัสผ่านใหม่'),
+          }, { required: ['currentPassword', 'newPassword', 'confirmPassword'] }),
+        ],
+      }, { displayName: 'ครูผู้สอน' }),
+      responses: {
+        ...ok('บันทึกบัญชีแล้ว', obj({ ok: bool('สำเร็จ'), teacher: obj({ email: str('อีเมล'), displayName: str('ชื่อที่แสดง') }) })),
+        ...failures([400, ['bad-request', 'account-update-failed']], [401, ['unauthorized', 'invalid-password']], [404, ['not-found']]),
+      },
+    }),
+  },
   '/api/teacher/login': {
     post: op({
       id: 'teacherLogin',

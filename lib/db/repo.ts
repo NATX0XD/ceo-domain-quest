@@ -162,6 +162,30 @@ export async function upsertTeacher(
   return data
 }
 
+export async function getTeacher(teacherId: string): Promise<Teacher | null> {
+  const { data, error } = await getServiceClient()
+    .from('teachers')
+    .select()
+    .eq('id', teacherId)
+    .maybeSingle()
+
+  if (error) fail('getTeacher', error)
+  return data
+}
+
+/** Update only the teacher row owned by the authenticated session. */
+export async function updateTeacherName(teacherId: string, name: string): Promise<Teacher | null> {
+  const { data, error } = await getServiceClient()
+    .from('teachers')
+    .update({ name })
+    .eq('id', teacherId)
+    .select()
+    .maybeSingle()
+
+  if (error) fail('updateTeacherName', error)
+  return data
+}
+
 /**
  * อ่านห้องจาก id ตรง ๆ — ไม่มีการตรวจเจ้าของ
  * ใช้ได้เฉพาะกับ classroomId ที่มาจาก session cookie ของนักเรียนเท่านั้น
@@ -325,6 +349,61 @@ export async function findStudentByNickname(
     .maybeSingle()
 
   if (error) fail('findStudentByNickname', error)
+  return data
+}
+
+/** Rename the current student without changing the PIN or device session. */
+export async function updateStudentNickname(
+  studentId: string,
+  classroomId: string,
+  nickname: string,
+): Promise<Student | null> {
+  const { data, error } = await getServiceClient()
+    .from('students')
+    .update({ nickname })
+    .eq('id', studentId)
+    .eq('classroom_id', classroomId)
+    .select()
+    .maybeSingle()
+
+  if (error) {
+    if (error.code === UNIQUE_VIOLATION) return null
+    fail('updateStudentNickname', error)
+  }
+  return data
+}
+
+/** Change the current student's PIN hash; the active session remains valid. */
+export async function updateStudentPin(
+  studentId: string,
+  classroomId: string,
+  pinHash: string,
+): Promise<Student | null> {
+  const { data, error } = await getServiceClient()
+    .from('students')
+    .update({ pin_hash: pinHash, must_change_pin: false, pin_reset_at: null, pin_reset_by: null })
+    .eq('id', studentId)
+    .eq('classroom_id', classroomId)
+    .select()
+    .maybeSingle()
+
+  if (error) fail('updateStudentPin', error)
+  return data
+}
+
+/** Owner-only bulk-create primitive. It never stores a raw PIN. */
+export async function createPrecreatedStudent(input: {
+  classroomId: string
+  nickname: string
+  pinHash: string
+}): Promise<Student> {
+  const { data, error } = await getServiceClient()
+    .from('students')
+    .insert({ classroom_id: input.classroomId, nickname: input.nickname, pin_hash: input.pinHash })
+    .select()
+    .single()
+
+  if (error) fail('createPrecreatedStudent', error)
   return data
 }
 
