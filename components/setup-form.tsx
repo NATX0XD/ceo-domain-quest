@@ -47,22 +47,12 @@ export function SetupForm({
     isRegisteredCompany !== null &&
     audience !== null
 
-  // นับเฉพาะเพื่อแสดงความคืบหน้าให้นักเรียนเห็นว่าเหลืออีกกี่ช่อง — ไม่ได้ใช้ตัดสินอะไร
-  const filledCount = [
-    trimmedName.length > 0,
-    businessTypeId.length > 0,
-    domainName.trim().length > 0,
-    isRegisteredCompany !== null,
-    audience !== null,
-  ].filter(Boolean).length
-
   const selectedBusiness = useMemo(
     () => businessTypes.find((business) => business.id === businessTypeId),
     [businessTypes, businessTypeId],
   )
   // ภาพร้านชุดเดียวกับหน้า /home — นักเรียนใหม่เริ่มที่ร้านขั้น 1 แล้วร้านโตตามภารกิจที่ผ่าน
   const previewImage = '/ui/home/shop-stage-1.webp'
-  const SETUP_STEPS = 5
 
   async function handleSubmit() {
     if (!ready || isRegisteredCompany === null || audience === null || saving) return
@@ -135,37 +125,6 @@ export function SetupForm({
         </ToastViewport>
       ) : null}
 
-      <section className="setup-panel setup-progress" aria-label={`ตั้งค่าร้านไปแล้ว ${filledCount} จาก ${SETUP_STEPS} ข้อ`}>
-        <div className="setup-progress-top">
-          <p>ตั้งค่าร้านไปแล้ว</p>
-          <strong>
-            {filledCount}
-            <span> / {SETUP_STEPS} ข้อ</span>
-          </strong>
-        </div>
-        {/* มาตรแบบเกมชุดเดียวกับหน้า /rewards: รางหนาขอบน้ำตาล ไส้ทอง หมุดทุกข้อ */}
-        <div
-          className="setup-gauge"
-          role="progressbar"
-          aria-label="ข้อที่ตั้งค่าแล้ว"
-          aria-valuemin={0}
-          aria-valuemax={SETUP_STEPS}
-          aria-valuenow={filledCount}
-        >
-          <span
-            className={`setup-gauge-fill${filledCount > 0 ? '' : ' is-empty'}`}
-            style={{ width: `${(filledCount / SETUP_STEPS) * 100}%` }}
-          />
-          {Array.from({ length: SETUP_STEPS - 1 }, (_, i) => i + 1).map((at) => (
-            <span
-              key={at}
-              className={`setup-gauge-tick${filledCount >= at ? ' is-lit' : ''}`}
-              style={{ left: `${(at / SETUP_STEPS) * 100}%` }}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
-      </section>
 
       <div className="setup-panel setup-preview" aria-live="polite">
         <div className="setup-preview-scene">
