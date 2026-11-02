@@ -342,3 +342,69 @@ export function ScanArrow({ active }: { active: boolean }) {
     </div>
   );
 }
+
+/* ── Domain parts legend: parts . forcespeed . com, each chip labelled ── */
+
+export const DOMAIN_PARTS = [
+  { word: "parts", tone: "green", th: "ส่วนย่อย", en: "Subdomain", step: 3, read: "ส่วนย่อย · เล็กสุด" },
+  { word: "forcespeed", tone: "blue", th: "ชื่อร้าน", en: "SLD", step: 2, read: "ชื่อร้าน" },
+  { word: "com", tone: "orange", th: "นามสกุล", en: "TLD", step: 1, read: "นามสกุล · ใหญ่สุด" },
+] as const;
+
+export function PartsLegend({ title = "ชื่อเว็บมี 3 ส่วน" }: { title?: string }) {
+  return (
+    <figure className="m2g-legend">
+      <figcaption>{title}</figcaption>
+      <div className="m2g-legend-row">
+        {DOMAIN_PARTS.map((part, index) => (
+          <Fragment key={part.word}>
+            {index > 0 ? <i className="m2g-legend-dot">.</i> : null}
+            <div className="m2g-legend-cell">
+              <span className={cn("m2g-part-pill", `tone-${part.tone}`)}>{part.word}</span>
+              <small>
+                {part.th}
+                <br />
+                <b>{part.en}</b>
+              </small>
+            </div>
+          </Fragment>
+        ))}
+      </div>
+    </figure>
+  );
+}
+
+/* ── Read order: chips in natural order, arrow + numbered steps right→left ── */
+
+export function ReadOrder() {
+  const steps = [...DOMAIN_PARTS].sort((a, b) => a.step - b.step);
+  return (
+    <div className="m2g-order">
+      <div className="m2g-order-chips" aria-label="ชื่อเว็บ parts.forcespeed.com">
+        {DOMAIN_PARTS.map((part, index) => (
+          <Fragment key={part.word}>
+            {index > 0 ? <i className="m2g-legend-dot">.</i> : null}
+            <span className="m2g-order-cell">
+              <span className={cn("m2g-part-pill", `tone-${part.tone}`)}>{part.word}</span>
+              <span className={cn("m2g-order-num", `tone-${part.tone}`)}>{part.step}</span>
+            </span>
+          </Fragment>
+        ))}
+      </div>
+      <div className="m2g-order-track" aria-hidden>
+        <span className="m2g-order-line" />
+        <span className="m2g-order-runner" />
+        <span className="m2g-order-label">คอมพิวเตอร์ค้นทางนี้</span>
+      </div>
+      <ol className="m2g-order-steps">
+        {steps.map((part) => (
+          <li key={part.word}>
+            <span className={cn("m2g-order-num", `tone-${part.tone}`)}>{part.step}</span>
+            <span className={cn("m2g-part-pill", `tone-${part.tone}`)}>{part.word}</span>
+            <span>{part.read}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}

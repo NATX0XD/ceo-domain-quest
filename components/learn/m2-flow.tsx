@@ -7,7 +7,7 @@ import { useExitConfirm } from "@/components/student-navigation";
 import { ModePopup } from "@/components/learn/mode-popup";
 import { postLearn, type LearnModeId } from "@/components/learn/learn-path-api";
 import type { LearnPath, LearnState } from "@/components/server/learn-path";
-import { Dome, Domain, KIT, M2Button, M2Screen, Panel, withDomains } from "./m2/m2-kit";
+import { Dome, Domain, KIT, M2Button, M2Screen, Panel, PartsLegend, withDomains } from "./m2/m2-kit";
 import { SimFinale, SimStage1, SimStage2, SimStage3, SimStage4, SimStorm, SimTutorial, type SimResult } from "./m2/m2-sim";
 import {
   ChoiceCards,
@@ -288,13 +288,7 @@ export function M2Flow({
               }
               art={
                 mode === "read" ? (
-                  <div className="m2g-rules-parts">
-                    <span className="m2g-part-pill tone-green">parts</span>
-                    <i>.</i>
-                    <span className="m2g-part-pill tone-blue">forcespeed</span>
-                    <i>.</i>
-                    <span className="m2g-part-pill tone-orange">com</span>
-                  </div>
+                  <PartsLegend />
                 ) : (
                   <div className="m2g-rules-woods">
                     <img src={KIT("l1_shop")} alt="" />

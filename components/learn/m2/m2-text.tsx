@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/components/ui";
-import { KIT, M2Button, M2Screen, ScanArrow, withDomains } from "./m2-kit";
+import { KIT, M2Button, M2Screen, ReadOrder, withDomains } from "./m2-kit";
 
 type Chrome = { onBack: () => void; soundOn: boolean; onSound: () => void };
 
@@ -11,7 +11,7 @@ export type TextGrade = { correct?: boolean; score?: number; feedback?: string; 
 
 type Msg = { id: number; who: "dome" | "me" | "card"; tone?: "ok" | "warn"; body: ReactNode };
 
-function LessonCard({ title, children, foot }: { title: string; children: ReactNode; foot?: string }) {
+function LessonCard({ title, children, foot }: { title: string; children: ReactNode; foot?: ReactNode }) {
   return (
     <div className="m2g-lesson">
       <p className="m2g-lesson-head">{title}</p>
@@ -22,12 +22,12 @@ function LessonCard({ title, children, foot }: { title: string; children: ReactN
 }
 
 const PART_ROWS = [
-  ["TLD", "orange", "com", "ขวาสุด บอกประเภทเว็บ"],
+  ["TLD", "orange", "com", "นามสกุล อยู่ขวาสุด บอกประเภทเว็บ"],
   ["SLD", "blue", "forcespeed", "ชื่อร้านที่จดไว้"],
-  ["Subdomain", "green", "parts", "ห้องย่อย/บริการ"],
+  ["Subdomain", "green", "parts", "ส่วนย่อย ห้องย่อย/บริการ"],
 ] as const;
 
-const LESSONS: { title: string; body: ReactNode; foot: string }[] = [
+const LESSONS: { title: string; body: ReactNode; foot: ReactNode }[] = [
   {
     title: "บทอ่าน 1 : ชื่อเว็บแบ่งด้วยจุด",
     body: (
@@ -57,17 +57,14 @@ const LESSONS: { title: string; body: ReactNode; foot: string }[] = [
   },
   {
     title: "บทอ่าน 3 : คอมพิวเตอร์อ่านจากขวาไปซ้าย",
-    body: (
+    body: <ReadOrder />,
+    foot: (
       <>
-        <p>เหมือนส่งพัสดุ : หาประเทศ › เมือง › บ้าน</p>
-        <p className="m2g-lesson-domain">com › forcespeed › parts</p>
-        <p className="m2g-lesson-split">
-          <span>ใหญ่สุด</span>
-          <span>เล็กสุด</span>
-        </p>
+        คนอ่านซ้ายไปขวา แต่คอมพิวเตอร์ค้นจากขวาไปซ้าย
+        <br />
+        เหมือนส่งพัสดุ : ประเทศ › เมือง › บ้าน
       </>
     ),
-    foot: "คนอ่านซ้ายไปขวา แต่คอมพิวเตอร์ค้นจากขวาไปซ้าย",
   },
 ];
 
@@ -121,12 +118,9 @@ export function TextChat({
     push(
       mk(
         "card",
-        <>
-          <LessonCard title={lesson.title} foot={lesson.foot}>
-            {lesson.body}
-          </LessonCard>
-          {n === 2 ? <ScanArrow active /> : null}
-        </>,
+        <LessonCard title={lesson.title} foot={lesson.foot}>
+          {lesson.body}
+        </LessonCard>,
       ),
     );
     setPhase({ kind: "lesson", n });

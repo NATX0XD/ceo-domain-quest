@@ -615,8 +615,6 @@
 .m2g-rules-art { margin-top: 16px; display: flex; justify-content: flex-start; padding-right: 100px; }
 .m2g-rules-woods { display: flex; gap: 4px; width: 100%; }
 .m2g-root .m2g-rules-woods img { width: 32%; height: auto; }
-.m2g-rules-parts { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.m2g-rules-parts i { font-weight: 800; }
 .m2g-root .m2g-rules-dome { position: absolute; right: -6px; bottom: -8px; width: 112px; height: auto; animation: m2g-bob 2.6s ease-in-out infinite; }
 
 /* ── text chat (31–37) ───────────────────────────────────────────────── */
@@ -644,7 +642,6 @@
 .m2g-lesson-body { padding: 10px 14px 4px; font-size: .88rem; font-weight: 600; line-height: 1.5; }
 .m2g-lesson-body p { margin: 0 0 8px; }
 .m2g-lesson-domain { font-size: 1rem; font-weight: 800; letter-spacing: .02em; }
-.m2g-lesson-split { display: flex; justify-content: space-between; padding-right: 30%; }
 .m2g-lesson-foot { margin: 0; padding: 0 12px 10px; text-align: center; font-size: .8rem; color: #6b3fc0; font-weight: 600; }
 .m2g-part-rows p { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; }
 .m2g-part-pill { display: inline-grid; place-items: center; min-width: 96px; padding: 4px 10px; border-radius: 999px; color: #fff; font-weight: 800; font-size: .85rem; }
@@ -753,4 +750,32 @@
   .m2g-root *, .m2g-root *::before, .m2g-root *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .m2g-rain { opacity: .5; }
 }
-.m2g-rules-parts .m2g-part-pill { min-width: 0; }
+
+/* domain parts legend (rules) + read-order card (lesson 3) */
+.m2g-legend { margin: 0; padding: 8px 10px 10px; border: 2px dashed #cdb9f0; border-radius: 14px; background: #fff; }
+.m2g-legend figcaption { margin-bottom: 6px; font-weight: 800; font-size: .9rem; color: #2f2014; }
+.m2g-legend-row, .m2g-order-chips { display: flex; align-items: flex-start; justify-content: center; gap: 3px; }
+.m2g-legend-dot { padding-top: 2px; font-style: normal; font-weight: 900; font-size: 1rem; line-height: 1.4; color: #2f2014; }
+.m2g-legend-cell, .m2g-order-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.m2g-legend-cell small { font-size: .7rem; font-weight: 700; line-height: 1.25; color: #4a3826; }
+.m2g-legend .m2g-part-pill, .m2g-order .m2g-part-pill { min-width: 0; padding: 3px 9px; font-size: .82rem; }
+.m2g-rules-art:has(.m2g-legend) { padding-right: 96px; }
+.m2g-order { padding: 2px 0 4px; }
+.m2g-order-num { display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: .75rem; font-weight: 800; line-height: 1; }
+.m2g-order-num.tone-green { background: #2fb34a; }
+.m2g-order-num.tone-blue { background: #2f7be0; }
+.m2g-order-num.tone-orange { background: #f39a1e; }
+.m2g-order-track { position: relative; height: 22px; margin: 6px 6px 2px; }
+.m2g-order-line { position: absolute; left: 0; right: 0; top: 4px; height: 4px; border-radius: 2px; background: #8b4fe8; }
+.m2g-order-line::before { content: ""; position: absolute; left: -2px; top: -6px; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-right: 12px solid #8b4fe8; }
+.m2g-order-runner { position: absolute; top: 0; right: 0; width: 12px; height: 12px; border: 2px solid #fff; border-radius: 50%; background: #f39a1e; box-shadow: 0 0 0 2px #8b4fe8; animation: m2g-run 3.6s ease-in-out infinite; }
+@keyframes m2g-run {
+  0%, 8% { right: 0; background: #f39a1e; }
+  40% { background: #2f7be0; }
+  80% { background: #2fb34a; }
+  86%, 100% { right: calc(100% - 12px); background: #2fb34a; opacity: 0; }
+}
+.m2g-order-label { position: absolute; right: 0; top: 10px; font-size: .68rem; font-weight: 800; color: #6b3fc0; }
+.m2g-order-steps { margin: 6px 0 4px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.m2g-order-steps li { display: flex; align-items: center; gap: 8px; font-size: .82rem; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .m2g-root .m2g-order-runner { display: none; } }
