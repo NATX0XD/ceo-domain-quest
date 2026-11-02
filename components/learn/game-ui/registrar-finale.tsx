@@ -83,7 +83,7 @@ export function TimeScreen({
               </div>
             </div>
           </div>
-          <p className={cn(SCENE_NOTE, 'px-4 text-title-sm font-extrabold text-[#ffcf4a]')}>ผ่านไป 1 ปี</p>
+          <p className={cn(SCENE_NOTE, 'px-4 text-title-sm font-extrabold text-[#6a35b8]')}>ผ่านไป 1 ปี</p>
         </div>
       </div>
     )
@@ -93,14 +93,17 @@ export function TimeScreen({
     <div className={SCROLL}>
       {view === 'choose' ? (
         <>
-          <PixelPanel variant="paper" className="flex flex-col gap-2 rounded-md border-4 border-[#0e0720] shadow-[0_0_0_2px_#7a5a3a,0_6px_0_2px_#0e0720]" initial={reduce ? false : { y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring}>
+          <PixelPanel variant="paper" className="flex flex-col gap-2 m4-board" initial={reduce ? false : { y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring}>
             <p className="text-label font-bold text-[#7a5a2c]">แจ้งเตือนจากผู้ให้บริการ</p>
-            <p className="text-title-sm font-extrabold text-balance">ชื่อเว็บจะหมดอายุในอีก 30 วัน</p>
+            <p className="text-title-sm font-extrabold text-balance">ชื่อเว็บจะหมดอายุในอีก</p>
+            <p className="m4-days">
+              <b>30</b> วัน
+            </p>
             <p className="text-body text-pretty">{expireEvent?.story}</p>
             <p className="text-body font-bold">{expireEvent?.question}</p>
           </PixelPanel>
           {err ? (
-            <p role="alert" className={cn(SCENE_NOTE, 'text-[#ffb870]')}>
+            <p role="alert" className={cn(SCENE_NOTE, 'text-[#b5521b]')}>
               {err}
             </p>
           ) : null}
@@ -110,13 +113,13 @@ export function TimeScreen({
           <GameButton variant="dark" disabled={busy} onClick={() => void decide(1)}>
             ปล่อยไว้ก่อน
           </GameButton>
-          {coins < fee ? <p className={cn(SCENE_NOTE, 'text-[#ffb870]')}>เหรียญไม่พอต่ออายุ ต้องเลือกปล่อยไว้</p> : null}
+          {coins < fee ? <p className={cn(SCENE_NOTE, 'text-[#b5521b]')}>เหรียญไม่พอต่ออายุ ต้องเลือกปล่อยไว้</p> : null}
         </>
       ) : null}
 
       {view === 'renewed' ? (
         <>
-          <PixelPanel variant="paper" className="flex flex-col gap-2 rounded-md border-4 border-[#0e0720] shadow-[0_0_0_2px_#7a5a3a,0_6px_0_2px_#0e0720]">
+          <PixelPanel variant="paper" className="flex flex-col gap-2 m4-board">
             <p className="flex items-center gap-2 text-title-sm font-extrabold text-quest-700">
               <CheckIcon width={24} height={24} aria-hidden /> ต่ออายุแล้ว เว็บยังอยู่
             </p>
@@ -224,7 +227,7 @@ export function ExplainScreen({
 
       {res ? (
         <>
-          <PixelPanel variant="paper" className="flex flex-col gap-2.5 rounded-md border-4 border-[#0e0720] shadow-[0_0_0_2px_#7a5a3a,0_6px_0_2px_#0e0720]" initial={reduce ? false : { scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring}>
+          <PixelPanel variant="paper" className="flex flex-col gap-2.5 m4-board" initial={reduce ? false : { scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring}>
             <div className="flex items-baseline justify-between gap-2">
               <p className="text-body font-extrabold">คะแนนคำอธิบาย</p>
               <p className="shrink-0 whitespace-nowrap text-title-sm font-extrabold text-[#3b1d8f]">
@@ -259,9 +262,9 @@ export function ExplainScreen({
           </PixelPanel>
           {res.followUp.question ? (
             <PixelPanel variant="dark" className={cn(PIXEL_BOX, "flex flex-col gap-1.5")}>
-              <p className="text-label font-extrabold text-[#ffcf4a]">บอสถามต่อ</p>
+              <p className="text-label font-extrabold text-[#6a35b8]">บอสถามต่อ</p>
               <p className="text-body font-bold text-pretty">{res.followUp.question}</p>
-              {res.followUp.reason ? <p className="text-label text-pretty text-[#d8c9ff]">คำตอบที่บอสอยากได้ยิน: {res.followUp.reason}</p> : null}
+              {res.followUp.reason ? <p className="text-label text-pretty text-[#6b4a2b]">คำตอบที่บอสอยากได้ยิน: {res.followUp.reason}</p> : null}
             </PixelPanel>
           ) : null}
           {passing ? (
@@ -494,6 +497,18 @@ export function ClearScreen({ result, shop, domain }: { result: RegistrarResult;
         ) : null}
         {result.passed ? <p className="rounded-lg bg-[#ece4ff] px-3 py-1 text-label font-extrabold text-[#3b1d8f]">ได้ป้าย CEO ตัวจริง</p> : null}
       </PixelPanel>
+      {result.passed ? (
+        <motion.img
+          src="/dome/mascot/dome-celebrate.webp"
+          alt=""
+          aria-hidden
+          draggable={false}
+          className="m4-clear-dome"
+          initial={reduce ? false : { y: 40, opacity: 0, scale: 0.8 }}
+          animate={reduce ? { opacity: 1 } : { y: [0, -8, 0], opacity: 1, scale: 1 }}
+          transition={reduce ? { duration: 0 } : { y: { duration: 1.8, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }, default: { type: 'spring', stiffness: 220, damping: 16, delay: 0.3 } }}
+        />
+      ) : null}
     </div>
   )
 }

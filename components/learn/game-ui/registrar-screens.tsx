@@ -145,12 +145,12 @@ export function SearchScreen({
   const canUseHere = takenDone && queried !== takenName
 
   return (
-    <div className={SCROLL}>
-      <PixelPanel variant="dark" className={cn(PIXEL_BOX, "flex flex-col gap-2.5")}>
+    <div className={`${SCROLL} m4-screen m4-search-screen`}>
+      <PixelPanel variant="dark" className={cn(PIXEL_BOX, 'm4-clipboard m4-search-form flex flex-col gap-2.5')}>
         <p className="text-title-sm font-extrabold">ค้นชื่อจริงหลายนามสกุล</p>
-        <p className="text-body text-[#d8c9ff]">{data.search.prompt}</p>
+        <p className="text-body text-[#6b4a2b]">{data.search.prompt}</p>
         <label className="flex flex-col gap-1">
-          <span className="text-label font-bold text-[#d8c9ff]">ชื่อร้านภาษาอังกฤษ</span>
+          <span className="text-label font-bold text-[#6b4a2b]">ชื่อร้านภาษาอังกฤษ</span>
           <input
             className={INPUT}
             placeholder={data.search.placeholder}
@@ -166,10 +166,10 @@ export function SearchScreen({
               if (e.key === 'Enter') void search()
             }}
           />
-          <span className="text-label text-[#a998d9]">{data.search.note}</span>
+          <span className="text-label text-[#7a5a2c]">{data.search.note}</span>
         </label>
         {err ? (
-          <p role="alert" className="text-label font-bold text-[#ffb870]">
+          <p role="alert" className="text-label font-bold text-[#b5521b]">
             {err}
           </p>
         ) : null}
@@ -179,7 +179,7 @@ export function SearchScreen({
       </PixelPanel>
 
       {note ? (
-        <p role="status" className={cn(SCENE_NOTE, 'flex items-start gap-2 text-[#ffb870]')}>
+        <p role="status" className={cn(SCENE_NOTE, 'flex items-start gap-2 text-[#b5521b]')}>
           <InfoIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0" />
           <span>
             {note}
@@ -189,7 +189,7 @@ export function SearchScreen({
       ) : null}
 
       {rows ? (
-        <PixelPanel variant="paper" className="flex flex-col gap-2 p-3" aria-label="ผลค้นชื่อจริง">
+        <PixelPanel variant="paper" className="m4-clipboard m4-results-card flex flex-col gap-2 p-3" aria-label="ผลค้นชื่อจริง">
           <p className="flex flex-wrap items-baseline gap-x-2">
             <span className="text-body font-extrabold">ผลค้น {queried}</span>
             <span className="whitespace-nowrap text-label text-[#6b5a43]">ข้อมูลจริงจากระบบทะเบียน</span>
@@ -207,23 +207,21 @@ export function SearchScreen({
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ ...spring, delay: reduce ? 0 : i * 0.08 }}
                   className={cn(
-                    'flex flex-col gap-1.5 rounded-xl border-2 p-2.5',
+                    'flex flex-col gap-1.5 rounded-xl border-2 px-2.5 py-2',
                     tone === 'red' && 'border-[#d97a6a] bg-[#ffe9e3]',
                     tone === 'green' && 'border-quest-500 bg-quest-50',
                     tone === 'orange' && 'border-[#d9a066] bg-[#fff0dc]',
                     tone === 'gray' && 'border-[#c9b68c] bg-[#f1e6c8]',
                   )}
                 >
-                  <div className="flex items-start gap-2">
-                    <span aria-hidden="true" className="mt-0.5 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <span aria-hidden="true" className="shrink-0">
                       {tone === 'green' ? <CheckIcon width={22} height={22} className="text-quest-700" /> : tone === 'gray' ? <InfoIcon width={22} height={22} /> : <AlertIcon width={22} height={22} className="text-spark-700" />}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-body font-extrabold break-all">{r.domain}</span>
-                      <span className="block text-label font-bold">
-                        {r.status === 'unknown' ? 'ตรวจไม่ได้ตอนนี้ ลองอีกครั้ง' : label}
-                        {r.source === 'sample' && r.status !== 'unknown' ? ' (ข้อมูลตัวอย่าง)' : ''}
-                      </span>
+                    <span className="min-w-0 flex-1 text-body font-extrabold break-all">{r.domain}</span>
+                    <span className={cn('m4-status-pill', `is-${tone}`)}>
+                      {r.status === 'unknown' ? 'ตรวจไม่ได้' : label}
+                      {r.source === 'sample' && r.status !== 'unknown' ? <small> ตัวอย่าง</small> : null}
                     </span>
                   </div>
                   {r.status === 'registered' ? (
@@ -280,6 +278,13 @@ export function SearchScreen({
           <QuizSheet
             key="detect"
             kicker="นักสืบโดเมน"
+            icon="/icons/3d/magnifying-glass-tilted-left.webp"
+            facts={[
+              { icon: '/icons/3d/check-mark-button.webp', label: 'สถานะ', value: 'ถูกจดแล้ว' },
+              { icon: '/icons/3d/memo.webp', label: 'วันที่จด', value: thaiDate(detail.registeredAt) ?? 'ระบบไม่ได้แจ้ง' },
+              { icon: '/icons/3d/alarm-clock.webp', label: 'วันหมดอายุ', value: thaiDate(detail.expiresAt) ?? 'ระบบไม่ได้แจ้ง' },
+              ...(detail.simulated ? [{ icon: '/icons/3d/warning.webp', label: 'แหล่งข้อมูล', value: 'ข้อมูลตัวอย่างในเกม' }] : []),
+            ]}
             title={detail.domain}
             story={`สถานะ ถูกจดแล้ว · จดเมื่อ ${thaiDate(detail.registeredAt) ?? 'ไม่ทราบ'} · หมดอายุ ${thaiDate(detail.expiresAt) ?? 'ไม่ทราบ'}${detail.simulated ? ' (ข้อมูลตัวอย่าง)' : ''}`}
             question={data.detective.question}
@@ -320,7 +325,7 @@ export function SearchScreen({
 function DetectiveCard({ row, onClose }: { row: RdapRow; onClose: () => void }) {
   const { reduce, spring } = useGameMotion()
   return (
-    <motion.div className="absolute inset-0 z-40 flex items-end bg-black/55" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <motion.div className="m4-detective-modal absolute inset-0 z-40 flex items-end bg-black/55" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <motion.div
         role="dialog"
         aria-modal="true"
@@ -329,7 +334,7 @@ function DetectiveCard({ row, onClose }: { row: RdapRow; onClose: () => void }) 
         animate={{ y: 0 }}
         exit={reduce ? undefined : { y: '100%' }}
         transition={spring}
-        className="flex w-full flex-col gap-3 rounded-t-3xl border-[3px] border-b-0 border-[#7a5a3a] bg-[#fff8e6] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-[#3a2a18]"
+        className="m4-detective-card flex w-full flex-col gap-3 rounded-t-3xl border-[3px] border-b-0 border-[#7a5a3a] bg-[#fff8e6] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-[#3a2a18]"
       >
         <p className="text-label font-bold text-[#7a5a2c]">นักสืบโดเมน</p>
         <p className="text-title-sm font-extrabold break-all">{row.domain}</p>
@@ -353,6 +358,21 @@ function DetectiveCard({ row, onClose }: { row: RdapRow; onClose: () => void }) 
 
 /** ─── R04 แผงเดินเรื่อง ─── */
 
+/** ไอคอน 3D ของการ์ดแต่ละขั้น (ภาพเท่านั้น ข้อความยังเป็น HTML) */
+const STEP_ICON: Record<string, string> = {
+  'st-account': 'bust-in-silhouette',
+  'st-menu': 'television',
+  'st-search': 'magnifying-glass-tilted-left',
+  'st-form': 'memo',
+  'st-docs': 'clipboard',
+  'st-review': 'eyes',
+  'st-email': 'bell',
+  'st-pay': 'handshake',
+  'st-confirm': 'check-mark-button',
+  'st-dns': 'gear',
+}
+const stepIcon = (id: string) => `/icons/3d/${STEP_ICON[id] ?? 'memo'}.webp`
+
 export function RouteBoard({
   data,
   placed,
@@ -371,7 +391,13 @@ export function RouteBoard({
   const text = useMemo(() => new Map(data.steps.map((s) => [s.id, s.text])), [data.steps])
   const nextRef = useRef<HTMLLIElement | null>(null)
   const [shake, setShake] = useState<string | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dragPoint, setDragPoint] = useState<{ x: number; y: number } | null>(null)
+  const dragStart = useRef<{ x: number; y: number } | null>(null)
+  const moved = useRef(false)
+  const suppressClick = useRef(false)
   const tray = data.steps.filter((s) => !placed.includes(s.id))
+  const [route, setRoute] = useState<'th' | 'com'>('th')
 
   useEffect(() => {
     nextRef.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' })
@@ -383,23 +409,97 @@ export function RouteBoard({
     setShake(placing)
   }, [hint, placing])
 
+  useEffect(() => {
+    if (!draggingId) return
+    const move = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' && event.buttons === 0) return
+      const point = { x: event.clientX, y: event.clientY }
+      setDragPoint(point)
+      if (!moved.current) {
+        const start = dragStart.current
+        if (start && Math.hypot(point.x - start.x, point.y - start.y) > 6) moved.current = true
+      }
+      if (moved.current) event.preventDefault()
+    }
+    const up = (event: PointerEvent) => {
+      const target = nextRef.current?.getBoundingClientRect()
+      const over = target && event.clientX >= target.left && event.clientX <= target.right && event.clientY >= target.top && event.clientY <= target.bottom
+      if (moved.current && over) {
+        suppressClick.current = true
+        buzz()
+        onPlace(draggingId)
+      }
+      setDraggingId(null)
+      setDragPoint(null)
+      dragStart.current = null
+      moved.current = false
+    }
+    window.addEventListener('pointermove', move, { passive: false })
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+    }
+  }, [draggingId, onPlace])
+
+  function startDrag(event: React.PointerEvent<HTMLButtonElement>, stepId: string) {
+    if (placing) return
+    moved.current = false
+    const point = { x: event.clientX, y: event.clientY }
+    dragStart.current = point
+    setDragPoint(point)
+    setDraggingId(stepId)
+  }
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2 px-3 pb-2">
-      <PixelPanel variant="paper" className="flex min-h-0 flex-1 flex-col p-3">
+    <div className={`${SCROLL} m4-screen m4-route-screen`}>
+      {hint ? (
+        <Say who="dome" mood="greet" className="m4-route-hint">
+          <span role="status" className="font-bold">
+            {hint}
+          </span>
+        </Say>
+      ) : null}
+
+      <PixelPanel variant="paper" className="m4-clipboard m4-route-paper flex min-h-0 flex-1 flex-col p-3">
         <div className="flex items-center justify-between gap-2">
           <p className="text-title-sm font-extrabold">แผงเดินเรื่อง</p>
           <p className="rounded-lg bg-[#3b1d8f] px-2.5 py-1 text-label font-extrabold text-white" aria-live="polite">
             เส้นทาง .th · {placed.length}/{total}
           </p>
         </div>
-        <p className="mt-1 text-label text-[#6b5a43]">{data.board.instruction}</p>
+        <div className="mt-2 grid grid-cols-2 rounded-xl border-2 border-[#7a5a3a] bg-[#ece4ff] p-1" role="tablist" aria-label="เส้นทางการจด">
+          {(['th', 'com'] as const).map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              role="tab"
+              aria-selected={route === kind}
+              onClick={() => {
+                setRoute(kind)
+                if (kind === 'com') setShake(null)
+              }}
+              className={cn('min-h-10 rounded-lg px-2 text-label font-extrabold transition', route === kind ? 'bg-[#6f3ec4] text-white shadow-[0_3px_0_#3b1d8f]' : 'text-[#3b1d8f]')}
+            >
+              เส้นทาง .{kind}
+            </button>
+          ))}
+        </div>
+        {route === 'com' ? (
+          <p className="mt-2 rounded-xl border-2 border-dashed border-[#b89569] bg-[#fff3c4] px-2.5 py-2 text-label font-semibold text-[#5c4228]">
+            เส้นทาง .com จ่ายก่อนใส่ตะกร้า ไม่ต้องแนบเอกสาร · ในรอบนี้ให้เรียนเส้นทาง .th ตามบัตรนามสกุลของร้าน
+          </p>
+        ) : null}
+        <p className="mt-1 text-label text-[#6b5a43] max-[400px]:sr-only">{data.board.instruction}</p>
         {/* ช่องที่ยังไม่ถึงคิวย่อเป็น 2 คอลัมน์ แผงจึงไม่ดันถาดการ์ดลงใต้จอ */}
         <ol className="mt-2 flex min-h-0 flex-1 flex-wrap content-start gap-1.5 overflow-y-auto pr-1">
           {Array.from({ length: total }, (_, i) => {
             const id = placed[i]
             const isNext = i === placed.length
             return (
-              <li key={i} ref={isNext ? nextRef : undefined} className={cn('flex items-center gap-2', !id && !isNext ? 'w-[calc(50%-0.1875rem)]' : 'w-full', isNext && 'scroll-mt-24 scroll-mb-6')} aria-current={isNext ? 'step' : undefined}>
+              <li key={i} ref={isNext ? nextRef : undefined} className={cn('m4-route-slot flex items-center gap-2', !id && !isNext ? 'w-[calc(50%-0.1875rem)]' : 'w-full', isNext && 'scroll-mt-24 scroll-mb-6')} aria-current={isNext ? 'step' : undefined}>
                 <span
                   aria-hidden="true"
                   className={cn(
@@ -414,8 +514,10 @@ export function RouteBoard({
                     initial={reduce ? false : { scale: 0.7, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={spring}
-                    className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border-2 border-[#b9a8ea] bg-[#ece4ff] px-2.5 py-1 text-body font-bold text-pretty"
+                    className="m4-placed flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border-2 border-[#b9a8ea] bg-[#ece4ff] px-2.5 py-1 text-body font-bold text-pretty"
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
+                    <img src={stepIcon(id)} alt="" aria-hidden className="m4-step-icon" />
                     <span className="min-w-0 flex-1">{text.get(id)}</span>
                     <CheckIcon width={20} height={20} aria-hidden className="shrink-0 text-quest-700" />
                   </motion.span>
@@ -437,19 +539,11 @@ export function RouteBoard({
         </ol>
       </PixelPanel>
 
-      {hint ? (
-        <Say who="dome" mood="greet">
-          <span role="status" className="font-bold">
-            {hint}
-          </span>
-        </Say>
-      ) : null}
-
       {/* ถาดอยู่ใน flow ของแผงเสมอ จึงกันพื้นที่ไว้จริงและไม่บังแถวความคืบหน้าบนมือถือ */}
-      <div className={cn(PIXEL_BOX, "relative shrink-0 p-2.5")}>
+      <div className={cn(PIXEL_BOX, 'm4-card-tray relative shrink-0 p-2.5')}>
         <p className="flex items-baseline justify-between gap-2 px-0.5">
-          <span className="text-label font-extrabold text-[#ffcf4a]">แตะการ์ดขั้นถัดไป</span>
-          <span className="whitespace-nowrap text-label text-[#d8c9ff]">เหลือ {tray.length} ใบ เลื่อนดู</span>
+          <span className="text-label font-extrabold text-[#6a35b8]">ลากการ์ดไปวางช่องที่กะพริบ หรือแตะ</span>
+          <span className="whitespace-nowrap text-label text-[#6b4a2b]">เหลือ {tray.length} ใบ เลื่อนดู</span>
         </p>
         <ul className="-mx-1 mt-2 flex snap-x gap-2 overflow-x-auto px-1 pb-1.5" aria-label="ตัวเลือกขั้นตอน">
           {tray.map((s) => (
@@ -459,23 +553,40 @@ export function RouteBoard({
               animate={shake === s.id && !reduce ? { x: [0, -8, 8, -5, 5, 0] } : { x: 0 }}
               transition={{ duration: 0.35 }}
               onAnimationComplete={() => setShake((v) => (v === s.id ? null : v))}
-              className="flex w-[72%] max-w-64 shrink-0 snap-start"
+              className="flex w-[46%] max-w-56 shrink-0 snap-start"
             >
               <button
                 type="button"
                 disabled={placing !== null}
+                aria-grabbed={draggingId === s.id}
+                onPointerDown={(event) => startDrag(event, s.id)}
                 onClick={() => {
+                  if (suppressClick.current) {
+                    suppressClick.current = false
+                    return
+                  }
                   buzz()
                   onPlace(s.id)
                 }}
-                className="flex min-h-16 w-full items-center rounded-xl border-2 border-[#b8860b] bg-[#fff6dc] px-2.5 py-1.5 text-left text-label font-bold text-pretty text-[#2a1748] shadow-[0_3px_0_#b8860b] focus-visible:outline-3 focus-visible:outline-focus disabled:opacity-60"
+                className="m4-tray-card flex min-h-16 w-full items-center gap-2 rounded-xl border-2 border-[#b8860b] bg-[#fff6dc] px-2.5 py-1.5 text-left text-label font-bold text-pretty text-[#2a1748] shadow-[0_3px_0_#b8860b] focus-visible:outline-3 focus-visible:outline-focus disabled:opacity-60"
               >
-                {s.text}
+                {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
+                <img src={stepIcon(s.id)} alt="" aria-hidden className="m4-step-icon" draggable={false} />
+                <span className="min-w-0 flex-1">{s.text}</span>
               </button>
             </motion.li>
           ))}
         </ul>
       </div>
+      {draggingId && dragPoint ? (
+        <div className="m4-drag-ghost rounded-xl border-2 border-[#b8860b] bg-[#fff6dc] px-2.5 py-2 text-label font-bold text-[#2a1748] shadow-[0_3px_0_#b8860b]" style={{ left: dragPoint.x, top: dragPoint.y }}>
+          <span className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
+            <img src={stepIcon(draggingId)} alt="" aria-hidden className="m4-step-icon" />
+            {text.get(draggingId)}
+          </span>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -509,8 +620,8 @@ export function MiniStep({
   }
 
   return (
-    <div className={SCROLL}>
-      <PixelPanel variant="paper" className="flex flex-col gap-3" initial={reduce ? false : { y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring}>
+    <div className={`${SCROLL} m4-screen m4-mini-screen`}>
+      <PixelPanel variant="paper" className="m4-clipboard flex flex-col gap-3" initial={reduce ? false : { y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring}>
         <p className="text-title-sm font-extrabold">{title}</p>
         <p className="text-body text-pretty">{body}</p>
         <div className="h-3 overflow-hidden rounded-full border-2 border-[#7a5a3a] bg-[#f1e6c8]" aria-hidden="true">
@@ -543,7 +654,7 @@ export function MiniStep({
 
 /** ─── R05 ฟอร์มและเอกสาร ─── */
 
-export type FormValue = { applicant: string; email: string; years: 1 | 2 }
+export type FormValue = { applicant: string; email: string; years: 1 | 2 | 3 }
 
 export function FormPanel({ domain, value, onChange, onDone }: { domain: string; value: FormValue; onChange: (v: FormValue) => void; onDone: () => void }) {
   const [err, setErr] = useState<string | null>(null)
@@ -554,8 +665,8 @@ export function FormPanel({ domain, value, onChange, onDone }: { domain: string;
     onDone()
   }
   return (
-    <div className={SCROLL}>
-      <PixelPanel variant="paper" className="flex flex-col gap-3">
+    <div className={`${SCROLL} m4-screen m4-form-screen`}>
+      <PixelPanel variant="paper" className="m4-clipboard m4-form-paper flex flex-col gap-3">
         <p className="text-title-sm font-extrabold">ใบขอจดทะเบียน {domain}</p>
         <label className="flex flex-col gap-1">
           <span className="text-label font-bold">ชื่อผู้ขอจด</span>
@@ -567,8 +678,8 @@ export function FormPanel({ domain, value, onChange, onDone }: { domain: string;
         </label>
         <fieldset>
           <legend className="text-label font-bold">จำนวนปีที่จด</legend>
-          <div role="radiogroup" className="mt-1 grid grid-cols-2 gap-2">
-            {([1, 2] as const).map((y) => (
+          <div role="radiogroup" className="mt-1 grid grid-cols-3 gap-2">
+            {([1, 2, 3] as const).map((y) => (
               <button
                 key={y}
                 type="button"
@@ -622,13 +733,13 @@ export function DocsPanel({
   const [reviewed, setReviewed] = useState(false)
   const domainLabel = `${domainName}${tld}`
   return (
-    <div className={SCROLL}>
+    <div className={`${SCROLL} m4-screen m4-docs-screen`}>
       {note ? (
         <Say who="dome" mood="greet">
           <span className="font-bold">{note}</span>
         </Say>
       ) : null}
-      <PixelPanel variant="paper" className="flex flex-col gap-3">
+      <PixelPanel variant="paper" className="m4-clipboard m4-docs-paper flex flex-col gap-3">
         <p className="text-title-sm font-extrabold">แนบเอกสารยืนยันตัวตน</p>
         <fieldset>
           <legend className="text-label font-bold">นามสกุลที่ขอจด ({domainLabel})</legend>
@@ -671,7 +782,7 @@ export function DocsPanel({
                     setDoc(d.id)
                     setReviewed(false)
                   }}
-                  className={cn('relative flex min-h-28 flex-col items-center gap-1.5 rounded-md border-4 px-1.5 py-2 text-center text-label font-extrabold leading-tight focus-visible:outline-3 focus-visible:outline-focus', on ? 'border-[#3b1d8f] bg-[#ece4ff] shadow-[0_4px_0_#3b1d8f]' : 'border-[#0e0720] bg-white shadow-[0_4px_0_#c9b68c]')}
+                  className={cn('m4-doc-card relative flex min-h-28 flex-col items-center gap-1.5 rounded-md border-4 px-1.5 py-2 text-center text-label font-extrabold leading-tight focus-visible:outline-3 focus-visible:outline-focus', on ? 'border-[#3b1d8f] bg-[#ece4ff] shadow-[0_4px_0_#3b1d8f]' : 'border-[#0e0720] bg-white shadow-[0_4px_0_#c9b68c]')}
                 >
                   <DocArt id={d.id} />
                   <span className="text-pretty">{d.label}</span>
@@ -788,10 +899,10 @@ export function EmailScreen({
 
   const tone = mail?.outcome === 'approve' ? 'ok' : mail?.outcome === 'reject' ? 'no' : 'more'
   return (
-    <div className={SCROLL}>
-      <PixelPanel variant="dark" className={cn(PIXEL_BOX, "flex flex-col gap-1")}>
-        <p className="text-label font-extrabold text-[#ffcf4a]">กล่องอีเมล</p>
-        <p className="text-label text-[#d8c9ff]">รอเจ้าหน้าที่ตรวจคำขอ {domainLabel}</p>
+    <div className={`${SCROLL} m4-screen m4-email-screen`}>
+      <PixelPanel variant="dark" className={cn(PIXEL_BOX, 'm4-email-top flex flex-col gap-1')}>
+        <p className="text-label font-extrabold text-[#6a35b8]">กล่องอีเมล</p>
+        <p className="text-label text-[#6b4a2b]">รอเจ้าหน้าที่ตรวจคำขอ {domainLabel}</p>
       </PixelPanel>
       {wait ? (
         <PixelPanel variant="paper" className="flex items-center gap-3">
@@ -815,7 +926,7 @@ export function EmailScreen({
         <motion.div initial={reduce ? false : { y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring}>
           <PixelPanel
             variant="paper"
-            className={cn('flex flex-col gap-2', tone === 'ok' && 'border-quest-600', tone === 'no' && 'border-spark-600')}
+            className={cn('m4-email-message flex flex-col gap-2', tone === 'ok' && 'border-quest-600', tone === 'no' && 'border-spark-600')}
           >
             <p className="text-label font-bold text-[#7a5a2c]">อีเมลจากผู้ให้บริการรับจดทะเบียน</p>
             <p className={cn('text-title-sm font-extrabold', tone === 'ok' ? 'text-quest-700' : tone === 'no' ? 'text-spark-700' : 'text-[#8a4b00]')}>
@@ -828,6 +939,23 @@ export function EmailScreen({
           </PixelPanel>
         </motion.div>
       ) : null}
+      <div className="m4-outcomes" aria-label="ผลที่อาจเกิดขึ้น">
+        <p>ผลที่อาจเกิดขึ้น</p>
+        <ul>
+          {([
+            ['approve', 'check-mark-button', 'อนุมัติ', 'เอกสารถูกต้อง'],
+            ['more', 'memo', 'ขอเอกสารเพิ่ม', 'ไม่ครบหรือไม่ชัด'],
+            ['reject', 'warning', 'ไม่อนุมัติ', 'ไม่มีสิทธิ์ตามบัตร'],
+          ] as const).map(([k, icon, t, d]) => (
+            <li key={k} className={cn(`is-${k}`, mail?.outcome === k && 'is-now')} aria-current={mail?.outcome === k ? 'true' : undefined}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
+              <img src={`/icons/3d/${icon}.webp`} alt="" aria-hidden />
+              <b>{t}</b>
+              <small>{d}</small>
+            </li>
+          ))}
+        </ul>
+      </div>
       {mail?.outcome === 'approve' ? (
         <GameButton variant="gold" onClick={onApproved}>
           ได้รับอนุมัติ ไปชำระค่าธรรมเนียม
@@ -898,8 +1026,8 @@ export function PayScreen({
   }
 
   return (
-    <div className={SCROLL}>
-      <PixelPanel variant="paper" className="relative" initial={reduce ? false : { y: 60, rotate: 2, opacity: 0 }} animate={{ y: 0, rotate: 0, opacity: 1 }} transition={spring}>
+    <div className={`${SCROLL} m4-screen m4-pay-screen`}>
+      <PixelPanel variant="paper" className="m4-clipboard m4-invoice relative" initial={reduce ? false : { y: 60, rotate: 2, opacity: 0 }} animate={{ y: 0, rotate: 0, opacity: 1 }} transition={spring}>
         <div className="flex min-h-9 items-center justify-between gap-2">
           <p className="text-label font-extrabold tracking-wide text-[#7a5a2c]">ใบแจ้งค่าธรรมเนียม</p>
           {paid ? (
@@ -945,15 +1073,15 @@ export function PayScreen({
         </AnimatePresence>
       </PixelPanel>
 
-      <PixelPanel variant="dark" className={cn(PIXEL_BOX, "flex flex-col gap-1")}>
-        <p className="text-label font-extrabold text-[#ffcf4a]">เทียบกับเส้นทาง .com</p>
-        <p className="text-label text-pretty text-[#d8c9ff]">{data.fee.comNote}</p>
+      <PixelPanel variant="dark" className={cn(PIXEL_BOX, 'm4-pay-compare flex flex-col gap-1')}>
+        <p className="text-label font-extrabold text-[#6a35b8]">เทียบกับเส้นทาง .com</p>
+        <p className="text-label text-pretty text-[#6b4a2b]">{data.fee.comNote}</p>
         <div className="mt-1 grid grid-cols-2 gap-2 text-label">
           <p className="rounded-lg bg-[#2a1748] p-2">
-            <span className="block font-extrabold text-[#ffcf4a]">.th</span>ตรวจก่อน จ่ายหลังอนุมัติ
+            <span className="block font-extrabold text-[#6a35b8]">.th</span>ตรวจก่อน จ่ายหลังอนุมัติ
           </p>
           <p className="rounded-lg bg-[#2a1748] p-2">
-            <span className="block font-extrabold text-[#ffcf4a]">.com</span>จ่ายก่อน ใช้ได้ทันที ({data.fee.comSample} เหรียญตัวอย่าง)
+            <span className="block font-extrabold text-[#6a35b8]">.com</span>จ่ายก่อน ใช้ได้ทันที ({data.fee.comSample} เหรียญตัวอย่าง)
           </p>
         </div>
       </PixelPanel>
@@ -1023,27 +1151,27 @@ export function DnsScreen({ data, onDone }: { data: RegistrarData; onDone: () =>
   }
 
   return (
-    <div className={SCROLL}>
+    <div className={`${SCROLL} m4-screen m4-dns-screen`}>
       <Say who="dome" mood="greet">
         {data.dns.intro}
       </Say>
-      <PixelPanel variant="dark" className={cn(PIXEL_BOX, "flex flex-col gap-3")}>
+      <PixelPanel variant="dark" className={cn(PIXEL_BOX, 'm4-clipboard m4-dns-paper flex flex-col gap-3')}>
         <p className="text-body font-extrabold text-[#8cf0b0]">ตั้งค่า DNS ของโดเมน</p>
         {sample ? (
           <div className="rounded-xl bg-[#1b0f36] p-2.5">
-            <p className="text-label text-pretty text-[#d8c9ff]">{sample.lead}</p>
+            <p className="text-label text-pretty text-[#6b4a2b]">{sample.lead}</p>
             <ul className="mt-1 flex flex-col gap-0.5">
               {data.dns.nameserverPlaceholders.map((n, i) => (
                 <li key={n} className="flex flex-wrap items-baseline gap-x-2 text-label">
-                  <span className="whitespace-nowrap text-[#d8c9ff]">Nameserver {i + 1}</span>
-                  <span className="font-mono font-bold whitespace-nowrap text-[#efe6ff]">{n}</span>
+                  <span className="whitespace-nowrap text-[#6b4a2b]">Nameserver {i + 1}</span>
+                  <span className="font-mono font-bold whitespace-nowrap text-[#3b2414]">{n}</span>
                 </li>
               ))}
             </ul>
-            {sample.tail ? <p className="mt-1 text-label text-[#d8c9ff]">{sample.tail}</p> : null}
+            {sample.tail ? <p className="mt-1 text-label text-[#6b4a2b]">{sample.tail}</p> : null}
           </div>
         ) : (
-          <p className="text-label text-pretty text-[#d8c9ff]">{data.dns.sampleText}</p>
+          <p className="text-label text-pretty text-[#6b4a2b]">{data.dns.sampleText}</p>
         )}
         {([['Nameserver 1', a, setA, 0], ['Nameserver 2', b, setB, 1]] as const).map(([label, val, set, i]) => (
           <label key={label} className="flex flex-col gap-1">
@@ -1052,24 +1180,37 @@ export function DnsScreen({ data, onDone }: { data: RegistrarData; onDone: () =>
           </label>
         ))}
         {err ? (
-          <p role="alert" className="text-label font-bold text-[#ffb870]">
+          <p role="alert" className="text-label font-bold text-[#b5521b]">
             {err}
           </p>
         ) : null}
-        <div className="rounded-xl border-2 border-dashed border-[#5b4698] p-2.5">
-          <p className="text-label font-bold text-[#ffcf4a]">
+        <div className="m4-dns-flow rounded-xl border-2 border-dashed border-[#5b4698] p-2.5">
+          <p className="text-label font-bold text-[#6a35b8]">
             ดูของจริง: Nameserver ของ <span className="font-mono whitespace-nowrap">{ref.domain}</span>
           </p>
-          <ul className="mt-1 font-mono text-label text-[#d8c9ff]">
+          <ul className="mt-1 font-mono text-label text-[#6b4a2b]">
             {ref.nameservers.map((n) => (
               <li key={n} className="whitespace-nowrap">{n}</li>
             ))}
           </ul>
-          <p className="mt-1 text-label text-[#a998d9]">ตรวจเมื่อ {ref.checkedAt}</p>
+          <p className="mt-1 text-label text-[#7a5a2c]">ตรวจเมื่อ {ref.checkedAt}</p>
         </div>
+        <ol className="m4-dns-diagram" aria-label="ชื่อเว็บชี้ไปที่ DNS แล้วไปถึงเว็บร้าน">
+          {([
+            ['/icons/3d/television.webp', 'ชื่อเว็บ'],
+            ['/icons/3d/gear.webp', 'DNS'],
+            ['/setup/bakery.webp', 'เว็บร้าน'],
+          ] as const).map(([src, label], i) => (
+            <li key={label} className={cn(state === 'ok' && 'is-live')} style={{ transitionDelay: `${i * 120}ms` }}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- ภาพสถิตใน public */}
+              <img src={src} alt="" aria-hidden />
+              <span>{label}</span>
+            </li>
+          ))}
+        </ol>
       </PixelPanel>
       {state === 'testing' ? (
-        <p role="status" className={cn(SCENE_NOTE, 'flex items-center gap-2 text-body text-[#efe6ff]')}>
+        <p role="status" className={cn(SCENE_NOTE, 'flex items-center gap-2 text-body text-[#3b2414]')}>
           <span aria-hidden="true" className="size-5 shrink-0 animate-spin rounded-full border-4 border-[#7c4dff] border-t-transparent" />
           กำลังทดสอบเปิดเว็บ
         </p>

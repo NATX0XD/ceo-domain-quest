@@ -5,56 +5,83 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   AlertIcon,
   CheckIcon,
-  CrownIcon,
   DomeAvatar,
   cn,
 } from "@/components/ui";
-import { GameButton, HudPill, SceneBg, buzz, useGameMotion } from "./index";
+import { useExitConfirm } from "@/components/student-navigation";
+import { GameButton, buzz, useGameMotion } from "./index";
 
-/** ชิ้นส่วนร่วมของเกมด่านบอส m4 (R01-R11) ธีม pixel เคาน์เตอร์ครีม/ไม้ */
+/** ชิ้นส่วนร่วมของเกมด่านบอส m4 (R01-R11) สไตล์เดียวกับ storyboard ภารกิจที่ 2:
+ *  ฉากเต็มจอ · ป้ายไม้ชื่อภารกิจ · ปุ่มกลมย้อนกลับ/เสียง · บอร์ดครีม · โดมพร้อมกล่องคำพูดสีขาว */
 
 export const BG_FALLBACK =
   "bg-gradient-to-b from-[#fff8e6] via-[#f1e2c3] to-[#c98948]";
 /** cn ไม่ merge คลาสที่ชนกัน จึงแยกชุดสีเข้ม/สว่างไว้คนละค่า ห้ามต่อสีทับกัน */
 const INPUT_BASE =
   "min-h-12 w-full rounded-xl border-2 px-3 text-body font-semibold focus-visible:outline-3 focus-visible:outline-focus disabled:opacity-70";
-export const INPUT = `${INPUT_BASE} border-[#7a5a3a] bg-white text-[#3a2a18] placeholder:text-[#8a7a63]`;
-export const INPUT_LIGHT = `${INPUT_BASE} border-[#7a5a3a] bg-white text-[#3a2a18] placeholder:text-[#8a7a63]`;
+export const INPUT = `${INPUT_BASE} border-[#b58a5c] bg-white text-[#3a2a18] placeholder:text-[#8a7a63]`;
+export const INPUT_LIGHT = INPUT;
 /** ข้อความที่ต้องลอยบนฉาก: วางบนพื้นทึบเสมอ ห้ามวางบนภาพพื้นหลังตรง ๆ */
 export const SCENE_NOTE =
-  "rounded-xl border-2 border-[#7a5a3a] bg-[#fff8e6]/95 px-3 py-2 text-label font-bold text-pretty text-[#3a2a18]";
+  "rounded-xl border-2 border-[#b58a5c] bg-[#fffbf0]/95 px-3 py-2 text-label font-bold text-pretty text-[#3a2a18]";
+
+export const M4_ASSET = (name: string) => `/learn/m2/kit/${name}.webp`;
 
 export function BossShell({
   children,
-  blur = 0,
-  src = "/learn/m4/bg-boss-office.webp",
-  dim = 0.02,
+  stage = "ด่านบอส",
 }: {
   children: ReactNode;
-  blur?: number;
-  src?: string;
-  dim?: number;
+  stage?: string;
 }) {
+  const [soundOn, setSoundOn] = useState(true);
+  const exit = useExitConfirm({
+    href: "/map",
+    note: "ความคืบหน้าในด่านนี้ยังไม่ถูกบันทึก ถ้าออกตอนนี้ต้องเริ่มด่านใหม่",
+  });
   return (
-    <div className="registrar-game-shell relative flex h-full min-h-[max(32rem,calc(100dvh-7.5rem))] w-full flex-1 flex-col overflow-clip rounded-3xl bg-[#f3e4c4] text-[#3a2a18]">
-      {src ? <SceneBg src={src} fallback={BG_FALLBACK} blur={blur} dim={dim} /> : <div className="absolute inset-0 bg-[#f3e4c4]" aria-hidden />}
-      {/* overflow-clip (ไม่ใช่ hidden) เพื่อไม่ให้กรอบนี้เป็นตัวเลื่อน ถาดการ์ดแบบ sticky จึงติดล่างจอได้ */}
-      {/* flex-1 ให้กล่องนี้สูงเต็มกรอบ แผ่นอีเมล (absolute inset-0) จึงไม่ถูกตัดตามความสูงเนื้อหา */}
-      <div className="relative flex min-h-0 flex-1 flex-col">{children}</div>
+    <div className="registrar-game-shell m4-stage">
+      <div className="m4-stage-inner">
+        <div className="m4-wood-header">
+          <button type="button" className="m4-round-button" onClick={exit.request} aria-label="ออกจากด่าน กลับแผนที่">
+            {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
+            <img src={M4_ASSET("icon_back")} alt="" draggable={false} />
+          </button>
+          <div className="m4-sign-wrap">
+            <div className="m4-sign">
+              <span className="m4-leaf m4-leaf-left" aria-hidden />
+              <span className="m4-leaf m4-leaf-right" aria-hidden />
+              <strong>ภารกิจที่ 4</strong>
+            </div>
+            <span className="m4-subtitle-pill">{stage}</span>
+          </div>
+          <button
+            type="button"
+            className={cn("m4-round-button", !soundOn && "is-muted")}
+            onClick={() => setSoundOn((v) => !v)}
+            aria-label={soundOn ? "ปิดเสียง" : "เปิดเสียง"}
+            aria-pressed={!soundOn}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
+            <img src={M4_ASSET("icon_sound")} alt="" draggable={false} />
+          </button>
+        </div>
+        <div className="relative flex min-h-0 flex-1 flex-col">{children}</div>
+      </div>
+      {exit.dialog}
     </div>
   );
 }
 
-/** แถบ HUD บนสุด: ด่านบอส · ขั้นที่ · เหรียญ */
+/** แถบ HUD: ขั้นที่ · เวลา · เหรียญ + แถบความคืบหน้า 10 ช่อง */
 export function BossHud({
-  stage,
   step,
   total,
   coins,
   coinNode,
   timer,
 }: {
-  stage: string;
+  stage?: string;
   step: number;
   total: number;
   coins: number;
@@ -63,56 +90,34 @@ export function BossHud({
 }) {
   const { reduce } = useGameMotion();
   return (
-    <div className="shrink-0 px-2 pt-3 pb-2">
-      <div className="flex items-center gap-1">
-        <HudPill
-          tone="dark"
-          className="shrink-0 whitespace-nowrap px-2 py-1 leading-tight max-[359px]:px-1.5"
-        >
-          <CrownIcon
-            width={16}
-            height={16}
-            aria-hidden
-            className="shrink-0 text-[#ffcf4a] max-[359px]:hidden"
-          />
-          {stage}
-        </HudPill>
-        <HudPill
-          tone="dark"
-          className="shrink-0 whitespace-nowrap px-2 py-1 leading-tight max-[359px]:px-1.5 tabular-nums"
-        >
-          {/* จอแคบ 360px: ป้าย "ขั้น" เหลือไว้ให้โปรแกรมอ่านจอ ตัวเลขยังใหญ่ 15px */}
+    <div className="m4-hud shrink-0">
+      <div className="m4-hud-row">
+        <span className="m4-chip">
+          {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
+          <img src="/icons/3d/clipboard.webp" alt="" aria-hidden />
           <span className="sr-only">ขั้น </span>
-          {Math.min(step, total)}/{total}
-        </HudPill>
-        <div className="flex-1" />
+          <b className="tabular-nums">{Math.min(step, total)}/{total}</b>
+        </span>
+        <span className="flex-1" />
         {timer ? (
-          <HudPill
-            tone="dark"
-            className="shrink-0 whitespace-nowrap px-2 py-1 leading-tight max-[359px]:px-1.5 tabular-nums"
-          >
+          <span className="m4-chip">
+            {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
+            <img src="/icons/3d/stopwatch.webp" alt="" aria-hidden />
             <span className="sr-only">เวลา</span>
-            {timer}
-          </HudPill>
+            <b className="tabular-nums">{timer}</b>
+          </span>
         ) : null}
-        <HudPill
-          tone="gold"
-          className="shrink-0 whitespace-nowrap px-2 py-1 leading-tight max-[359px]:px-1.5 tabular-nums"
-        >
-          <span
-            aria-hidden="true"
-            className="size-4 shrink-0 rounded-full border-2 border-[#b8860b] bg-[#ffe27a] max-[359px]:hidden"
-          />
-          <span aria-label={`เหรียญ ${coins}`}>{coinNode}</span>
-        </HudPill>
+        <span className="m4-chip m4-chip-coin">
+          <span aria-hidden="true" className="m4-coin" />
+          <b className="tabular-nums" aria-label={`เหรียญ ${coins}`}>{coinNode}</b>
+        </span>
       </div>
-      <div className="mt-2 flex gap-1" aria-hidden="true">
+      <div className="m4-progress" aria-hidden="true">
         {Array.from({ length: total }, (_, i) => (
           <motion.span
             key={i}
-            className="h-1.5 flex-1 rounded-sm"
-            animate={{ backgroundColor: i < step ? "#ffcf4a" : "#9a7045" }}
-            transition={reduce ? { duration: 0 } : { duration: 0.35 }}
+            animate={{ backgroundColor: i < step ? "#67bd59" : "rgba(255,255,255,0.55)" }}
+            transition={reduce ? { duration: 0 } : { duration: 0.35, delay: i < step ? 0.04 * i : 0 }}
           />
         ))}
       </div>
@@ -173,34 +178,38 @@ export function BossPortrait({ size = 104 }: { size?: number }) {
   );
 }
 
-/** บทพูดโดมหรือบอส ในกรอบม่วงเข้ม */
+/** บทพูดโดมหรือบอส: ตัวละครซ้าย + กล่องคำพูดสีขาว (แบบ m2) */
 export function Say({
   who = "dome",
-  mood = "happy",
   children,
   className,
+  bare = false,
 }: {
+  bare?: boolean;
   who?: "dome" | "boss";
   mood?: "happy" | "greet" | "cheer";
   children: ReactNode;
   className?: string;
 }) {
+  const { reduce } = useGameMotion();
   return (
-    <div
-      className={cn(
-        "flex items-center gap-2.5 rounded-2xl border-2 border-[#7a5a3a] bg-[#fff8e6]/95 p-2 pr-3 shadow-[0_4px_0_#5c4228]",
-        className,
-      )}
+    <motion.div
+      className={cn("m4-say", className)}
+      initial={reduce ? false : { y: 10, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 320, damping: 24 }}
     >
-      {who === "boss" ? (
-        <BossPortrait size={56} />
+      {bare ? null : who === "boss" ? (
+        <BossPortrait size={52} />
       ) : (
-        <DomeAvatar mood={mood} size={52} decorative />
+        // eslint-disable-next-line @next/next/no-img-element -- ภาพโดมสถิตใน public
+        <img className="m4-say-dome" src={M4_ASSET("dome_cheer")} alt="" draggable={false} />
       )}
-      <div className="min-w-0 flex-1 text-label font-semibold text-pretty text-[#3a2a18]">
-        {children}
+      <div className="m4-say-bubble">
+        <span>{who === "boss" ? "บอส" : "โดม"}</span>
+        <div>{children}</div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -219,10 +228,16 @@ export function QuizSheet({
   onDone,
   doneLabel = "ไปต่อ",
   retry = false,
+  icon = "/icons/3d/bell.webp",
+  facts,
 }: {
   title: string;
   kicker?: string;
   story: string;
+  /** ไอคอน 3D หัวการ์ด */
+  icon?: string;
+  /** ตารางข้อมูล (เช่น นักสืบโดเมน) แสดงแทนย่อหน้าเรื่อง */
+  facts?: { icon: string; label: string; value: string }[];
   question: string;
   choices: string[];
   check: QuizCheck;
@@ -263,7 +278,7 @@ export function QuizSheet({
 
   return (
     <motion.div
-      className="absolute inset-0 z-40 flex items-end bg-black/55"
+      className="m4-modal absolute inset-0 z-40 flex items-end bg-black/55"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -281,36 +296,35 @@ export function QuizSheet({
             : { type: "spring", stiffness: 300, damping: 30 }
         }
         ref={sheetRef}
-        className="flex max-h-[min(96%,calc(100dvh-4.75rem))] w-full flex-col overflow-hidden rounded-t-3xl border-[3px] border-b-0 border-[#7a5a3a] bg-[#fff8e6] text-[#3a2a18]"
+        className="m4-modal-card flex max-h-[min(96%,calc(100dvh-4.75rem))] w-full flex-col overflow-hidden rounded-t-3xl border-[3px] border-b-0 border-[#7a5a3a] bg-[#fff8e6] text-[#3a2a18]"
       >
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pt-3 pb-2">
           <div className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#7c4dff] text-white"
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="5" width="18" height="14" rx="2" />
-                <path d="M3 7l9 6 9-6" />
-              </svg>
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
+            <img src={icon} alt="" aria-hidden className="m4-modal-icon" />
             <div className="min-w-0">
               <p className="text-label font-bold text-[#7a5a2c]">{kicker}</p>
               <p className="text-body font-extrabold text-balance">{title}</p>
             </div>
           </div>
-          <p className="rounded-xl bg-[#f1e6c8] px-3 py-2 text-body leading-snug text-pretty">
-            {story}
-          </p>
-          <p className="text-body font-extrabold">{question}</p>
+          {facts ? (
+            <dl className="m4-facts">
+              {facts.map((f) => (
+                <div key={f.label}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิตใน public */}
+                  <img src={f.icon} alt="" aria-hidden />
+                  <dt>{f.label}</dt>
+                  <dd>{f.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="rounded-xl bg-[#f1e6c8] px-3 py-2 text-body leading-snug text-pretty">
+              {story}
+            </p>
+          )}
+          {facts ? <Say className="m4-modal-say">{question}</Say> : null}
+          {facts ? null : <p className="text-body font-extrabold">{question}</p>}
           <div
             role="radiogroup"
             aria-label={question}
@@ -389,7 +403,7 @@ export function QuizSheet({
             </motion.div>
           ) : null}
         </div>
-        <div className="shrink-0 border-t-2 border-[#d9c7a0] bg-[#fff8e6] px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="m4-modal-dock shrink-0 border-t-2 border-[#d9c7a0] bg-[#fff8e6] px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {fb && retry && !fb.correct && !retried ? (
             <GameButton
               variant="primary"
@@ -473,5 +487,4 @@ export function BossDoor() {
 }
 
 /** กรอบแผงแบบเกม 8 บิต: มุมเหลี่ยม ขอบหนาสองชั้น เงาเป็นขั้น */
-export const PIXEL_BOX =
-  "rounded-md border-4 border-[#0e0720] bg-[#241446]/95 text-[#efe6ff] shadow-[0_0_0_2px_#6d4bd1,0_6px_0_2px_#0e0720]";
+export const PIXEL_BOX = "m4-board";

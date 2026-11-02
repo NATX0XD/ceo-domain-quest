@@ -1,0 +1,565 @@
+/* Mission 4 — same game style as the m2 storyboard: full-bleed scene, wood title
+   sign, round back/sound buttons, cream boards, Dome + white speech bubble, big
+   glossy CTA. Art lives in public; every word stays live HTML. Unlayered CSS so it
+   wins over Tailwind utilities on the shared PixelPanel/GameButton primitives. */
+
+.registrar-game-shell.m4-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  isolation: isolate;
+  display: flex;
+  overflow: hidden;
+  background: #f5d9a8 url('/learn/m4/bg-office-bright.webp') center / cover no-repeat;
+  color: #3b2414;
+}
+.registrar-game-shell.m4-stage::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(180deg, rgb(255 248 222 / .08), rgb(255 240 200 / .32));
+  content: '';
+  pointer-events: none;
+}
+.m4-stage-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(100%, 560px);
+  height: 100%;
+  min-height: 0;
+  margin: 0 auto;
+  flex-direction: column;
+}
+
+/* ── header ── */
+.m4-wood-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  gap: 8px;
+  padding: max(9px, env(safe-area-inset-top)) 12px 2px;
+}
+.m4-round-button {
+  display: grid;
+  flex: 0 0 46px;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 3px solid #74431d;
+  border-radius: 50%;
+  background: #fff8e6;
+  box-shadow: 0 4px 0 #a66d35, inset 0 2px 0 #fff9df;
+  cursor: pointer;
+  transition: transform .15s ease;
+}
+.m4-round-button:active { transform: translateY(2px); box-shadow: 0 2px 0 #a66d35; }
+.m4-round-button:focus-visible { outline: 3px solid #6c43bb; outline-offset: 2px; }
+.m4-round-button img { width: 26px; height: 26px; object-fit: contain; }
+.m4-round-button.is-muted { opacity: .55; }
+.m4-sign-wrap {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  justify-items: center;
+  gap: 4px;
+}
+.m4-sign {
+  position: relative;
+  width: 100%;
+  min-height: 48px;
+  padding: 7px 30px 6px;
+  border: 3px solid #70401e;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #ffd98c 0%, #e4a457 100%);
+  box-shadow: inset 0 3px 0 rgb(255 246 201 / .9), 0 5px 0 #75411b, 0 8px 12px rgb(62 31 14 / .22);
+  text-align: center;
+}
+.m4-sign strong {
+  display: block;
+  color: #fff6db;
+  font-size: clamp(21px, 5.6vw, 28px);
+  font-weight: 900;
+  line-height: 1.1;
+  text-shadow: 0 2px 0 #744117, 1px 0 0 #744117, -1px 0 0 #744117;
+}
+.m4-leaf {
+  position: absolute;
+  top: 9px;
+  width: 22px;
+  height: 12px;
+  border: 2px solid #3a9b52;
+  border-radius: 100% 0 100% 0;
+  background: #67bd59;
+}
+.m4-leaf-left { left: 9px; transform: rotate(-26deg); }
+.m4-leaf-right { right: 9px; transform: scaleX(-1) rotate(-26deg); }
+.m4-subtitle-pill {
+  max-width: 100%;
+  overflow: hidden;
+  border: 2px solid #fff0ff;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #9a58ed, #7040c5);
+  padding: 2px 16px 3px;
+  color: #fff9ff;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: 0 3px 0 rgb(75 35 135 / .4);
+}
+
+/* ── HUD ── */
+.m4-hud { padding: 6px 12px 6px; }
+.m4-hud-row { display: flex; align-items: center; gap: 6px; }
+.m4-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 2px 10px 2px 5px;
+  border: 2px solid #8d5b30;
+  border-radius: 999px;
+  background: #fffbf0;
+  color: #4a2a12;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 3px 0 rgb(117 65 27 / .45);
+  white-space: nowrap;
+}
+.m4-chip img { width: 22px; height: 22px; object-fit: contain; }
+.m4-chip-coin { background: linear-gradient(180deg, #fff3b8, #ffd45c); border-color: #b47b14; }
+.m4-coin {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #b8860b;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6c0 0 25%, #ffd23f 26% 70%, #e2a400 71%);
+  vertical-align: -4px;
+}
+.m4-progress {
+  display: flex;
+  gap: 3px;
+  margin-top: 7px;
+  padding: 3px;
+  border: 2px solid #8d5b30;
+  border-radius: 999px;
+  background: rgb(117 65 27 / .35);
+}
+.m4-progress span { height: 7px; flex: 1; border-radius: 999px; }
+
+/* ── content / dock ── */
+.m4-content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 12px 10px;
+  scrollbar-width: thin;
+}
+.m4-dock {
+  flex: 0 0 auto;
+  padding: 6px 12px max(10px, env(safe-area-inset-bottom));
+}
+.m4-dock-pair { display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px; }
+.m4-dock-pair .game-button { width: 100%; min-width: 0; }
+
+/* Buttons: primary = big glossy green CTA (kit2 art), paper = cream, ghost = purple */
+.registrar-game-shell .game-button {
+  --gb-h: 3.4rem;
+  min-width: 0;
+  white-space: normal;
+  text-wrap: balance;
+}
+.registrar-game-shell .game-button--orange {
+  --gb-l: url('/ui/kit2/btn/green-l.webp');
+  --gb-m: url('/ui/kit2/btn/green-m.webp');
+  --gb-r: url('/ui/kit2/btn/green-r.webp');
+  --gb-ink: #0a5a26;
+}
+.registrar-game-shell .m4-dock .game-button { --gb-h: 3.75rem; font-size: clamp(1.05rem, 4.6vw, 1.3rem); }
+
+/* ── boards (all panels inside the shell) ── */
+.registrar-game-shell .m4-board,
+.registrar-game-shell .m4-clipboard,
+.registrar-game-shell .m4-content > [class*='rounded-2xl'],
+.registrar-game-shell .m4-screen > .rounded-2xl {
+  border: 3px solid #8d5b30;
+  border-radius: 22px;
+  background: rgb(255 251 240 / .97);
+  color: #3b2414;
+  box-shadow: 0 7px 0 rgb(94 51 20 / .28), 0 10px 20px rgb(86 46 20 / .16), inset 0 2px 0 rgb(255 255 255 / .88);
+}
+.registrar-game-shell .m4-clipboard { position: relative; padding-top: 1.25rem; }
+.registrar-game-shell .m4-clipboard::before {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  width: 4.4rem;
+  height: 1.3rem;
+  border: 3px solid #5c3418;
+  border-radius: .5rem;
+  background: linear-gradient(#e2b46e, #a8692f);
+  box-shadow: 0 2px 0 #5c3418;
+  content: '';
+  transform: translateX(-50%);
+}
+.registrar-game-shell .m4-screen { gap: .8rem; padding-top: .9rem; }
+.registrar-game-shell .text-title-sm { color: #583017; }
+
+/* ── Dome / boss speech ── */
+.m4-say { display: flex; align-items: flex-end; gap: 6px; }
+.m4-say-dome {
+  flex: 0 0 auto;
+  width: 58px !important;
+  height: 58px !important;
+  object-fit: contain;
+  object-position: bottom;
+  filter: drop-shadow(0 3px 2px rgb(60 30 10 / .25));
+}
+.m4-say-bubble {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+  border: 2px solid #b78b60;
+  border-radius: 16px 16px 16px 4px;
+  background: #fffdf6;
+  padding: 7px 11px 8px;
+  color: #3b2414;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  box-shadow: 0 3px 0 rgb(111 64 25 / .14);
+}
+.m4-say-bubble::before {
+  position: absolute;
+  left: -7px;
+  bottom: 9px;
+  width: 12px;
+  height: 12px;
+  border-left: 2px solid #b78b60;
+  border-bottom: 2px solid #b78b60;
+  background: #fffdf6;
+  content: '';
+  transform: rotate(45deg);
+}
+.m4-say-bubble > span {
+  display: block;
+  color: #7a46c3;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+/* ── modal (event / detective) ── */
+.registrar-game-shell .m4-modal,
+.registrar-game-shell .m4-detective-modal {
+  position: fixed;
+  z-index: 60;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgb(40 20 8 / .55);
+  backdrop-filter: blur(2px);
+}
+.registrar-game-shell .m4-modal-card,
+.registrar-game-shell .m4-detective-card {
+  width: min(100%, 520px);
+  max-height: min(94%, 44rem);
+  border: 3px solid #8d5b30 !important;
+  border-radius: 22px !important;
+  background: #fffbf0 !important;
+  box-shadow: 0 8px 0 rgb(94 51 20 / .35), 0 18px 34px rgb(0 0 0 / .25);
+}
+.m4-modal-icon { width: 40px !important; height: 40px !important; flex: 0 0 auto; object-fit: contain; }
+.m4-facts { display: grid; gap: 6px; margin: 0; }
+.m4-facts > div {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 2px solid #ead7b4;
+  border-radius: 12px;
+  background: #fff;
+}
+.m4-facts img { width: 24px !important; height: 24px !important; object-fit: contain; }
+.m4-facts dt { color: #6b4a2b; font-size: 14px; font-weight: 700; }
+.m4-facts dd { margin: 0; color: #3b2414; font-size: 15px; font-weight: 900; text-align: right; }
+.m4-modal-say { margin-top: 2px; }
+.m4-modal-say .m4-say-bubble { font-weight: 900; font-size: 15px; }
+.registrar-game-shell .m4-modal-dock { border-top-color: #ead7b4; background: #fffbf0; }
+
+/* ── rules infographic ── */
+.m4-rules-board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 3px solid #8d5b30;
+  border-radius: 22px;
+  background: rgb(255 251 240 / .97);
+  padding: 14px;
+  box-shadow: 0 7px 0 rgb(94 51 20 / .28), inset 0 2px 0 rgb(255 255 255 / .88);
+}
+.m4-kicker { color: #70421d; font-size: 12px; font-weight: 900; letter-spacing: .03em; }
+.m4-rules-board h2 {
+  margin: -4px 0 0;
+  color: #402515;
+  font-size: clamp(22px, 6vw, 30px);
+  font-weight: 950;
+  line-height: 1.12;
+}
+.m4-rules-lead { margin: 0; font-size: 14px; font-weight: 700; line-height: 1.45; color: #5a3a20; }
+.m4-rules-path {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.m4-rules-path li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 6px 9px;
+  border: 2px solid #d9b98a;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff, #fff4dc);
+  text-align: center;
+  box-shadow: 0 3px 0 rgb(141 91 48 / .25);
+}
+.m4-rules-path li:nth-child(1) { border-color: #6fb8e8; }
+.m4-rules-path li:nth-child(2) { border-color: #67bd59; }
+.m4-rules-path li:nth-child(3) { border-color: #f0a24a; }
+.m4-rules-path li:nth-child(4) { border-color: #a57ae6; }
+.m4-rules-path img { width: 46px !important; height: 46px !important; object-fit: contain; }
+.m4-rules-path b { color: #402515; font-size: 15px; line-height: 1.2; }
+.m4-rules-path small { color: #6b4a2b; font-size: 12px; font-weight: 700; line-height: 1.3; }
+.m4-rules-no {
+  position: absolute;
+  top: -8px;
+  left: -6px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #7040c5;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 2px 0 #4b2387;
+}
+.m4-rules-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.m4-rules-strip > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1e9ff;
+  color: #4b2387;
+  font-size: 13px;
+  font-weight: 800;
+}
+.m4-rules-strip img { width: 20px !important; height: 20px !important; }
+
+/* ── R01 intro ── */
+.m4-intro { align-items: center; justify-content: flex-end; }
+.m4-intro-office {
+  position: relative;
+  display: grid;
+  width: min(100%, 300px);
+  flex: 1 1 auto;
+  min-height: 150px;
+  max-height: 340px;
+  place-items: center;
+}
+.m4-intro-office > img {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 340px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 14px rgb(60 30 10 / .28));
+}
+.m4-intro-office-sign {
+  position: absolute;
+  top: 33.2%;
+  left: 50%;
+  width: 46%;
+  transform: translateX(-50%);
+  color: #6a35b8;
+  font-size: clamp(11px, 3.4vw, 15px);
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+}
+.registrar-game-shell .m4-intro-boss {
+  position: absolute;
+  top: 2%;
+  right: -4%;
+  padding: 2px 14px;
+  font-size: 1.15rem;
+}
+.m4-intro-row { display: flex; width: 100%; align-items: flex-end; justify-content: center; gap: 4px; }
+.m4-intro-dome { width: 108px !important; height: 108px !important; object-fit: contain; }
+.m4-ticket {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  padding: 10px 16px 11px;
+  border: 3px dashed #c38b4b;
+  border-radius: 14px;
+  background: #fffbf0;
+  box-shadow: 0 6px 0 rgb(94 51 20 / .3);
+  text-align: center;
+}
+.m4-ticket small { color: #7a5a2c; font-size: 12px; font-weight: 900; }
+.m4-ticket strong { color: #6a35b8; font-size: clamp(30px, 9vw, 40px); font-weight: 950; line-height: 1.05; }
+.m4-ticket span { color: #4a2a12; font-size: 12px; font-weight: 800; }
+.m4-intro .m4-say { width: 100%; }
+
+/* ── route board (R04) ── */
+.registrar-game-shell .m4-route-slot { touch-action: none; }
+.registrar-game-shell .m4-card-tray {
+  border: 3px solid #8a63d2;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f6f0ff, #e7dcff);
+  box-shadow: 0 5px 0 rgb(75 35 135 / .35);
+  color: #3b2414;
+}
+.registrar-game-shell .m4-tray-card {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+.registrar-game-shell .m4-tray-card:active { cursor: grabbing; }
+.registrar-game-shell .m4-drag-ghost {
+  position: fixed;
+  z-index: 80;
+  width: min(72vw, 17rem);
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(-3deg) scale(1.04);
+  filter: drop-shadow(0 10px 10px rgb(20 10 40 / .3));
+}
+.registrar-game-shell .m4-results-card button,
+.registrar-game-shell .m4-doc-card,
+.registrar-game-shell .m4-tray-card {
+  transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
+}
+.registrar-game-shell .m4-results-card button:active,
+.registrar-game-shell .m4-doc-card:active,
+.registrar-game-shell .m4-tray-card:active { transform: translateY(2px) scale(.98); }
+
+/* ── docs / email / pay / dns ── */
+.registrar-game-shell .m4-doc-card {
+  min-height: 8rem;
+  border-width: 3px;
+  border-radius: 16px;
+}
+.registrar-game-shell .m4-email-top {
+  border-color: #8a63d2;
+  background: linear-gradient(180deg, #f6f0ff, #e7dcff);
+}
+.registrar-game-shell .m4-pay-compare { background: #f6f0ff; border-color: #a57ae6; }
+.registrar-game-shell .m4-dns-flow {
+  border: 2px dashed #b89569;
+  border-radius: .75rem;
+  background: rgb(255 255 255 / .48);
+}
+
+@media (max-width: 370px) {
+  .m4-wood-header { gap: 6px; padding-inline: 8px; }
+  .m4-round-button { flex-basis: 40px; width: 40px; height: 40px; }
+  .m4-round-button img { width: 22px; height: 22px; }
+  .m4-chip { font-size: 13px; padding-right: 8px; }
+  .m4-intro-dome { width: 88px !important; height: 88px !important; }
+  .m4-rules-path b { font-size: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m4-round-button,
+  .registrar-game-shell .m4-results-card button,
+  .registrar-game-shell .m4-doc-card,
+  .registrar-game-shell .m4-tray-card { transition: none; }
+}
+
+.m4-step-icon { flex: 0 0 auto; width: 30px !important; height: 30px !important; object-fit: contain; pointer-events: none; }
+.m4-status-pill {
+  flex: 0 0 auto;
+  max-width: 48%;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+}
+.m4-status-pill small { font-size: 10px; font-weight: 800; opacity: .8; }
+.m4-status-pill.is-red { background: #ffd6cc; color: #a02a14; }
+.m4-status-pill.is-green { background: #d4f5d9; color: #1d6a33; }
+.m4-status-pill.is-orange { background: #ffe2b8; color: #8a4b00; }
+.m4-status-pill.is-gray { background: #eee3c9; color: #5c4228; }
+.m4-outcomes {
+  padding: 8px 10px 10px;
+  border: 2px dashed #c9a676;
+  border-radius: 16px;
+  background: rgb(255 251 240 / .92);
+}
+.m4-outcomes > p { margin: 0 0 6px; color: #583017; font-size: 13px; font-weight: 900; text-align: center; }
+.m4-outcomes ul { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.m4-outcomes li {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  padding: 6px 4px;
+  border: 2px solid #ead7b4;
+  border-radius: 12px;
+  background: #fff;
+  text-align: center;
+  opacity: .78;
+  transition: transform .2s ease, opacity .2s ease;
+}
+.m4-outcomes li.is-now { opacity: 1; transform: translateY(-2px) scale(1.04); box-shadow: 0 4px 0 rgb(94 51 20 / .2); }
+.m4-outcomes li.is-approve.is-now { border-color: #3da850; background: #eafbe9; }
+.m4-outcomes li.is-more.is-now { border-color: #e7a33e; background: #fff4dc; }
+.m4-outcomes li.is-reject.is-now { border-color: #d2553f; background: #ffe9e3; }
+.m4-outcomes img { width: 26px !important; height: 26px !important; object-fit: contain; }
+.m4-outcomes b { color: #3b2414; font-size: 12px; line-height: 1.2; }
+.m4-outcomes small { color: #6b4a2b; font-size: 10.5px; font-weight: 700; line-height: 1.25; }
+@media (prefers-reduced-motion: reduce) { .m4-outcomes li { transition: none; } }
+.m4-dns-diagram { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin: 0; padding: 8px 6px; list-style: none; border-radius: 14px; background: #f6f0ff; }
+.m4-dns-diagram li { position: relative; display: grid; flex: 1; justify-items: center; gap: 2px; color: #4b2387; font-size: 12px; font-weight: 900; transition: transform .3s ease; }
+.m4-dns-diagram li + li::before { position: absolute; top: 16px; left: -14px; color: #a57ae6; font-size: 18px; content: '➜'; }
+.m4-dns-diagram img { width: 38px !important; height: 38px !important; object-fit: contain; }
+.m4-dns-diagram li.is-live { transform: translateY(-3px); }
+.m4-dns-diagram li.is-live span { color: #1d6a33; }
+@media (prefers-reduced-motion: reduce) { .m4-dns-diagram li { transition: none; } }
+.registrar-game-shell .m4-doc-card[aria-pressed='false'], .registrar-game-shell .m4-doc-card[aria-checked='false'] { border-color: #c9a676; }
+.m4-clear-dome { align-self: center; width: auto !important; height: 120px !important; max-width: none; filter: drop-shadow(0 6px 8px rgb(60 30 10 / .25)); }
+.registrar-game-shell .m4-route-paper { flex: 0 0 auto; }
+.registrar-game-shell .m4-route-paper ol { flex: 0 0 auto; max-height: none; overflow: visible; }
+.registrar-game-shell .m4-card-tray { position: sticky; bottom: 0; z-index: 5; }
+.registrar-game-shell .m4-placed { min-height: 2.4rem; font-size: 13px; line-height: 1.3; }
+.registrar-game-shell .m4-placed .m4-step-icon { width: 24px !important; height: 24px !important; }
+.registrar-game-shell .m4-route-slot > span:first-child { width: 2rem; height: 2rem; font-size: 14px; }
+.registrar-game-shell .m4-tray-card { min-height: 3.6rem; font-size: 12.5px; line-height: 1.3; }
+.registrar-game-shell .m4-route-hint { position: sticky; top: 0; z-index: 6; }
+.registrar-game-shell .m4-route-hint .m4-say-bubble { border-color: #e7a33e; background: #fff8e8; }
+.m4-days { margin: -4px 0 2px; color: #c0392b; font-size: 18px; font-weight: 900; text-align: center; }
+.m4-days b { font-size: 56px; line-height: 1; letter-spacing: -.02em; text-shadow: 0 3px 0 rgb(192 57 43 / .2); }
