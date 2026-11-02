@@ -6,6 +6,8 @@ import {
   AlertIcon,
   CheckIcon,
 } from '@/components/ui'
+import { Icon3d, type Icon3dName } from '@/app/teacher/_ux/v2'
+import { Ring } from '@/app/teacher/_ux/ui'
 
 /**
  * ฟอร์มให้ครูยืนยันหรือแก้คะแนนของงาน 1 ชิ้น → POST /api/teacher/confirm-score
@@ -31,6 +33,19 @@ export interface RubricGuide {
 
 export const DEFAULT_NOTE = 'ครูตรวจแล้ว ยืนยันคะแนนนี้'
 
+function ReviewStepHeading({ number, title, icon, detail }: { number: string; title: string; icon: Icon3dName; detail?: string }) {
+  return (
+    <header className="flex items-center gap-2.5">
+      <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-[var(--c-brand-soft)] text-[14px] font-extrabold text-[var(--c-brand)]">{number}</span>
+      <Icon3d name={icon} size={30} />
+      <div className="min-w-0">
+        <h3 className="m-0 text-[15px] leading-5 font-extrabold text-[var(--c-ink)]">{title}</h3>
+        {detail ? <p className="m-0 text-[11px] leading-4 font-semibold text-[var(--c-ink-3)]">{detail}</p> : null}
+      </div>
+    </header>
+  )
+}
+
 function shortSummary(text: string | undefined | null, max = 60): string {
   const clean = (text ?? '').replace(/\s+/g, ' ').trim()
   if (!clean) return ''
@@ -49,6 +64,7 @@ export function TeacherConfirmScore({
   maxRounds = 3,
   nextHref = null,
   guides = {},
+  starBands = [],
 }: {
   submissionId: string
   /** ไม่ใช้แสดงแล้ว (ปุ่มยืนยันใช้ผลรวมรายด้านเอง) เก็บไว้ให้ผู้เรียกเดิมไม่พัง */
@@ -70,6 +86,7 @@ export function TeacherConfirmScore({
   } | null
   /** เกณฑ์ต่อด้าน (id ด้าน → คำถามที่ครูควรดู + คำอธิบายแต่ละระดับ) */
   guides?: Record<string, RubricGuide>
+  starBands?: { minWeighted: number; maxWeighted: number; stars: number }[]
   /** คะแนนรายด้านที่ระบบเสนอ ครูแก้ได้ทีละด้าน ไม่ใช่แก้ได้แค่ตัวเลขรวม */
   dimensions: RubricDimensionView[]
 }) {
@@ -197,6 +214,8 @@ export function TeacherConfirmScore({
 
   const saved = savedFromServer ?? savedScores
   const changed = dimensions.some((d) => (dimScores[d.id] ?? d.score) !== d.score)
+  const liveStars = starBands.find((band) => computedTotal >= band.minWeighted && computedTotal <= band.maxWeighted)?.stars ?? 0
+  const livePercent = maxScore > 0 ? (computedTotal / maxScore) * 100 : 0
 
   function openSendBack() {
     if (!open && reviseDims.length === 0) {
@@ -275,12 +294,15 @@ export function TeacherConfirmScore({
         </ul>
       ) : null}
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-2xl bg-[var(--c-brand-soft)] px-4 py-2.5">
-        <p className="m-0 text-[15px] font-bold text-ink">
-          รวมถ่วงน้ำหนัก <span className="text-[22px] font-extrabold text-[var(--c-brand)] tabular-nums">{computedTotal}</span> / {maxScore}
-          {changed ? <span className="ml-2 text-[13px] font-semibold text-ink-muted">ปรับจากที่ระบบเสนอ</span> : null}
-        </p>
-        <p className="m-0 text-[13px] text-ink-muted">จุดเขียวคือระดับที่ระบบเสนอ · กดเลือกระดับได้เลย</p>
+      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl bg-[var(--c-brand-soft)] px-3 py-2.5">
+        <Ring value={livePercent} size={54} stroke={6} label={`คะแนนสด ${computedTotal} จาก ${maxScore}`}>
+          <span className="text-center"><strong className="block text-[16px] leading-4 text-[var(--c-brand)] tabular-nums">{computedTotal}</strong><small className="text-[10px] font-bold text-[var(--c-ink-3)]">/{maxScore}</small></span>
+        </Ring>
+        <div className="min-w-0 flex-1">
+          <p className="m-0 text-[14px] font-bold text-[var(--c-ink)]">รวมถ่วงน้ำหนัก <span className="text-[var(--c-brand)]">{computedTotal}/{maxScore}</span>{changed ? <span className="ml-1 text-[11px] font-semibold text-[var(--c-ink-3)]">ปรับแล้ว</span> : null}</p>
+          <p className="m-0 mt-0.5 flex items-center gap-1 text-[13px] font-bold text-[#9b6b00]" aria-label={`ตัวอย่าง ${liveStars} ดาว`}><span aria-hidden>{[1, 2, 3].map((star) => <span key={star} className={star <= liveStars ? '' : 'opacity-25'}>★</span>)}</span><span>{liveStars} ดาว</span></p>
+          <p className="m-0 mt-0.5 text-[11px] font-semibold text-[var(--c-ink-3)]">จุดเขียวคือระดับที่ระบบเสนอ · กดเลือกระดับได้เลย</p>
+        </div>
       </div>
 
       <label htmlFor={`note-${submissionId}`} className="mt-3 block text-label font-bold text-ink">
@@ -296,16 +318,19 @@ export function TeacherConfirmScore({
         className="mt-1 w-full rounded-xl border border-[var(--c-line)] bg-white p-2.5 text-body text-ink outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus"
       />
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button type="button" onClick={() => void confirm(true)} disabled={busy} className="t2-btn focus-ring" data-kind="primary">
-          <CheckIcon width={20} height={20} aria-hidden />
-          {busy ? 'กำลังบันทึก…' : done ? `ยืนยันอีกครั้ง ${computedTotal}/${maxScore}` : `ยืนยันคะแนน ${computedTotal}/${maxScore}`}
-        </button>
-        <button type="button" onClick={openSendBack} aria-expanded={open} className="t2-btn focus-ring" data-kind="soft">
-          ส่งกลับให้แก้
-        </button>
-        <span className="text-note text-ink-muted">แก้มาแล้ว {roundsUsed}/{maxRounds} รอบ</span>
-      </div>
+      <section className="mt-4 border-t border-dashed border-[var(--c-line-strong)] pt-3" aria-label="ยืนยันคะแนน">
+        <ReviewStepHeading number="④" title="ยืนยัน" icon="check-mark-button" detail="บันทึกคะแนนนี้ หรือส่งกลับให้แก้เป็นฉบับใหม่" />
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => void confirm(true)} disabled={busy} className="t2-btn focus-ring" data-kind="primary">
+            <CheckIcon width={20} height={20} aria-hidden />
+            {busy ? 'กำลังบันทึก…' : done ? `ยืนยันอีกครั้ง ${computedTotal}/${maxScore}` : `ยืนยันคะแนน ${computedTotal}/${maxScore}`}
+          </button>
+          <button type="button" onClick={openSendBack} aria-expanded={open} className="t2-btn focus-ring" data-kind="soft">
+            ส่งกลับให้แก้
+          </button>
+          <span className="text-note text-ink-muted">แก้มาแล้ว {roundsUsed}/{maxRounds} รอบ</span>
+        </div>
+      </section>
 
       {open ? (
         <div className="mt-3 rounded-xl border border-[var(--c-line)] bg-[var(--c-bg)] p-3">

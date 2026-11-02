@@ -12,6 +12,10 @@ import { MAX_REVISION_ROUNDS } from '@/components/server/revision'
 import { classifyAiWait } from '@/lib/ai/stale-grading'
 import { RegradeButton } from './regrade-button'
 import { isTeacherConfirmed } from '@/lib/db/submission-scores'
+import { Icon3d, type Icon3dName } from './v2'
+import { shopArtFallbackSrc, shopArtSrc } from '@/components/shop-art'
+import { ShopArtImg } from '@/components/shop-art-img'
+import { stripFeedbackScorePrefix } from './review-feedback'
 
 /**
  * คิวตรวจงานของครู — ย้ายออกมาเป็นชิ้นเดียวที่ใช้ซ้ำได้ (UX-6 แตกหน้าเป็นแดชบอร์ด)
@@ -55,18 +59,34 @@ const GUIDES: Record<string, RubricGuide> = Object.fromEntries(
   ]),
 )
 
-function Fact({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) {
+function Fact({ icon, label, children, tone = 'soft' }: { icon: string; label: string; children: React.ReactNode; tone?: 'soft' | 'good' | 'warn' | 'gold' }) {
   return (
-    <div className={wide ? 'min-w-0 sm:col-span-2' : 'min-w-0'}>
-      <dt className="text-[12px] leading-4 font-semibold text-ink-muted">{label}</dt>
-      <dd className="m-0 text-[15px] leading-5 font-bold text-ink">{children}</dd>
+    <div className="flex min-w-0 items-start gap-2 rounded-xl border border-[var(--c-line)] bg-white px-2.5 py-2" data-tone={tone}>
+      <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-lg bg-[var(--c-sunken)] text-[16px]">{icon}</span>
+      <div className="min-w-0">
+        <dt className="text-[11px] leading-4 font-bold text-[var(--c-ink-3)]">{label}</dt>
+        <dd className="m-0 text-[13px] leading-5 font-bold text-[var(--c-ink)]">{children}</dd>
+      </div>
     </div>
+  )
+}
+
+function ReviewStepHeading({ number, title, icon, detail }: { number: string; title: string; icon: Icon3dName; detail?: string }) {
+  return (
+    <header className="flex items-center gap-2.5">
+      <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-[var(--c-brand-soft)] text-[14px] font-extrabold text-[var(--c-brand)]">{number}</span>
+      <Icon3d name={icon} size={30} />
+      <div className="min-w-0">
+        <h3 className="m-0 text-[15px] leading-5 font-extrabold text-[var(--c-ink)]">{title}</h3>
+        {detail ? <p className="m-0 text-[11px] leading-4 font-semibold text-[var(--c-ink-3)]">{detail}</p> : null}
+      </div>
+    </header>
   )
 }
 
 /** ตัดคำสรุปให้เหลือประโยคเดียวและไม่ทวนคะแนนที่แสดงแยกอยู่แล้ว */
 export function trimFeedback(text: string | undefined | null, max = 90): string {
-  const t = (text ?? '').replace(/\s+/g, ' ').trim()
+  const t = stripFeedbackScorePrefix(text).replace(/\s+/g, ' ').trim()
   if (!t) return ''
   const sentence = t.match(/[^.!?。]+[.!?。]?/)?.[0]?.trim() ?? t
   let out = sentence
@@ -259,68 +279,113 @@ export async function ReviewList({
         const aiTotal = ai?.aiProposed?.weightedTotal
         const domeText = trimFeedback(aiDone ? ai?.aiProposed?.feedback ?? ai?.feedback : ai?.ruleScores?.feedback ?? ai?.feedback)
         const confirmedNow = isTeacherConfirmed(row)
+        const businessType = businessTypes.items.find((t) => t.id === profile?.business_type)
+        const shopArt = shopArtSrc(profile?.business_type, 5)
+        const shopFallback = shopArtFallbackSrc(5)
+        const currentStep = confirmedNow ? 4 : 3
+        const domeBlock = domeText ? (
+          <div className="flex items-start gap-2 rounded-2xl border border-[#ddd3fb] bg-white p-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/icon-192.png" alt="โดม" width={44} height={44} className="size-11 shrink-0 rounded-2xl" />
+            <div className="relative min-w-0 rounded-2xl rounded-tl-sm bg-[#f3efff] px-3 py-2 text-[13px] leading-5 text-[var(--c-ink-2)]">
+              <p className="m-0 text-[11px] font-bold text-[var(--c-brand)]">โดมสรุป</p>
+              <p className="m-0">{domeText}</p>
+            </div>
+          </div>
+        ) : null
         return (
           <li key={row.id} className="t3-card p-4">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <Avatar name={row.nickname ?? '?'} size={36} />
               <p className="m-0 min-w-0 text-[18px] leading-6 font-extrabold text-ink">{row.nickname}</p>
-              <p className="m-0 min-w-0 flex-1 text-[15px] font-bold break-all text-brand-700">
+              <p className="m-0 min-w-0 basis-full text-[15px] font-bold break-all text-brand-700 min-[640px]:flex-1 min-[640px]:basis-0">
                 {row.domain_name}{row.tld}
               </p>
               <StatusBadge status="passed">{confirmedNow ? 'ครูยืนยันแล้ว' : 'ได้เกียรติบัตรแล้ว · ครูดูย้อนหลัง'}</StatusBadge>
             </div>
 
-            <details className="mt-3 rounded-xl bg-[var(--c-sunken)] px-3 py-2">
-              <summary className="cursor-pointer text-[14px] font-bold text-ink">โจทย์ที่นักเรียนได้รับ</summary>
-              <p className="m-0 mt-1.5 text-[14px] leading-5 text-ink-muted">
+            <div className="mt-2.5 rounded-xl border border-[var(--c-line)] bg-[var(--c-sunken)] px-3 py-1.5" aria-label={`ขั้นตอนตรวจงาน ขั้นที่ ${currentStep} จาก 4`}>
+              <div className="flex items-center gap-1.5">
+                {[
+                  ['①', 'โจทย์'],
+                  ['②', 'ส่งงาน'],
+                  ['③', 'ให้คะแนน'],
+                  ['④', 'ยืนยัน'],
+                ].map(([number, label], index) => {
+                  const step = index + 1
+                  const on = step === currentStep
+                  const done = step < currentStep
+                  return (
+                    <div key={number} className="flex min-w-0 flex-1 items-center gap-1.5">
+                      <span className={`grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-extrabold ${on ? 'bg-[var(--c-brand)] text-white shadow-sm' : done ? 'bg-[var(--s-success-soft)] text-[var(--s-success-ink)]' : 'bg-white text-[var(--c-ink-3)]'}`}>{number}</span>
+                      <span className={`truncate text-[11px] font-bold ${on ? 'text-[var(--c-brand)]' : 'text-[var(--c-ink-3)]'}`}>{label}</span>
+                      {index < 3 ? <span aria-hidden className="h-px min-w-1 flex-1 bg-[var(--c-line-strong)]" /> : null}
+                    </div>
+                  )
+                })}
+              </div>
+                          </div>
+
+            <details className="mt-3 rounded-2xl border border-[var(--c-line)] bg-white px-3 py-2.5">
+              <summary className="cursor-pointer list-none"><ReviewStepHeading number="①" title="โจทย์" icon="clipboard" detail="ภารกิจใหญ่ CEO · เปิดอ่านเพื่อทบทวนเกณฑ์" /></summary>
+              <p className="m-0 mt-2.5 rounded-xl bg-[var(--c-sunken)] px-3 py-2.5 text-[13px] leading-5 text-[var(--c-ink-2)]">
                 <strong className="text-ink">{bigMission.title}</strong> — {bigMission.objective} นักเรียนต้องเลือกชื่อโดเมน + นามสกุล แล้วเขียนเหตุผล 3 ข้อ (ชื่อ · นามสกุล · ลูกค้า)
               </p>
             </details>
 
-            <section aria-label="สิ่งที่นักเรียนส่ง" className="mt-3 rounded-2xl border border-[var(--c-line)] p-3">
-              <h3 className="m-0 text-[13px] leading-5 font-bold tracking-wide text-[var(--c-brand)]">สิ่งที่นักเรียนส่ง</h3>
-              <p className="m-0 mt-1 text-[12px] leading-4 font-semibold text-ink-muted">ชื่อโดเมนที่เสนอ</p>
-              <p className="m-0 text-[26px] leading-9 font-extrabold break-all text-brand-700">{row.domain_name}<span className="text-[var(--c-accent,#7a5cf0)]">{row.tld}</span></p>
-              <dl className="m-0 mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
-                {profile?.business_name ? <Fact label="ชื่อร้าน">{profile.business_name}</Fact> : null}
-                {profile?.business_type ? <Fact label="ประเภทธุรกิจ">{businessTypes.items.find((t) => t.id === profile.business_type)?.label ?? profile.business_type}</Fact> : null}
-                {profile?.audience ? <Fact label="กลุ่มลูกค้า">{profile.audience === 'international' ? 'มีลูกค้าต่างชาติด้วย' : 'ลูกค้าในไทย'}</Fact> : null}
+            <section aria-label="สิ่งที่นักเรียนส่ง" className="mt-3 rounded-2xl border border-[var(--c-line)] bg-[linear-gradient(135deg,#fff_0%,#faf9ff_100%)] p-3">
+              <ReviewStepHeading number="②" title="สิ่งที่นักเรียนส่ง" icon="package" detail="ภาพร้าน ข้อมูลสำคัญ และเหตุผลของนักเรียน" />
+              <div className="mt-2.5 grid gap-3 sm:grid-cols-[170px_minmax(0,1fr)]">
+                <div className="flex flex-col justify-between overflow-hidden rounded-2xl border border-[var(--c-line)] bg-[#eef0ff] p-1.5">
+                  <ShopArtImg src={shopArt} fallback={shopFallback} alt={`ภาพร้าน${profile?.business_name ? ` ${profile.business_name}` : ''}`} className="h-[104px] w-full object-contain" style={{ height: 160, width: "100%", maxHeight: 160, objectFit: "contain" }} />
+                  <div className="flex items-center gap-2 rounded-xl bg-white/80 px-2 py-1.5">
+                    <Avatar name={row.nickname ?? '?'} size={25} />
+                    <span className="min-w-0 truncate text-[12px] font-bold text-[var(--c-ink)]">{row.nickname}</span>
+                    {businessType?.icon ? <span className="ml-auto text-[16px]" aria-label={businessType.label}>{businessType.icon}</span> : null}
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <div className="rounded-xl border border-[var(--c-line-strong)] bg-white px-2.5 py-2 shadow-[0_2px_8px_rgb(30_35_70_/_.05)]">
+                    <div className="flex items-center gap-1.5 rounded-lg bg-[var(--c-sunken)] px-2 py-1.5 text-[13px] font-bold text-[var(--c-ink-2)]">
+                      <span aria-hidden className="text-[12px]">🔒</span>
+                      <span className="min-w-0 break-all">{row.domain_name}<strong className="ml-0.5 rounded-md bg-[#e6defd] px-1 text-[var(--c-brand)]">{row.tld}</strong></span>
+                    </div>
+                  </div>
+                  <dl className="m-0 mt-2 grid grid-cols-2 gap-1.5">
+                    {profile?.business_name ? <Fact icon="🏪" label="ชื่อร้าน">{profile.business_name}</Fact> : null}
+                    {profile?.business_type ? <Fact icon={businessType?.icon ?? '🏬'} label="ประเภทธุรกิจ">{businessType?.label ?? profile.business_type}</Fact> : null}
+                    {profile?.audience ? <Fact icon="👥" label="กลุ่มลูกค้า">{profile.audience === 'international' ? 'มีลูกค้าต่างชาติด้วย' : 'ลูกค้าในไทย'}</Fact> : null}
                 {profile?.is_registered_company !== null && profile?.is_registered_company !== undefined ? (
-                  <Fact label="สถานะร้าน">{profile.is_registered_company ? 'จดทะเบียนเป็นนิติบุคคลแล้ว' : 'ยังไม่ได้จดทะเบียนนิติบุคคล'}</Fact>
+                  <Fact icon="📜" label="สถานะร้าน" tone={profile.is_registered_company ? 'good' : 'warn'}>{profile.is_registered_company ? 'จดทะเบียนแล้ว' : 'ยังไม่ได้จดทะเบียน'}</Fact>
                 ) : null}
                 {row.emphasis_criterion ? (
-                  <Fact label="ด้านที่ขอให้ครูดูเป็นพิเศษ (×2)">
+                  <Fact icon="×2" label="ดูเป็นพิเศษ" tone="gold">
                     {rubricDimensions.find((d) => d.id === resolveEmphasisDimension(row.emphasis_criterion))?.name ?? row.emphasis_criterion}
                   </Fact>
                 ) : null}
-              </dl>
+                  </dl>
+                </div>
+              </div>
+              <div className="mt-2.5 grid gap-2.5 min-[900px]:grid-cols-2">
               {row.reason_text ? (
-                <div className="mt-3">
-                  <p className="m-0 text-[12px] leading-4 font-semibold text-ink-muted">เหตุผลที่นักเรียนเขียน</p>
-                  <p className="m-0 mt-1 rounded-lg bg-[var(--c-sunken)] p-3 text-body whitespace-pre-line text-ink">{row.reason_text}</p>
+                <div className="flex items-start gap-2 rounded-2xl bg-[#f3efff] p-2.5">
+                  <Avatar name={row.nickname ?? '?'} size={30} />
+                  <div className="min-w-0">
+                    <p className="m-0 text-[11px] font-bold text-[var(--c-brand)]">เหตุผลที่นักเรียนเขียน</p>
+                    <blockquote className="m-0 mt-0.5 text-[13px] leading-5 whitespace-pre-line text-[var(--c-ink-2)]">“{row.reason_text}”</blockquote>
+                  </div>
                 </div>
               ) : null}
+                {domeBlock}
+              </div>
             </section>
 
-            {domeText ? (
-              <p className="mt-3 mb-0 flex items-start gap-2 text-label text-ink-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/icon-192.png" alt="โดม" width={24} height={24} className="mt-0.5 size-6 shrink-0 rounded-md" />
-                <span><strong className="text-ink">โดมสรุป</strong> {domeText}</span>
-              </p>
-            ) : null}
-
-            <p className="mt-3 mb-0 flex flex-wrap items-center gap-x-3 gap-y-1 text-body font-bold text-ink">
-              <span>
-                คะแนนระบบ {sysTotal ?? '-'}/{sysMax}
-                {sysStars !== undefined ? ` · ${sysStars} ดาว` : ''}
-              </span>
-              {aiDone && aiTotal !== undefined ? (
-                <span className="font-semibold text-ink-muted">AI เสนอ {aiTotal}/{ai?.aiProposed?.weightedMax ?? sysMax}</span>
-              ) : aiWait === 'stale' ? (
-                <RegradeButton submissionId={row.id} />
-              ) : null}
-            </p>
+            <section aria-label="ให้คะแนน" className="mt-3 rounded-2xl border border-[var(--c-line)] bg-white p-3">
+              <ReviewStepHeading number="③" title="ให้คะแนน" icon="bar-chart" detail="ตรวจทีละด้าน แล้วปรับระดับได้ตามดุลยพินิจครู" />
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-[var(--c-sunken)] px-3 py-2 text-[12px] font-bold text-[var(--c-ink-2)]">
+                <span>ระบบตรวจให้ <strong className="text-[var(--c-brand)]">{sysTotal ?? '-'}/{sysMax}</strong>{sysStars !== undefined ? ` · ${sysStars} ดาว` : ''}</span>
+                {aiDone && aiTotal !== undefined ? <span className="font-semibold text-[var(--c-ink-3)]">AI เสนอ {aiTotal}/{ai?.aiProposed?.weightedMax ?? sysMax}</span> : aiWait === 'stale' ? <RegradeButton submissionId={row.id} /> : null}
+              </div>
 
             <TeacherConfirmScore
               submissionId={row.id}
@@ -334,7 +399,9 @@ export async function ReviewList({
               maxRounds={MAX_REVISION_ROUNDS}
               nextHref={nextHref}
               guides={GUIDES}
+              starBands={rubric.scoring.starBands}
             />
+            </section>
 
             {older.length > 0 ? (
               <details className="mt-3">
