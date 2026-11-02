@@ -192,6 +192,10 @@
 .px-cust.is-result { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 6px; height: clamp(118px, 19vh, 170px); }
 .px-cust.is-result { height: clamp(130px, 22vh, 200px); }
 .px-cust.is-interview:not(.is-result) { height: clamp(196px, 31vh, 290px); align-items: stretch; }
+/* สัมภาษณ์: ลูกค้าคอลัมน์ซ้ายกว้างคงที่ (หน้าเห็นเสมอ) บทสนทนาคอลัมน์ขวาอยู่หน้าภาพ ไม่ทับตัวลูกค้า */
+.px-cust.is-interview:not(.is-result) { grid-template-columns: 42% minmax(0, 1fr); gap: 10px; height: auto; min-height: clamp(196px, 31vh, 290px); }
+.px-cust.is-interview:not(.is-result) .px-talk { overflow: visible; }
+.px-cust.is-interview:not(.is-result) .px-cust-sprite { width: 100%; aspect-ratio: auto; }
 .px-cust .px-cust-sprite { align-self: end; height: 100%; aspect-ratio: 0.7; overflow: hidden; border-radius: 0 0 10px 10px; }
 .px-cust .px-cust-sprite .px-sprite { position: absolute; top: 0; left: 50%; height: 196%; transform: translateX(-50%); }
 .px-cust .px-speech { position: relative; top: auto; right: auto; align-self: center; max-width: 100%; border-radius: 12px 12px 12px 3px; }
@@ -205,15 +209,15 @@
 @keyframes px-bob { 50% { transform: translateY(-5px); } }
 
 /* บทสนทนาเป็นฟองคำพูด (ล่าสุดอยู่ล่าง ฟองลูกค้ามีหางชี้ไปที่ตัวลูกค้า) */
-.px-talk { display: flex; flex-direction: column; gap: 5px; min-height: 0; padding: 2px 2px 4px 8px; overflow-y: auto; scrollbar-width: none; }
+.px-talk { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 0; padding: 2px 2px 4px 8px; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; }
 .px-talk::-webkit-scrollbar { display: none; }
 .px-talk > :first-child { margin-top: auto; }
 .px-b-pair { display: grid; gap: 4px; }
 .px-b-pair.is-old { opacity: 0.62; }
 .px-b-pair.is-old .px-b-them,
 .px-b-pair.is-old .px-b-me { font-size: 12px; }
-.px-b-me { justify-self: end; max-width: 92%; margin: 0; padding: 4px 9px; border: 2px solid #241552; border-radius: 12px 12px 3px 12px; background: var(--purple); color: #fff; font-size: 12.5px; font-weight: 800; line-height: 1.35; }
-.px-b-them { position: relative; justify-self: start; max-width: 100%; margin: 0; padding: 6px 10px; border: 3px solid var(--ink); border-radius: 12px 12px 12px 3px; background: #fff; box-shadow: 0 3px 0 var(--ink); color: #241a44; font-size: 14px; font-weight: 800; line-height: 1.4; }
+.px-b-me { justify-self: end; max-width: 100%; overflow-wrap: anywhere; margin: 0; padding: 4px 9px; border: 2px solid #241552; border-radius: 12px 12px 3px 12px; background: var(--purple); color: #fff; font-size: 12.5px; font-weight: 800; line-height: 1.35; }
+.px-b-them { position: relative; justify-self: start; max-width: 100%; overflow-wrap: anywhere; margin: 0; padding: 6px 10px; border: 3px solid var(--ink); border-radius: 12px 12px 12px 3px; background: #fff; box-shadow: 0 3px 0 var(--ink); color: #241a44; font-size: 14px; font-weight: 800; line-height: 1.4; }
 .px-b-them::before { position: absolute; bottom: 6px; left: -10px; width: 11px; height: 11px; border-bottom: 3px solid var(--ink); border-left: 3px solid var(--ink); background: #fff; content: ""; transform: rotate(45deg); }
 .px-b-them.is-chat { background: #fffbe8; }
 .px-b-them.is-chat::before { background: #fffbe8; }
@@ -389,7 +393,7 @@
 .px-report-dome .px-dome-bubble::after { position: absolute; bottom: -11px; left: 44%; width: 16px; height: 16px; border-right: 3px solid var(--ink); border-bottom: 3px solid var(--ink); background: #fff; content: ""; transform: rotate(45deg); }
 
 /* ---------- กล่องหมดเวลา (กรอบ kit2) ---------- */
-.px-timeup { display: grid; justify-items: center; gap: 8px; width: min(88vw, 380px); text-align: center; }
+.px-timeup { display: grid; justify-items: center; gap: 8px; box-sizing: border-box; width: min(92vw, 360px); text-align: center; }
 .px-timeup h2 { margin: 0; color: #b0302a; font-size: 26px; font-weight: 900; }
 .px-timeup p { margin: 0; color: #4b260f; font-size: 15px; font-weight: 800; line-height: 1.5; }
 .px-timeup .px-stack { width: 100%; }
@@ -448,6 +452,9 @@
 
 /* ---------- กล่องยืนยันออก ---------- */
 .px-dialog { max-width: min(92vw, 420px); padding: 0; border: 0; background: transparent; }
+/* กล่องกลางจอทุกขนาด: dialog เต็มจอโปร่งใส แล้วจัดการ์ดไว้กลาง กรอบใบไม้ไม่ล้นขอบ */
+.px-dialog[open] { position: fixed; inset: 0; display: grid; place-items: center; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 12px; overflow: auto; }
+.px-dialog[open] > * { box-sizing: border-box; width: min(92vw, 360px); max-width: 100%; }
 .px-dialog::backdrop { background: rgba(20, 10, 40, 0.55); }
 .px-dialog-card { display: grid; gap: 12px; }
 .px-dialog-text { margin: 0; color: #241a44; font-size: 16px; font-weight: 800; line-height: 1.5; }
@@ -476,3 +483,16 @@
   .px.is-turn-l .px-world,
   .px.is-turn-r .px-world { animation: none; }
 }
+
+/* ดูที่คุยกัน: ปุ่มบนใบคำขอ/ผลลัพธ์ + กล่องบันทึกบทสนทนาทั้งหมด */
+.px-logbtn { display: inline-flex; align-items: center; justify-self: start; gap: 6px; margin-top: 6px; min-height: 36px; padding: 4px 12px; border: 2px solid var(--ink); border-radius: 999px; background: #fff; box-shadow: 0 2px 0 var(--ink); color: var(--ink); font-size: 14px; font-weight: 900; cursor: pointer; }
+.px-logbtn .px-ico { width: 18px; height: 18px; }
+.px-log { display: grid; gap: 10px; max-height: calc(100dvh - 40px); overflow-y: auto; }
+.px-log-head { display: flex; align-items: center; gap: 10px; }
+.px-log-head b { display: block; color: var(--ink); font-size: 18px; font-weight: 900; }
+.px-log-photo { flex: 0 0 auto; width: 56px; height: 64px; }
+.px-log-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.px-log-pair { display: grid; gap: 5px; }
+.px-log-pair .px-b-them { margin-left: 10px; }
+.px-log-them { padding: 6px 10px; border: 2px dashed var(--ink); border-radius: 10px; background: #fff; color: #241a44; font-size: 14px; font-weight: 800; line-height: 1.4; }
+.px-log-them span { display: block; color: var(--purple); font-size: 12px; font-weight: 900; }

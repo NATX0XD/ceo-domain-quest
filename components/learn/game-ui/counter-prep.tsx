@@ -659,8 +659,15 @@ function PrepSort({ onBack, onDone }: { onBack: () => void; onDone: () => void }
   const [placed, setPlaced] = useState<Record<string, number>>({})
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const [shake, setShake] = useState<string | null>(null)
+  const [flash, setFlash] = useState<{ floor: number; ok: boolean } | null>(null)
   const left = order.filter((t) => placed[t.id] === undefined)
   const done = left.length === 0
+
+  useEffect(() => {
+    if (!flash) return
+    const t = window.setTimeout(() => setFlash(null), 650)
+    return () => window.clearTimeout(t)
+  }, [flash])
 
   const dd = useDragDrop({
     onDrop: (item, zone) => {
@@ -670,16 +677,19 @@ function PrepSort({ onBack, onDone }: { onBack: () => void; onDone: () => void }
       if (tag.floor === floor) {
         sfx('ok')
         setPlaced((p) => ({ ...p, [item]: floor }))
+        setFlash({ floor, ok: true })
         const f = FLOORS[floor - 1]!
         setMsg({ text: `${item} อยู่ชั้น ${floor} · ${f.rule}`, ok: true })
       } else {
         sfx('bad')
         setShake(item)
-        window.setTimeout(() => setShake(null), 450)
+        setFlash({ floor, ok: false })
+        window.setTimeout(() => setShake(null), 750)
         setMsg({ text: SORT_HINT[item] ?? `${item} ยังไม่ใช่ชั้นนี้ ดูว่าใครจดได้`, ok: false })
       }
     },
   })
+  const active = !!dd.dragging || !!dd.selected
 
   return (
     <M3Stage
@@ -688,32 +698,60 @@ function PrepSort({ onBack, onDone }: { onBack: () => void; onDone: () => void }
       label="ลากป้ายนามสกุลเข้าตึก"
       dock={done ? <Cta onClick={onDone}>ตึกสว่างแล้ว เข้ากะเลย →</Cta> : <Cta disabled>ลากป้ายเข้าชั้นให้ครบ {left.length} ป้าย</Cta>}
     >
-      <Panel className="m3s-sort" kicker="ลากป้ายไปชั้นที่ใช่ · หรือแตะป้ายแล้วแตะชั้น">
+      <Panel className="m3s-sort" kicker="ลากป้ายลงชั้นวาง · หรือแตะป้ายแล้วแตะชั้น">
         <DomeSay live className={cn('m3s-dome--top', msg && (msg.ok ? 'is-ok' : 'is-warn'))}>
           {msg ? msg.text : 'ลากป้ายนามสกุลขึ้นตึก ชั้นไหนใครก็จดได้ ชั้นไหนต้องมีเอกสาร'}
         </DomeSay>
-        <Building
-          lit={done}
-          showTags={false}
-          renderFloor={(f) => (
-            <div {...dd.zoneProps(`floor-${f.no}`)} role="button" aria-label={`วางที่ชั้น ${f.no} ${f.name}`}>
-              <div className="m3s-floor-tags">
-                {Object.entries(placed)
-                  .filter(([, v]) => v === f.no)
-                  .map(([t]) => (
-                    <motion.span key={t} className="m3s-tag is-placed" initial={reduce ? false : { scale: 1.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+        {/* ตึกแบบผ่าชั้น: ป้ายชั้นอยู่บนสุดของแต่ละชั้น ป้ายที่วางแล้วเรียงบนชั้นวางของตัวเอง ไม่ทับข้อความ */}
+        <div className={cn('m3s-tower', done && 'is-lit', active && 'is-active')}>
+          <div className="m3s-tower-roof" aria-hidden />
+          {[...FLOORS].reverse().map((f) => {
+            const z = dd.zoneProps(`floor-${f.no}`)
+            const tags = Object.entries(placed).filter(([, v]) => v === f.no)
+            return (
+              <div
+                key={f.id}
+                {...z}
+                className={cn(
+                  z.className,
+                  'm3s-tower-floor',
+                  `m3s-tower-floor--${f.no}`,
+                  `tone-${f.tone}`,
+                  flash?.floor === f.no && (flash.ok ? 'is-snap' : 'is-wrong'),
+                )}
+                role="button"
+                aria-label={`วางที่ชั้น ${f.no} ${f.name}`}
+              >
+                <div className="m3s-tower-sign">
+                  <b>
+                    ชั้น {f.no} · {f.name}
+                  </b>
+                  <span>{f.rule}</span>
+                </div>
+                <div className="m3s-ledge">
+                  {tags.length === 0 ? <span className="m3s-ledge-empty">วางป้ายตรงนี้</span> : null}
+                  {tags.map(([t]) => (
+                    <motion.span
+                      key={t}
+                      className="m3s-tag is-placed"
+                      initial={reduce ? false : { scale: 1.45, y: -14, opacity: 0 }}
+                      animate={{ scale: 1, y: 0, opacity: 1 }}
+                      transition={{ type: 'spring', stiffness: 520, damping: 22 }}
+                    >
                       {t}
                     </motion.span>
                   ))}
+                </div>
               </div>
-            </div>
-          )}
-        />
+            )
+          })}
+          <div className="m3s-tower-base" aria-hidden />
+        </div>
         <div className="m3s-tray" aria-label="ป้ายที่ยังไม่ได้วาง">
           {left.map((t) => {
             const p = dd.itemProps(t.id)
             return (
-              <button key={t.id} type="button" {...p} className={cn('m3s-tag', p.className, shake === t.id && 'is-shake')}>
+              <button key={t.id} type="button" {...p} className={cn('m3s-tag', p.className, shake === t.id && 'is-bounce')}>
                 {t.id}
               </button>
             )

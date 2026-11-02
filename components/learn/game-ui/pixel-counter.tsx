@@ -15,7 +15,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { cn } from '@/components/ui'
 import { GameHeader } from '@/components/learn/game-header'
 import { M3_ASSET, sfx, useM3Sound, useUrgentTick } from './counter-shell'
-import { answersAskedSuffix, matchIntent, smallTalkReply } from '../counter-intent'
+import { answersAskedSuffix, matchIntent, smallTalkReply, softParticle } from '../counter-intent'
 import { CountUp, Stars, useGameMotion } from './index'
 import type {
   CounterCase,
@@ -347,6 +347,7 @@ export function PixelShift({
   const stampTimer = useRef<number | null>(null)
   const chatRef = useRef<HTMLDivElement | null>(null)
   const timeUpRef = useRef<HTMLDialogElement | null>(null)
+  const logRef = useRef<HTMLDialogElement | null>(null)
   const domeRef = useRef<HTMLDivElement | null>(null)
   const swipe = useRef<{ x: number; y: number; id: number; active: boolean } | null>(null)
   const swallowClick = useRef(false)
@@ -596,7 +597,7 @@ export function PixelShift({
     const q = current.questions.find((x) => x.id === id)
     if (!q) return
     if (asked.includes(id)) {
-      setTalk((t) => [...t, { key: `a${t.length}`, q: typedText ?? q.text, a: `ตอบไปแล้วนะ${current.particle ?? ''} ${q.reply}`, mood: 'neutral', kind: 'again' }])
+      setTalk((t) => [...t, { key: `a${t.length}`, q: typedText ?? q.text, a: `ตอบไปแล้วนะ${softParticle(current.particle)} ${q.reply}`, mood: 'neutral', kind: 'again' }])
       return
     }
     if (asked.length >= data.maxQuestions) return
@@ -786,7 +787,7 @@ export function PixelShift({
   const base = wanted.split('.')[0] ?? wanted
   const resultDomain =
     needsExt && extension ? (current.domains.find((d) => d.name.endsWith(extension))?.name ?? `${base}${extension}`) : wanted
-  const recent = talk.slice(-3)
+  const recent = talk.slice(-2)
 
   const say = feedback
     ? feedback.kind === 'right'
@@ -798,11 +799,11 @@ export function PixelShift({
             : stamp === 'reject'
               ? `เข้าใจแล้ว${p} จะเตรียมข้อมูลจริงมายื่นใหม่`
               : `อ๋อ เข้าใจแล้ว${p} งั้นเอา ${resultDomain}`))
-      : `เอ๊ะ ทำไมล่ะ${p} ช่วยดูอีกทีได้ไหม`
+      : `เอ๊ะ ทำไมล่ะ${softParticle(p)} ช่วยดูอีกทีได้ไหม${softParticle(p)}`
     : page === 'queue' || page === 'interview'
       ? null
       : page === 'stamp'
-        ? `ตกลงจดได้ไหม${p}`
+        ? `ตกลงจดได้ไหม${softParticle(p)}`
         : current.greeting
 
   /* ---------- ด็อกล่าง ---------- */
@@ -929,6 +930,14 @@ export function PixelShift({
       </div>
     </dl>
   )
+
+  /* ---------- ดูที่คุยกัน (ขั้นตราและผลลัพธ์) ---------- */
+  const logBtn =
+    talk.length > 0 ? (
+      <button type="button" className="px-logbtn" onClick={() => logRef.current?.showModal()}>
+        <i className="px-ico px-ico--doc" aria-hidden /> ดูที่คุยกัน ({talk.length})
+      </button>
+    ) : null
 
   return (
     <div className={cn('px', `is-look-${look}`, turnDir && `is-turn-${turnDir}`)} aria-label={data.title}>
@@ -1129,6 +1138,7 @@ export function PixelShift({
                               <span className="px-kicker">ผลลัพธ์</span>
                               {stampInfo ? <span className={cn('px-stamp-tag', `is-${stampInfo.id}`)}>{stampInfo.label}</span> : null}
                             </div>
+                            {logBtn}
                             <small className="px-muted">{stamp === 'approve' ? 'โดเมนที่อนุมัติ' : 'โดเมนที่แนะนำ'}</small>
                             <p className="px-bigdomain" dir="auto">
                               {resultDomain}
@@ -1151,6 +1161,7 @@ export function PixelShift({
                               <span className="px-kicker">ผลลัพธ์</span>
                               <span className="px-muted">{feedback.kind === 'retry' ? 'ลองได้อีก 1 ครั้ง' : `ได้ ${feedback.points} คะแนน`}</span>
                             </div>
+                            {logBtn}
                             <p className="px-result-line" dir="auto">
                               <i className="px-ico px-ico--globe" aria-hidden /> {wanted}
                             </p>
@@ -1290,6 +1301,7 @@ export function PixelShift({
                         <div className="px-stampdesk">
                           <div className="px-card px-card--clip px-card--compact">
                             {fieldRows}
+                            {logBtn}
                             <div className="px-paper-ink">
                               <AnimatePresence>
                                 {stamping && stampInfo ? (
@@ -1460,6 +1472,38 @@ export function PixelShift({
         <div className="px-dock">{dock}</div>
       </div>
       {exit.dialog}
+      <dialog ref={logRef} className="px-dialog" aria-label={`บทสนทนากับ${current.name}`}>
+        <div className="px-card px-log">
+          <div className="px-log-head">
+            <span className="px-photo px-log-photo">
+              <PxImg srcs={PX_ASSET.customer(current.portrait ?? 'c1', 'neutral')} alt="" className="px-sprite" />
+            </span>
+            <div>
+              <b>ที่คุยกับ{current.name}</b>
+              <small className="px-muted">{talk.length} รอบ เรียงจากแรกไปล่าสุด</small>
+            </div>
+          </div>
+          {fieldRows}
+          <ol className="px-log-list">
+            <li className="px-log-them">
+              <span>{current.name}</span>
+              {current.greeting}
+            </li>
+            {talk.map((t) => (
+              <li key={t.key} className="px-log-pair">
+                <p className="px-b-me">{t.q}</p>
+                <p className="px-b-them">
+                  {t.a}
+                  {t.kind === 'chat' ? <small>ไม่นับเป็นคำถาม</small> : null}
+                </p>
+              </li>
+            ))}
+          </ol>
+          <PxBtn tone="cream" onClick={() => logRef.current?.close()}>
+            ปิด
+          </PxBtn>
+        </div>
+      </dialog>
       <dialog
         ref={timeUpRef}
         className="px-dialog"

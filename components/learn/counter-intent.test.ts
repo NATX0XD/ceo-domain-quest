@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { answersAskedSuffix, matchIntent, smallTalkReply } from './counter-intent'
+import { answersAskedSuffix, matchIntent, smallTalkReply, softParticle } from './counter-intent'
 
 const ALL = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6']
 
@@ -56,5 +56,31 @@ describe('answersAskedSuffix', () => {
   it('.net.th ไม่ถูกนับเป็น .net และคำถามทั่วไปผ่านเสมอ', () => {
     expect(answersAskedSuffix('.net.th คืออะไร', 'ผู้ได้รับใบอนุญาต .net.th', hb)).toBe(true)
     expect(answersAskedSuffix('ต้องใช้เอกสารอะไร', 'ดูคู่มือนะ', hb)).toBe(true)
+  })
+})
+
+describe('คำลงท้ายผู้หญิง: ถาม/ขอร้องใช้ "คะ" ไม่ใช่ "ค่ะ"', () => {
+  const WRONG = /นะค่ะ|ไหมค่ะ|หรือเปล่าค่ะ|อะไรค่ะ|ยังไงค่ะ|มั้งค่ะ|ล่ะค่ะ/
+
+  it('ไฟล์เนื้อหาใน content/ ไม่มีคำลงท้ายผิด', async () => {
+    const { readdir, readFile } = await import('node:fs/promises')
+    const path = await import('node:path')
+    const dir = path.join(process.cwd(), 'content')
+    const files = (await readdir(dir)).filter((f) => f.endsWith('.json'))
+    expect(files.length).toBeGreaterThan(0)
+    for (const f of files) {
+      const text = await readFile(path.join(dir, f), 'utf8')
+      expect(text.match(WRONG)?.[0] ?? null, f).toBeNull()
+    }
+  })
+
+  it('คำตอบคุยเล่นของลูกค้าผู้หญิงลงท้ายถูก', () => {
+    for (const t of ['กินข้าวยัง', 'สบายดีไหม', 'อายุเท่าไร', 'หมาแมว']) {
+      expect(smallTalkReply(t, 'ค่ะ').reply).not.toMatch(WRONG)
+    }
+    expect(smallTalkReply('กินข้าวยัง', 'ค่ะ').reply).toContain('นะคะ')
+    expect(smallTalkReply('กินข้าวยัง', 'ครับ').reply).toContain('นะครับ')
+    expect(softParticle('ค่ะ')).toBe('คะ')
+    expect(softParticle('ครับ')).toBe('ครับ')
   })
 })

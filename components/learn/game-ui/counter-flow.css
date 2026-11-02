@@ -837,6 +837,8 @@
 /* ---------- กล่องยืนยันออก ---------- */
 .m3s-dialog { width: min(92vw, 420px); padding: 0; border: 0; background: transparent; }
 .m3s-dialog::backdrop { background: rgba(40, 20, 6, 0.5); }
+.m3s-dialog[open] { position: fixed; inset: 0; display: grid; place-items: center; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 12px; overflow: auto; }
+.m3s-dialog[open] > * { box-sizing: border-box; width: min(92vw, 360px); max-width: 100%; }
 .m3s-dialog-panel { display: grid; gap: 12px; }
 .m3s-field { display: grid; gap: 4px; margin-top: 10px; color: #5a3518; font-size: 14.5px; font-weight: 900; }
 .m3s-field textarea { min-height: 84px; padding: 10px 12px; border: 2px solid #c9a46a; border-radius: 12px; background: #fff; color: #3b2414; font: inherit; font-size: 16px; font-weight: 500; resize: vertical; }
@@ -885,3 +887,100 @@
 .m3s-avatar { overflow: hidden; }
 .m3s-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
 .m3s-avatar img + b { display: none; }
+
+/* ---------- S08 ตึกผ่าชั้น: ป้ายชั้น + ชั้นวางป้ายแยกกัน ไม่ทับข้อความ ---------- */
+.m3s-tower {
+  --art: url('/learn/m3/domain-building.webp');
+  position: relative;
+  width: min(100%, 360px);
+  margin: 0 auto;
+  container-type: inline-size;
+  transition: filter 0.4s;
+}
+.m3s-tower.is-lit { filter: drop-shadow(0 0 14px rgba(255, 214, 90, 0.95)) brightness(1.05); }
+/* ภาพตึก 700x840 ผ่าเป็นแถบตามชั้น (1px ภาพ = 1/7 cqw) */
+.m3s-tower-roof,
+.m3s-tower-floor,
+.m3s-tower-base { background: var(--art) no-repeat; background-size: 100% auto; }
+.m3s-tower-roof { height: 8cqw; background-position: 0 -15cqw; }
+.m3s-tower-base { height: 5cqw; background-position: 0 -103cqw; }
+.m3s-tower-floor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 9% 4px;
+  border-radius: 14px;
+  transition: box-shadow 0.15s, transform 0.15s, background-color 0.15s;
+}
+.m3s-tower-floor--3 { min-height: 20cqw; background-position: 0 -23cqw; }
+.m3s-tower-floor--2 { min-height: 20cqw; background-position: 0 -47cqw; }
+.m3s-tower-floor--1 { min-height: 20cqw; background-position: 0 -75cqw; }
+.m3s-tower-sign {
+  display: grid;
+  width: min(100%, 250px);
+  padding: 3px 10px 4px;
+  border: 3px solid #e3a33a;
+  border-radius: 12px;
+  background: #fff8e6;
+  box-shadow: 0 2px 0 rgba(95, 48, 18, 0.25), 0 0 10px rgba(255, 220, 140, 0.7);
+  text-align: center;
+  line-height: 1.2;
+  pointer-events: none;
+}
+.m3s-tower-sign b { font-size: clamp(13px, 4.1cqw, 15px); font-weight: 900; white-space: nowrap; }
+.m3s-tower-sign span { color: #5a3a1c; font-size: clamp(11.5px, 3.5cqw, 13px); font-weight: 800; }
+.m3s-tower-floor.tone-purple .m3s-tower-sign { border-color: #8a5ad8; }
+.m3s-tower-floor.tone-teal .m3s-tower-sign { border-color: #22a3a0; }
+.m3s-tower-floor.tone-orange .m3s-tower-sign { border-color: #ef8a2a; }
+.m3s-tower-floor.tone-purple .m3s-tower-sign b { color: #5b2aa8; }
+.m3s-tower-floor.tone-teal .m3s-tower-sign b { color: #126d6a; }
+.m3s-tower-floor.tone-orange .m3s-tower-sign b { color: #b04e0a; }
+/* ชั้นวางป้าย (ขอบหน้าต่างไม้) ใต้ป้ายชั้น */
+.m3s-ledge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 30px;
+  padding: 2px 6px 4px;
+  border: 2px dashed rgba(116, 67, 29, 0.55);
+  border-bottom: 6px solid #9b6a2c;
+  border-radius: 10px 10px 6px 6px;
+  background: rgba(255, 246, 222, 0.82);
+  pointer-events: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.m3s-ledge-empty { color: #9a7a55; font-size: 12px; font-weight: 800; }
+.m3s-tower .m3s-tag.is-placed { padding: 2px 8px; font-size: 13px; line-height: 1.3; }
+/* ระหว่างลาก/เลือกป้าย: ทุกชั้นวางเรืองบอกว่าวางได้ */
+.m3s-tower.is-active .m3s-ledge { border-color: #7c4dff; background: rgba(240, 233, 255, 0.9); }
+.m3s-tower.is-active .m3s-ledge-empty { color: #6a3fd6; }
+.m3s-tower .m3s-tower-floor.m3s-dropzone.is-over {
+  background-color: rgba(124, 77, 255, 0.18) !important;
+  box-shadow: inset 0 0 0 3px #7c4dff, 0 0 16px rgba(124, 77, 255, 0.55);
+  transform: scale(1.02);
+}
+.m3s-tower-floor.is-over .m3s-ledge { border-style: solid; background: #efe6ff; }
+.m3s-tower-floor.is-snap .m3s-ledge { animation: m3s-ledge-ok 0.6s ease-out; }
+.m3s-tower-floor.is-wrong { animation: m3s-shake 0.4s; }
+.m3s-tower-floor.is-wrong .m3s-ledge { border-color: #e06a16; background: #ffe9d6; }
+@keyframes m3s-ledge-ok {
+  0% { box-shadow: 0 0 0 0 rgba(47, 158, 90, 0.9); background: #dff7e4; }
+  100% { box-shadow: 0 0 0 10px rgba(47, 158, 90, 0); }
+}
+/* ป้ายในถาด: ยกตัวตอนลาก, เด้งกลับที่เดิมตอนวางผิดแล้วสั่น */
+.m3s-sort .m3s-tray { margin-top: 8px; padding-top: 8px; gap: 6px; }
+.m3s-sort .m3s-tray .m3s-tag { min-width: 58px; min-height: 40px; padding: 4px 10px; font-size: 15px; transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s; }
+.m3s-sort .m3s-tray .m3s-tag.is-dragging { box-shadow: 0 16px 24px rgba(60, 30, 10, 0.4), 0 3px 0 #9b6a2c !important; }
+.m3s-sort .m3s-tag.is-bounce { animation: m3s-shake 0.4s 0.3s; border-color: #e06a16; }
+.m3s-sort .m3s-dome--top { margin-bottom: 4px; }
+@media (max-height: 760px) {
+  .m3s-sort .m3s-dome--top > img { flex-basis: 44px; width: 44px; height: 44px; }
+  .m3s-sort .m3s-dome--top .m3s-bubble p { font-size: 14px; line-height: 1.35; }
+  .m3s-sort .m3s-dome--top .m3s-bubble > span { display: none; }
+  .m3s-sort .m3s-tray .m3s-tag { min-height: 36px; }
+}

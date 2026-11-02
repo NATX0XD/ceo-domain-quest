@@ -355,7 +355,7 @@ export function useDragDrop({ onDrop }: { onDrop: (item: string, zone: string) =
       },
       style:
         drag?.id === id && drag.moved
-          ? { transform: `translate(${drag.dx}px, ${drag.dy}px) scale(1.08) rotate(-3deg)`, zIndex: 50, transition: 'none' }
+          ? { transform: `translate(${drag.dx}px, ${drag.dy}px) scale(1.12) rotate(-3deg)`, zIndex: 50, transition: 'none' }
           : undefined,
       className: cn('m3s-draggable', drag?.id === id && drag.moved && 'is-dragging', selected === id && 'is-selected'),
       'aria-pressed': selected === id,

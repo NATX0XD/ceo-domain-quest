@@ -79,12 +79,18 @@ export function matchIntent(text: string, ids: readonly string[]): string | null
 
 /* ---------- คุยเล่นนอกเรื่อง: ลูกค้าตอบตามบท ไม่เสียสิทธิ์ถาม ---------- */
 
-const SMALL_TALK: { re: RegExp; reply: (p: string) => string; mood: CounterMood }[] = [
-  { re: /กินข้าว|ทานข้าว|หิว|กินอะไร/, reply: (p) => `ยังเลย${p} แต่วันนี้มาเรื่องจดชื่อเว็บนะ${p}`, mood: 'happy' },
+/** คำลงท้ายแบบถาม/ขอร้อง (นะ ไหม มั้ง ล่ะ): ผู้หญิงใช้ "คะ" ไม่ใช่ "ค่ะ" ส่วนประโยคบอกเล่าใช้ "ค่ะ" */
+export function softParticle(particle = ''): string {
+  return particle === 'ค่ะ' ? 'คะ' : particle
+}
+
+// p = ลงท้ายบอกเล่า, q = ลงท้ายหลัง นะ/ไหม/มั้ง (ผู้หญิง คะ)
+const SMALL_TALK: { re: RegExp; reply: (p: string, q: string) => string; mood: CounterMood }[] = [
+  { re: /กินข้าว|ทานข้าว|หิว|กินอะไร/, reply: (p, q) => `ยังเลย${p} แต่วันนี้มาเรื่องจดชื่อเว็บนะ${q}`, mood: 'happy' },
   { re: /สวัสดี|หวัดดี|ดีจ้า|hello|hi\b/i, reply: (p) => `สวัสดี${p} วันนี้มาขอจดชื่อเว็บ${p}`, mood: 'happy' },
-  { re: /สบายดี|เป็นไงบ้าง|เหนื่อยไหม/, reply: (p) => `สบายดี${p} ขอบคุณที่ถาม รีบจดชื่อเว็บให้หน่อยนะ${p}`, mood: 'happy' },
+  { re: /สบายดี|เป็นไงบ้าง|เหนื่อยไหม/, reply: (p, q) => `สบายดี${p} ขอบคุณที่ถาม รีบจดชื่อเว็บให้หน่อยนะ${q}`, mood: 'happy' },
   { re: /ชื่ออะไร|ชื่อจริง/, reply: (p) => `ชื่ออยู่บนใบคำขอแล้ว${p} อยากรู้อะไรเรื่องจดเว็บถามได้เลย${p}`, mood: 'neutral' },
-  { re: /อายุ|กี่ขวบ|เกิดปี/, reply: (p) => `เรื่องอายุไม่เกี่ยวกับการจดหรอกมั้ง${p} ถามเรื่องเอกสารดีกว่า${p}`, mood: 'confused' },
+  { re: /อายุ|กี่ขวบ|เกิดปี/, reply: (p, q) => `เรื่องอายุไม่เกี่ยวกับการจดหรอกมั้ง${q} ถามเรื่องเอกสารดีกว่า${p}`, mood: 'confused' },
   { re: /อากาศ|ร้อน|ฝนตก|หนาว/, reply: (p) => `ร้อนจริง${p} รีบจดเสร็จจะได้กลับบ้าน${p}`, mood: 'neutral' },
   { re: /ขอบคุณ|ขอบใจ/, reply: (p) => `ยินดี${p}`, mood: 'happy' },
   { re: /ราคา|กี่บาท|ค่าจด|แพงไหม/, reply: (p) => `เรื่องค่าจดเดี๋ยวค่อยคุยตอนจ่ายเงิน${p} ตอนนี้ขอให้ตรวจคำขอก่อน${p}`, mood: 'neutral' },
@@ -96,18 +102,19 @@ export type CustomerChat = { reply: string; mood: CounterMood }
 /** ลูกค้าตอบคำถามนอกเรื่องแบบเป็นธรรมชาติ ชวนกลับมาเรื่องจดชื่อเว็บ */
 export function smallTalkReply(text: string, particle = ''): CustomerChat {
   const p = particle ? particle : ''
+  const q = softParticle(p)
   const t = norm(text)
   const hit = SMALL_TALK.find((s) => s.re.test(t))
-  if (hit) return { reply: tidy(hit.reply(p)), mood: hit.mood }
+  if (hit) return { reply: tidy(hit.reply(p, q)), mood: hit.mood }
   return {
-    reply: tidy(`ไม่แน่ใจว่าถามเรื่องอะไร${p} วันนี้มาเรื่องจดชื่อเว็บนะ${p} ลองถามเรื่องบริษัท เอกสาร หรือว่าเป็นหน่วยงานแบบไหนก็ได้${p}`),
+    reply: tidy(`ยังไม่เข้าใจคำถาม${p} วันนี้มาเรื่องจดชื่อเว็บนะ${q} ลองถามเรื่องบริษัท เอกสาร หรือว่าเป็นหน่วยงานแบบไหนก็ได้${p}`),
     mood: 'confused',
   }
 }
 
 /** ลบคำลงท้ายซ้อน (เช่น "นะครับครับ") และช่องว่างเกิน */
 function tidy(s: string): string {
-  return s.replace(/(ครับ|ค่ะ|จ้า)\1+/g, '$1').replace(/\s{2,}/g, ' ').trim()
+  return s.replace(/(ครับ|ค่ะ|คะ|จ้า)\1+/g, '$1').replace(/\s{2,}/g, ' ').trim()
 }
 
 /** คำถามเอ่ยนามสกุลในคู่มือ → คำตอบต้องเอ่ยนามสกุลนั้นด้วย ไม่งั้นถือว่าตอบผิดเรื่อง */
