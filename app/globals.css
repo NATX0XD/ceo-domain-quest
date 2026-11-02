@@ -1113,10 +1113,10 @@ select {
   z-index: -1;
   background: radial-gradient(ellipse at center, transparent 42%, rgb(64 42 33 / .22) 100%);
 }
-.student-stage:has(.media-landing-main)::before { background-image: linear-gradient(180deg, rgb(20 91 144 / .12), rgb(78 43 87 / .28)), url('/ui/welcome/bg.webp'); }
-.student-stage:has(.welcome-shell)::before { background-image: linear-gradient(180deg, rgb(20 91 144 / .12), rgb(78 43 87 / .28)), url('/landing/sea-bg.webp'); }
-.student-stage:has(.media-join-main)::before { background-image: linear-gradient(180deg, rgb(20 91 144 / .12), rgb(78 43 87 / .28)), url('/ui/join/bg.webp'); }
-.student-stage:has(.media-dome-shell)::before { background-image: linear-gradient(180deg, rgb(20 91 144 / .12), rgb(78 43 87 / .28)), url('/ui/dome/bg.webp'); }
+.student-stage:has(.media-landing-main)::before { background-image: linear-gradient(180deg, rgb(20 91 144 / .12), rgb(78 43 87 / .28)), url('/ui/welcome/official-bg.webp'); }
+.student-stage:has(.welcome-shell)::before { background-image: linear-gradient(180deg, rgb(20 91 144 / .12), rgb(78 43 87 / .28)), url('/ui/welcome/official-bg.webp'); }
+.student-stage:has(.media-join-main)::before { background-image: linear-gradient(180deg, rgb(20 91 144 / .12), rgb(78 43 87 / .28)), url('/ui/join/official-bg.webp'); }
+.student-stage:has(.media-dome-shell)::before { background-image: linear-gradient(180deg, rgb(20 91 144 / .12), rgb(78 43 87 / .28)), url('/ui/dome/official-bg.webp'); }
 .student-stage:has(.map-page)::before { background-image: linear-gradient(180deg, rgb(20 91 144 / .12), rgb(78 43 87 / .28)), url('/ui/map/state-1.webp'); }
 .student-stage-deco {
   position: absolute;
@@ -1281,12 +1281,12 @@ select {
 .media-shell { background-color: #20A9F3; }
 .media-shell .surface-veil { background-color: rgb(255 241 214 / 0.93); border-color: rgb(107 45 18 / 0.25); }
 .media-shell .app-shell-main { background: linear-gradient(180deg, rgb(32 169 243 / 0.18), rgb(255 241 214 / 0.92)); }
-.media-landing-main { background: #20A9F3 url('/ui/welcome/bg.webp') center / cover no-repeat; }
+.media-landing-main { background: #20A9F3 url('/ui/welcome/official-bg.webp') center / cover no-repeat; }
 .media-join-main {
   /* The form stage grows into the main viewport instead of stopping at the art ratio. */
   display: flex;
   flex-direction: column;
-  background: #20A9F3 url('/ui/join/bg.webp') center / cover no-repeat;
+  background: #20A9F3 url('/ui/join/official-bg.webp') center / cover no-repeat;
 }
 .join-frame-stage {
   position: relative;
@@ -1351,14 +1351,14 @@ select {
   .join-frame-panel { inset: 27% 7% 0; }
   .join-frame-panel .h-16 { height: 2.9rem; }
 }
-.media-dome-shell .app-shell-main { background: #20A9F3 url('/ui/dome/bg.webp') center / cover no-repeat; }
+.media-dome-shell .app-shell-main { background: #20A9F3 url('/ui/dome/official-bg.webp') center / cover no-repeat; }
 .media-dome-shell .app-shell-main::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(21 85 200 / .12), rgb(255 241 214 / .42)); pointer-events: none; }
 .media-frame { border: 5px solid #FFF1D6; box-shadow: 0 8px 0 #6B2D12, inset 0 2px 0 rgb(255 255 255 / .9); }
 .media-panel { background: rgb(255 241 214 / .95); border: 4px solid #6B2D12; box-shadow: 0 7px 0 #6B2D12, inset 0 2px 0 #fff; }
 .media-landing-art { filter: drop-shadow(0 12px 0 rgb(107 45 18 / .28)); }
 
 /* Welcome chooser: the first student-facing screen is the compact mobile landing hero. */
-.welcome-shell { background: url('/landing/sea-bg.webp') center / cover no-repeat; }
+.welcome-shell { background: url('/ui/welcome/official-bg.webp') center / cover no-repeat; }
 .welcome-shell .app-shell-main,
 .welcome-shell .app-shell-footer { background: transparent; }
 .welcome-shell .surface-veil { background: transparent; backdrop-filter: none; border-color: transparent; }
@@ -1497,6 +1497,15 @@ select {
 .map-island-hotspot:hover { background: rgb(255 255 255 / .08); }
 .map-island-hotspot:active { transform: scale(.97); }
 .map-island-hotspot:focus-visible { background: rgb(255 255 255 / .12); }
+.map-island-hotspot-selected {
+  background: rgb(255 229 92 / .22);
+  box-shadow: 0 0 0 5px rgb(255 239 139 / .68), 0 0 28px rgb(255 190 48 / .72);
+  animation: map-island-pulse 1.25s ease-in-out infinite;
+}
+@keyframes map-island-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
 .map-progress-badge { position: absolute; display: inline-flex; min-height: 30px; align-items: center; gap: 3px; border: 2px solid #fff1d6; border-radius: 999px; background: #18334b; padding: 3px 7px; color: #fff; font-size: 14px; font-weight: 800; line-height: 1; box-shadow: 0 3px 0 rgb(65 37 15 / .55); pointer-events: none; white-space: nowrap; transform: translateY(-115%); }
 .map-progress-badge svg:first-child { color: #ffd33d; }
 /* ปุ่มบอสลอยติดเหนือแถบเมนูล่างเสมอ (nav ทับท้ายกล่องเลื่อน) — เห็นและกดได้ตั้งแต่ scroll 0

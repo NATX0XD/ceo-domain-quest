@@ -74,10 +74,24 @@ export function SearchScreen({
   const [detail, setDetail] = useState<RdapRow | null>(null)
   const [sheet, setSheet] = useState<'detect' | 'taken' | null>(null)
   const [detectDone, setDetectDone] = useState(false)
+  const [retryAt, setRetryAt] = useState<number | null>(null)
+  const [clockNow, setClockNow] = useState(() => Date.now())
 
   const eligible = ELIGIBLE_TLDS[card.ownerType]
+  const retrySeconds = retryAt === null ? 0 : Math.max(0, Math.ceil((retryAt - clockNow) / 1000))
+
+  useEffect(() => {
+    if (retryAt === null) return
+    const timer = window.setInterval(() => {
+      const now = Date.now()
+      setClockNow(now)
+      if (now >= retryAt) setRetryAt(null)
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [retryAt])
 
   async function search() {
+    if (retrySeconds > 0) return
     const value = name.trim().toLowerCase()
     if (!NAME_RE.test(value)) {
       setErr('ใช้ได้เฉพาะ a-z ตัวเลข และขีดกลาง ยาว 1-63 ตัว ไม่ขึ้นต้นหรือลงท้ายด้วยขีด')
@@ -88,8 +102,12 @@ export function SearchScreen({
     setBusy(true)
     try {
       const res = await fetch(`/api/domain/rdap?name=${encodeURIComponent(value)}`, { cache: 'no-store' })
-      const body = (await res.json().catch(() => null)) as { results?: RdapRow[]; message?: string } | null
+      const body = (await res.json().catch(() => null)) as { results?: RdapRow[]; message?: string; resetAt?: number } | null
       if (!res.ok || !body?.results) {
+        if (res.status === 429 && typeof body?.resetAt === 'number') {
+          setRetryAt(body.resetAt)
+          setClockNow(Date.now())
+        }
         setNote(body?.message ?? 'ตอนนี้ค้นไม่ได้ ลองอีกครั้ง')
         return
       }
@@ -155,7 +173,7 @@ export function SearchScreen({
             {err}
           </p>
         ) : null}
-        <GameButton variant="primary" loading={busy} onClick={() => void search()}>
+        <GameButton variant="primary" loading={busy} disabled={retrySeconds > 0} onClick={() => void search()}>
           <GlobeIcon width={20} height={20} aria-hidden /> ค้นชื่อจริง
         </GameButton>
       </PixelPanel>
@@ -163,7 +181,10 @@ export function SearchScreen({
       {note ? (
         <p role="status" className={cn(SCENE_NOTE, 'flex items-start gap-2 text-[#ffb870]')}>
           <InfoIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0" />
-          <span>{note}</span>
+          <span>
+            {note}
+            {retrySeconds > 0 ? ` ลองใหม่ได้ใน ${retrySeconds} วินาที` : ''}
+          </span>
         </p>
       ) : null}
 
@@ -216,7 +237,7 @@ export function SearchScreen({
                   ) : r.status === 'unknown' ? (
                     <button
                       type="button"
-                      disabled={busy}
+                      disabled={busy || retrySeconds > 0}
                       onClick={() => void search()}
                       className="min-h-11 rounded-lg border-2 border-[#7a5a3a] bg-white px-3 text-label font-extrabold focus-visible:outline-3 focus-visible:outline-focus disabled:opacity-60"
                     >

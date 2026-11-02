@@ -99,7 +99,7 @@ export function IntroCardsClient({
         <div className="intro-world-layers" aria-hidden="true">
           <img src="/intro/sky.webp" alt="" className="intro-layer intro-layer-sky" />
           <img src="/intro/shop.webp" alt="" className="intro-layer intro-layer-shop" />
-          <img src="/ui/welcome/dome.webp" alt="" className="intro-layer intro-layer-dome" />
+          <img src="/ui/welcome/official-dome.webp" alt="" className="intro-layer intro-layer-dome" />
         </div>
         <div className="intro-copy-panel">
         <p className="sr-only" aria-live="polite">

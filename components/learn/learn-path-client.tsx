@@ -5,7 +5,6 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useRouter } from 'next/navigation'
 import type { LearnPath, LearnState } from '@/components/server/learn-path'
 import {
-  counterLevelFromWarmup,
   type CounterData,
   type CounterDecision,
   type CounterStepResult,
@@ -21,8 +20,8 @@ import {
   Card,
   CheckIcon,
   ChevronRightIcon,
-  ChoiceCard,
   DomeAvatar,
+  DomeBoardFrame,
   HomeIcon,
   DomeSays,
   PauseIcon,
@@ -38,7 +37,6 @@ import {
   type AnswerResponse,
   type DoResponse,
   type LearnModeId,
-  type WarmupResponse,
 } from './learn-path-api'
 import { ModePopup } from './mode-popup'
 import { LearnScenePanel } from './learn-path-scene'
@@ -53,25 +51,21 @@ import { themeFor } from './app/theme'
 /**
  * เส้นทางเรียนก่อนเข้าภารกิจ (ดู / อ่าน / ลงมือทำ) — สเปก docs/learn-path-spec.md
  *
- * ลำดับจอ: แนะนำเรื่อง > เช็กพื้นฐาน 3 ข้อ > ผล + เลือกวิธีเรียน > เรียนตามวิธี > สรุป
+ * ลำดับจอ: แนะนำเรื่อง > เลือกวิธีเรียน > เรียนตามวิธี > สรุป
  * ⚠️ ไม่มีเฉลยในไฟล์นี้ ทุกการตรวจส่งไป POST /api/mission/[id]/learn
  * ⚠️ วิธีเรียนเป็นข้อเสนอเท่านั้น ทุกวิธีกดได้เสมอ และเปลี่ยนวิธีได้ทุกเมื่อ
  * จบแล้ว router.refresh() ให้หน้าเซิร์ฟเวอร์เห็น learn-done แล้วแสดงจอภารกิจเดิม
  */
 
-type Step = 'intro' | 'warmup' | 'result' | 'watch' | 'read' | 'questions' | 'do' | 'done'
+type Step = 'intro' | 'result' | 'watch' | 'read' | 'questions' | 'do' | 'done'
 
-const MARKERS = ['ก', 'ข', 'ค', 'ง']
-
-const STAGES = ['เช็กพื้นฐาน', 'เลือกวิธี', 'เรียน', 'สรุป'] as const
+const STAGES = ['เลือกวิธี', 'เรียน', 'สรุป'] as const
 
 function stageOf(step: Step): number {
-  if (step === 'intro' || step === 'warmup') return 0
-  if (step === 'result') return 1
-  if (step === 'done') return 3
-  return 2
+  if (step === 'intro' || step === 'result') return 0
+  if (step === 'done') return 2
+  return 1
 }
-
 export interface LearnPathClientProps {
   missionId: string
   /** ใช้แยกที่เก็บความคืบหน้าในแท็บ ไม่ให้นักเรียนคนถัดไปเห็นของคนก่อน */
@@ -83,6 +77,7 @@ export interface LearnPathClientProps {
   gameData?: GameData | null
   counterData?: CounterData | null
   registrarData?: RegistrarData | null
+  recommendedMode?: LearnModeId | null
 }
 
 export function LearnPathClient({
@@ -95,22 +90,17 @@ export function LearnPathClient({
   gameData,
   counterData,
   registrarData,
+  recommendedMode = null,
 }: LearnPathClientProps) {
   const router = useRouter()
   const singleMode = path.modes.length === 1 && path.modes[0] === 'do'
 
   // กลับมาเปิดหน้าใหม่ = ทำต่อจากจุดเดิมที่บันทึกไว้
   const [step, setStep] = useState<Step>(() =>
-    singleMode ? (state.chosen === 'do' ? 'do' : 'intro') : (state.chosen ?? (state.warmup ? 'result' : 'intro')),
+    singleMode ? (state.chosen === 'do' ? 'do' : 'intro') : (state.chosen ?? 'result'),
   )
   const [mode, setMode] = useState<LearnModeId | null>(state.chosen)
-  const [picked, setPicked] = useState<LearnModeId | null>(state.chosen ?? state.warmup?.recommended ?? null)
-
-  const [warmIdx, setWarmIdx] = useState(0)
-  const [warmAnswers, setWarmAnswers] = useState<(number | null)[]>(() => path.warmup.map(() => null))
-  const [warm, setWarm] = useState<(Omit<WarmupResponse, 'perQuestion'> & { perQuestion?: boolean[] }) | null>(
-    state.warmup,
-  )
+  const [picked, setPicked] = useState<LearnModeId | null>(state.chosen ?? recommendedMode ?? 'do')
 
   const [sceneIdx, setSceneIdx] = useState(0)
   const [autoPlay, setAutoPlay] = useState(true)
@@ -161,7 +151,7 @@ export function LearnPathClient({
       const saved = raw ? (JSON.parse(raw) as Record<string, unknown>) : null
       if (saved && !state.done) {
         const savedMode = saved.mode === 'watch' || saved.mode === 'read' || saved.mode === 'do' ? saved.mode : null
-        const steps: Step[] = ['intro', 'warmup', 'result', 'watch', 'read', 'questions', 'do']
+        const steps: Step[] = ['intro', 'result', 'watch', 'read', 'questions', 'do']
         const savedStep = steps.find((x) => x === saved.step)
         const needsMode =
           savedStep === 'watch' || savedStep === 'read' || savedStep === 'questions' || savedStep === 'do'
@@ -170,19 +160,14 @@ export function LearnPathClient({
             ? savedStep
             : null
           : savedStep
-        if (usableSavedStep && (!needsMode || savedMode) && (usableSavedStep !== 'result' || state.warmup || warm)) {
+        if (usableSavedStep && (!needsMode || savedMode)) {
           setStep(usableSavedStep)
           setMode(savedMode)
           if (typeof saved.brief === 'boolean') setBrief(saved.brief)
           if (typeof saved.qIdx === 'number') setQIdx(Math.max(0, Math.min(questions.length - 1, saved.qIdx)))
           if (typeof saved.sceneIdx === 'number') setSceneIdx(Math.max(0, Math.min(lastScene, saved.sceneIdx)))
           if (typeof saved.chatShown === 'number') setChatShown(Math.max(1, Math.min(chat.length, saved.chatShown)))
-          if (typeof saved.warmIdx === 'number')
-            setWarmIdx(Math.max(0, Math.min(path.warmup.length - 1, saved.warmIdx)))
           if (saved.answers && typeof saved.answers === 'object') setAnswers(saved.answers as Record<string, string>)
-          if (Array.isArray(saved.warmAnswers) && saved.warmAnswers.length === path.warmup.length) {
-            setWarmAnswers(saved.warmAnswers as (number | null)[])
-          }
           if (usableSavedStep === 'watch') setAutoPlay(false)
         }
       }
@@ -200,13 +185,13 @@ export function LearnPathClient({
       else {
         sessionStorage.setItem(
           storeKey,
-          JSON.stringify({ step, mode, brief, qIdx, sceneIdx, chatShown, warmIdx, answers, warmAnswers }),
+          JSON.stringify({ step, mode, brief, qIdx, sceneIdx, chatShown, answers }),
         )
       }
     } catch {
       /* เก็บไม่ได้ก็ข้าม */
     }
-  }, [ready, storeKey, step, mode, brief, qIdx, sceneIdx, chatShown, warmIdx, answers, warmAnswers, done])
+  }, [ready, storeKey, step, mode, brief, qIdx, sceneIdx, chatShown, answers, done])
 
   useEffect(() => {
     if (step !== 'watch' || showVideo || !autoPlay || sceneIdx >= lastScene) return
@@ -241,21 +226,6 @@ export function LearnPathClient({
     } else {
       go('do')
     }
-  }
-
-  async function submitWarmup() {
-    setBusy(true)
-    setError(null)
-    const res = await postLearn<WarmupResponse>(missionId, {
-      action: 'warmup',
-      answers: warmAnswers.map((a) => (a === null ? -1 : a)),
-    })
-    setBusy(false)
-    if (!res.ok) return setError(res.message)
-    setWarm(res.data)
-    setPicked(res.data.recommended)
-    setConfettiTick((t) => t + 1)
-    go('result')
   }
 
   async function submitChoose() {
@@ -364,25 +334,10 @@ export function LearnPathClient({
       <Button
         size="lg"
         fullWidth
-        onClick={() => (singleMode ? openMode('do') : go('warmup'))}
+        onClick={() => (singleMode ? openMode('do') : go('result'))}
         trailingIcon={<ChevronRightIcon width={22} height={22} />}
       >
-        {singleMode ? 'เข้าเกมภารกิจ' : 'เริ่มเช็กพื้นฐาน 3 ข้อ'}
-      </Button>
-    )
-  } else if (step === 'warmup') {
-    const isLast = warmIdx === path.warmup.length - 1
-    footer = (
-      <Button
-        size="lg"
-        fullWidth
-        disabled={warmAnswers[warmIdx] === null || busy}
-        loading={busy}
-        loadingLabel="กำลังตรวจ"
-        onClick={() => (isLast ? submitWarmup() : setWarmIdx((i) => i + 1))}
-        trailingIcon={busy ? undefined : <ChevronRightIcon width={22} height={22} />}
-      >
-        {isLast ? 'ดูผลเช็กพื้นฐาน' : 'ข้อต่อไป'}
+        {singleMode ? 'เข้าเกมภารกิจ' : 'เลือกวิธีเรียน'}
       </Button>
     )
   } else if (step === 'result') {
@@ -617,25 +572,23 @@ export function LearnPathClient({
 
   const order: Record<Step, number> = {
     intro: 0,
-    warmup: 1,
-    result: 2,
-    watch: 3,
-    read: 3,
-    do: 3,
-    questions: 4,
-    done: 5,
+    result: 0,
+    watch: 1,
+    read: 1,
+    do: 1,
+    questions: 2,
+    done: 2,
   }
   const idx = order[step]
   const dir = idx >= prevIdx.current ? 1 : -1
   useEffect(() => {
     prevIdx.current = idx
   }, [idx])
-  const viewKey = step === 'warmup' ? `warmup-${warmIdx}` : step
+  const viewKey = step
 
   function back() {
     if (step === 'intro') return router.back()
     if (singleMode && step === 'do') return go('intro')
-    if (step === 'warmup') return warmIdx > 0 ? setWarmIdx((i) => i - 1) : go('intro')
     if (step === 'result') return go('intro')
     if ((step === 'watch' || step === 'read' || step === 'do') && brief) return go('result')
     if ((step === 'watch' || step === 'read') && reviewing) return go('questions')
@@ -692,8 +645,8 @@ export function LearnPathClient({
         <ModePopup
           missionNo={missionId.replace(/\D/g, '') || missionId}
           title={missionTitle}
-          recommended={warm?.recommended ?? null}
-          reason={warm?.reason}
+          recommended={recommendedMode ?? 'do'}
+          reason={recommendedMode ? undefined : 'ยังไม่รู้สไตล์ของคุณ ลองแบบนี้ก่อน'}
           picked={picked}
           busy={busy}
           error={error}
@@ -703,6 +656,7 @@ export function LearnPathClient({
           }}
           onStart={submitChoose}
           onClose={() => (mode ? go(mode) : router.push('/map'))}
+          presentation="drawer"
         />
       ) : null}
       <AnimatePresence mode="wait" custom={dir} initial={false}>
@@ -755,24 +709,10 @@ export function LearnPathClient({
                   <p className={cn('mt-2 text-body', inkMuted)}>{path.story}</p>
                 </details>
                 {!singleMode ? (
-                  <p className={cn('mt-3 text-label font-semibold', inkMuted)}>เช็กพื้นฐาน 3 ข้อ · ไม่หักคะแนน</p>
+                  <p className={cn('mt-3 text-label font-semibold', inkMuted)}>เลือกวิธีเรียนจากการ์ดด้านล่างได้เลย เปลี่ยนภายหลังได้</p>
                 ) : null}
               </GlassCard>
             </>
-          ) : null}
-
-          {step === 'warmup' ? (
-            <WarmupScreen
-              path={path}
-              idx={warmIdx}
-              answers={warmAnswers}
-              disabled={busy}
-              dark={dark}
-              onPick={(choice) => {
-                buzz()
-                setWarmAnswers((prev) => prev.map((a, i) => (i === warmIdx ? choice : a)))
-              }}
-            />
           ) : null}
 
           {(step === 'watch' || step === 'read') && brief ? (
@@ -977,10 +917,10 @@ export function LearnPathClient({
                   <DomeAvatar mood="cheer" size={112} decorative />
                 </Float>
               </div>
-              <GlassCard dark={dark}>
+              <DomeBoardFrame className="learn-result-board">
                 <h2 className={cn('text-title-sm font-extrabold', ink)}>{path.do.title}</h2>
                 <p className={cn('mt-2 text-body-lg', ink)}>{path.do.instruction}</p>
-              </GlassCard>
+              </DomeBoardFrame>
             </>
           ) : null}
 
@@ -1020,7 +960,7 @@ export function LearnPathClient({
                   data={counterData}
                   onSubmit={submitDo}
                   onCheck={checkCounter}
-                  level={state.warmup ? counterLevelFromWarmup(state.warmup.score, state.warmup.total) : undefined}
+                  level={undefined}
                 />
               ) : path.do.kind === 'registrar' && registrarData ? (
                 <RegistrarGame data={registrarData} onSubmit={submitDo} onStep={checkRegistrar} />
@@ -1091,14 +1031,6 @@ export function LearnPathClient({
                   <dd className={cn('font-bold', ink)}>{MODE_LABEL[done.mode]}</dd>
                   <dt className={inkMuted}>คะแนน</dt>
                   <dd className={cn('font-bold', ink)}>{done.score} / 100</dd>
-                  {warm ? (
-                    <>
-                      <dt className={inkMuted}>เช็กพื้นฐาน</dt>
-                      <dd className={cn('font-bold', ink)}>
-                        {warm.score} / {warm.total} ข้อ
-                      </dd>
-                    </>
-                  ) : null}
                 </dl>
               </GlassCard>
             </>
@@ -1106,62 +1038,5 @@ export function LearnPathClient({
         </motion.div>
       </AnimatePresence>
     </AppScreen>
-  )
-}
-
-function WarmupScreen({
-  path,
-  idx,
-  answers,
-  disabled,
-  dark,
-  onPick,
-}: {
-  path: LearnPath
-  idx: number
-  answers: (number | null)[]
-  disabled: boolean
-  dark: boolean
-  onPick: (choice: number) => void
-}) {
-  const q = path.warmup[idx]!
-  const reduce = useReducedMotion()
-  return (
-    <section className="flex flex-col gap-3" aria-label="เช็กพื้นฐาน">
-      <div className="rounded-[20px] bg-white px-4 py-3 shadow-soft-1">
-        <ProgressBar
-          value={idx + 1}
-          max={path.warmup.length}
-          label={`ข้อ ${idx + 1} จาก ${path.warmup.length}`}
-          showValue
-          tone="brand"
-          size="sm"
-        />
-      </div>
-      <GlassCard dark={dark}>
-        <h2 className={cn('text-title-sm font-bold', dark ? 'text-white' : 'text-ink')}>{q.question}</h2>
-      </GlassCard>
-      <div className="flex flex-col gap-2.5" role="radiogroup" aria-label={q.question}>
-        {q.choices.map((choice, i) => (
-          <motion.div key={i} whileTap={reduce ? undefined : { scale: 0.97 }}>
-            <ChoiceCard
-              marker={MARKERS[i]}
-              label={choice}
-              selected={answers[idx] === i}
-              disabled={disabled}
-              onSelect={() => onPick(i)}
-            />
-          </motion.div>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={() => onPick(-1)}
-        disabled={disabled}
-        className="flex min-h-11 items-center self-center rounded-full bg-white px-5 text-label font-bold whitespace-nowrap text-ink shadow-soft-1 transition-transform active:scale-95 disabled:opacity-50 focus-ring"
-      >
-        {answers[idx] === -1 ? 'เลือกแล้ว: ยังไม่แน่ใจ' : 'ยังไม่แน่ใจ'}
-      </button>
-    </section>
   )
 }

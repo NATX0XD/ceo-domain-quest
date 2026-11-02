@@ -22,6 +22,7 @@ import { PASS_SCORE, findLearnPath, loadLearnState, type LearnState } from '@/co
 import { publicCounterData } from '@/components/server/learn-counter'
 import { publicRegistrarData } from '@/components/server/learn-registrar'
 import { requireShopProfile } from '@/components/server/shop-gate'
+import type { LearnModeId } from '@/components/learn/learn-path-api'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,12 +51,16 @@ export default async function MissionPage({
   }
 
   const shopProfile = await requireShopProfile(session.studentId)
+  const selfProfile = await loadSelfProfileDb(session.studentId)
+  const savedRoute = selfProfile.route ?? selfProfile.suggestedRoute
+  const recommendedMode: LearnModeId | null =
+    savedRoute === 'clip' ? 'watch' : savedRoute === 'card' ? 'read' : savedRoute === 'game' ? 'do' : null
   const m2Variant = mission.id === 'm2' ? m2VariantFor(session.studentId, shopProfile?.domainName) : null
   const studentMission = m2Variant ? personalizeM2Mission(mission, m2Variant) : mission
 
   /**
    * เส้นทางเรียนก่อนภารกิจ (docs/learn-path-spec.md) — ยังไม่จบ = แสดงจอเรียนแทนจอภารกิจ
-   * ไม่มีทางข้าม: ต้องเช็กพื้นฐานแล้วเรียนตามวิธีที่เลือกจนครบเกณฑ์ก่อน · อ่านสถานะไม่ได้ = ปล่อยเข้าภารกิจเดิม ไม่ปิดทางเรียน
+   * ผู้เรียนเลือกวิธีเรียนจาก self-profile ก่อน แล้วเรียนตามวิธีที่เลือกจนครบเกณฑ์ · อ่านสถานะไม่ได้ = ปล่อยเข้าภารกิจเดิม ไม่ปิดทางเรียน
    */
   const learnPath = findLearnPath(mission.id)
   if (learnPath) {
@@ -79,6 +84,7 @@ export default async function MissionPage({
           gameData={kind === 'game' ? buildGameData(studentMission, session.studentId) : null}
           counterData={kind === 'counter' ? publicCounterData() : null}
           registrarData={kind === 'registrar' ? publicRegistrarData() : null}
+          recommendedMode={recommendedMode}
         />
       )
     }
@@ -86,7 +92,7 @@ export default async function MissionPage({
 
   const [row, self, summary, progress, advice, story, standing] = await Promise.all([
     loadMissionRow(session.studentId, mission.id as MissionId),
-    loadSelfProfileDb(session.studentId),
+    Promise.resolve(selfProfile),
     lessonSummary(session.studentId),
     listProgress(session.studentId),
     /**

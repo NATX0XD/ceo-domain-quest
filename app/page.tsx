@@ -18,10 +18,10 @@ export default function LandingPage() {
       footer={
         <AppFooter divider={false} className="welcome-footer">
           <div className="welcome-choices">
-            <Link href="/join" className="welcome-choice welcome-choice--primary">
+            <Link href="/join" className="welcome-choice game-button game-button--orange">
               เข้าห้องเรียน <span aria-hidden="true">▶</span>
             </Link>
-            <Link href="/teacher" className="welcome-choice welcome-choice--secondary">
+            <Link href="/teacher" className="welcome-choice game-button game-button--purple">
               สำหรับครู
             </Link>
             <p className="welcome-helper">ขอรหัสห้อง 6 ตัวกับ PIN จากครูก่อน แล้วกดปุ่มด้านบนได้เลยครับ</p>
@@ -34,10 +34,10 @@ export default function LandingPage() {
           21910-2002 อินเทอร์เน็ตในงานธุรกิจดิจิทัล
         </span>
         <div className="welcome-brand-lockup relative z-10">
-          <img src="/landing/logo.webp" alt="โลโก้ CEO Domain Quest" className="welcome-logo object-contain" />
+          <img src="/ui/kit/signs/welcome-logo.webp" alt="โลโก้ CEO Domain Quest" className="welcome-logo object-contain" />
         </div>
         <div className="welcome-dome-stage relative z-10 min-h-0 w-full flex-1">
-          <img src="/dome/mascot/dome-greet.webp" alt="โดมกำลังโบกมือทักทาย" className="media-landing-art welcome-dome mx-auto h-full w-full object-contain object-bottom" />
+          <img src="/ui/welcome/official-dome.webp" alt="โดมกำลังโบกมือทักทาย" className="media-landing-art welcome-dome mx-auto h-full w-full object-contain object-bottom" />
           <div className="welcome-dome-bubble">สวัสดี! มาเล่นกัน</div>
         </div>
         <div className="welcome-tagline relative z-10">สร้างร้านในฝัน เรียนรู้โดเมนอย่างสนุก</div>

@@ -5,6 +5,8 @@ import { useState, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
 import { TestNudgeCard } from '@/components/test-nudge'
 import type { TestNudge } from '@/components/server/test-nudge'
+import { ModePopup } from '@/components/learn/mode-popup'
+import { postLearn, type LearnModeId } from '@/components/learn/learn-path-api'
 import { ArrowLeftIcon, CheckIcon, LockIcon, StarIcon, Toast, ToastViewport } from '@/components/ui'
 
 type Mission = {
@@ -18,7 +20,13 @@ type Mission = {
 
 type Boss = { title: string; unlocked: boolean; href: string }
 
-type MapHotspotsProps = { imageState: number; missions: Mission[]; boss: Boss; nudge?: TestNudge | null }
+type MapHotspotsProps = {
+  imageState: number
+  missions: Mission[]
+  boss: Boss
+  nudge?: TestNudge | null
+  recommendedMode?: LearnModeId | null
+}
 
 const ISLAND_HOTSPOTS = [
   { left: '42%', top: '24%', width: '55%', height: '20%' },
@@ -41,16 +49,48 @@ function statusOf(mission: Mission, unlocked: boolean) {
   return 'ล็อกอยู่'
 }
 
-export function MapHotspots({ imageState, missions, boss, nudge = null }: MapHotspotsProps) {
+export function MapHotspots({ imageState, missions, boss, nudge = null, recommendedMode = null }: MapHotspotsProps) {
   const [toast, setToast] = useState(false)
   const [entering, setEntering] = useState<number | null>(null)
+  const [drawerIndex, setDrawerIndex] = useState<number | null>(null)
+  const [picked, setPicked] = useState<LearnModeId>(recommendedMode ?? 'do')
+  const [drawerBusy, setDrawerBusy] = useState(false)
+  const [drawerError, setDrawerError] = useState<string | null>(null)
   const router = useRouter()
   const focusHotspot = entering === null ? null : ISLAND_HOTSPOTS[entering] ?? ISLAND_HOTSPOTS[0]
 
   function enterMission(href: string, index: number) {
     router.prefetch(href)
     setEntering(index)
-    window.setTimeout(() => router.push(href), 720)
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    window.setTimeout(() => router.push(href), reduced ? 140 : 720)
+  }
+
+  function openMission(index: number, href: string) {
+    if (index < 2) {
+      setDrawerIndex(index)
+      setPicked(recommendedMode ?? 'do')
+      setDrawerError(null)
+      return
+    }
+    enterMission(href, index)
+  }
+
+  async function startFromDrawer() {
+    if (drawerIndex === null || !picked) return
+    const mission = missions[drawerIndex]
+    if (!mission) return
+    setDrawerBusy(true)
+    setDrawerError(null)
+    const result = await postLearn<{ ok: true }>(mission.id, { action: 'choose', mode: picked })
+    setDrawerBusy(false)
+    if (!result.ok) {
+      setDrawerError(result.message)
+      return
+    }
+    const index = drawerIndex
+    setDrawerIndex(null)
+    window.setTimeout(() => enterMission(`/mission/${mission.id}`, index), 120)
   }
 
   return (
@@ -77,7 +117,7 @@ export function MapHotspots({ imageState, missions, boss, nudge = null }: MapHot
         }
       >
         <img
-          src={`/ui/map/state-${imageState}.webp`}
+          src={imageState === 1 ? '/ui/map/official-map.webp' : `/ui/map/state-${imageState}.webp`}
           alt="แผนที่ภารกิจ เกาะภารกิจที่ 1 ถึง 4 เชื่อมต่อกันด้วยสะพาน"
           className="map-artwork"
           draggable={false}
@@ -94,7 +134,13 @@ export function MapHotspots({ imageState, missions, boss, nudge = null }: MapHot
           return (
             <div key={mission.id} className="map-hotspot-layer">
               {unlocked ? (
-                <button type="button" onClick={() => enterMission(`/mission/${mission.id}`, index)} aria-label={label} className="map-island-hotspot focus-ring" style={ISLAND_HOTSPOTS[index]} />
+                <button
+                  type="button"
+                  onClick={() => openMission(index, `/mission/${mission.id}`)}
+                  aria-label={label}
+                  className={`map-island-hotspot focus-ring${drawerIndex === index ? ' map-island-hotspot-selected' : ''}`}
+                  style={ISLAND_HOTSPOTS[index]}
+                />
               ) : (
                 <button type="button" aria-label={label} className="map-island-hotspot focus-ring" style={ISLAND_HOTSPOTS[index]} onClick={() => setToast(true)} />
               )}
@@ -131,6 +177,21 @@ export function MapHotspots({ imageState, missions, boss, nudge = null }: MapHot
           </button>
         )}
       </section>
+      {drawerIndex !== null && missions[drawerIndex] ? (
+        <ModePopup
+          missionNo={String(drawerIndex + 1)}
+          title={missions[drawerIndex].title}
+          recommended={recommendedMode ?? 'do'}
+          reason={recommendedMode ? undefined : 'ยังไม่รู้สไตล์ของคุณ ลองแบบนี้ก่อน'}
+          picked={picked}
+          busy={drawerBusy}
+          error={drawerError}
+          onPick={setPicked}
+          onStart={() => void startFromDrawer()}
+          onClose={() => setDrawerIndex(null)}
+          presentation="drawer"
+        />
+      ) : null}
       {entering !== null ? <div className="map-fog-transition" role="status" aria-live="polite">กำลังพาไปเกาะภารกิจ</div> : null}
     </div>
   )

@@ -10,13 +10,13 @@ const icon = (name: string, size = 38) => <Pic src={`/icons/3d/${name}.webp`} al
 
 const FLOW = [
   { icon: 'door', title: 'เข้าห้อง', note: 'ใส่รหัสจากครู แล้วตั้งชื่อเล่น', shot: 'join', anchor: 'step-1' },
-  { icon: 'brain', title: 'เช็กพื้นฐาน', note: 'ตอบ 3 ข้อสั้น ๆ ก่อนออกเดินทาง', shot: 'home', anchor: 'step-6' },
+  { icon: 'brain', title: 'เลือกสไตล์ของฉัน', note: 'ตอบคำถามรู้จักตัวเอง แล้วเลือกวิธีเรียนที่ชอบ', shot: 'home', anchor: 'step-6' },
   { icon: 'eyes', title: 'เลือกวิธีเรียน', note: 'เลือกแบบที่ถนัดได้เลย', shot: 'choose', anchor: 'step-6', chips: [['television', 'ดู'], ['books', 'อ่าน'], ['gear', 'ลงมือทำ']] },
   { icon: 'bullseye', title: 'ผ่านภารกิจ 1-4', note: 'เก็บดาวทีละเกาะบนแผนที่', shot: 'map', anchor: 'step-7' },
   { icon: 'crown', title: 'สู้บอส CEO', note: 'ใช้ความรู้ทั้งหมด ปิดเกมให้สวย', shot: 'play', anchor: 'step-10' },
 ] as const
 
-const SAY = ['ใส่รหัสก่อนนะ!', 'อุ่นเครื่องกัน', 'เลือกแบบที่ชอบ', 'ลุยทีละเกาะ!', 'บอสรออยู่!'] as const
+const SAY = ['ใส่รหัสก่อนนะ!', 'รู้จักตัวเองก่อน!', 'เลือกแบบที่ชอบ', 'ลุยทีละเกาะ!', 'บอสรออยู่!'] as const
 
 const PATH_D = 'M0 28 C 125 28, 125 78, 250 78 S 375 28, 500 28 S 625 78, 750 78 S 875 28, 1000 28'
 

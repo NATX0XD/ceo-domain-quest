@@ -8,6 +8,8 @@ import { bigMission, selfProfile } from '@/components/server/lesson-content'
 import { MapHotspots } from '@/components/map-hotspots'
 import { loadTestNudge } from '@/components/server/test-nudge'
 import { requireShopProfile } from '@/components/server/shop-gate'
+import { loadSelfProfileDb } from '@/components/server/game-state'
+import type { LearnModeId } from '@/components/learn/learn-path-api'
 
 export const metadata: Metadata = { title: 'แผนภารกิจของฉัน — CEO Domain Quest' }
 export const dynamic = 'force-dynamic'
@@ -18,9 +20,13 @@ export default async function MapPage() {
 
   await requireShopProfile(session.studentId)
   const data = await lessonSummary(session.studentId)
+  const self = await loadSelfProfileDb(session.studentId)
   const allMissionsPassed = data.missions.length > 0 && data.missions.every((mission) => mission.passed)
   const nudge = await loadTestNudge(session.studentId, data.missions.filter((m) => m.passed).length)
   const mapState = Math.min(data.summary.done + 1, 4)
+  const savedRoute = self.route ?? self.suggestedRoute
+  const recommendedMode: LearnModeId | null =
+    savedRoute === 'clip' ? 'watch' : savedRoute === 'card' ? 'read' : savedRoute === 'game' ? 'do' : null
 
   return (
     <AppShell className="media-shell student-display student-world" mainLabel="แผนที่ภารกิจ" footer={<BottomNav />}>
@@ -40,6 +46,7 @@ export default async function MapPage() {
           unlocked: allMissionsPassed,
           href: '/ceo',
         }}
+        recommendedMode={recommendedMode}
       />
     </AppShell>
   )

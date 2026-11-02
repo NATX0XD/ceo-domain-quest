@@ -61,6 +61,8 @@ export interface ModePopupProps {
   onPick: (m: LearnModeId) => void
   onStart: () => void
   onClose: () => void
+  /** The same component is used on the map and while changing mode in a mission. */
+  presentation?: 'drawer' | 'modal'
 }
 
 export function ModePopup({
@@ -74,6 +76,7 @@ export function ModePopup({
   onPick,
   onStart,
   onClose,
+  presentation = 'drawer',
 }: ModePopupProps) {
   const reduce = useReducedMotion()
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -90,9 +93,22 @@ export function ModePopup({
 
   const pickedInfo = MODES.find((m) => m.id === picked)
 
+  const drawer = presentation === 'drawer'
+  const officialM1 = drawer && missionNo === '1'
+
   return (
     <motion.div
-      className="fixed inset-0 z-[60] flex items-end justify-center overflow-y-auto bg-[#1d0f3a]/85 backdrop-blur-xl px-3 pb-4 pt-6 sm:items-center"
+      className={
+        drawer
+          ? 'fixed inset-0 z-[60] flex items-end justify-center overflow-y-auto bg-[#21150f]/20 p-0'
+          : 'fixed inset-0 z-[60] flex items-end justify-center overflow-y-auto bg-[#1d0f3a]/85 px-3 pb-4 pt-6 backdrop-blur-xl sm:items-center'
+      }
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+      onTouchStart={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
       initial={reduce ? { opacity: 0 } : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: reduce ? 0.01 : 0.2 }}
@@ -101,52 +117,88 @@ export function ModePopup({
         role="dialog"
         aria-modal="true"
         aria-labelledby="mode-popup-title"
-        className="relative my-auto w-full max-w-[560px] pt-[clamp(130px,38vw,210px)]"
+        className={
+          officialM1
+            ? 'relative mt-auto w-full max-w-[720px]'
+            : drawer
+            ? 'relative mt-auto w-full max-w-[720px] max-h-[min(92dvh,780px)] overflow-y-auto rounded-t-[30px] pt-[clamp(116px,31vw,190px)]'
+            : 'relative my-auto w-full max-w-[560px] pt-[clamp(130px,38vw,210px)]'
+        }
+        drag={drawer ? 'y' : false}
+        dragConstraints={drawer ? { top: 0, bottom: 520 } : undefined}
+        dragElastic={drawer ? 0.18 : undefined}
+        onDragEnd={
+          drawer
+            ? (_event, info) => {
+                if (info.offset.y > 100 || info.velocity.y > 700) onClose()
+              }
+            : undefined
+        }
         initial={reduce ? false : { opacity: 0, scale: 0.88, y: 28 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={reduce ? { duration: 0.01 } : spring}
       >
-        {/* โดมโผล่เหนือขอบการ์ด */}
-        <motion.div
-          className="pointer-events-none absolute left-0 top-0 z-0 flex w-full items-end"
-          style={{ height: DOME_H }}
-          initial={reduce ? false : { y: 46, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={reduce ? { duration: 0.01 } : { ...spring, delay: 0.12 }}
-        >
-          <div
-            className="relative shrink-0 overflow-hidden"
-            style={{ height: DOME_H, width: `calc(${DOME_H} * 0.8)`, marginLeft: '2%' }}
+        {drawer ? (
+          <span
+            className="absolute left-1/2 top-2 z-20 h-1.5 w-14 -translate-x-1/2 rounded-full bg-[#8f775e]/55"
+            aria-hidden="true"
+          />
+        ) : null}
+        {!officialM1 ? (
+          <motion.div
+            className="pointer-events-none absolute left-0 top-0 z-0 flex w-full items-end"
+            style={{ height: DOME_H }}
+            initial={reduce ? false : { y: 46, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={reduce ? { duration: 0.01 } : { ...spring, delay: 0.12 }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element -- มาสคอตทางการ โผล่แค่ครึ่งบนเหนือขอบการ์ด */}
-            <img
-              src="/dome/mascot/dome-greet.webp"
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-              className="absolute left-0 top-0 max-w-none select-none"
-              style={{ height: `calc(${DOME_H} * 1.62)`, width: 'auto' }}
-            />
-          </div>
-          <div className="relative mb-[22%] ml-[-9%] min-w-0 flex-1 self-center sm:mb-[14%]">
-            <motion.p
-              className="relative rounded-[28px] border-2 border-[#c9b6f0] bg-[#f4edff] px-3 py-2 text-center text-[clamp(12px,3.6vw,18px)] font-extrabold leading-snug text-[#3a1a6e] shadow-[0_6px_14px_rgba(60,30,110,0.22)]"
-              initial={reduce ? false : { scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={reduce ? { duration: 0.01 } : { ...spring, delay: 0.3 }}
-              style={{ transformOrigin: 'left center' }}
+            <div
+              className="relative shrink-0 overflow-hidden"
+              style={{ height: DOME_H, width: `calc(${DOME_H} * 0.8)`, marginLeft: '2%' }}
             >
-              เลือกวิธีเรียนที่ถนัด
-              <br />
-              แล้วไปลุยภารกิจที่ {missionNo} กันเลย!
-              <span
+              {/* eslint-disable-next-line @next/next/no-img-element -- มาสคอตทางการ โผล่แค่ครึ่งบนเหนือขอบการ์ด */}
+              <img
+                src="/dome/mascot/dome-greet.webp"
+                alt=""
                 aria-hidden="true"
-                className="absolute -left-[7px] top-1/2 size-3.5 -translate-y-1/2 rotate-45 border-b-2 border-l-2 border-[#c9b6f0] bg-[#f4edff]"
+                draggable={false}
+                className="absolute left-0 top-0 max-w-none select-none"
+                style={{ height: `calc(${DOME_H} * 1.62)`, width: 'auto' }}
               />
-            </motion.p>
-          </div>
-        </motion.div>
-
+            </div>
+            <div className="relative mb-[22%] ml-[-9%] min-w-0 flex-1 self-center sm:mb-[14%]">
+              <motion.p
+                className="relative rounded-[28px] border-2 border-[#c9b6f0] bg-[#f4edff] px-3 py-2 text-center text-[clamp(12px,3.6vw,18px)] font-extrabold leading-snug text-[#3a1a6e] shadow-[0_6px_14px_rgba(60,30,110,0.22)]"
+                initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={reduce ? { duration: 0.01 } : { ...spring, delay: 0.3 }}
+                style={{ transformOrigin: 'left center' }}
+              >
+                เลือกวิธีเรียนที่ถนัด
+                <br />
+                แล้วไปลุยภารกิจที่ {missionNo} กันเลย!
+                <span
+                  aria-hidden="true"
+                  className="absolute -left-[7px] top-1/2 size-3.5 -translate-y-1/2 rotate-45 border-b-2 border-l-2 border-[#c9b6f0] bg-[#f4edff]"
+                />
+              </motion.p>
+            </div>
+          </motion.div>
+        ) : null}
+        {/* ภารกิจแรกมีภาพตัดจาก UI/ เป็น visual source of truth; ปุ่มด้านบนยังเป็น HTML เพื่อเลือก/อ่านด้วยแป้นพิมพ์ได้ */}
+        {officialM1 ? (
+          <OfficialModeArtwork
+            missionNo={missionNo}
+            title={title}
+            picked={picked}
+            recommended={recommended}
+            busy={busy}
+            error={error}
+            onPick={onPick}
+            onStart={onStart}
+            onClose={onClose}
+          />
+        ) : (
         <div className="relative z-10 rounded-[28px] bg-[#fcf6eb] px-3 pb-4 pt-5 shadow-[0_18px_40px_rgba(30,10,60,0.4),inset_0_2px_0_rgba(255,255,255,0.9)] ring-1 ring-[#f1e3cb] sm:px-6 sm:pb-6">
           <button
             ref={closeRef}
@@ -270,8 +322,64 @@ export function ModePopup({
             )}
           </button>
         </div>
+        )}
       </motion.section>
     </motion.div>
+  )
+}
+
+function OfficialModeArtwork({
+  missionNo,
+  title,
+  picked,
+  recommended,
+  busy,
+  error,
+  onPick,
+  onStart,
+  onClose,
+}: Omit<ModePopupProps, 'presentation' | 'reason'>) {
+  return (
+    <div className="relative aspect-[1122/1402] w-full max-w-[720px] select-none" aria-label={`เลือกวิธีเรียนสำหรับภารกิจที่ ${missionNo}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- ภาพคอมโพสิตทางการจาก UI/ */}
+      <img src="/ui/mode/official-popup.webp" alt="" aria-hidden="true" draggable={false} className="absolute inset-0 size-full object-contain" />
+      <h2 className="sr-only">{title}</h2>
+      <button type="button" onClick={onClose} aria-label="ปิดและกลับไปแผนที่" className="absolute right-[3.2%] top-[34%] size-[10%] rounded-full bg-transparent" style={{ background: 'transparent', border: 0 }} />
+      <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="absolute inset-x-[6.5%] top-[55%] grid h-[28%] grid-cols-3 gap-[1.5%]">
+        {MODES.map((mode) => {
+          const selected = picked === mode.id
+          const rec = recommended === mode.id
+          return (
+            <button
+              key={mode.id}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              aria-label={`${mode.title}${rec ? ' (แนะนำ)' : ''} ${mode.lines.join(' ')}`}
+              onClick={() => onPick(mode.id)}
+              className="relative rounded-[20%] bg-transparent outline-none focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/70"
+              style={{ background: 'transparent', border: 0 }}
+            >
+              {rec ? <span className="absolute -top-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#f26b1d] px-2 py-0.5 text-[clamp(9px,2.5vw,15px)] font-extrabold text-white shadow-sm">แนะนำ</span> : null}
+              <span aria-hidden="true" className={`absolute bottom-[4%] left-1/2 size-[11%] -translate-x-1/2 rounded-full border-[3px] border-[#8f8f8f] bg-white ${selected ? 'ring-4 ring-white/80' : ''}`}>
+                {selected ? <span className="absolute inset-[22%] rounded-full bg-[#7c4dd6]" /> : null}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+      {error ? <p role="alert" className="absolute inset-x-[12%] top-[84%] text-center text-[clamp(10px,2.8vw,16px)] font-bold text-[#b42318]">{error}</p> : null}
+      <button
+        type="button"
+        onClick={onStart}
+        disabled={!picked || busy}
+        aria-label={picked ? `เริ่มภารกิจที่ ${missionNo} แบบ${MODES.find((m) => m.id === picked)?.title}` : 'เลือกวิธีเรียนก่อน'}
+        className="absolute inset-x-[6.5%] bottom-[4%] h-[10%] rounded-full bg-transparent text-transparent outline-none focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/70 disabled:cursor-not-allowed"
+        style={{ background: 'transparent', border: 0 }}
+      >
+        {busy ? 'กำลังบันทึก' : 'เริ่มภารกิจ'}
+      </button>
+    </div>
   )
 }
 
