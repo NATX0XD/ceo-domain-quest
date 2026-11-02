@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { PageHeading, SignInGate, StudentShell } from '@/components/student-shell'
+import { PageStateCard } from '@/components/page-state-card'
+import './ceo-done.css'
 import { AppFooter } from '@/components/app-shell'
 import { useExitConfirm } from '@/components/student-navigation'
 import { GradeStatusCard } from '@/components/grade-status-client'
@@ -16,7 +18,6 @@ import {
   ChevronRightIcon,
   ChoiceCard,
   ClockIcon,
-  DomeAvatar,
   DomeSays,
   EmptyState,
   InfoIcon,
@@ -589,19 +590,20 @@ export function CeoClient({
           </AppFooter>
         }
       >
-        <header className="flex flex-col items-center gap-2 pt-2 text-center">
-          <DomeAvatar mood={revision ? 'cheer' : 'celebrate'} size={112} decorative />
-          <h1 className="text-display font-extrabold text-balance text-ink">
-            {revision ? 'ครูส่งงานกลับมาให้แก้' : 'ส่งใบเสนอแล้ว'}
-          </h1>
-          <p className="text-body text-pretty text-ink-muted">
-            {revision
+        <PageStateCard
+          className="ceo-done-hero"
+          tone={revision ? 'warm' : 'done'}
+          art={revision ? '/icons/3d/memo.webp' : '/icons/3d/crown.webp'}
+          badge={revision ? '/icons/3d/warning.webp' : '/ui/kit2/badge-check.webp'}
+          title={<span className="ceo-done-title">{revision ? 'ครูส่งงานกลับมาให้แก้' : 'ส่งใบเสนอแล้ว'}</span>}
+          body={
+            revision
               ? 'ไม่ได้แปลว่าผิดนะ ครูอยากให้เติมอีกนิดเดียว แก้แล้วส่งใหม่ได้เลย ฉบับเดิมยังอยู่'
               : justSubmitted
                 ? `ใบเสนอชื่อเว็บส่งถึงที่ประชุมเรียบร้อย${nickname ? ` ${nickname}` : ''}`
-                : 'ใบเสนอชื่อเว็บของเราส่งไปแล้ว แก้ไม่ได้ ถ้าอยากแก้ให้บอกครู'}
-          </p>
-        </header>
+                : 'ใบเสนอชื่อเว็บของเราส่งไปแล้ว แก้ไม่ได้ ถ้าอยากแก้ให้บอกครู'
+          }
+        />
 
         {/* ส่งแล้วต้องรู้ว่าอยู่ขั้นไหน ไม่ใช่นั่งเดา — poll ตามจังหวะที่เซิร์ฟเวอร์บอก
             สถานะเปลี่ยนเมื่อไหร่ (ครูยืนยัน / ครูสั่งแก้) โหลดคะแนนกับคำสั่งแก้ใหม่ให้เอง

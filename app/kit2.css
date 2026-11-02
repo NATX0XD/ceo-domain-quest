@@ -1,103 +1,334 @@
-/* CEO Domain Quest — kit2 asset classes (opt-in; not imported by the app yet)
+/* CEO Domain Quest — kit2 art layer (imported by app/layout.tsx after globals.css)
  *
- * 9-slice insets are pixel insets from the source files:
- *   Buttons: left/right 64px, center 16px tile strip, source height 160px.
- *   panel-cream / panel-wood: 90px top/right/bottom/left.
- *   modal-frame: 112px top, 74px right, 96px bottom, 74px left.
- *   Signs are decorative headers and should use background-size: 100% 100%.
+ * Shared components (GameButton/Button, WoodSign/page titles, CreamCard, Sheet,
+ * dialog, ChoiceCard marks, Chip, ProgressBar) paint with the kit2 art here.
+ * Live text always stays HTML.
+ *
+ * Buttons: the generated btn-<color>-right files were NOT mirrored (they are a
+ * second copy of the left cap) and the 16px mid strip has a different height
+ * and shading from the caps, so they never join cleanly. public/ui/kit2/btn/
+ * holds pieces derived from each colour's left cap (scripted crop, no new art):
+ *   <c>-l.webp  left cap cropped to rows 6..152 (64×146)
+ *   <c>-r.webp  that cap mirrored
+ *   <c>-m.webp  the cap's inner column repeated (4×146) — identical profile
+ * Cap width = height × 64/146, so caps always sit inside the box.
+ *
+ * 9-slice insets (source px): panel-cream 90 · modal-frame 112/74/96/74 ·
+ * sign-small 56/96 · sign-wide 90/190.
  */
 
-.k2-btn {
-  --k2-cap: 64px;
-  --k2-left: url('/ui/kit2/btn-orange-left.webp');
-  --k2-mid: url('/ui/kit2/btn-orange-mid.webp');
-  --k2-right: url('/ui/kit2/btn-orange-right.webp');
-  align-items: center;
-  background-image: var(--k2-left), var(--k2-mid), var(--k2-right);
-  background-position: left center, center center, right center;
-  background-repeat: no-repeat;
-  background-size: var(--k2-cap) 100%, calc(100% - (var(--k2-cap) * 2)) 100%, var(--k2-cap) 100%;
-  background-color: transparent;
-  border: 0;
-  color: #fff9e9;
+/* ── Game button ──────────────────────────────────────────────────────────── */
+.game-button {
+  --gb-h: 3.5rem;
+  --gb-cap: calc(var(--gb-h) * 0.4384);
+  --gb-l: url('/ui/kit2/btn/orange-l.webp');
+  --gb-m: url('/ui/kit2/btn/orange-m.webp');
+  --gb-r: url('/ui/kit2/btn/orange-r.webp');
+  --gb-ink: #5a2208;
   display: inline-flex;
-  font: 800 clamp(1rem, 2.4vw, 1.55rem)/1.1 system-ui, sans-serif;
+  box-sizing: border-box;
+  height: var(--gb-h);
+  min-height: 0;
+  min-width: calc(var(--gb-cap) * 2 + 1rem);
+  max-width: 100%;
+  align-items: center;
   justify-content: center;
-  min-height: 160px;
-  min-width: 200px;
-  padding: 0 calc(var(--k2-cap) + 18px);
+  gap: .45rem;
   position: relative;
-  text-align: center;
-  text-shadow: 0 3px 0 #662817, 0 5px 8px rgb(71 26 13 / 35%);
-  user-select: none;
-}
-
-.k2-btn--orange { --k2-left: url('/ui/kit2/btn-orange-left.webp'); --k2-mid: url('/ui/kit2/btn-orange-mid.webp'); --k2-right: url('/ui/kit2/btn-orange-right.webp'); }
-.k2-btn--green { --k2-left: url('/ui/kit2/btn-green-left.webp'); --k2-mid: url('/ui/kit2/btn-green-mid.webp'); --k2-right: url('/ui/kit2/btn-green-right.webp'); }
-.k2-btn--purple { --k2-left: url('/ui/kit2/btn-purple-left.webp'); --k2-mid: url('/ui/kit2/btn-purple-mid.webp'); --k2-right: url('/ui/kit2/btn-purple-right.webp'); }
-.k2-btn--blue { --k2-left: url('/ui/kit2/btn-blue-left.webp'); --k2-mid: url('/ui/kit2/btn-blue-mid.webp'); --k2-right: url('/ui/kit2/btn-blue-right.webp'); }
-.k2-btn--red { --k2-left: url('/ui/kit2/btn-red-left.webp'); --k2-mid: url('/ui/kit2/btn-red-mid.webp'); --k2-right: url('/ui/kit2/btn-red-right.webp'); }
-.k2-btn--cream { --k2-left: url('/ui/kit2/btn-cream-left.webp'); --k2-mid: url('/ui/kit2/btn-cream-mid.webp'); --k2-right: url('/ui/kit2/btn-cream-right.webp'); color: #6c2c1a; text-shadow: 0 2px 0 #fff8e7; }
-.k2-btn--grey, .k2-btn[aria-disabled='true'] { --k2-left: url('/ui/kit2/btn-grey-left.webp'); --k2-mid: url('/ui/kit2/btn-grey-mid.webp'); --k2-right: url('/ui/kit2/btn-grey-right.webp'); color: #fff; filter: saturate(.8); }
-
-.k2-sign {
-  align-items: center;
-  background: url('/ui/kit2/sign-wide.webp') center / 100% 100% no-repeat;
-  color: #6a2a17;
-  display: flex;
-  font: 900 clamp(1.2rem, 3.3vw, 2.4rem)/1.1 system-ui, sans-serif;
-  justify-content: center;
-  min-height: 170px;
-  padding: 28px 15%;
-  text-align: center;
-  text-shadow: 0 2px 0 #fff3d0;
-}
-.k2-sign--small { background-image: url('/ui/kit2/sign-small.webp'); min-height: 110px; }
-.k2-sign--hanging { background-image: url('/ui/kit2/sign-hanging.webp'); min-height: 190px; padding-top: 44px; }
-
-.k2-panel {
-  background: url('/ui/kit2/panel-cream.webp') center / 100% 100% no-repeat;
-  color: #5b2c1e;
-  min-height: 250px;
-  padding: 82px 94px;
-}
-.k2-panel--wood { background-image: url('/ui/kit2/panel-wood.webp'); }
-.k2-modal {
-  background: url('/ui/kit2/modal-frame.webp') center / 100% 100% no-repeat;
-  color: #5b2c1e;
-  min-height: 420px;
-  padding: 126px 82px 98px;
-}
-
-.k2-chip {
-  align-items: center;
-  background: url('/ui/kit2/chip-cream.webp') center / 100% 100% no-repeat;
-  color: #6a2a17;
-  display: inline-flex;
-  font-weight: 800;
-  min-height: 72px;
-  padding: 0 54px;
-}
-.k2-badge { background: center / 100% 100% no-repeat; display: inline-block; height: 88px; width: 88px; }
-.k2-badge--star { background-image: url('/ui/kit2/badge-star.webp'); }
-.k2-badge--check { background-image: url('/ui/kit2/badge-check.webp'); }
-.k2-tab {
-  align-items: center;
-  background: url('/ui/kit2/tab-active.webp') center / 100% 100% no-repeat;
+  overflow: visible;
+  border: 0;
+  border-radius: calc(var(--gb-h) * .34);
+  /* face of the art sits a little above centre (bottom lip) — nudge text up */
+  padding: 0 calc(var(--gb-cap) * .8) calc(var(--gb-h) * .09);
+  background-color: transparent;
+  background-image: var(--gb-l), var(--gb-r), var(--gb-m);
+  background-position: left center, right center, center center;
+  background-repeat: no-repeat;
+  background-size: auto 100%, auto 100%, max(0px, calc(100% - var(--gb-cap) * 2 + 2px)) 100%;
+  box-shadow: none;
   color: #fff;
-  display: inline-flex;
-  font-weight: 900;
-  justify-content: center;
-  min-height: 76px;
-  min-width: 220px;
-  padding: 0 52px;
-  text-shadow: 0 2px 0 #5d241b;
+  font-family: var(--font-display), var(--font-noto-sans-thai), sans-serif;
+  font-size: clamp(.95rem, calc(var(--gb-h) * .3), 1.2rem);
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  text-decoration: none;
+  text-shadow: 0 2px 0 var(--gb-ink), 1px 0 0 var(--gb-ink), -1px 0 0 var(--gb-ink), 0 -1px 0 var(--gb-ink);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  filter: drop-shadow(0 3px 3px rgb(74 31 10 / .22));
+  transition: filter .18s ease, transform .18s ease;
 }
-.k2-tab--idle { background-image: url('/ui/kit2/tab-idle.webp'); color: #6a2a17; text-shadow: 0 1px 0 #fff4d6; }
-.k2-progress { background: url('/ui/kit2/progress-track.webp') center / 100% 100% no-repeat; display: inline-block; min-height: 46px; min-width: 260px; padding: 8px; }
-.k2-progress__fill { background: url('/ui/kit2/progress-fill.webp') left center / 100% 100% no-repeat; height: 100%; width: 62%; }
-.k2-radio { background: url('/ui/kit2/radio-off.webp') center / 100% 100% no-repeat; display: inline-block; height: 76px; width: 76px; }
-.k2-radio--on { background-image: url('/ui/kit2/radio-on.webp'); }
-.k2-send, .k2-account { background: center / 100% 100% no-repeat; display: inline-block; height: 86px; width: 86px; }
-.k2-send { background-image: url('/ui/kit2/send-button.webp'); }
-.k2-account { background-image: url('/ui/kit2/icon-account.webp'); }
+.game-button:hover:not(:disabled):not([aria-disabled='true']) { filter: drop-shadow(0 4px 4px rgb(74 31 10 / .26)) brightness(1.05) saturate(1.06); transform: translateY(-1px); }
+.game-button:active:not(:disabled):not([aria-disabled='true']) { filter: drop-shadow(0 1px 1px rgb(74 31 10 / .22)); transform: translateY(2px); }
+.game-button:focus-visible { outline: 3px solid var(--color-focus, #6c43bb); outline-offset: 3px; }
+.game-button > * { position: relative; z-index: 1; }
+
+.game-button--xs { --gb-h: 2.75rem; }
+.game-button--sm { --gb-h: 2.75rem; }
+.game-button--md { --gb-h: 3rem; }
+.game-button--lg { --gb-h: 3.5rem; }
+.game-button--xl { --gb-h: 4rem; }
+.game-button--icon { padding: 0 0 calc(var(--gb-h) * .07); min-width: var(--gb-h); }
+
+.game-button--orange,
+.game-button--primary { --gb-ink: #7a2c05; }
+.game-button--green { --gb-l: url('/ui/kit2/btn/green-l.webp'); --gb-m: url('/ui/kit2/btn/green-m.webp'); --gb-r: url('/ui/kit2/btn/green-r.webp'); --gb-ink: #0a5a26; }
+.game-button--purple { --gb-l: url('/ui/kit2/btn/purple-l.webp'); --gb-m: url('/ui/kit2/btn/purple-m.webp'); --gb-r: url('/ui/kit2/btn/purple-r.webp'); --gb-ink: #3b1677; }
+.game-button--blue { --gb-l: url('/ui/kit2/btn/blue-l.webp'); --gb-m: url('/ui/kit2/btn/blue-m.webp'); --gb-r: url('/ui/kit2/btn/blue-r.webp'); --gb-ink: #0b3f86; }
+.game-button--red { --gb-l: url('/ui/kit2/btn/red-l.webp'); --gb-m: url('/ui/kit2/btn/red-m.webp'); --gb-r: url('/ui/kit2/btn/red-r.webp'); --gb-ink: #7d1420; }
+.game-button--cream,
+.game-button--secondary,
+.game-button--home {
+  --gb-l: url('/ui/kit2/btn/cream-l.webp');
+  --gb-m: url('/ui/kit2/btn/cream-m.webp');
+  --gb-r: url('/ui/kit2/btn/cream-r.webp');
+  color: #5a2812;
+  text-shadow: 0 1px 0 #fff8e7;
+}
+.game-button--home { color: #21456e; }
+.game-button--grey { --gb-l: url('/ui/kit2/btn/grey-l.webp'); --gb-m: url('/ui/kit2/btn/grey-m.webp'); --gb-r: url('/ui/kit2/btn/grey-r.webp'); --gb-ink: #55524f; }
+
+/* Disabled always uses the grey art, whatever the colour was. */
+.game-button.game-button:disabled,
+.game-button.game-button[aria-disabled='true'] {
+  --gb-l: url('/ui/kit2/btn/grey-l.webp');
+  --gb-m: url('/ui/kit2/btn/grey-m.webp');
+  --gb-r: url('/ui/kit2/btn/grey-r.webp');
+  --gb-ink: #66625f;
+  color: #f7f6f5;
+  text-shadow: 0 1px 0 var(--gb-ink), 1px 0 0 var(--gb-ink), -1px 0 0 var(--gb-ink);
+  cursor: not-allowed;
+  opacity: 1;
+  filter: drop-shadow(0 2px 2px rgb(74 31 10 / .14));
+  transform: none;
+}
+
+.game-button.game-button--ghost {
+  background-image: none;
+  color: #5b250f;
+  text-shadow: none;
+  filter: none;
+  padding-inline: 1rem;
+  min-width: 0;
+}
+.game-button.game-button--ghost:hover:not(:disabled) { background-color: rgb(255 241 214 / .7); }
+
+/* ── Wood signs (page titles) ─────────────────────────────────────────────── */
+.kit-sign,
+.wood-sign,
+.student-world .page-heading-sign,
+.student-stage > .app-shell .app-shell-header h1:not(.gf-sign h1) {
+  display: inline-block;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  min-width: min(100%, 9rem);
+  border-style: solid;
+  border-width: .62rem 1.45rem .7rem;
+  border-image: url('/ui/kit2/sign-small.webp') 56 96 fill / .62rem 1.45rem .7rem / 0 stretch;
+  border-radius: 0;
+  padding: .05rem .35rem;
+  background: none;
+  box-shadow: none;
+  color: #5a2412;
+  font-family: var(--font-display), var(--font-noto-sans-thai), sans-serif;
+  font-weight: 800;
+  line-height: 1.22;
+  text-align: center;
+  text-shadow: 0 1px 0 rgb(255 246 222 / .9);
+  filter: drop-shadow(0 3px 2px rgb(74 31 10 / .25));
+}
+/* titles that may wrap: balance lines, never one word per line */
+.kit-sign,
+.student-world .page-heading-sign { display: block; text-wrap: balance; word-break: keep-all; }
+.student-world .eyebrow-chip.eyebrow-chip { display: flex; }
+.student-world .page-heading-sign { font-size: clamp(1.2rem, 5.6vw, 1.6rem); }
+.student-stage > .app-shell .app-shell-header h1:not(.gf-sign h1) { font-size: 1.125rem; }
+.kit-sign--wide {
+  display: block;
+  width: 100%;
+  border-width: .9rem 2.6rem 1rem;
+  border-image: url('/ui/kit2/sign-wide.webp') 90 190 fill / .9rem 2.6rem 1rem / 0 stretch;
+}
+
+/* WoodSign component: wide sign so long titles stay on one/two lines */
+.wood-sign {
+  display: grid;
+  justify-items: center;
+  width: min(100%, 24rem);
+  min-height: 0;
+  margin-inline: auto;
+  border-width: .95rem 2.4rem 1.05rem;
+  border-image: url('/ui/kit2/sign-wide.webp') 90 190 fill / .95rem 2.4rem 1.05rem / 0 stretch;
+  padding: .1rem .2rem;
+  transform: none;
+}
+.wood-sign__rope { display: none; }
+.wood-sign__title { font-size: clamp(1.1rem, 5vw, 1.55rem); line-height: 1.2; text-wrap: balance; word-break: keep-all; }
+.wood-sign__detail { margin-top: .15rem; }
+
+/* gf-sign = game-frame header bar (back · title · count) on the wide wood sign */
+.gf-sign {
+  border-style: solid;
+  border-width: .55rem 1.35rem .65rem;
+  border-image: url('/ui/kit2/sign-wide.webp') 90 190 fill / .55rem 1.35rem .65rem / 0 stretch;
+  border-radius: 0;
+  padding: .15rem .1rem;
+  background: none;
+  box-shadow: none;
+  color: #5a2412;
+  filter: drop-shadow(0 3px 2px rgb(74 31 10 / .22));
+}
+.gf-sign h1,
+.student-world .gf-sign h1 { color: #5a2412; text-shadow: 0 1px 0 rgb(255 246 222 / .9); }
+
+/* ── Cream panels ─────────────────────────────────────────────────────────── */
+.cream-card,
+.student-world .cream-card.cream-card {
+  border-style: solid;
+  border-width: 1.25rem;
+  border-image: url('/ui/kit2/panel-cream.webp') 90 fill / 1.25rem / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+  color: #4b260f;
+  filter: drop-shadow(0 6px 8px rgb(74 31 10 / .16));
+}
+.student-world .cream-card.cream-card::after { display: none; }
+
+/* ── Sheet + dialog frame ─────────────────────────────────────────────────── */
+.sheet-panel.sheet-panel,
+.student-world .sheet-panel.sheet-panel,
+.knowledge-world .sheet-panel.sheet-panel,
+.kit-modal {
+  border-style: solid;
+  border-width: 2.4rem 1.35rem 1.6rem;
+  border-image: url('/ui/kit2/modal-frame.webp') 112 74 96 fill / 2.4rem 1.35rem 1.6rem / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding-top: 1.35rem;
+  color: #4b260f;
+}
+.sheet-panel.sheet-panel > .sheet-grip { display: none; }
+
+/* ── Choice marks (radio / check) ─────────────────────────────────────────── */
+.choice-card-radio.choice-card-radio,
+.student-world .game-choice-card > .choice-card-check > .choice-card-radio {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 999px;
+  background: url('/ui/kit2/radio-off.webp') center / contain no-repeat;
+  box-shadow: none;
+  --tw-ring-color: transparent;
+  --tw-ring-shadow: 0 0 #0000;
+}
+.choice-card-radio.choice-card-radio > svg { display: none; }
+.game-choice-card[aria-pressed='true'] > .choice-card-check > .choice-card-radio.choice-card-radio,
+.student-world .game-choice-card[aria-pressed='true'] > .choice-card-check > .choice-card-radio {
+  background: url('/ui/kit2/badge-check.webp') center / contain no-repeat;
+  box-shadow: none;
+  --tw-ring-color: transparent;
+}
+.kit-radio { display: inline-block; width: 1.75rem; height: 1.75rem; background: url('/ui/kit2/radio-off.webp') center / contain no-repeat; }
+.kit-radio[aria-checked='true'], .kit-radio--on { background-image: url('/ui/kit2/radio-on.webp'); }
+.kit-check { display: inline-block; width: 1.75rem; height: 1.75rem; background: url('/ui/kit2/badge-check.webp') center / contain no-repeat; }
+
+/* ── Chips ────────────────────────────────────────────────────────────────── */
+.kit-chip,
+.student-world .eyebrow-chip.eyebrow-chip {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-style: solid;
+  border-width: .45rem .8rem;
+  border-image: url('/ui/kit2/chip-cream.webp') 50 60 fill / .45rem .8rem / 0 stretch;
+  border-radius: 0;
+  padding: 0 .1rem;
+  background: none;
+  box-shadow: none;
+  color: #6a2a17;
+  font-weight: 800;
+  text-shadow: 0 1px 0 #fff8e7;
+}
+.game-chip[aria-pressed='false'] {
+  border-style: solid;
+  border-width: .5rem .9rem;
+  border-image: url('/ui/kit2/chip-cream.webp') 50 60 fill / .5rem .9rem / 0 stretch;
+  background: none;
+  --tw-ring-color: transparent;
+  --tw-shadow: 0 0 #0000;
+  color: #6a2a17;
+  padding-inline: .1rem;
+}
+
+/* ── Progress bar ─────────────────────────────────────────────────────────── */
+.kit-progress {
+  position: relative;
+  border-style: solid;
+  border-width: 3px 8px;
+  border-image: url('/ui/kit2/progress-track.webp') 18 26 fill / 3px 8px / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  --tw-ring-color: transparent;
+  overflow: hidden;
+}
+.kit-progress > .kit-progress__fill {
+  min-width: 0;
+  background: url('/ui/kit2/progress-fill.webp') left center / 100% 100% no-repeat;
+  border-radius: 999px;
+}
+.kit-progress--sm { height: .75rem; }
+.kit-progress--md { height: 1rem; }
+.kit-progress--lg { height: 1.25rem; }
+
+/* ── Legacy CTA utilities → same kit2 button art ─────────────────────────── */
+.btn-go.btn-go,
+.student-world .btn-go.btn-go,
+.btn-confirm.btn-confirm {
+  --gb-h: 3.5rem;
+  --gb-cap: calc(var(--gb-h) * 0.4384);
+  --gb-l: url('/ui/kit2/btn/orange-l.webp');
+  --gb-m: url('/ui/kit2/btn/orange-m.webp');
+  --gb-r: url('/ui/kit2/btn/orange-r.webp');
+  --gb-ink: #7a2c05;
+  height: var(--gb-h);
+  min-height: 0;
+  border: 0;
+  border-radius: calc(var(--gb-h) * .34);
+  padding: 0 calc(var(--gb-cap) * .8) calc(var(--gb-h) * .09);
+  background-color: transparent;
+  background-image: var(--gb-l), var(--gb-r), var(--gb-m);
+  background-position: left center, right center, center center;
+  background-repeat: no-repeat;
+  background-size: auto 100%, auto 100%, max(0px, calc(100% - var(--gb-cap) * 2 + 2px)) 100%;
+  box-shadow: none;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--gb-ink), 1px 0 0 var(--gb-ink), -1px 0 0 var(--gb-ink), 0 -1px 0 var(--gb-ink);
+  filter: drop-shadow(0 3px 3px rgb(74 31 10 / .22));
+}
+.btn-confirm.btn-confirm { --gb-l: url('/ui/kit2/btn/green-l.webp'); --gb-m: url('/ui/kit2/btn/green-m.webp'); --gb-r: url('/ui/kit2/btn/green-r.webp'); --gb-ink: #0a5a26; }
+.btn-go.btn-go:disabled, .btn-go.btn-go[aria-disabled='true'],
+.btn-confirm.btn-confirm:disabled, .btn-confirm.btn-confirm[aria-disabled='true'] {
+  --gb-l: url('/ui/kit2/btn/grey-l.webp'); --gb-m: url('/ui/kit2/btn/grey-m.webp'); --gb-r: url('/ui/kit2/btn/grey-r.webp'); --gb-ink: #66625f;
+  opacity: 1;
+  filter: none;
+}
+
+/* Join screen title plaque → small wood sign */
+.join-title-plaque.join-title-plaque {
+  border-style: solid;
+  border-width: .62rem 1.45rem .7rem;
+  border-image: url('/ui/kit2/sign-small.webp') 56 96 fill / .62rem 1.45rem .7rem / 0 stretch;
+  border-radius: 0;
+  padding: 0 .3rem;
+  background: none;
+  box-shadow: none;
+  color: #5a2412;
+  filter: drop-shadow(0 3px 2px rgb(74 31 10 / .25));
+}
+.join-title-plaque.join-title-plaque h1 { text-shadow: 0 1px 0 rgb(255 246 222 / .9); }

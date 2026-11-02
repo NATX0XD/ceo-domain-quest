@@ -1,16 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { StudentShell } from '@/components/student-shell'
 import { AppFooter } from '@/components/app-shell'
 import { QuizStepper } from '@/components/quiz-stepper-client'
+import './game-result.css'
+import './check.css'
 import { FlowNote, StageLine, useFlowFeedback } from '@/components/flow-feedback-client'
 import {
   Button,
   ChevronRightIcon,
   LightbulbIcon,
-  ProgressBar,
   SendIcon,
   cn,
 } from '@/components/ui'
@@ -127,31 +128,33 @@ export function CheckClient({
           state={{ kind: 'done', text: 'บันทึกคำตอบแล้ว ขั้นต่อไปคือไปยืนยันระดับตัวช่วยที่หน้ารู้จักตัวเอง' }}
         />
 
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3">
-          <p className="text-label font-semibold text-ink-muted">ตอบตรงแนว</p>
-          <p className="text-hero font-extrabold tabular-nums text-brand-700">
-            {result.score}
-            <span className="text-title text-ink-subtle"> / {result.total}</span>
+        <section className="gf-panel gr-reveal" aria-label={`ตอบตรงแนว ${result.score} จาก ${result.total} ข้อ`}>
+          <div className="gr-medal" aria-hidden="true">
+            <span className="gr-glow" />
+            <img src="/icons/3d/bullseye.webp" alt="" className="gr-medal-img ck-art" />
+          </div>
+          <p className="gr-label">ตอบตรงแนว</p>
+          <p className="gr-score">
+            <span className="gr-score-num">{result.score}</span>
+            <span className="gr-score-total">/ {result.total}</span>
           </p>
-          <ProgressBar
-            className="w-full"
-            value={result.score}
-            max={result.total}
-            tone="brand"
-            label={`ตอบตรงแนว ${result.score} จาก ${result.total} ข้อ`}
-            hideLabel
-            showValue={false}
-          />
-          <p className="text-center text-body text-pretty text-ink">
-            ระบบเสนอระดับตัวช่วยที่ {result.suggestedLevel}
-            {result.levelReason ? ` ${result.levelReason}` : ''}
+          <div className="gr-bar" role="presentation">
+            <span
+              className="gr-bar-fill"
+              style={{ '--pct': `${result.total > 0 ? Math.round((Math.min(result.score, result.total) / result.total) * 100) : 0}%` } as CSSProperties}
+            />
+          </div>
+          <ul className="gr-chips">
+            <li>ระบบเสนอตัวช่วยระดับ {result.suggestedLevel}</li>
+          </ul>
+          {result.levelReason ? (
+            <p className="ck-reason">{result.levelReason}</p>
+          ) : null}
+          <p className="ck-tip">
+            <LightbulbIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0" />
+            <span>ผลนี้ไม่ใช่คะแนนเก็บ และเปลี่ยนระดับเองได้ทุกเมื่อ</span>
           </p>
-        </div>
-
-        <p className="flex shrink-0 items-start justify-center gap-1.5 text-center text-label text-pretty text-ink-muted">
-          <LightbulbIcon width={18} height={18} aria-hidden className="mt-0.5 shrink-0" />
-          <span>ผลนี้ไม่ใช่คะแนนเก็บ และเปลี่ยนระดับเองได้ทุกเมื่อ</span>
-        </p>
+        </section>
       </StudentShell>
     )
   }

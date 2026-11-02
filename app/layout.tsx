@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Mitr, Noto_Sans_Thai } from 'next/font/google'
 import './globals.css'
+import './kit2.css'
 import { PRODUCT_NAME_FULL } from '@/components/product'
 
 const notoSansThai = Noto_Sans_Thai({

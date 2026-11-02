@@ -4,7 +4,9 @@ import { businessTypes } from '@/core/content'
 import { SetupForm } from '@/components/setup-form'
 import { SignInGate } from '@/components/student-shell'
 import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
-import { CreamCard, ChevronRightIcon, DomeAvatar, LockIcon } from '@/components/ui'
+import { ChevronRightIcon } from '@/components/ui'
+import { PageStateCard, PageStateTip } from '@/components/page-state-card'
+import './setup-locked.css'
 import { isShopProfileLocked, loadShopProfile } from '@/components/server/game-state'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 
@@ -31,7 +33,7 @@ export default async function SetupPage() {
     return (
       <AppShell
         className="student-world student-display media-shell setup-locked-shell"
-        mainClassName="grid place-items-center"
+        mainClassName="flex flex-col"
         header={<AppHeader backHref="/home"><h1>ตั้งค่าร้านของเรา</h1></AppHeader>}
         footer={
           <AppFooter>
@@ -45,24 +47,21 @@ export default async function SetupPage() {
           </AppFooter>
         }
       >
-        <div className="flex flex-col items-center gap-5 px-4 py-8 text-center">
-        <DomeAvatar mood="cheer" size={112} decorative />
-
-        <h1 className="flex items-center gap-2 text-title font-extrabold text-balance text-ink">
-          <LockIcon width={26} height={26} aria-hidden className="shrink-0 text-brand-600" />
-          ข้อมูลร้านถูกล็อกแล้ว
-        </h1>
-
-        <p className="max-w-[24rem] text-body text-pretty text-ink-muted">
-          เริ่มทำภารกิจไปแล้ว จึงแก้ข้อมูลร้านไม่ได้ ถ้าจำเป็นต้องแก้ให้ยกมือบอกครู
-        </p>
-
-        <CreamCard className="setup-locked-card w-full max-w-[24rem] p-5 text-left">
-          <p className="text-label font-semibold text-ink-muted">ร้านของเรา</p>
-          <p className="mt-1 text-title-sm font-extrabold text-balance text-brand-700">
-            {profile?.shopName ?? 'ยังไม่มีข้อมูล'}
-          </p>
-        </CreamCard>
+        <div className="flex h-full min-h-0 w-full flex-col px-4 py-4">
+          <PageStateCard
+            art="/icons/3d/locked.webp"
+            title="ข้อมูลร้านถูกล็อกแล้ว"
+            body="เริ่มทำภารกิจไปแล้ว จึงแก้ข้อมูลร้านไม่ได้ ถ้าจำเป็นต้องแก้ให้ยกมือบอกครู"
+          >
+            <div className="setup-locked-shop">
+              <img src="/ui/home/shop-stage-5.webp" alt="" />
+              <div>
+                <p>ร้านของเรา</p>
+                <strong>{profile?.shopName ?? 'ยังไม่มีข้อมูล'}</strong>
+              </div>
+            </div>
+            <PageStateTip icon="/icons/3d/rocket.webp">ข้อมูลร้านนี้ใช้ต่อในทุกภารกิจจนจบคาบ</PageStateTip>
+          </PageStateCard>
         </div>
       </AppShell>
     )

@@ -3,7 +3,9 @@ import Link from 'next/link'
 import { getStudent, listSubmissions } from '@/lib/db/repo'
 import { SignInGate } from '@/components/student-shell'
 import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
-import { DomeAvatar, EmptyState, StarIcon } from '@/components/ui'
+import { StarIcon } from '@/components/ui'
+import { PageStateCard, PageStateTip } from '@/components/page-state-card'
+import './my-site.css'
 import { loadShopProfile } from '@/components/server/game-state'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 
@@ -42,7 +44,7 @@ export default async function MySitePage() {
     <AppShell
       // ยังไม่มีชื่อเว็บ = เนื้อหาสั้นมาก ถ้าไม่จัดกลางแนวตั้งจะเหลือพื้นที่ว่างครึ่งจอ
       className="student-world student-display media-shell my-site-world"
-      mainClassName={domain === null ? 'grid place-items-center' : undefined}
+      mainClassName={domain === null ? 'flex flex-col' : undefined}
       header={
         <AppHeader backHref="/home">
           <p className="eyebrow-chip">
@@ -79,17 +81,16 @@ export default async function MySitePage() {
         </AppFooter>
       }
     >
-      <div className="w-full px-4 pt-4 pb-6">
+      <div className={domain === null ? 'flex h-full min-h-0 w-full flex-col px-4 py-4' : 'w-full px-4 pt-4 pb-6'}>
       {domain === null ? (
-        <div className="flex flex-col items-center gap-4">
-          <DomeAvatar mood="greet" size={112} decorative />
-          <EmptyState
-            as="h2"
-            title="ยังไม่มีชื่อเว็บที่ส่ง"
-            description="ไปยื่นจดชื่อเว็บที่ภารกิจที่ 3 หรือส่งใบเสนอที่ด่านบอสก่อน แล้วกลับมาดูหน้านี้ได้เลย"
-            className="w-full"
-          />
-        </div>
+        <PageStateCard
+          art="/ui/home/shop-stage-1.webp"
+          title="ยังไม่มีชื่อเว็บที่ส่ง"
+          body="ส่งชื่อเว็บก่อน แล้วหน้านี้จะกลายเป็นเว็บไซต์ร้านของเรา"
+        >
+          <PageStateTip icon="/icons/3d/memo.webp">ยื่นจดชื่อเว็บที่ภารกิจที่ 3</PageStateTip>
+          <PageStateTip icon="/icons/3d/crown.webp">หรือส่งใบเสนอที่ด่านบอส แล้วกลับมาดูหน้านี้ได้เลย</PageStateTip>
+        </PageStateCard>
       ) : (
         <>
           {/* หน้าจอเบราว์เซอร์จำลอง — แถบที่อยู่โชว์โดเมนที่เด็กคิดเอง */}
@@ -106,8 +107,9 @@ export default async function MySitePage() {
 
             {/* แบนเนอร์หัวเว็บจำลอง — ให้เห็นภาพว่า "เว็บของเราจะมีหน้าตาแบบนี้"
                 ไม่ใช่กล่องข้อความบนพื้นขาวธรรมดา */}
-            <div className="panel-hero rounded-none px-5 py-7 text-center">
+            <div className="panel-hero rounded-none px-5 py-6 text-center">
               <span aria-hidden="true" className="panel-hero-glow" />
+              <img src="/ui/home/shop-stage-5.webp" alt="" className="ms-hero-shop" />
               <p className="relative text-title font-black text-balance">
                 {shopName ?? 'ร้านของฉัน'}
               </p>
@@ -141,7 +143,8 @@ export default async function MySitePage() {
             </div>
           </div>
 
-          <p className="mt-4 text-label text-pretty text-ink-muted">
+          <p className="ms-credit">
+            <img src="/icons/3d/glowing-star.webp" alt="" />
             ชื่อนี้ {student?.nickname ? `${student.nickname} ` : ''}คิดเองและอธิบายเหตุผลเองทั้งหมด
           </p>
         </>

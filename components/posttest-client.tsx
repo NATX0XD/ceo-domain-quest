@@ -95,9 +95,6 @@ export function PosttestClient({
   }
 
   if (result) {
-    const chips: string[] = []
-    if (result.preScore !== null) chips.push(`ก่อนเรียน ${result.preScore}`)
-    if (result.gain !== null && result.gain > 0) chips.push(`เพิ่มขึ้น ${result.gain} ข้อ`)
     return (
       <GameScore
         title="หลังเรียน"
@@ -106,7 +103,11 @@ export function PosttestClient({
         label="คะแนนหลังเรียน"
         score={result.score}
         total={result.total}
-        chips={chips}
+        compare={
+          result.preScore !== null
+            ? { before: result.preScore, after: result.score, gain: result.gain }
+            : null
+        }
         ctaHref="/reflect"
         ctaLabel="ไปทบทวนตัวเอง"
       />

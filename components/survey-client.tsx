@@ -3,13 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { StudentShell } from '@/components/student-shell'
+import { PageStateCard, PageStateTip } from '@/components/page-state-card'
 import { AppFooter } from '@/components/app-shell'
 import { DomeTip, FlowNote, StageLine, useFlowFeedback } from '@/components/flow-feedback-client'
 import {
   Button,
-  CheckIcon,
   ChevronRightIcon,
-  InfoIcon,
   ProgressBar,
   SendIcon,
   cn,
@@ -117,13 +116,13 @@ export function SurveyClient({
         <FlowNote
           state={{ kind: 'done', text: 'ส่งแบบสอบถามแล้ว ครูเห็นเป็นภาพรวมของทั้งห้อง ไม่รู้ว่าใครตอบอะไร' }}
         />
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 text-center">
-          <span aria-hidden="true" className="grid size-20 place-items-center rounded-full bg-quest-100 text-quest-700">
-            <CheckIcon width={44} height={44} />
-          </span>
-          <h1 className="text-title font-extrabold text-balance text-ink">ขอบคุณที่ตอบนะ</h1>
-          <p className="max-w-[22rem] text-body text-pretty text-ink-muted">{note}</p>
-        </div>
+        <PageStateCard
+          tone="done"
+          art="/icons/3d/party-popper.webp"
+          badge="/ui/kit2/badge-check.webp"
+          title="ขอบคุณที่ตอบนะ"
+          body={note}
+        />
       </StudentShell>
     )
   }
@@ -144,16 +143,17 @@ export function SurveyClient({
         }
       >
         <StageLine stage="ความเห็นของเรา" remain="ยังไม่เปิด" />
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 text-center">
-          <InfoIcon width={56} height={56} aria-hidden className="text-brand-400" />
-          <h1 className="text-title font-extrabold text-balance text-ink">ครูยังไม่ได้เปิดแบบสอบถาม</h1>
-          <p className="max-w-[22rem] text-body text-pretty text-ink-muted">
-            {reason ?? 'ถ้าอยากตอบให้บอกครูเปิดให้ หรือกลับมาตอบทีหลังก็ได้'}
-          </p>
-          <DomeTip mood="greet">
-            ระหว่างรอ กลับไปดูสรุปของเราหรือดูผลงานเพื่อนก่อนก็ได้ครับ พอครูเปิดแล้วหน้านี้จะตอบได้ทันที
-          </DomeTip>
-        </div>
+        <PageStateCard
+          tone="wait"
+          live
+          art="/icons/3d/clipboard.webp"
+          badge="/icons/3d/locked.webp"
+          title="ครูยังไม่ได้เปิดแบบสอบถาม"
+          body={reason ?? 'ถ้าอยากตอบให้บอกครูเปิดให้ หรือกลับมาตอบทีหลังก็ได้'}
+        >
+          <PageStateTip icon="/icons/3d/trophy.webp">ระหว่างรอ กลับไปดูสรุปของเราก่อนก็ได้</PageStateTip>
+          <PageStateTip icon="/icons/3d/bell.webp">พอครูเปิดแล้ว กลับมาหน้านี้ตอบได้ทันที</PageStateTip>
+        </PageStateCard>
       </StudentShell>
     )
   }

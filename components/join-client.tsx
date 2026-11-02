@@ -15,6 +15,7 @@ import {
   ToastViewport,
 } from '@/components/ui'
 import { AppFooter, AppShell } from '@/components/app-shell'
+import './join.css'
 
 /**
  * หน้าเข้าห้องเรียนของนักเรียน
@@ -150,17 +151,6 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
             {busy ? 'กำลังเข้าห้องเรียน…' : mode === 'join' ? 'เข้าห้องเรียน' : 'เข้าห้องเดิม'}
           </GameButton>
 
-          <GameButton
-            type="button"
-            variant="secondary"
-            className="w-full min-h-14"
-            onClick={() => {
-              setMode(mode === 'join' ? 'resume' : 'join')
-              setError(null)
-            }}
-          >
-            {mode === 'join' ? 'เคยเข้าแล้ว ย้ายเครื่อง' : 'ยังไม่เคยเข้า ขอเข้าครั้งแรก'}
-          </GameButton>
         </AppFooter>
       }
     >
@@ -178,10 +168,35 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
         <span aria-hidden="true">←</span> หน้าแรก
       </Link>
 
-      <header className="relative z-10 mx-auto mb-2 max-w-[25rem] text-center text-[#4a1f0a]">
-        <p className="text-title-sm font-extrabold">เข้าห้องเรียน</p>
-        <p className="text-label font-semibold">รหัสห้อง · ชื่อเล่น · PIN 4 หลัก</p>
-      </header>
+      <div className="jn-tabs" role="tablist" aria-label="วิธีเข้าห้อง">
+        {(
+          [
+            ['join', 'ยังไม่เคยเข้า', 'เข้าครั้งแรก', '/icons/3d/glowing-star.webp'],
+            ['resume', 'เคยเข้าแล้ว', 'ย้ายเครื่อง', '/icons/3d/counterclockwise-arrows-button.webp'],
+          ] as const
+        ).map(([m, small, label, icon]) => (
+          <button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={mode === m}
+            className="jn-tab focus-ring"
+            onClick={() => {
+              setMode(m)
+              setError(null)
+            }}
+          >
+            <img src={icon} alt="" />
+            <span className="jn-tab-text">
+              <small>{small}</small>
+              {label}
+            </span>
+          </button>
+        ))}
+      </div>
+      <p className="jn-sub">
+        {mode === 'join' ? 'ครั้งแรกในห้องนี้ ตั้ง PIN เอง' : 'เคยเข้าแล้ว ใช้ชื่อเล่นกับ PIN เดิม'}
+      </p>
 
       <section className="join-frame-stage" aria-label="แบบฟอร์มเข้าห้องเรียน">
         <img src="/ui/join/official-frame.webp" alt="กรอบไม้ประดับตัวละครสำหรับแบบฟอร์มเข้าห้องเรียน" aria-hidden="true" className="join-frame-art" />
@@ -234,6 +249,13 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
           label={mode === 'join' ? 'ตั้งรหัส 4 หลักของตัวเอง' : 'รหัส 4 หลักเดิม'}
           disabled={busy}
         />
+
+        <p className="jn-hint">
+          <img src={mode === 'join' ? '/icons/3d/light-bulb.webp' : '/icons/3d/locked.webp'} alt="" />
+          {mode === 'join'
+            ? 'จำชื่อเล่นกับ PIN ไว้ ใช้ตอนย้ายเครื่อง'
+            : 'สะกดชื่อเล่นให้เหมือนตอนเข้าครั้งแรก'}
+        </p>
       </form>
 
         </div>

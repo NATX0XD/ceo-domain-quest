@@ -136,7 +136,7 @@ export function ChoiceCard({
         ) : (
           <span
             className={cn(
-              'grid size-6 place-items-center rounded-full ring-2 ring-inset',
+              'choice-card-radio grid size-6 place-items-center rounded-full ring-2 ring-inset',
               selected ? 'bg-brand-600 ring-brand-600' : 'ring-line-contrast',
             )}
           >

@@ -1,0 +1,17 @@
+/* /check result body (shares gr-* reveal styles from game-result.css) */
+img.ck-art { width: 7.5rem; height: 7.5rem; }
+.ck-reason { max-width: 21rem; color: #4a1f0a; font-size: 1rem; font-weight: 700; line-height: 1.55; text-wrap: pretty; }
+.ck-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: .4rem;
+  margin-top: .35rem;
+  padding: .5rem .8rem;
+  border-radius: 1rem;
+  background: #fff8e8;
+  border: 2px solid rgb(107 45 18 / .25);
+  color: #6b4a2e;
+  font-size: .9rem;
+  font-weight: 700;
+  text-align: left;
+}

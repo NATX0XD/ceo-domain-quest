@@ -99,7 +99,7 @@ export function Chip({
           : undefined
       }
       className={cn(
-        'inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full font-bold',
+        'game-chip inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full font-bold',
         'ring-2 ring-inset shadow-soft-1 select-none',
         'transition-[background-color,color,box-shadow,transform] duration-200 ease-[var(--ease-soft)]',
         'focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus',

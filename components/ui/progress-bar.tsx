@@ -74,13 +74,14 @@ export function ProgressBar({
         aria-valuenow={clamped}
         aria-valuetext={`${percent} เปอร์เซ็นต์`}
         className={cn(
-          'w-full overflow-hidden rounded-full bg-surface-sunken ring-1 ring-line ring-inset',
+          'kit-progress w-full overflow-hidden rounded-full bg-surface-sunken ring-1 ring-line ring-inset',
+          `kit-progress--${size}`,
           SIZE_CLASS[size],
         )}
       >
         <div
           className={cn(
-            'h-full rounded-full transition-[width] duration-500 ease-[var(--ease-soft)] motion-reduce:transition-none',
+            'kit-progress__fill h-full rounded-full transition-[width] duration-500 ease-[var(--ease-soft)] motion-reduce:transition-none',
             TONE_CLASS[tone],
           )}
           style={{ width: `${percent}%` }}

@@ -1,0 +1,102 @@
+/* PageStateCard — page-level status cards (survey / setup locked / my-site / ceo). */
+.psc {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  padding: 1.25rem 1rem 1.1rem;
+  border: 3px solid #6b2d12;
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(110% 55% at 50% 0%, rgb(255 214 102 / .45), transparent 70%),
+    rgb(255 241 214 / .97);
+  box-shadow: 0 5px 0 rgb(107 45 18 / .3);
+  text-align: center;
+  overflow: hidden auto;
+}
+.psc-done { background: radial-gradient(110% 55% at 50% 0%, rgb(126 224 107 / .4), transparent 70%), rgb(255 241 214 / .97); }
+.psc-wait { background: radial-gradient(110% 55% at 50% 0%, rgb(183 148 255 / .35), transparent 70%), rgb(255 241 214 / .97); }
+
+.psc-art {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 8.5rem;
+  height: 8.5rem;
+}
+.psc-glow {
+  position: absolute;
+  inset: -8%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgb(255 236 170) 0%, rgb(255 205 80 / .45) 45%, transparent 70%);
+  animation: psc-glow 2.8s ease-in-out infinite;
+}
+.psc-done .psc-glow { background: radial-gradient(circle, rgb(220 255 205) 0%, rgb(126 224 107 / .45) 45%, transparent 70%); }
+.psc-wait .psc-glow { background: radial-gradient(circle, rgb(240 230 255) 0%, rgb(183 148 255 / .45) 45%, transparent 70%); }
+img.psc-art-img {
+  position: relative;
+  width: 6.25rem;
+  height: 6.25rem;
+  max-width: none;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 0 rgb(74 31 10 / .2));
+  animation: psc-bob 3s ease-in-out infinite;
+}
+img.psc-badge {
+  position: absolute;
+  right: .4rem;
+  bottom: .5rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  max-width: none;
+}
+.psc-title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  line-height: 1.35;
+  color: #3b1707;
+  text-wrap: balance;
+}
+.psc-body {
+  max-width: 22rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.6;
+  color: #6b4a2e;
+  text-wrap: pretty;
+}
+.psc-extra {
+  display: flex;
+  width: 100%;
+  max-width: 21rem;
+  flex-direction: column;
+  gap: .5rem;
+  margin-top: .4rem;
+}
+.psc-tip {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  padding: .6rem .8rem;
+  border: 2px solid rgb(107 45 18 / .3);
+  border-radius: 1rem;
+  background: #fff8e8;
+  color: #4a1f0a;
+  font-size: .95rem;
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: left;
+}
+.psc-tip img { width: 2rem; height: 2rem; max-width: none; flex: none; }
+
+@keyframes psc-glow { 0%, 100% { opacity: .75; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.04); } }
+@keyframes psc-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@media (prefers-reduced-motion: reduce) {
+  .psc-glow, img.psc-art-img { animation: none; }
+}

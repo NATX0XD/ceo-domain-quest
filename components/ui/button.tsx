@@ -80,6 +80,7 @@ export function Button({
         'btn-base',
         SIZE_CLASS[size],
         VARIANT_CLASS[variant],
+        variant === 'ghost' ? null : `game-button--${size}`,
         fullWidth ? 'w-full' : 'w-auto',
         className,
       )}
@@ -148,6 +149,7 @@ export function IconButton({
         'btn-base shrink-0 rounded-full px-0',
         box,
         VARIANT_CLASS[variant],
+        variant === 'ghost' ? null : `game-button--${size} game-button--icon`,
         className,
       )}
       {...rest}

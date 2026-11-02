@@ -1,0 +1,68 @@
+/* /reflect page body (components/reflect-client.tsx) */
+.rf-feel-grid {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(6.25rem, 1fr);
+  gap: .65rem;
+}
+.rf-feel-grid > .gf-feel:last-child:nth-child(odd) { grid-column: 1 / -1; flex-direction: row; gap: .75rem; }
+.rf-feel-grid .gf-feel { font-size: 1.0625rem; transition: transform .15s ease; }
+.rf-feel-grid .gf-feel:active { transform: scale(.97); }
+img.rf-feel-img { width: 3.75rem; height: 3.75rem; max-width: none; }
+.rf-feel-grid .gf-feel[aria-pressed='true'] img.rf-feel-img { animation: gr-pop .45s cubic-bezier(.2, 1.5, .4, 1) both; }
+
+.rf-stars-wrap {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  border-radius: 1.25rem;
+  background: radial-gradient(70% 55% at 50% 45%, rgb(255 214 102 / .45), transparent 75%);
+}
+.rf-stars { display: flex; justify-content: center; gap: .15rem; }
+.student-world .rf-stars .gf-star { width: 3.75rem; height: 3.75rem; background: transparent; box-shadow: none; border: 0; }
+img.rf-star-img {
+  width: 3.4rem;
+  height: 3.4rem;
+  max-width: none;
+  filter: grayscale(1) opacity(.35);
+  transition: filter .2s ease, transform .2s ease;
+}
+.rf-stars .gf-star[aria-checked='true'] { filter: none; }
+.rf-stars .gf-star[aria-checked='true'] img.rf-star-img { filter: drop-shadow(0 3px 0 rgb(74 31 10 / .3)); transform: scale(1.06); }
+.rf-stars-caption {
+  padding: .3rem 1rem;
+  border: 2px solid rgb(107 45 18 / .35);
+  border-radius: 9999px;
+  background: #fff8e8;
+  color: #4a1f0a;
+  font-weight: 900;
+}
+
+img.rf-trophy { width: 8rem; height: 8rem; }
+img.rf-score-star { width: 2.75rem; height: 2.75rem; max-width: none; align-self: center; }
+.rf-survey-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: .45rem;
+  margin-top: .5rem;
+  padding: 0 1rem;
+  border: 2px solid rgb(107 45 18 / .4);
+  border-radius: 9999px;
+  background: #fff8e8;
+  color: #8a4a21;
+  font-size: .95rem;
+  font-weight: 900;
+}
+.rf-survey-link img { width: 1.6rem; height: 1.6rem; max-width: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-feel-grid .gf-feel,
+  img.rf-star-img { transition: none; }
+  .rf-feel-grid .gf-feel[aria-pressed='true'] img.rf-feel-img { animation: none; }
+}

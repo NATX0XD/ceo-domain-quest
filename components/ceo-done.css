@@ -1,0 +1,5 @@
+/* /ceo submitted / graded hero (components/ceo-client.tsx) */
+.psc.ceo-done-hero { flex: none; margin-top: .25rem; padding-top: 1rem; }
+.ceo-done-hero .psc-art { width: 7.5rem; height: 7.5rem; }
+.ceo-done-hero img.psc-art-img { width: 5.5rem; height: 5.5rem; }
+.ceo-done-title { font-size: 1.75rem; }

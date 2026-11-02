@@ -1159,101 +1159,7 @@ select {
    screens in the same island world. Page-specific content stays HTML/React;
    this layer only supplies the brand material, depth, and tactile states.
    -------------------------------------------------------------------------- */
-.game-button {
-  display: inline-flex;
-  min-height: 3.5rem;
-  align-items: center;
-  justify-content: center;
-  gap: .55rem;
-  position: relative;
-  overflow: visible;
-  /* ปุ่มแคปซูลมันวาวตามแบบของทีม — วาดด้วย CSS แทนการต่อภาพซ้าย/กลาง/ขวา
-     เพราะภาพที่ตัดมามีลูกศร ใบไม้ และส่วนเบลอติดขอบ พอยืดปุ่มแล้วต่อกันไม่เนียน */
-  border: 3px solid var(--game-edge, #6b2d12);
-  border-radius: 999px;
-  padding: .75rem 1.6rem;
-  font-family: var(--font-display), var(--font-noto-sans-thai), sans-serif;
-  font-size: 1.08rem;
-  font-weight: 800;
-  line-height: 1.25;
-  white-space: nowrap;
-  cursor: pointer;
-  background-color: var(--game-base, #ff8a19);
-  background-image:
-    radial-gradient(60% 40% at 22% 18%, rgb(255 255 255 / .55), transparent 70%),
-    linear-gradient(180deg, rgb(255 255 255 / .32) 0, rgb(255 255 255 / .1) 40%, transparent 48%),
-    var(--game-fill);
-  background-repeat: no-repeat;
-  box-shadow: inset 0 -4px 0 rgb(0 0 0 / .14), 0 5px 0 var(--game-edge, #6b2d12), 0 10px 16px rgb(74 31 10 / .16);
-  color: #fff;
-  text-shadow: 0 2px 0 #6b2d12, 1px 0 0 #6b2d12, -1px 0 0 #6b2d12;
-  transition: filter .18s ease, transform .18s ease, box-shadow .18s ease;
-}
-.game-button:hover:not(:disabled) { filter: saturate(1.08) brightness(1.04); transform: translateY(-1px); }
-.game-button:active:not(:disabled) { transform: translateY(3px); box-shadow: inset 0 -2px 0 rgb(0 0 0 / .14), 0 2px 0 var(--game-edge, #6b2d12); }
-/* ปุ่มกดไม่ได้ใช้ชิ้นปุ่มเทาของทีมเสมอ ไม่ว่าเดิมเป็นสีไหน จะได้ไม่ออกน้ำตาลขุ่นจนดูเหมือนกดได้ */
-.game-button:disabled,
-.game-button:disabled:is(.game-button--orange, .game-button--primary, .game-button--green, .game-button--blue, .game-button--purple, .game-button--cream, .game-button--secondary, .game-button--red, .game-button--home) {
-  --game-base: #969392;
-  --game-fill: linear-gradient(180deg, #d9d6d4 0%, #a7a3a0 100%);
-  --game-edge: #77706c;
-  background-color: transparent;
-  cursor: not-allowed;
-  filter: none;
-  opacity: .9;
-  color: #f7f6f5;
-  text-shadow: 0 1px 0 #77706c, 1px 0 0 #77706c, -1px 0 0 #77706c;
-}
-.game-button--orange,
-.game-button--primary {
-  --game-fill: linear-gradient(180deg, #ffc51b 0%, #ff7411 100%);
-}
-.game-button--green {
-  --game-base: #0aab47;
-  --game-fill: linear-gradient(180deg, #43df55 0%, #0aab47 100%);
-}
-.game-button--blue {
-  --game-base: #086ddd;
-  --game-fill: linear-gradient(180deg, #34aafc 0%, #086ddd 100%);
-}
-.game-button--purple {
-  --game-base: #7319dc;
-  --game-fill: linear-gradient(180deg, #c766ff 0%, #7319dc 100%);
-}
-.game-button--cream,
-.game-button--secondary {
-  --game-base: #ffdca8;
-  --game-fill: linear-gradient(180deg, #fffdf0 0%, #ffdca8 100%);
-  color: #5a2812;
-  text-shadow: 0 1px 0 #fff;
-  box-shadow: 0 5px 0 #6b2d12, 0 8px 14px rgb(74 31 10 / .12);
-}
-.game-button--red {
-  --game-base: #d92e45;
-  --game-fill: linear-gradient(180deg, #ff6572 0%, #d92e45 100%);
-}
-.game-button--grey {
-  --game-base: #969392;
-  --game-fill: linear-gradient(180deg, #d2d0d0 0%, #969392 100%);
-}
-.game-button--home {
-  --game-base: #e8e0d4;
-  --game-fill: linear-gradient(180deg, #fffdf7 0%, #e8e0d4 100%);
-  color: #21456e;
-  text-shadow: 0 1px 0 #fff;
-  box-shadow: 0 5px 0 #6b2d12, 0 8px 14px rgb(74 31 10 / .12);
-}
-.game-button--ghost {
-  --game-left: none;
-  --game-fill: linear-gradient(transparent, transparent);
-  --game-right: none;
-  border-color: transparent;
-  background-image: none;
-  color: #5b250f;
-  text-shadow: none;
-  box-shadow: none;
-}
-.game-button > * { position: relative; z-index: 1; }
+/* .game-button now lives in app/kit2.css (kit2 left/mid/right art). */
 
 .cream-card {
   border: 2px solid rgb(107 45 18 / .36);
@@ -1313,18 +1219,6 @@ select {
   border: 2px solid rgb(107 45 18 / .22);
   background: rgb(255 241 214 / .95);
   box-shadow: 0 5px 0 rgb(107 45 18 / .13), 0 12px 22px rgb(74 31 10 / .1);
-}
-.student-world .page-heading-sign,
-.student-world .app-shell-header h1:not(.gf-sign h1) {
-  display: inline-block;
-  max-width: 100%;
-  padding: .25rem .85rem .35rem;
-  border: 2px solid #633218;
-  border-radius: .8rem;
-  background: linear-gradient(180deg, #bb6a2f, #8b4a21);
-  color: #fff7df;
-  text-shadow: 0 2px 0 #421a0a;
-  box-shadow: 0 4px 0 #4a1f0a, inset 0 2px 0 rgb(255 215 147 / .48);
 }
 .student-world .btn-quest,
 .student-world .btn-base[class*='bg-brand-600'],
@@ -2098,16 +1992,10 @@ select {
   border-color: rgb(107 45 18 / .24);
   box-shadow: 0 4px 16px rgb(74 31 10 / .1);
 }
-.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .app-shell-header h1 {
-  display: inline-block;
-  max-width: 100%;
-  padding: .25rem .85rem .35rem;
-  border: 2px solid #633218;
-  border-radius: .8rem;
-  background: linear-gradient(180deg, #bb6a2f, #8b4a21);
-  color: #fff7df;
-  text-shadow: 0 2px 0 #421a0a;
-  box-shadow: 0 4px 0 #4a1f0a, inset 0 2px 0 rgb(255 215 147 / .48);
+.student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .app-shell-header h1:not(.gf-sign h1) {
+  /* page-title sign art lives in app/kit2.css (.kit-sign) */
+  color: #5a2412;
+  text-shadow: 0 1px 0 rgb(255 246 222 / .9);
 }
 .student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .card-soft,
 .student-stage > .app-shell:not(:has(.welcome-shell)):not(:has(.media-landing-main)):not(:has(.media-join-main)):not(:has(.media-dome-shell)):not(:has(.map-page)) .card-work,
@@ -2233,8 +2121,6 @@ select {
 }
 
 /* Compact pages use the same wood-plaque heading rhythm as welcome. */
-.student-world .app-shell-header h1,
-.student-world .page-heading-sign,
 .student-game-screen .m1-intro-copy h2 {
   text-shadow: 0 2px 0 #421a0a;
 }

@@ -1,0 +1,15 @@
+/* /setup locked view only */
+.setup-locked-shop {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem 1rem;
+  border: 3px solid #6b2d12;
+  border-radius: 1.1rem;
+  background: linear-gradient(180deg, #fffdf6, #ffeec8);
+  box-shadow: 0 4px 0 rgb(107 45 18 / .3);
+  text-align: left;
+}
+.setup-locked-shop img { width: 4rem; height: 4rem; object-fit: contain; max-width: none; flex: none; }
+.setup-locked-shop p { font-size: .875rem; font-weight: 800; color: #8a4a21; }
+.setup-locked-shop strong { display: block; font-size: 1.25rem; font-weight: 900; line-height: 1.35; color: #5b21b6; text-wrap: balance; }

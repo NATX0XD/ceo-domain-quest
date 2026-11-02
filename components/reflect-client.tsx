@@ -1,12 +1,15 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { SignInGate } from '@/components/student-shell'
 import { GameFrame } from '@/components/game-frame'
 import { FlowNote, useFlowFeedback } from '@/components/flow-feedback-client'
-import { ChevronRightIcon, SendIcon, StarIcon, cn } from '@/components/ui'
+import { ChevronRightIcon, SendIcon, cn } from '@/components/ui'
+import { GameWaiting } from '@/components/game-result'
+import './game-result.css'
+import './reflect.css'
 
 /**
  * หน้าทบทวนตัวเอง (หลังแบบทดสอบหลังเรียน) — **แสดงผลอย่างเดียว**
@@ -269,34 +272,35 @@ export function ReflectClient({
           </Link>
         }
       >
-        <section className="gf-panel flex flex-1 flex-col items-center justify-center gap-3 p-5 text-center">
-          {card ? (
-            <span className="rounded-full border-2 border-[#6b2d12] bg-[#ffe58a] px-3 py-1 text-label font-extrabold text-[#4a1f0a]">
-              {card.badgeLabel}
-            </span>
-          ) : null}
-          <p className="flex items-center gap-2 text-hero font-black tabular-nums text-[#3b1707]">
-            <StarIcon aria-hidden width={44} height={44} className="text-[#ffb400]" />
-            {earned}
-            <span className="text-title text-[#8a4a21]">/ {stars.max}</span>
+        <section className="gf-panel gr-reveal" aria-label={`ดาวที่เก็บได้ ${earned} จาก ${stars.max}`}>
+          <div className="gr-medal" aria-hidden="true">
+            <span className="gr-glow" />
+            <img src="/icons/3d/trophy.webp" alt="" className="gr-medal-img rf-trophy" />
+          </div>
+          {card ? <p className="gr-label">{card.badgeLabel}</p> : <p className="gr-label">ดาวที่เก็บได้</p>}
+          <p className="gr-score">
+            <img src="/ui/kit2/badge-star.webp" alt="" className="rf-score-star" />
+            <span className="gr-score-num">{earned}</span>
+            <span className="gr-score-total">/ {stars.max}</span>
           </p>
-          <ul className="flex flex-wrap justify-center gap-2">
-            {goal !== null ? (
-              <li className="rounded-full bg-white/70 px-3 py-1 text-label font-extrabold text-[#4a1f0a] ring-2 ring-[#6b2d12]/30">
-                เป้า {goal} ดาว
-              </li>
-            ) : null}
+          <div className="gr-bar" role="presentation">
+            <span
+              className="gr-bar-fill"
+              style={{ '--pct': `${stars.max > 0 ? Math.round((Math.min(earned, stars.max) / stars.max) * 100) : 0}%` } as CSSProperties}
+            />
+          </div>
+          <ul className="gr-chips">
+            {goal !== null ? <li>เป้า {goal} ดาว</li> : null}
             {certificate ? (
-              <li className="rounded-full bg-white/70 px-3 py-1 text-label font-extrabold text-[#4a1f0a] ring-2 ring-[#6b2d12]/30">
+              <li>
                 ผ่าน {certificate.passedCount}/{certificate.totalCount} ด้าน
               </li>
             ) : null}
           </ul>
-          <Link
-            href="/survey"
-            className="tap-target mt-1 inline-flex items-center rounded-full px-4 text-label font-extrabold text-[#8a4a21] underline focus-ring"
-          >
+          <Link href="/survey" className="rf-survey-link focus-ring">
+            <img src="/icons/3d/clipboard.webp" alt="" />
             ตอบแบบสอบถามสั้น ๆ
+            <ChevronRightIcon aria-hidden width={18} height={18} />
           </Link>
         </section>
       </GameFrame>
@@ -305,9 +309,7 @@ export function ReflectClient({
 
   if (!current) {
     return (
-      <GameFrame title="ทบทวน" backHref="/map" mood="think" say="รอครูเปิดขั้นทบทวนนะ">
-        <section className="gf-panel flex flex-1 items-center justify-center p-5" />
-      </GameFrame>
+      <GameWaiting title="ทบทวน" backHref="/map" say="รอครูเปิดขั้นทบทวนนะ" hint="พอครูเปิด ข้อทบทวนจะขึ้นเอง" />
     )
   }
 
@@ -357,7 +359,7 @@ export function ReflectClient({
         <h2 className="gf-question shrink-0 text-pretty">{current.title}</h2>
 
         {current.kind === 'feeling' ? (
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="rf-feel-grid">
             {current.extra.options.map((opt) => (
               <button
                 key={opt}
@@ -366,7 +368,7 @@ export function ReflectClient({
                 onClick={() => set(current.id, opt)}
                 className="gf-feel focus-ring"
               >
-                <img src={FEEL_ICON[opt] ?? '/icons/3d/glowing-star.webp'} alt="" width={48} height={48} />
+                <img src={FEEL_ICON[opt] ?? '/icons/3d/glowing-star.webp'} alt="" className="rf-feel-img" />
                 <span>{opt}</span>
               </button>
             ))}
@@ -401,20 +403,27 @@ export function ReflectClient({
         ) : null}
 
         {current.kind === 'stars' ? (
-          <div role="radiogroup" aria-label={current.title} className="flex justify-center gap-1 py-4">
-            {Array.from({ length: current.extra.max }, (_, i) => i + 1).map((n) => (
-              <button
-                key={n}
-                type="button"
-                role="radio"
-                aria-checked={Number(valueOf(current.id)) >= n}
-                aria-label={`${n} ดาว`}
-                onClick={() => set(current.id, String(n))}
-                className="gf-star focus-ring"
-              >
-                <StarIcon aria-hidden width={44} height={44} filled={Number(valueOf(current.id)) >= n} />
-              </button>
-            ))}
+          <div className="rf-stars-wrap">
+            <div role="radiogroup" aria-label={current.title} className="rf-stars">
+              {Array.from({ length: current.extra.max }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  role="radio"
+                  aria-checked={Number(valueOf(current.id)) >= n}
+                  aria-label={`${n} ดาว`}
+                  onClick={() => set(current.id, String(n))}
+                  className="gf-star focus-ring"
+                >
+                  <img src="/ui/kit2/badge-star.webp" alt="" className="rf-star-img" />
+                </button>
+              ))}
+            </div>
+            <p className="rf-stars-caption" aria-hidden="true">
+              {Number(valueOf(current.id)) > 0
+                ? `${valueOf(current.id)} / ${current.extra.max} ดาว`
+                : 'แตะดาวเพื่อเลือก'}
+            </p>
           </div>
         ) : null}
 
