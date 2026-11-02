@@ -304,7 +304,7 @@ function OfficialModeArtwork({
       <button type="button" onClick={onClose} aria-label="ปิดและกลับไปแผนที่" className="absolute right-[3.2%] top-[34%] size-[10%] rounded-full bg-transparent" style={{ background: 'transparent', border: 0 }} />
       {/* ปิดการ์ดในภาพ (มีวงกลม radio ที่ดูเหมือนเลข 0) แล้ววางการ์ด HTML ที่เห็นชัดว่าเลือกอันไหนอยู่ */}
       <div aria-hidden="true" className="absolute inset-x-[5.4%] top-[52.6%] h-[32%] rounded-[4cqw] bg-[#fdf6ea]" />
-      <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="absolute inset-x-[6.2%] top-[53.4%] grid h-[30.4%] grid-cols-3 gap-[2.2cqw]">
+      <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="absolute inset-x-[6.2%] top-[55.6%] grid h-[28.2%] grid-cols-3 gap-[2.2cqw]">
         {MODES.map((mode) => (
           <ModeCard
             key={mode.id}
@@ -323,7 +323,7 @@ function OfficialModeArtwork({
         onClick={onStart}
         disabled={!picked || busy}
         aria-label={picked ? `เริ่มภารกิจที่ ${missionNo} แบบ${MODES.find((m) => m.id === picked)?.title}` : 'เลือกวิธีเรียนก่อน'}
-        className="absolute inset-x-[6.5%] bottom-[4%] h-[10%] rounded-full bg-transparent text-[4.6cqw] font-extrabold text-white outline-none [text-shadow:0_2px_0_#c2410c] focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/70 disabled:cursor-not-allowed"
+        className="absolute inset-x-[6.5%] bottom-[6.5%] flex h-[8.3%] items-center justify-center rounded-full bg-transparent leading-none text-[4.6cqw] font-extrabold text-white outline-none [text-shadow:0_2px_0_#c2410c] focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/70 disabled:cursor-not-allowed"
         style={{ background: 'transparent', border: 0 }}
       >
         {busy ? 'กำลังบันทึก' : `เริ่มภารกิจที่ ${missionNo} →`}
@@ -412,17 +412,6 @@ function ModeCard({
         {mode.lines[0]}
         <br />
         {mode.lines[1]}
-      </span>
-      <span
-        aria-hidden="true"
-        className={`mt-auto rounded-full px-2.5 py-0.5 font-extrabold leading-tight ${scaled ? 'text-[2.6cqw]' : 'text-[12px]'}`}
-        style={
-          selected
-            ? { backgroundColor: mode.ring, color: '#fff' }
-            : { backgroundColor: 'rgba(255,255,255,0.75)', color: mode.text }
-        }
-      >
-        {selected ? 'เลือกแล้ว' : 'แตะเพื่อเลือก'}
       </span>
     </motion.button>
   )
