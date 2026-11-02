@@ -6,7 +6,6 @@ import { TeacherLoginClient } from '@/components/teacher-login-client'
 import { readTeacherSession } from '@/app/api/_lib/session-cookie'
 import { loadTeacherPage, type SearchParams } from './_lib/teacher-page'
 import { PageBody } from './_ux/page-head'
-import { getServiceClient } from '@/lib/db/client'
 import { HomeOverview, type HomeStudent, type HelpStudent } from './_ux/home-overview'
 import { loadShopTypes, toCardData } from './_lib/student-cards-data'
 
@@ -84,9 +83,22 @@ export default async function TeacherPage({
   const joinUrl = joinPath ? `${process.env.APP_BASE_URL ?? 'http://localhost:3000'}${joinPath}` : null
   const qrSvg = joinUrl ? await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 240 }) : null
 
-  const me = await getServiceClient().from('teachers').select('name, email').eq('id', data.teacherId).maybeSingle()
-  const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Bangkok' }).format(new Date()))
-  const greeting = hour < 12 ? 'สวัสดีตอนเช้า' : hour < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น'
+  // โดมสรุปห้อง: สร้างจากข้อมูลรายงานด้วยกฎ ไม่เรียก AI ตอนโหลดหน้า
+  const MISSION_NAME: Record<string, string> = { m1: 'รู้จักชื่อโดเมน', m2: 'เลือกนามสกุล', m3: 'เจ้าหน้าที่จดทะเบียน', m4: 'ค้นหาชื่อที่ใช่' }
+  const rawStudents = raw?.students ?? []
+  const dome: string[] = []
+  if (rawStudents.length > 0) {
+    const certs = rawStudents.filter((st) => st.submission !== null).length
+    dome.push(`เข้าห้อง ${rawStudents.length} คน · ได้เกียรติบัตรแล้ว ${certs}`)
+    let worst: { id: string; n: number } | null = null
+    for (const id of Object.keys(MISSION_NAME)) {
+      const n = rawStudents.filter((st) => st.submission === null && st.missions.some((m) => m.missionId === id && !m.passed)).length
+      if (n > 0 && (!worst || n > worst.n)) worst = { id, n }
+    }
+    if (worst) dome.push(`${worst.n > 1 ? 'ส่วนใหญ่' : 'มี 1 คน'}ติดที่ ${worst.id.toUpperCase()} ${MISSION_NAME[worst.id]}`)
+    const todo = (pending?.length ?? 0) + showcaseCount
+    dome.push(todo > 0 ? `มี ${todo} งานให้ครูดูเมื่อสะดวก` : 'ยังไม่มีงานให้ครูดู')
+  }
 
   return (
     <PageBody>
@@ -99,8 +111,7 @@ export default async function TeacherPage({
         qrSvg={qrSvg}
         help={help}
         showcaseCount={showcaseCount}
-        greeting={greeting}
-        teacherName={me.data?.name || me.data?.email?.split('@')[0] || null}
+        dome={dome}
       />
     </PageBody>
   )

@@ -33,20 +33,6 @@ const MISSIONS = [
 
 const BTN = 'inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-[15px] font-bold whitespace-nowrap text-white transition-[filter,transform] hover:brightness-110 active:translate-y-px focus-ring'
 
-interface Todo {
-  key: string
-  count: number
-  icon: Icon3dName
-  title: string
-  why: string
-  cta: string
-  href: string
-  /** สีใช้เพื่อบอกความเร่งด่วนเท่านั้น */
-  tone: 'rose' | 'amber' | 'teal'
-}
-
-const TONE_BG = { rose: 'var(--s-danger)', amber: '#d98a0b', teal: 'var(--c-brand)' } as const
-
 export function HomeOverview({
   students,
   pendingCount,
@@ -56,8 +42,7 @@ export function HomeOverview({
   qrSvg,
   help,
   showcaseCount,
-  greeting,
-  teacherName,
+  dome = [],
 }: {
   students: HomeStudent[]
   pendingCount: number
@@ -67,8 +52,8 @@ export function HomeOverview({
   qrSvg: string | null
   help: HelpStudent[]
   showcaseCount: number
-  greeting?: string
-  teacherName?: string | null
+  /** บรรทัดสรุปห้อง สร้างฝั่งเซิร์ฟเวอร์ด้วยกฎ */
+  dome?: string[]
 }) {
   const [requestCount, setRequestCount] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
@@ -102,28 +87,25 @@ export function HomeOverview({
   const ceoDone = students.filter((s) => s.ceoDone).length
   const byStatus = (st: PassStatus) => students.filter((s) => cardStatus(s) === st).length
   const notStarted = byStatus('notstarted')
-  const requests = requestCount ?? 0
 
-  const todos: Todo[] = [
-    { key: 'review', count: pendingCount, icon: 'memo', title: 'งานรอตรวจ', why: 'นักเรียนรอคะแนนจากครู', cta: 'ตรวจเลย', href: `/teacher/review${q}`, tone: 'rose' },
-    { key: 'requests', count: requests, icon: 'speech-balloon', title: 'คำขอจากนักเรียน', why: 'ตอบแล้วนักเรียนเห็นทันที', cta: 'ตอบ', href: `/teacher/requests${q}`, tone: 'amber' },
-    { key: 'help', count: help.length, icon: 'warning', title: 'นักเรียนต้องช่วย', why: help[0] ? `${help[0].nickname} · ${help[0].reason}${help.length > 1 ? ` และอีก ${help.length - 1} คน` : ''}` : 'ยังไม่เริ่ม ติดอยู่ หรือเงียบไปหลายวัน', cta: 'ดูรายชื่อ', href: `/teacher/student${q}`, tone: 'amber' },
-    { key: 'showcase', count: showcaseCount, icon: 'glowing-star', title: 'ผลงานรอคัด', why: 'ตัวกรองติดธง รอครูตัดสินก่อนเพื่อนเห็น', cta: 'คัดผลงาน', href: `/teacher/showcase${q}`, tone: 'teal' },
+  const chips: { key: string; count: number | null; icon: Icon3dName; title: string; href: string }[] = [
+    { key: 'review', count: pendingCount, icon: 'memo', title: 'งานให้ครูดู', href: `/teacher/review${q}` },
+    { key: 'requests', count: requestCount, icon: 'speech-balloon', title: 'คำขอ', href: `/teacher/requests${q}` },
+    { key: 'help', count: help.length, icon: 'warning', title: 'นักเรียนอาจต้องช่วย', href: `/teacher/student${q}` },
+    { key: 'showcase', count: showcaseCount, icon: 'glowing-star', title: 'ผลงานรอคัด', href: `/teacher/showcase${q}` },
   ]
-  const active = todos.filter((t) => t.count > 0)
-  const clear = todos.filter((t) => t.count === 0 && !(t.key === 'requests' && requestCount === null))
 
   const openBoard = () => {
     if (classroomId) window.open(`/board?classroomId=${classroomId}&mode=join`, '_blank', 'noopener')
   }
 
-  const actions: { label: string; benefit: string; icon: Icon3dName; href?: string; onClick?: () => void }[] = [
-    { label: 'ชวนนักเรียนเข้าห้อง', benefit: 'เปิดจอหน้าห้อง QR ใหญ่ให้สแกน (แท็บใหม่)', icon: 'door', onClick: openBoard },
-    { label: 'ตั้งค่าด่าน', benefit: 'ปรับเกณฑ์ผ่านและตัวช่วยของแต่ละด่าน', icon: 'gear', href: `/teacher/missions${q}` },
-    { label: 'ดูรายงาน', benefit: 'ผลเรียนรวมทั้งห้อง จุดที่ยังอ่อน', icon: 'bar-chart', href: `/teacher/report${q}` },
-    { label: 'พิมพ์เกียรติบัตร/รายงาน', benefit: 'เลือกนักเรียนแล้วสั่งพิมพ์ได้เลย', icon: 'printer', href: `/teacher/student${q}` },
-    { label: 'ฉายผลงานเด่น', benefit: 'ปักหมุดผลงานขึ้นจอหน้าห้อง', icon: 'television', href: `/teacher/showcase${q ? q + "&" : "?"}tab=screen` },
-    { label: 'จัดการห้อง', benefit: 'รหัสห้อง บัญชี และดาวน์โหลดข้อมูล', icon: 'clipboard', href: `/teacher/settings${q}` },
+  const actions: { label: string; icon: Icon3dName; href?: string; onClick?: () => void }[] = [
+    { label: 'ชวนนักเรียนเข้าห้อง', icon: 'door', onClick: openBoard },
+    { label: 'ตั้งค่าด่าน', icon: 'gear', href: `/teacher/missions${q}` },
+    { label: 'ดูรายงาน', icon: 'bar-chart', href: `/teacher/report${q}` },
+    { label: 'พิมพ์เกียรติบัตร/รายงาน', icon: 'printer', href: `/teacher/student${q}` },
+    { label: 'ฉายผลงานเด่น', icon: 'television', href: `/teacher/showcase${q ? q + "&" : "?"}tab=screen` },
+    { label: 'จัดการห้อง', icon: 'clipboard', href: `/teacher/settings${q}` },
   ]
 
   const sharePanel = (
@@ -144,11 +126,7 @@ export function HomeOverview({
   )
 
   return (
-    <div className="flex flex-col gap-5">
-      <p className="m-0 text-[15px] text-[var(--c-ink-2)]">
-        {greeting ?? 'สวัสดี'} <strong className="font-bold text-[var(--c-ink)]">{teacherName ?? 'คุณครู'}</strong>
-      </p>
-
+    <div className="flex flex-col gap-4">
       {total === 0 ? (
         <section aria-labelledby="first-run" className="t3-card overflow-hidden">
           <div className="border-b border-[var(--c-line)] bg-[var(--c-brand-soft)] p-5 sm:px-6">
@@ -177,69 +155,54 @@ export function HomeOverview({
           </div>
         </section>
       ) : (
-        <section aria-labelledby="today" className="t3-card p-5 sm:p-6">
-          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <h2 id="today" className="m-0 text-[22px] leading-8 font-extrabold text-[var(--c-ink)]">วันนี้ครูต้องทำอะไร</h2>
-            <p className="m-0 text-[14px] text-[var(--c-ink-3)]">
-              {active.length > 0 ? `${active.length} เรื่องที่รอครู · เรียงตามความเร่งด่วน` : `นักเรียน ${total} คน · ความคืบหน้าเฉลี่ย ${avg}%`}
-            </p>
-          </div>
-
-          {active.length > 0 ? (
-            <ul className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2 xl:grid-cols-[repeat(var(--n),minmax(0,1fr))]" style={{ ['--n' as string]: Math.min(active.length, 4) }}>
-              {active.map((t) => (
-                <li key={t.key} className="flex min-w-0 flex-col gap-3 rounded-2xl border-2 bg-white p-4" style={{ borderColor: TONE_BG[t.tone] }}>
-                  <div className="flex items-center gap-3">
-                    <span aria-hidden className="grid size-14 shrink-0 place-items-center rounded-2xl" style={{ background: `color-mix(in srgb, ${TONE_BG[t.tone]} 14%, white)` }}>
-                      <Icon3d name={t.icon} size={34} />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-[40px] leading-10 font-extrabold tabular-nums text-[var(--c-ink)]">{t.count}</span>
-                      <span className="block truncate text-[15px] font-bold text-[var(--c-ink)]">{t.title}</span>
-                    </span>
-                  </div>
-                  <p className="m-0 min-h-10 text-[14px] leading-5 text-[var(--c-ink-3)]">{t.why}</p>
-                  <Link href={t.href} className={BTN} style={{ background: TONE_BG[t.tone] }}>{t.cta} ›</Link>
+        <section aria-label="สรุปห้องนี้" className="flex flex-col gap-3">
+          <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-4">
+            {chips.map((c) => {
+              const zero = c.count === 0
+              return (
+                <li key={c.key} className="min-w-0">
+                  <Link
+                    href={c.href}
+                    className="t3-card flex h-[68px] items-center gap-2 px-2.5 transition-transform hover:-translate-y-0.5 focus-ring"
+                    style={zero ? { opacity: 0.7 } : undefined}
+                  >
+                    <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--c-brand-soft)]"><Icon3d name={c.icon} size={22} /></span>
+                    <span className="min-w-0 flex-1 text-[14px] leading-[18px] font-bold text-[var(--c-ink)]">{c.title}</span>
+                    {zero ? (
+                      <span aria-label="เรียบร้อย" className="text-[16px] font-bold text-[var(--s-success)]">✓</span>
+                    ) : (
+                      <span className="min-w-7 rounded-full bg-[var(--c-brand)] px-2 text-center text-[14px] leading-6 font-extrabold text-white tabular-nums">{c.count ?? '–'}</span>
+                    )}
+                  </Link>
                 </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="flex items-center gap-4 rounded-2xl bg-[var(--s-success-soft,#e1f5ea)] p-4">
-              <Icon3d name="party-popper" size={44} />
-              <div>
-                <p className="m-0 text-[18px] font-extrabold text-[var(--c-ink)]">เรียบร้อย ✓ ไม่มีงานค้าง</p>
-                <p className="m-0 text-[14px] text-[var(--c-ink-2)]">ไม่มีงานรอตรวจ คำขอ หรือนักเรียนที่ต้องช่วยในตอนนี้</p>
-              </div>
+              )
+            })}
+          </ul>
+          <div className="t3-card flex items-center gap-3 px-4 py-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/icon-192.png" alt="" width={44} height={44} className="size-11 shrink-0 rounded-xl" />
+            <div className="min-w-0 flex-1">
+              <p className="m-0 text-[13px] leading-5 font-bold text-[var(--c-brand)]">โดมสรุปห้องนี้</p>
+              <ul className="m-0 flex list-none flex-wrap gap-x-5 gap-y-0.5 p-0 text-[14px] leading-5 text-[var(--c-ink-2)]">
+                {dome.slice(0, 3).map((line) => <li key={line} className="min-w-0">{line}</li>)}
+              </ul>
             </div>
-          )}
-
-          {active.length > 0 && clear.length > 0 ? (
-            <ul className="m-0 mt-4 flex list-none flex-wrap gap-2 p-0" aria-label="เรื่องที่เรียบร้อยแล้ว">
-              {clear.map((t) => (
-                <li key={t.key} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--c-bg)] px-3 py-1.5 text-[14px] font-semibold text-[var(--c-ink-2)]">
-                  <span aria-hidden className="text-[var(--s-success)]">✓</span>{t.title} เรียบร้อย
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          </div>
         </section>
       )}
 
       <section aria-labelledby="can-do">
-        <h2 id="can-do" className="m-0 mb-3 text-[18px] leading-7 font-bold text-[var(--c-ink)]">ครูทำอะไรได้บ้าง</h2>
-        <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 min-[560px]:grid-cols-2 xl:grid-cols-3">
+        <h2 id="can-do" className="m-0 mb-2 text-[16px] leading-6 font-bold text-[var(--c-ink)]">ครูทำอะไรได้บ้าง</h2>
+        <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 min-[560px]:grid-cols-3">
           {actions.map((a) => {
             const inner = (
               <>
-                <span aria-hidden className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--c-brand-soft)]"><Icon3d name={a.icon} size={30} /></span>
-                <span className="min-w-0 flex-1 text-left">
-                  <span className="block text-[16px] leading-6 font-bold text-[var(--c-ink)]">{a.label}</span>
-                  <span className="block text-[14px] leading-5 text-[var(--c-ink-3)]">{a.benefit}</span>
-                </span>
-                <span aria-hidden className="text-[22px] text-[var(--c-ink-3)]">›</span>
+                <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-lg bg-[var(--c-brand-soft)]"><Icon3d name={a.icon} size={20} /></span>
+                <span className="min-w-0 flex-1 text-left text-[14px] leading-5 font-bold text-[var(--c-ink)]">{a.label}</span>
+                <span aria-hidden className="text-[18px] text-[var(--c-ink-3)]">›</span>
               </>
             )
-            const cls = 't3-card flex w-full items-center gap-3 p-3.5 transition-transform hover:-translate-y-0.5 focus-ring'
+            const cls = 't3-card flex min-h-12 w-full items-center gap-2.5 px-3 py-1 transition-transform hover:-translate-y-0.5 focus-ring'
             return (
               <li key={a.label}>
                 {a.href ? <Link href={a.href} className={cls}>{inner}</Link> : <button type="button" onClick={a.onClick} className={cls}>{inner}</button>}

@@ -4,7 +4,7 @@ import { PageBody, PageHead } from '../_ux/page-head'
 import { Icon3d } from '../_ux/v2'
 import { ReviewList } from '../_ux/review-list'
 
-export const metadata: Metadata = { title: 'งานรอตรวจ — สำหรับครู' }
+export const metadata: Metadata = { title: 'งานให้ครูดู — สำหรับครู' }
 export const dynamic = 'force-dynamic'
 
 /** งานที่นักเรียนส่งมาและรอครูยืนยันคะแนน — หน้าเต็มของแดชบอร์ด (UX-6) */
@@ -15,15 +15,15 @@ export default async function TeacherReviewPage({
 }) {
   const params = await searchParams
   const data = await loadTeacherPage(params)
-  if (!data) return <TeacherSignedOut title="งานรอตรวจ" />
+  if (!data) return <TeacherSignedOut title="งานให้ครูดู" />
 
   return (
     <PageBody>
       <PageHead
-        tone="rose"
+        tone="teal"
         icon={<Icon3d name="memo" size={36} />}
-        title="งานรอตรวจ"
-        subtitle="ครูเป็นคนยืนยันคะแนนเสมอ"
+        title="งานให้ครูดู"
+        subtitle="นักเรียนได้เกียรติบัตรแล้ว ครูดูย้อนหลังและปรับคะแนนได้เมื่อสะดวก"
       />
       <ReviewList teacherId={data.teacherId} classroomId={data.selectedId} selectedId={typeof params.submission === 'string' ? params.submission : null} />
     </PageBody>

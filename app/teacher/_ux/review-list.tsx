@@ -1,11 +1,10 @@
 import rubric from '@/content/rubric.json'
 import { listGradeJobsBySubmissions, listPendingReview, listSubmissions, type Submission } from '@/lib/db/repo'
-import { TeacherConfirmScore, type RubricDimensionView } from '@/components/teacher-confirm-client'
+import { BulkConfirm, TeacherConfirmScore, type BulkItem, type RubricDimensionView } from '@/components/teacher-confirm-client'
 import Link from 'next/link'
-import { InfoIcon, AlertIcon } from '@/components/ui'
-import { Fact, Icon3d, InfoTip } from './v2'
+import { AlertIcon } from '@/components/ui'
 import { Avatar, EmptyState, StatusBadge } from './ui'
-import { sourceLabel, type AiSourceInfo } from '@/components/server/ai'
+import type { AiSourceInfo } from '@/components/server/ai'
 import { MAX_REVISION_ROUNDS } from '@/components/server/revision'
 import { classifyAiWait } from '@/lib/ai/stale-grading'
 import { RegradeButton } from './regrade-button'
@@ -37,23 +36,19 @@ interface AiScoreBag extends Partial<AiSourceInfo> {
   dimensions?: RubricDimensionView[]
 }
 
-/**
- * ชื่อไทยของด้านในรูบริก — ของเดิมโชว์รหัสดิบ `dim-customer-reason` บนการ์ด (UAT-7 ข้อ ค-3)
- * ทั้งที่ `content/rubric.json` มีชื่อไทยอยู่แล้ว และตารางรูบริกในการ์ดใบเดียวกันก็แสดงถูกอยู่
- */
-const DIMENSION_THAI_NAME: Record<string, string> = Object.fromEntries(
-  rubric.dimensions.map((d) => [d.id, d.name]),
-)
-
-/** รูปแบบส่งงาน — ของเดิมโชว์รหัส `write` / `voice` ดิบ ๆ ให้ครูอ่าน (flow-1 ข้อ 12) */
-const FORMAT_THAI: Record<string, string> = {
-  write: 'ส่งงานแบบพิมพ์',
-  voice: 'ส่งงานแบบอัดเสียง',
-  choose: 'ส่งงานแบบเลือกคำ',
+/** ตัดคำแนะนำให้เหลือ 1-2 ประโยคสั้น ๆ */
+export function trimFeedback(text: string | undefined | null, max = 200): string {
+  const t = (text ?? '').replace(/\s+/g, ' ').trim()
+  if (!t) return ''
+  const sentences = t.match(/[^.!?。]+[.!?。]?/g) ?? [t]
+  let out = sentences.slice(0, 2).join('').trim()
+  if (out.length > max) out = out.slice(0, max - 1).trimEnd() + '…'
+  return out
 }
 
-function emphasisName(id: string): string {
-  return DIMENSION_THAI_NAME[id] ?? id
+function starsOf(weighted: number | undefined): number | undefined {
+  if (weighted === undefined) return undefined
+  return rubric.scoring.starBands.find((b) => weighted >= b.minWeighted && weighted <= b.maxWeighted)?.stars
 }
 
 /** อ่านคะแนนที่ครูยืนยันไว้จริงจาก teacher_confirmed_scores เพื่อแสดงกลับ ไม่ใช่โชว์ค่าที่พิมพ์ค้าง */
@@ -148,8 +143,8 @@ export async function ReviewList({
     return (
       <div className="t3-card">
         <EmptyState
-          title="ตรวจครบแล้ว ไม่มีงานค้าง"
-          body="งานที่นักเรียนส่งจะขึ้นที่นี่ ครูยืนยันคะแนนได้ทีละชิ้น"
+          title="ไม่มีงานให้ครูดู"
+          body="งานที่นักเรียนส่งจะขึ้นที่นี่ นักเรียนได้เกียรติบัตรแล้ว ครูดูย้อนหลังได้"
           action={<Link href={`/teacher/student?classroomId=${classroomId}`} className="inline-flex h-10 items-center rounded-xl bg-[var(--c-brand)] px-4 text-[15px] font-semibold text-white">ดูความคืบหน้ารายคน</Link>}
         />
       </div>
@@ -169,16 +164,32 @@ export async function ReviewList({
   })
 
   const active = pending.find((r) => r.id === selectedId) ?? pending[0]!
+  const activeIdx = pending.findIndex((r) => r.id === active.id)
+  const nextRow = pending[activeIdx + 1] ?? pending[activeIdx - 1] ?? null
+  const nextHref = nextRow ? `/teacher/review?classroomId=${classroomId}&submission=${nextRow.id}` : null
   const activeJobs = await listGradeJobsBySubmissions([active.id]).catch(() => [])
 
+  const bulkItems: BulkItem[] = pending.flatMap((r) => {
+    if (isTeacherConfirmed(r)) return []
+    const b = readAiScores(r.ai_scores)
+    const done = b?.gradingStatus === 'done' && Boolean(b?.aiProposed)
+    const dims = (done && b?.aiProposed?.dimensions?.length ? b.aiProposed.dimensions : b?.dimensions) ?? []
+    if (dims.length === 0) return []
+    return [{
+      submissionId: r.id,
+      dimensions: Object.fromEntries(dims.map((d) => [d.id, d.score])),
+      emphasisDimensionId: dims.find((d) => d.emphasized)?.id ?? null,
+    }]
+  })
+
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
-      <nav aria-label="คิวงานรอตรวจ" className="t3-card overflow-hidden lg:sticky lg:top-4">
-        <div className="flex items-center justify-between border-b border-[var(--c-line)] px-4 py-3">
-          <h2 className="m-0 text-[16px] font-bold">คิวงานรอตรวจ</h2>
-          <span className="rounded-full bg-[var(--s-danger)] px-2.5 text-[13px] font-bold text-white tabular-nums">{pending.length}</span>
+    <div className="grid items-start gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <nav aria-label="คิวงานให้ครูดู" className="t3-card overflow-hidden lg:sticky lg:top-4">
+        <div className="flex items-center justify-between border-b border-[var(--c-line)] px-3 py-2">
+          <h2 className="m-0 text-[15px] font-bold">คิวงาน</h2>
+          <span className="rounded-full bg-[var(--c-brand)] px-2 text-[13px] leading-5 font-bold text-white tabular-nums">{pending.length}</span>
         </div>
-        <ul className="t3-scroll max-h-[60vh] overflow-y-auto p-2">
+        <ul className="t3-scroll m-0 max-h-[52vh] list-none overflow-y-auto p-1.5">
           {pending.map((q) => {
             const on = q.id === active.id
             return (
@@ -186,171 +197,100 @@ export async function ReviewList({
                 <Link
                   href={`/teacher/review?classroomId=${classroomId}&submission=${q.id}`}
                   aria-current={on ? 'true' : undefined}
-                  className="flex items-center gap-3 rounded-xl p-2.5 hover:bg-[var(--c-brand-soft)]"
+                  className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-[var(--c-brand-soft)]"
                   style={on ? { background: 'var(--c-brand-soft)', boxShadow: 'inset 3px 0 0 var(--c-brand)' } : undefined}
                 >
-                  <Avatar name={q.nickname ?? '?'} size={40} />
+                  <Avatar name={q.nickname ?? '?'} size={30} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-semibold">{q.nickname}</span>
-                    <span className="block truncate text-[13px] text-[var(--c-ink-3)]">{q.domain_name}{q.tld}</span>
+                    <span className="block truncate text-[14px] leading-5 font-semibold">{q.nickname}</span>
+                    <span className="block truncate text-[12px] leading-4 text-[var(--c-ink-3)]">{q.domain_name}{q.tld}</span>
                   </span>
-                  <StatusBadge status={q.emphasis_criterion ? 'inprogress' : 'notstarted'}>{q.emphasis_criterion ? 'CEO' : 'สถานี B'}</StatusBadge>
                 </Link>
               </li>
             )
           })}
         </ul>
+        <BulkConfirm items={bulkItems} />
       </nav>
       <ul aria-live="polite" className="m-0 flex min-w-0 list-none flex-col gap-4 p-0">
       {[active].map((row) => {
         const ai = readAiScores(row.ai_scores)
         const aiDone = ai?.gradingStatus === 'done' && Boolean(ai?.aiProposed)
-        // ฉบับทั้งหมดของคนนี้ ใหม่สุดอยู่หน้าสุด (listSubmissions เรียง created_at DESC)
         const versions = historyByStudent.get(row.student_id) ?? []
         const indexFromNewest = versions.findIndex((v) => v.id === row.id)
-        const versionNo = indexFromNewest >= 0 ? versions.length - indexFromNewest : 1
         const older = indexFromNewest >= 0 ? versions.slice(indexFromNewest + 1) : []
-        const initial = Array.from((row.nickname ?? '?').trim())[0] ?? '?'
         const aiWait = classifyAiWait(ai?.gradingStatus, Boolean(ai?.aiProposed), activeJobs)
-        const aiTotal =
-          ai?.aiProposed?.weightedTotal !== undefined
-            ? `${ai.aiProposed.weightedTotal}/${ai.aiProposed.weightedMax ?? ai.maxScore ?? '-'}`
-            : aiWait === 'pending'
-              ? 'กำลังตรวจ…'
-              : aiWait === 'stale'
-                ? 'AI ยังไม่ได้ตรวจ'
-                : 'ไม่ได้เรียก AI'
+        const sysTotal = ai?.ruleScores?.weightedTotal ?? ai?.score
+        const sysMax = ai?.ruleScores?.weightedMax ?? ai?.maxScore ?? rubric.scoring.weightedMax
+        const sysStars = ai?.ruleScores?.stars ?? starsOf(sysTotal)
+        const aiTotal = ai?.aiProposed?.weightedTotal
+        const domeText = trimFeedback(aiDone ? ai?.aiProposed?.feedback ?? ai?.feedback : ai?.ruleScores?.feedback ?? ai?.feedback)
+        const confirmedNow = isTeacherConfirmed(row)
         return (
-          <li key={row.id} className="t3-card p-4 sm:p-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="t2-avatar" aria-hidden>
-                {initial}
-              </span>
-              <p className="min-w-0 flex-1 text-title-sm font-extrabold text-ink">{row.nickname}</p>
-              <p className="min-w-0 text-body font-extrabold break-all text-brand-700">
-                {row.domain_name}
-                {row.tld}
+          <li key={row.id} className="t3-card p-4">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <Avatar name={row.nickname ?? '?'} size={36} />
+              <p className="m-0 min-w-0 text-[18px] leading-6 font-extrabold text-ink">{row.nickname}</p>
+              <p className="m-0 min-w-0 flex-1 text-[15px] font-bold break-all text-brand-700">
+                {row.domain_name}{row.tld}
               </p>
+              <StatusBadge status="passed">{confirmedNow ? 'ครูยืนยันแล้ว' : 'ได้เกียรติบัตรแล้ว · ครูดูย้อนหลัง'}</StatusBadge>
             </div>
 
-            <p className="mt-3 flex flex-wrap items-center gap-2">
-              <StatusBadge status="inprogress">{row.emphasis_criterion ? 'ภารกิจใหญ่ CEO' : 'สถานี B · จดทะเบียน'}</StatusBadge>
-              {row.emphasis_criterion ? <StatusBadge status="notstarted">เน้น {emphasisName(row.emphasis_criterion)} ×2</StatusBadge> : null}
-              <StatusBadge status="notstarted">{FORMAT_THAI[row.format] ?? `ส่งงานแบบ ${row.format}`}</StatusBadge>
-              {versions.length > 1 ? (
-                <StatusBadge status="atrisk">
-                  ฉบับที่ {versionNo}/{versions.length}
-                </StatusBadge>
-              ) : null}
-            </p>
-
             {row.reason_text ? (
-              <p className="mt-3 rounded-lg bg-[var(--c-sunken)] p-3 text-body whitespace-pre-line text-ink">
-                {row.reason_text}
+              <p className="mt-3 mb-0 rounded-lg bg-[var(--c-sunken)] p-3 text-body whitespace-pre-line text-ink">{row.reason_text}</p>
+            ) : null}
+
+            {domeText ? (
+              <p className="mt-3 mb-0 flex items-start gap-2 text-label text-ink-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/icon-192.png" alt="โดม" width={24} height={24} className="mt-0.5 size-6 shrink-0 rounded-md" />
+                <span><strong className="text-ink">โดมสรุป</strong> {domeText}</span>
               </p>
             ) : null}
 
-            {/* ฉบับก่อนหน้า — เปิดดูเทียบได้ว่านักเรียนแก้อะไรมา */}
+            <p className="mt-3 mb-0 flex flex-wrap items-center gap-x-3 gap-y-1 text-body font-bold text-ink">
+              <span>
+                คะแนนระบบ {sysTotal ?? '-'}/{sysMax}
+                {sysStars !== undefined ? ` · ${sysStars} ดาว` : ''}
+              </span>
+              {aiDone && aiTotal !== undefined ? (
+                <span className="font-semibold text-ink-muted">AI เสนอ {aiTotal}/{ai?.aiProposed?.weightedMax ?? sysMax}</span>
+              ) : aiWait === 'stale' ? (
+                <RegradeButton submissionId={row.id} />
+              ) : null}
+            </p>
+
+            <TeacherConfirmScore
+              submissionId={row.id}
+              proposedScore={(aiDone ? ai?.aiProposed?.weightedTotal : undefined) ?? ai?.score ?? 0}
+              maxScore={(aiDone ? ai?.aiProposed?.weightedMax : undefined) ?? ai?.maxScore ?? 15}
+              dimensions={(aiDone && ai?.aiProposed?.dimensions?.length ? ai.aiProposed.dimensions : ai?.dimensions) ?? []}
+              savedScores={readTeacherScores(row.teacher_confirmed_scores)}
+              /** ต้องถาม isTeacherConfirmed() ไม่ใช่เช็ก null เพราะก้อน status:'revise' ก็ไม่ null (T65 · /api/ceo) */
+              confirmed={confirmedNow}
+              roundsUsed={Math.max(0, versions.length - 1)}
+              maxRounds={MAX_REVISION_ROUNDS}
+              nextHref={nextHref}
+            />
+
             {older.length > 0 ? (
-              <details className="mt-3 rounded-lg bg-[var(--c-sunken)] p-3">
-                <summary className="flex min-h-11 cursor-pointer items-center text-label font-extrabold text-ink">
-                  ฉบับก่อนหน้า {older.length} ฉบับ
-                </summary>
-                <ul className="mt-2 flex flex-col gap-2">
+              <details className="mt-3">
+                <summary className="cursor-pointer text-note font-bold text-brand-700">ดูฉบับก่อนหน้า ({older.length})</summary>
+                <ul className="mt-2 flex list-none flex-col gap-2 p-0">
                   {older.map((old, i) => {
                     const teacherBag = readTeacherScores(old.teacher_confirmed_scores)
                     return (
-                      <li key={old.id} className="rounded-md bg-white p-3">
-                        <p className="text-label font-bold text-ink">
-                          ฉบับที่ {older.length - i} · {old.domain_name}
-                          {old.tld}
-                        </p>
-                        {old.reason_text ? (
-                          <p className="mt-1 text-label whitespace-pre-line text-ink-muted">
-                            {old.reason_text}
-                          </p>
-                        ) : null}
-                        {teacherBag?.note ? (
-                          <p className="mt-1 text-note text-brand-700">
-                            ครูเคยบอกไว้: {teacherBag.note}
-                          </p>
-                        ) : null}
+                      <li key={old.id} className="rounded-md bg-[var(--c-sunken)] p-3">
+                        <p className="m-0 text-label font-bold text-ink">ฉบับที่ {older.length - i} · {old.domain_name}{old.tld}</p>
+                        {old.reason_text ? <p className="mt-1 mb-0 text-label whitespace-pre-line text-ink-muted">{old.reason_text}</p> : null}
+                        {teacherBag?.note ? <p className="mt-1 mb-0 text-note text-brand-700">ครูเคยบอกไว้: {teacherBag.note}</p> : null}
                       </li>
                     )
                   })}
                 </ul>
               </details>
             ) : null}
-
-            {ai ? (
-              <div className="mt-3">
-                {/* สองค่าคู่กันเสมอ: กฎให้เท่าไร AI เสนอเท่าไร ครูเป็นคนตัดสินคะแนนจริง */}
-                <dl className="t2-facts">
-                  <Fact
-                    label="ระบบตรวจให้"
-                    icon="clipboard"
-                                        value={`${ai.ruleScores?.weightedTotal ?? ai.score ?? '-'}/${ai.ruleScores?.weightedMax ?? ai.maxScore ?? '-'}`}
-                  />
-                  <Fact label="AI เสนอ" icon="robot" value={aiTotal} />
-                </dl>
-                {ai.feedback ? <p className="mt-2 text-label text-ink-muted">{ai.feedback}</p> : null}
-                {/* flow-1 ข้อ 17: ครูไม่ต้องรอ AI ก่อนยืนยัน */}
-                {aiWait === 'pending' ? (
-                  <p className="mt-2 flex flex-wrap items-center gap-2">
-                    <StatusBadge status="inprogress">AI กำลังอ่าน · ยืนยันได้เลยไม่ต้องรอ</StatusBadge>
-                  </p>
-                ) : null}
-                {aiWait === 'stale' ? (
-                  <p className="mt-2 flex flex-wrap items-center gap-2">
-                    <StatusBadge status="atrisk">AI ยังไม่ได้ตรวจ · ยืนยันด้วยคะแนนระบบได้เลย</StatusBadge>
-                    <RegradeButton submissionId={row.id} />
-                  </p>
-                ) : null}
-                <p className="mt-2 flex items-center gap-1 text-note font-bold text-ink-muted">
-                  ที่มา: {sourceLabel({
-                    source: ai.source ?? 'fallback',
-                    provider: ai.provider ?? 'rules',
-                    fallbackReason: ai.fallbackReason ?? null,
-                  })}
-                  <InfoTip
-                    label="เรื่องที่มาของคะแนน"
-                    text="คะแนนที่เสนอเป็นแค่ข้อมูลประกอบ ครูเป็นคนยืนยันคะแนนจริงเสมอ ความเห็นของ AI ไม่ผูกมัด"
-                  />
-                </p>
-              </div>
-            ) : (
-              <p className="mt-3 flex items-center gap-1.5 text-label text-ink-muted">
-                <InfoIcon width={18} height={18} aria-hidden className="shrink-0" />
-                <span>ยังไม่มีคะแนนที่เสนอไว้</span>
-              </p>
-            )}
-
-            {/* flow-1 ข้อ 24: บอกให้ชัดว่ากดยืนยันแล้วเกิดอะไรกับเด็ก ครูจะได้ไม่ลังเล */}
-            <p className="mt-3 flex items-center gap-2 text-label font-bold text-ink-muted">
-              <Icon3d name="light-bulb" size={24} />
-              นักเรียนได้คะแนนอัตโนมัติและเกียรติบัตรแล้ว · ครูปรับคะแนน/เขียนความเห็นได้
-              <InfoTip
-                label="เรื่องการยืนยันคะแนน"
-                text="นักเรียนเห็นคะแนนที่ AI ตรวจ (หรือคะแนนจากกฎถ้า AI ยังไม่เสร็จ) และได้เกียรติบัตรทันทีที่ส่งงาน ไม่ต้องรอครู ถ้าครูยืนยัน/ปรับคะแนน คะแนนของครูจะแทนคะแนนอัตโนมัติ และข้อความของครูจะขึ้นที่หน้าผลของนักเรียน แก้ซ้ำได้เสมอ ส่วน ส่งกลับให้แก้ ใช้เมื่ออยากให้นักเรียนปรับงาน (ไม่ดึงเกียรติบัตรคืน)"
-              />
-            </p>
-
-            <TeacherConfirmScore
-              submissionId={row.id}
-              /* นักเรียนเห็นคะแนน AI เมื่อ AI ตรวจเสร็จ — ฟอร์มครูจึงตั้งต้นจากค่าเดียวกัน */
-              proposedScore={(aiDone ? ai?.aiProposed?.weightedTotal : undefined) ?? ai?.score ?? 0}
-              maxScore={(aiDone ? ai?.aiProposed?.weightedMax : undefined) ?? ai?.maxScore ?? 15}
-              dimensions={(aiDone && ai?.aiProposed?.dimensions?.length ? ai.aiProposed.dimensions : ai?.dimensions) ?? []}
-              savedScores={readTeacherScores(row.teacher_confirmed_scores)}
-              /**
-               * ต้องถาม `isTeacherConfirmed()` ไม่ใช่เช็กว่าคอลัมน์ไม่ null
-               * เพราะก้อนที่ครูสั่งให้แก้ (`status: 'revise'`) ก็ไม่ null เหมือนกัน
-               * เช็กแบบเดิมทำให้งานที่เพิ่งตีกลับขึ้นว่า "ยืนยันแล้ว" (กติกาเดียวกับ T65 · /api/ceo)
-               */
-              confirmed={isTeacherConfirmed(row)}
-              roundsUsed={Math.max(0, versions.length - 1)}
-              maxRounds={MAX_REVISION_ROUNDS}
-            />
           </li>
         )
       })}

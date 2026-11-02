@@ -184,7 +184,7 @@ export function TeacherShell({
       title: 'นักเรียน',
       items: [
         { href: `/teacher/student${q}`, label: 'นักเรียนรายคน', icon: ico('graduation-cap') },
-        { href: `/teacher/review${q}`, label: 'งานรอตรวจ', icon: ico('memo'), badge: badges.review, urgent: true },
+        { href: `/teacher/review${q}`, label: 'งานให้ครูดู', icon: ico('memo'), badge: badges.review, urgent: false },
         { href: `/teacher/requests${q}`, label: 'คำขอจากนักเรียน', icon: ico('speech-balloon'), badge: badges.requests },
       ],
     },
@@ -239,7 +239,7 @@ export function TeacherShell({
     : pathname === '/teacher'
       ? { label: 'ชวนนักเรียนเข้าห้อง', icon: 'door', run: () => { window.open(`/board?classroomId=${classroomId}&mode=join`, '_blank', 'noopener') } }
       : pathname.startsWith('/teacher/review')
-        ? { label: 'ตรวจถัดไป', icon: 'memo', run: nextReview, disabled: badges.review === 0 }
+        ? { label: 'ดูงานถัดไป', icon: 'memo', run: nextReview, disabled: badges.review === 0 }
         : pathname.startsWith('/teacher/student') && params.get('studentId')
           ? { label: 'พิมพ์รายงาน', icon: 'printer', run: () => window.print() }
           : pathname.startsWith('/teacher/missions')
@@ -522,7 +522,7 @@ export function TeacherShell({
               </button>
             ) : null}
 
-            {/* ระฆัง — ตัวเลขจริงจากงานรอตรวจ + คำขอที่รอตอบ */}
+            {/* ระฆัง — ตัวเลขจริงจากงานให้ครูดู + คำขอที่รอตอบ */}
             <div ref={bellRef} className="relative shrink-0">
               <button
                 type="button"
@@ -549,7 +549,7 @@ export function TeacherShell({
                       {badges.review > 0 ? (
                         <Link role="menuitem" href={`/teacher/review${q}`} className="flex min-h-12 items-center gap-3 rounded-xl px-2.5 hover:bg-surface-sunken">
                           <span aria-hidden data-tone="amber" className="t3-tile size-9 rounded-xl"><Icon3d name="memo" size={20} /></span>
-                          <span className="flex-1 text-[14px] font-semibold text-ink">งานรอตรวจ</span>
+                          <span className="flex-1 text-[14px] font-semibold text-ink">งานให้ครูดู</span>
                           <span className="rounded-full bg-[var(--s-danger)] px-2 text-[13px] font-bold text-white">{badges.review}</span>
                         </Link>
                       ) : null}
