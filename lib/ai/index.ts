@@ -26,6 +26,7 @@ import {
   learnCheckPrompt,
   simulateCustomerPrompt,
   storyPrompt,
+  teacherAssistPrompt,
 } from './prompts'
 import {
   RUBRIC_DIMENSION_IDS,
@@ -56,6 +57,8 @@ import type {
   SimulateCustomerResult,
   StoryInput,
   StoryResult,
+  TeacherAssistInput,
+  TeacherAssistResult,
 } from './types'
 
 export const DEFAULT_TIMEOUT_MS = 5000
@@ -88,6 +91,8 @@ export const TASK_TIMEOUT_MS: Record<AiTask, number> = {
   learnCheck: DEFAULT_TIMEOUT_MS,
   /** แชทกับโดม — ผู้เรียนรอคำตอบอยู่หน้าจอ */
   dome: DEFAULT_TIMEOUT_MS,
+  /** ถามโดมฝั่งครู — ครูรอ ยาวกว่านักเรียนได้เล็กน้อย (คำตอบยาวกว่า) */
+  teacher: 12_000,
 }
 
 /** เวลาที่กันไว้ให้คำขอจริงหลังรอคิว ถ้าเหลือน้อยกว่านี้ไม่ต้องเข้าคิวแล้ว ไปใช้ทางถัดไปเลย */
@@ -519,6 +524,26 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
         },
       )
       return value ?? { text: '', scope: 'on', source: 'fallback', provider: 'rules', fallbackReason: lastReason }
+    },
+
+    async teacherAssist(input: TeacherAssistInput): Promise<TeacherAssistResult> {
+      // ไม่มี studentId = ไม่กินโควตานักเรียน · คิวจำกัดอัตราของผู้ให้บริการยังใช้ร่วมกัน
+      const gated = gate(undefined, 'teacher')
+      if (typeof gated === 'string') return { text: '', source: 'fallback', provider: 'rules', fallbackReason: gated }
+      const { value, lastReason } = await runChain(
+        gated,
+        'teacher',
+        () => teacherAssistPrompt(input),
+        (raw, provider): TeacherAssistResult => {
+          const data = raw as { text?: unknown; reply?: unknown }
+          const text = typeof data?.text === 'string' ? data.text : data?.reply
+          if (typeof text !== 'string' || text.trim().length === 0) {
+            throw new Error('โมเดลไม่ได้ตอบกลับเป็น JSON ที่ใช้ได้')
+          }
+          return { text: text.trim().slice(0, 2000), source: 'ai', provider, fallbackReason: null }
+        },
+      )
+      return value ?? { text: '', source: 'fallback', provider: 'rules', fallbackReason: lastReason }
     },
 
     async hintFor(input: HintInput): Promise<HintResult> {

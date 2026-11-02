@@ -246,8 +246,22 @@ export interface DomeChatResult extends AiMeta {
   scope: 'on' | 'off'
 }
 
+export interface TeacherAssistInput {
+  /** ข้อมูลห้องแบบย่อ (ไม่มี PIN/รหัสห้อง/รหัสนักเรียน/อีเมล) */
+  context: string
+  /** บทสนทนาเรียงเก่า → ใหม่ ข้อความสุดท้ายคือคำถามของครู */
+  messages: Array<{ role: 'teacher' | 'dome'; text: string }>
+}
+
+export interface TeacherAssistResult extends AiMeta {
+  /** ว่างเมื่อ source เป็น 'fallback' ผู้เรียกใช้บทสรุปจากกฎของตัวเอง */
+  text: string
+}
+
 export interface AiClient {
   domeChat(input: DomeChatInput): Promise<DomeChatResult>
+  /** โดมตอบครูจากข้อมูลห้อง — ไม่ throw ไม่ได้ผล = source 'fallback' */
+  teacherAssist(input: TeacherAssistInput): Promise<TeacherAssistResult>
   hintFor(input: HintInput): Promise<HintResult>
   gradeReason(input: GradeReasonInput): Promise<GradeReasonResult>
   simulateCustomer(input: SimulateCustomerInput): Promise<SimulateCustomerResult>

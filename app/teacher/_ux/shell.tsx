@@ -8,6 +8,7 @@ import { TeacherDeviceRecommendation } from '@/components/teacher-device-recomme
 import { Icon3d, type Icon3dName } from './v2'
 import { Avatar, ToastProvider } from './ui'
 import { createRoomRequest, createdRoomHref } from './create-room'
+import { DomeAssistant } from './dome-assistant'
 
 /**
  * โครงแดชบอร์ดของครู (redesign C1) — เมนูข้าง (ยุบได้ / มือถือเป็นลิ้นชัก) + แถบบน (breadcrumb · สลับห้อง · บัญชี) + เนื้อหา
@@ -332,6 +333,10 @@ export function TeacherShell({
     <div className="teacher-cms flex h-dvh max-h-dvh overflow-hidden bg-[var(--c-bg)]">
       <ToastProvider>
       <TopProgress onPending={setNavigating} pending={navigating} />
+        {/* ถามโดม — ต้องมีห้องที่เลือกอยู่ (จอฉายอยู่นอกโครงนี้) */}
+        {classroomId ? (
+          <DomeAssistant classroomId={classroomId} raised={pathname.startsWith('/teacher/review')} />
+        ) : null}
         {/* เมนูข้าง desktop · ยุบเหลือไอคอนได้ */}
         <aside
           aria-label="เมนูของครู"

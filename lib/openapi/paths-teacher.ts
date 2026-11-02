@@ -486,6 +486,31 @@ access token ของ Supabase **ไม่ถูกส่งกลับไป�
     }),
   },
 
+  '/api/teacher/assistant': {
+    post: op({
+      id: 'teacherAssistant',
+      summary: 'ถามโดม — ผู้ช่วยครูตอบเรื่องนักเรียนในห้อง',
+      tags: [TEACHER],
+      security: TEACHER_ONLY,
+      description:
+        'สร้างข้อมูลห้องแบบย่อ (ชื่อเล่น + ตัวเลข ไม่มี PIN/รหัสห้อง/รหัสนักเรียน/อีเมล) แล้วให้ AI ตอบ · AI ไม่ว่างหรือล่ม = ตอบด้วยกฎ source "fallback" · ไม่ใช่ห้องของครู = 404 · จำกัด 30 ครั้ง/10 นาที',
+      requestBody: jsonBody(
+        obj(
+          {
+            classroomId: uuid('ห้องที่เลือกอยู่', FAKE.classroomId),
+            messages: arr(obj({ role: str('teacher | dome'), text: str('ข้อความ ไม่เกิน 500 ตัวอักษร') }, { required: ['role', 'text'] }), 'ล่าสุดไม่เกิน 6 ข้อความ ข้อความสุดท้ายต้องเป็นของครู'),
+          },
+          { required: ['classroomId', 'messages'] },
+        ),
+        { classroomId: FAKE.classroomId, messages: [{ role: 'teacher', text: 'สรุปห้องนี้' }] },
+      ),
+      responses: {
+        ...ok('คำตอบของโดม', obj({ ok: bool('สำเร็จ'), reply: str('คำตอบ'), source: str('ai | fallback'), provider: str('ผู้ให้บริการ หรือ rules') })),
+        ...failures([400, ['bad-request']], [401, ['unauthorized']], [404, ['not-found']], [429, ['rate-limited']]),
+      },
+    }),
+  },
+
   '/api/teacher/projector': {
     get: op({
       id: 'projectorData',
