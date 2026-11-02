@@ -22,6 +22,8 @@ const mitr = Mitr({
 })
 
 export const metadata: Metadata = {
+  // iOS Safari แปลงตัวเลข/วันที่ในหน้าเป็นลิงก์เองก่อน React hydrate ทำให้ขึ้น hydration mismatch
+  formatDetection: { telephone: false, date: false, address: false, email: false },
   // ชื่อผลงานอยู่ที่ components/product.ts ที่เดียว (มติ T40: อังกฤษเป็นหลัก ไทยเป็นชื่อรอง)
   title: PRODUCT_NAME_FULL,
   description:
@@ -48,8 +50,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="th" className={`${notoSansThai.variable} ${mitr.variable}`}>
-      <body className="font-sans">
+    <html lang="th" className={`${notoSansThai.variable} ${mitr.variable}`} suppressHydrationWarning>
+      <body className="font-sans" suppressHydrationWarning>
         {children}
         <CloudCurtain />
         <SwRegister />
