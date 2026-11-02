@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertIcon, CheckIcon } from '@/components/ui'
 import { Icon3d, InfoTip } from '@/app/teacher/_ux/v2'
+import { StatusBadge } from '@/app/teacher/_ux/ui'
 
 /**
  * ครูดูแลผนังผลงาน — ปักหมุดขึ้นจอหน้าห้อง (T-04) + ซ่อนความเห็นที่ไม่เหมาะสม (T-09)
@@ -110,17 +111,17 @@ export function TeacherShowcaseClient({
             return (
               <li
                 key={row.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-[18px] p-3"
-                style={{ background: isPinned ? 'var(--t2-yellow)' : '#f6f2e8' }}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--c-line)] p-3"
+                style={{ background: isPinned ? 'var(--c-brand-soft)' : '#fff' }}
               >
                 <p className="min-w-0 text-label text-ink">
-                  <span className="font-extrabold">{row.nickname}</span>
-                  <span className="ml-2 font-bold break-all text-brand-700">{row.domain}</span>
+                  <span className="font-semibold">{row.nickname}</span>
+                  <span className="ml-2 break-all text-[var(--c-ink-2)]">{row.domain}</span>
                   {row.hiddenFromPeers ? (
-                    <span className="t2-chip ml-2" title="ตั้งได้ที่การ์ดผนังผลงานเพื่อน">
+                    <StatusBadge status="atrisk" className="ml-2">
                       <AlertIcon width={14} height={14} aria-hidden />
                       ไม่ขึ้นให้เพื่อนเห็น
-                    </span>
+                    </StatusBadge>
                   ) : null}
                 </p>
                 <div className="flex shrink-0 flex-wrap gap-2">
@@ -176,15 +177,15 @@ export function TeacherShowcaseClient({
           {feedback.map((row) => (
             <li
               key={row.id}
-              className="rounded-[18px] p-3"
-              style={{ background: row.hidden_at ? '#ece8dd' : '#f6f2e8' }}
+              className="rounded-lg border border-[var(--c-line)] p-3"
+              style={{ background: row.hidden_at ? 'var(--c-sunken)' : '#fff' }}
             >
               {row.praise_text ? <p className="text-label text-ink">ชม: {row.praise_text}</p> : null}
               {row.suggest_text ? (
                 <p className="mt-1 text-label text-ink">เสนอแนะ: {row.suggest_text}</p>
               ) : null}
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                {row.hidden_at ? <span className="t2-chip">ซ่อนอยู่</span> : null}
+                {row.hidden_at ? <StatusBadge status="notstarted">ซ่อนอยู่</StatusBadge> : null}
                 <button
                   type="button"
                   className="t2-btn focus-ring"

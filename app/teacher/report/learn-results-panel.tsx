@@ -8,9 +8,11 @@ import type {
   StudentLearnResult,
   StudentMissionLearn,
 } from '../../../components/server/learn-results'
-import { AlertIcon, cn } from '../../../components/ui'
+import { AlertIcon } from '../../../components/ui'
 import { FilterChips, SideDrawer } from '../_ux/cms'
-import { Icon3d, InfoTip, Kpi, KpiGrid, Radar } from '../_ux/v2'
+import { Icon3d, InfoTip } from '../_ux/v2'
+import { Legend, STATUS_LEGEND, StatTile, StatusBadge } from '../_ux/ui'
+import { MissionTag, StackBar } from '../_ux/data-viz'
 
 /**
  * ผลเส้นทางเรียน (ดู / อ่าน / ลงมือทำ) บนแผงครู
@@ -151,31 +153,22 @@ export function LearnResultsPanel({
             const att = data.missions.filter((m) => m.attemptsAvg !== null)
             return (
               <div className="mt-3">
-                <KpiGrid>
-                  <Kpi
-                    label="เริ่มเรียนแล้ว"
-                    value={started.length}
-                    unit="คน"
-                    tone="sky"
-                    icon="rocket"
-                    hint={`จาก ${data.students.length} คน`}
-                  />
-                  <Kpi label="ครบอย่างน้อย 1 ด่าน" value={doneStudents} unit="คน" tone="mint" icon="check-mark-button" />
-                  <Kpi
+                <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 lg:grid-cols-4">
+                  <StatTile label="เริ่มเรียนแล้ว" value={started.length} unit="คน" icon={<Icon3d name="rocket" size={30} />} hint={`จาก ${data.students.length} คน`} />
+                  <StatTile label="ครบอย่างน้อย 1 ด่าน" value={doneStudents} unit="คน" icon={<Icon3d name="check-mark-button" size={30} />} badge={doneStudents > 0 ? <StatusBadge status="passed" /> : undefined} />
+                  <StatTile
                     label="ทำตามที่แนะนำ"
                     value={followed + different > 0 ? `${Math.round((followed / (followed + different)) * 100)}%` : '-'}
-                    tone="yellow"
-                    icon="bullseye"
+                    icon={<Icon3d name="bullseye" size={30} />}
                     hint={`${followed} จาก ${followed + different} ครั้ง`}
                   />
-                  <Kpi
+                  <StatTile
                     label="ส่งตรวจ/ด่าน"
                     value={att.length ? n(att.reduce((a, m) => a + (m.attemptsAvg ?? 0), 0) / att.length) : '-'}
                     unit="ครั้ง"
-                    tone="lilac"
-                    icon="memo"
+                    icon={<Icon3d name="memo" size={30} />}
                   />
-                </KpiGrid>
+                </div>
               </div>
             )
           })()}
@@ -190,7 +183,7 @@ export function LearnResultsPanel({
                     const adaptive = m.missionId === 'm1' || m.missionId === 'm2'
                     return (
                       <>
-                  <p className="text-label font-bold text-ink">{title(m.missionId)}</p>
+                  <p className="text-label font-bold text-ink"><MissionTag n={Number(m.missionId.slice(1)) || 1}>{title(m.missionId)}</MissionTag></p>
                   {adaptive ? (
                     <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                       <Fact label="เช็กพื้นฐานแล้ว" value={`${m.warmedUp} คน · เฉลี่ย ${n(m.warmupAvg)}/3`} />
@@ -262,7 +255,7 @@ export function LearnResultsPanel({
               </div>
               <div className="mt-2 max-h-[60vh] overflow-auto rounded-xl ring-1 ring-line">
                 <table className="w-full min-w-[640px] text-left text-label">
-                  <thead className="sticky top-0 z-10 bg-surface-sunken">
+                  <thead className="sticky top-0 z-10 bg-[var(--c-sunken)]">
                     <tr className="text-note text-ink-muted">
                       {(
                         [
@@ -305,9 +298,9 @@ export function LearnResultsPanel({
                         <tr key={r.st.studentId} className="border-t border-line hover:bg-surface-sunken">
                           <td className="px-3 py-2 font-bold text-ink">{r.st.nickname}</td>
                           <td className="px-3 py-2 tabular-nums">
-                            <span className={cn('font-bold', r.done === r.started ? 'text-quest-700' : 'text-ink')}>
+                            <StatusBadge status={r.started === 0 ? 'notstarted' : r.done === r.started ? 'passed' : r.done > 0 ? 'inprogress' : 'atrisk'}>
                               {r.done}/{r.started}
-                            </span>
+                            </StatusBadge>
                           </td>
                           <td className="px-3 py-2 tabular-nums">{n(r.best)}</td>
                           <td className="px-3 py-2 tabular-nums">{r.attempts}</td>
@@ -315,7 +308,7 @@ export function LearnResultsPanel({
                             <button
                               type="button"
                               onClick={() => setOpenId(r.st.studentId)}
-                              className="min-h-9 rounded-lg px-3 text-note font-bold text-brand-700 ring-1 ring-brand-200 hover:bg-brand-50 focus-ring"
+                              className="min-h-9 rounded-lg px-3 text-note font-medium text-[var(--c-brand)] ring-1 ring-[var(--c-line-strong)] hover:bg-[var(--c-brand-soft)] focus-ring"
                             >
                               ดูรายละเอียด
                             </button>
@@ -368,27 +361,28 @@ export function MasteryRadarCard({ classroomId }: { classroomId: string | null }
   }, [classroomId])
 
   const ids = ['m1', 'm2', 'm3', 'm4']
-  const axes = ids.map((id, i) => {
+  const total = data?.students.length ?? 0
+  const rows = ids.map((id, i) => {
     const done = data?.missions.find((m) => m.missionId === id)?.done ?? 0
     const started = data?.students.filter((st) => st.missions.some((m) => m.missionId === id)).length ?? 0
-    const total = data?.students.length ?? 0
-    const value = total > 0 ? Math.round((done / total) * 100) : 0
+    const learning = Math.max(0, started - done)
     return {
-      label: `ด่าน ${i + 1}`,
-      sub: started === 0 ? 'ยังไม่เริ่ม' : `ผ่าน ${done} · เริ่ม ${started}`,
-      value,
-      value2: total > 0 ? Math.round((started / total) * 100) : 0,
+      n: i + 1,
+      title: `ด่าน ${i + 1} ${data?.missionTitles[id] ?? ''}`.trim(),
+      segments: [
+        { status: 'passed' as const, count: done },
+        { status: 'inprogress' as const, count: learning },
+        { status: 'notstarted' as const, count: Math.max(0, total - started) },
+      ],
     }
   })
-  const scale = Math.min(100, Math.max(20, Math.ceil(Math.max(0, ...axes.map((a) => Math.max(a.value, a.value2 ?? 0))) / 10) * 10))
-  const titles = ids.map((id, i) => `ด่าน ${i + 1} ${data?.missionTitles[id] ?? ''}`.trim())
 
   return (
-    <section className="t2-card" aria-label="ความเข้าใจรายภารกิจ">
+    <section className="t2-card" aria-label="ผ่านเกณฑ์รายด่าน">
       <h2 className="t2-card-title">
-        <Icon3d name="brain" size={32} />
-        ผ่านเกณฑ์รายด่าน
-        <InfoTip label="เรื่องกราฟ" text={`พื้นที่สีเหลืองคือคนที่ผ่านเกณฑ์ พื้นที่เส้นประสีฟ้าคือคนที่เริ่มเรียนแล้ว นับเทียบทั้งห้อง · ${titles.join(' · ')}`} />
+        <Icon3d name="brain" size={28} />
+        ผ่านเกณฑ์รายด่าน (คน)
+        <InfoTip label="เรื่องกราฟ" text="แท่งหนึ่งแท่งคือหนึ่งด่าน แบ่งตามสถานะของนักเรียนทั้งห้อง" />
       </h2>
       {failed ? (
         <p role="alert" className="t2-empty">
@@ -398,18 +392,14 @@ export function MasteryRadarCard({ classroomId }: { classroomId: string | null }
         <p className="t2-empty">กำลังโหลด…</p>
       ) : (
         <>
-          <Radar axes={axes} title="ผ่านเกณฑ์รายด่าน" scale={scale} />
-          <p className="t2-legend mt-2 justify-center">
-            <span>
-              <i className="t2-dot" style={{ background: 'var(--t2-gold)' }} />
-              ผ่านเกณฑ์
-            </span>
-            <span>
-              <i className="t2-dot" style={{ background: 'var(--t2-blue)' }} />
-              เริ่มเรียนแล้ว
-            </span>
-            <span>เต็มวง = {scale}% ของห้อง</span>
-          </p>
+          <div className="mb-4">
+            <Legend items={STATUS_LEGEND.filter((l) => ['ผ่าน', 'กำลังเรียน', 'ยังไม่เริ่ม'].includes(l.label))} />
+          </div>
+          <ul className="flex flex-col gap-4">
+            {rows.map((r) => (
+              <StackBar key={r.n} total={total} segments={r.segments} label={<MissionTag n={r.n}>{r.title}</MissionTag>} />
+            ))}
+          </ul>
         </>
       )}
     </section>
@@ -436,7 +426,7 @@ function MissionTable({
         <li key={m.missionId} className="rounded-xl bg-surface-sunken p-3">
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <p className="text-label font-bold text-ink">{title(m.missionId)}</p>
-            <p className={cn('text-label font-bold', m.done ? 'text-quest-700' : 'text-ink-muted')}>{statusText(m)}</p>
+            <StatusBadge status={m.done ? 'passed' : m.attempts > 0 ? 'inprogress' : 'notstarted'}>{statusText(m)}</StatusBadge>
           </div>
           {m.missionId === 'm1' || m.missionId === 'm2' ? (
             <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">

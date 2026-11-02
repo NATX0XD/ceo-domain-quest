@@ -1,12 +1,20 @@
 import { listClassroomReflections } from '../../../lib/db/repo'
-import { Bar, Bars, Icon3d, Kpi, KpiGrid } from '../_ux/v2'
+import { Icon3d } from '../_ux/v2'
+import { StatTile } from '../_ux/ui'
+import { BarList, ColorBar } from '../_ux/data-viz'
 
 /**
  * สรุปการทบทวนตัวเองของทั้งห้อง (ทำหลังแบบทดสอบหลังเรียน) — ไม่ให้คะแนน ใช้ดูภาพรวมเท่านั้น
  * ความรู้สึกเป็นแถบสี · ความมั่นใจเป็นค่าเฉลี่ยดาว · เรื่องที่ยังสงสัยเปิดอ่านได้ (ไม่แสดงเป็นรายการยาวตั้งแต่แรก)
  */
 const FEELINGS = ['สนุกมาก', 'ภูมิใจ', 'เฉย ๆ', 'งงนิดหน่อย', 'เหนื่อย'] as const
-const FEEL_COLOR = { สนุกมาก: 'green', ภูมิใจ: 'green', 'เฉย ๆ': 'gold', งงนิดหน่อย: 'coral', เหนื่อย: 'red' } as const
+const FEEL_COLOR = {
+  สนุกมาก: 'var(--d-passed)',
+  ภูมิใจ: 'var(--d-passed)',
+  'เฉย ๆ': 'var(--d-notstarted)',
+  งงนิดหน่อย: 'var(--d-atrisk)',
+  เหนื่อย: 'var(--d-failed)',
+} as const
 
 type Row = { student_id: string; question_id: string; answer_text: string; students?: { nickname?: string } | null }
 
@@ -37,23 +45,19 @@ export async function ReflectionPanel({
   return (
     <section className="t2-card" aria-label="ทบทวนตัวเองของห้อง">
       <h2 className="t2-card-title">
-        <Icon3d name="memo" size={32} />
+        <Icon3d name="memo" size={28} />
         ทบทวนตัวเอง
       </h2>
-      <KpiGrid cols={3}>
-        <Kpi label="ทบทวนแล้ว" value={answered} tone="sky" icon="busts-in-silhouette" />
-        <Kpi
-          label="มั่นใจเฉลี่ย (เต็ม 5)"
-          value={avgConf === null ? '-' : avgConf.toFixed(1)}
-          tone="yellow"
-          icon="glowing-star"
-        />
-        <Kpi label="ยังสงสัย" value={wonders.length} tone="peach" icon="speech-balloon" />
-      </KpiGrid>
+      <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-3">
+        <StatTile label="ทบทวนแล้ว" value={answered} unit="คน" icon={<Icon3d name="busts-in-silhouette" size={30} />} />
+        <StatTile label="มั่นใจเฉลี่ย (เต็ม 5)" value={avgConf === null ? '-' : avgConf.toFixed(1)} icon={<Icon3d name="glowing-star" size={30} />} />
+        <StatTile label="ยังสงสัย" value={wonders.length} unit="เรื่อง" icon={<Icon3d name="speech-balloon" size={30} />} />
+      </div>
       {feelTotal > 0 ? (
-        <Bars>
+        <div className="mt-5">
+        <BarList>
           {FEELINGS.map((f) => (
-            <Bar
+            <ColorBar
               key={f}
               label={f}
               value={feelCount.get(f) ?? 0}
@@ -62,7 +66,8 @@ export async function ReflectionPanel({
               color={FEEL_COLOR[f]}
             />
           ))}
-        </Bars>
+        </BarList>
+        </div>
       ) : null}
       {wonders.length > 0 ? (
         <details className="t2-more">
@@ -70,7 +75,7 @@ export async function ReflectionPanel({
           <div className="t2-more__body">
             <ul className="flex flex-col gap-2">
               {wonders.map((w, i) => (
-                <li key={i} className="rounded-[18px] bg-[#f6f2e8] p-3">
+                <li key={i} className="rounded-lg bg-[var(--c-sunken)] p-3">
                   <p className="text-note font-bold text-ink-muted">{w.name}</p>
                   <p className="mt-0.5 text-body whitespace-pre-line text-ink">{w.text}</p>
                 </li>

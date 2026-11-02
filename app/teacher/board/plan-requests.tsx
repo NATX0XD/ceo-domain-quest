@@ -10,7 +10,8 @@ import {
   type PlanRequestKind,
   type PlanRequestStatus,
 } from '../../../core/plan-request'
-import { Chip, Icon3d, InfoTip } from '../_ux/v2'
+import { Icon3d, InfoTip } from '../_ux/v2'
+import { StatusBadge } from '../_ux/ui'
 
 /**
  * S-08 คำขอเปลี่ยนแผนจากผู้เรียน — ฝั่งครู
@@ -173,7 +174,7 @@ export function PlanRequests({
         <h2 className="t2-card-title" style={{ margin: 0 }}>
           <Icon3d name="speech-balloon" size={36} />
           คำขอจากนักเรียน
-          {pending.length > 0 ? <Chip tone="orange">รอตอบ {pending.length}</Chip> : null}
+          {pending.length > 0 ? <StatusBadge status="atrisk">รอตอบ {pending.length}</StatusBadge> : null}
           <InfoTip
             label="เรื่องคำขอ"
             text="นักเรียนขอเปลี่ยนระดับ เปลี่ยนช่องทาง ขอข้าม หรือขอเวลาเพิ่มได้จากหน้าของตัวเอง แล้วคำขอจะเด้งขึ้นตรงนี้เอง"
@@ -214,24 +215,24 @@ export function PlanRequests({
             const options = optionsFor(row.kind)
             const picked = granted[row.id] ?? ''
             return (
-              <li key={row.id} className="rounded-[22px] bg-[#fff8e3] p-4">
+              <li key={row.id} className="rounded-xl border border-[var(--c-line)] bg-white p-4">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="t2-avatar" data-level="yellow" aria-hidden>
+                  <span className="t2-avatar" aria-hidden>
                     {initial(row.nickname)}
                   </span>
                   <p className="min-w-0 flex-1 text-body-lg font-extrabold text-ink">
                     {row.nickname ?? 'ผู้เรียน'}
                     <span className="ml-2 align-middle">
-                      <Chip tone="orange">{PLAN_REQUEST_LABELS[row.kind]}</Chip>
+                      <StatusBadge status="inprogress">{PLAN_REQUEST_LABELS[row.kind]}</StatusBadge>
                     </span>
                   </p>
-                  <Chip>{waitedText(row.createdAt)}</Chip>
+                  <StatusBadge status="atrisk">{waitedText(row.createdAt)}</StatusBadge>
                 </div>
 
                 <p className="mt-2 text-label font-extrabold text-ink">{row.summary}</p>
 
                 {/* ข้อความของเด็ก — ขึ้นเต็ม ไม่ตัด ไม่ย่อ */}
-                <blockquote className="mt-2 rounded-[16px] bg-white p-3 text-label text-pretty text-ink">
+                <blockquote className="mt-2 rounded-lg bg-[var(--c-sunken)] p-3 text-label text-pretty text-ink">
                   “{row.reason}”
                 </blockquote>
 
@@ -245,7 +246,7 @@ export function PlanRequests({
                   value={replies[row.id] ?? ''}
                   onChange={(e) => setReplies((prev) => ({ ...prev, [row.id]: e.target.value }))}
                   placeholder="เช่น ลองระดับนี้ก่อน ถ้ายังยากบอกครูอีกที"
-                  className="mt-1 w-full rounded-[16px] bg-white p-3 text-label text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus"
+                  className="mt-1 w-full rounded-lg bg-white p-3 text-label text-ink border border-[var(--c-line-strong)] outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus"
                 />
 
                 {options.length > 0 ? (
@@ -313,12 +314,12 @@ export function PlanRequests({
       {showAnswered && answered.length > 0 ? (
         <ul className="mt-4 flex flex-col gap-2">
           {answered.map((row) => (
-            <li key={row.id} className="rounded-[18px] bg-[#f6f2e8] p-3">
+            <li key={row.id} className="rounded-lg border border-[var(--c-line)] bg-white p-3">
               <p className="text-label font-extrabold text-ink">
                 {row.nickname ?? 'ผู้เรียน'} · {row.summary}
               </p>
               <p className="mt-1 flex flex-wrap items-center gap-2 text-note text-ink-muted">
-                <Chip tone={row.status === 'rejected' ? 'orange' : 'green'}>{STATUS_LABEL[row.status] ?? row.status}</Chip>
+                <StatusBadge status={row.status === 'rejected' ? 'notstarted' : row.status === 'changed' ? 'inprogress' : 'passed'}>{STATUS_LABEL[row.status] ?? row.status}</StatusBadge>
                 {row.grantedValue ? `ให้จริง ${row.grantedValue}` : null}
                 {row.teacherResponse ? `ครูบอกว่า “${row.teacherResponse}”` : null}
               </p>

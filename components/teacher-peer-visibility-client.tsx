@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertIcon } from '@/components/ui'
 import { Icon3d, InfoTip } from '@/app/teacher/_ux/v2'
+import { StatusBadge } from '@/app/teacher/_ux/ui'
 
 export interface PeerVisibilityRow {
   submissionId: string
@@ -70,30 +71,28 @@ export function TeacherPeerVisibilityClient({ rows }: { rows: PeerVisibilityRow[
             <button
               key={row.submissionId}
               type="button"
-              className="t2-toggle focus-ring"
+              className="flex min-h-14 w-full items-center gap-3 rounded-lg border border-[var(--c-line)] bg-white px-4 py-2 text-left hover:bg-[var(--c-sunken)] disabled:cursor-not-allowed disabled:opacity-60 focus-ring"
               aria-pressed={visible}
               disabled={busyId === row.submissionId}
               onClick={() => void toggle(row, !visible)}
             >
               <span className="min-w-0 flex-1 text-left">
-                <span className="font-extrabold">{row.nickname}</span>
-                <span className="ml-2 font-bold break-all text-brand-700">{row.domain}</span>
+                <span className="font-semibold text-[var(--c-ink)]">{row.nickname}</span>
+                <span className="ml-2 break-all text-[var(--c-ink-2)]">{row.domain}</span>
                 {row.flagged ? (
-                  <span className="t2-chip ml-2" title="ชื่อเว็บหรือเหตุผลติดตัวกรองคำ">
+                  <StatusBadge status={override === true ? 'atrisk' : 'failed'} className="ml-2">
                     <AlertIcon width={14} height={14} aria-hidden />
-                    {override === true ? 'ติดตัวกรองคำ · ครูอนุมัติแล้ว' : 'ติดตัวกรองคำ'}
-                  </span>
+                    {override === true ? 'ติดตัวกรองคำ · ครูอนุมัติแล้ว' : 'ต้องดูแล · ติดตัวกรองคำ'}
+                  </StatusBadge>
                 ) : null}
               </span>
-              <span className="t2-chip" data-tone={visible ? 'green' : undefined}>
-                {visible ? 'แสดงให้เพื่อนเห็น' : 'ซ่อนจากเพื่อน'}
-              </span>
+              <StatusBadge status={visible ? 'passed' : 'notstarted'}>{visible ? 'แสดงให้เพื่อนเห็น' : 'ซ่อนจากเพื่อน'}</StatusBadge>
             </button>
           )
         })}
       </div>
       {error ? (
-        <p className="mt-2 text-label font-bold text-danger-700" role="alert">
+        <p className="mt-2 text-label font-bold text-[var(--d-failed-ink)]" role="alert">
           {error}
         </p>
       ) : null}

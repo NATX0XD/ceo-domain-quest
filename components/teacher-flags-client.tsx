@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { CheckIcon } from '@/components/ui'
 import { Icon3d, InfoTip } from '@/app/teacher/_ux/v2'
+import { StatusBadge } from '@/app/teacher/_ux/ui'
 
 /**
  * ธงคำไม่เหมาะสมบนแผงครู (E-11)
@@ -86,7 +87,7 @@ export function TeacherFlagsClient({ classroomId }: { classroomId: string | null
   if (!classroomId || flags.length === 0) return null
 
   return (
-    <section className="t2-card shrink-0" style={{ background: '#fdeceb', borderColor: '#eba7a3' }}>
+    <section className="t2-card shrink-0" style={{ borderLeft: '4px solid var(--d-failed)' }}>
       <h3 className="t2-card-title" style={{ marginBottom: '0.75rem' }}>
         <Icon3d name="warning" size={32} />
         ต้องดูแล {flags.length} รายการ
@@ -98,7 +99,7 @@ export function TeacherFlagsClient({ classroomId }: { classroomId: string | null
 
       <ul aria-live="polite" className="flex flex-col gap-2">
         {flags.map((flag) => (
-          <li key={flag.id} className="rounded-[18px] bg-white p-3">
+          <li key={flag.id} className="rounded-lg bg-[var(--c-sunken)] p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="min-w-0 text-label font-extrabold text-ink">
                 {flag.nickname}
@@ -106,13 +107,13 @@ export function TeacherFlagsClient({ classroomId }: { classroomId: string | null
                   {CONTEXT_LABEL[flag.context] ?? flag.context}
                 </span>
               </p>
-              <span className="t2-chip" data-tone={flag.level >= 3 ? 'red' : 'orange'}>
+              <StatusBadge status={flag.level >= 3 ? 'failed' : 'atrisk'}>
                 ระดับ {flag.level}
                 {flag.is_full_text ? ' · เต็ม' : ' · ปิดบางส่วน'}
-              </span>
+              </StatusBadge>
             </div>
 
-            <p className="mt-2 rounded-[14px] bg-[#f6f2e8] p-2 text-label break-words text-ink">
+            <p className="mt-2 rounded-md bg-white p-2 text-label break-words text-ink">
               {flag.text_for_teacher ?? '(ไม่มีข้อความ)'}
             </p>
 
@@ -135,7 +136,7 @@ export function TeacherFlagsClient({ classroomId }: { classroomId: string | null
       </ul>
 
       {error ? (
-        <p role="alert" className="mt-3 text-label font-semibold text-danger-700">
+        <p role="alert" className="mt-3 text-label font-semibold text-[var(--d-failed-ink)]">
           {error}
         </p>
       ) : null}

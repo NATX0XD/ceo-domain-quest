@@ -3,18 +3,9 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { AlertIcon, Card, EmptyState, UsersIcon, cn } from '../../../components/ui'
-import {
-  BAR_COLOR,
-  Bar,
-  Bars,
-  Chip,
-  Distribution,
-  Icon3d,
-  InfoTip,
-  Kpi,
-  KpiGrid,
-  type BarColor,
-} from '../_ux/v2'
+import { Icon3d, InfoTip, type Icon3dName } from '../_ux/v2'
+import { LevelBadge, Legend, StatTile, StatusBadge, statusFromRate } from '../_ux/ui'
+import { BarList, ColorBar, LikertDist } from '../_ux/data-viz'
 
 /**
  * T-11 รายงานรายห้อง — ตัวเลขที่เอาขึ้นสไลด์ได้จริง
@@ -207,6 +198,27 @@ const ROUTE_LABEL: Record<string, string> = {
   card: 'อ่านการ์ด',
   game: 'เล่นเกม',
   buddy: 'เรียนกับเพื่อน',
+}
+
+const RATE_LEGEND = [
+  { color: 'var(--d-passed)', label: 'ผ่าน ≥80%' },
+  { color: 'var(--d-atrisk)', label: 'เสี่ยง 50–79%' },
+  { color: 'var(--d-failed)', label: 'ไม่ผ่าน <50%' },
+]
+
+/** การ์ดกราฟ: ชื่อ + หน่วย/คำอธิบาย + legend เหนือกราฟ */
+function VCard({ title, icon, tip, legend, children }: { title: string; icon: Icon3dName; tip?: string; legend?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="t2-card" aria-label={title}>
+      <h2 className="t2-card-title">
+        <Icon3d name={icon} size={28} />
+        {title}
+        {tip ? <InfoTip label={`เรื่อง${title}`} text={tip} /> : null}
+      </h2>
+      {legend ? <div className="mb-4">{legend}</div> : null}
+      {children}
+    </section>
+  )
 }
 
 function n2(value: number | null | undefined, digits = 2): string {
@@ -415,8 +427,6 @@ export function ClassReportClient({
   const t = report.tests
   const hasPost = (t.post.n ?? 0) > 0
   const gain = hakeGainOf(report)
-  const objColor = (i: number): BarColor =>
-    (['blue', 'purple', 'coral', 'green', 'gold', 'red'] as const)[i % 6] ?? 'purple'
   const objEntries = Object.entries(report.objectives)
   const survey = report.survey && report.survey.responses > 0 ? report.survey : null
   const dist = (['1', '2', '3', '4', '5'] as const).map((k) => ({
@@ -434,208 +444,228 @@ export function ClassReportClient({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2 print:hidden">
-        <details className="relative">
-          <summary className="t2-btn focus-ring" data-kind="primary" style={{ listStyle: 'none' }}>
-            ส่งออก
-          </summary>
-          <div className="absolute left-0 top-[calc(100%+0.5rem)] z-30 grid min-w-60 gap-1 rounded-[20px] bg-white p-2 shadow-soft-3 ring-1 ring-line print:hidden">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="min-h-11 rounded-xl px-3 text-left text-label font-bold text-brand-700 hover:bg-[#f3effc]"
-            >
-              พิมพ์ / บันทึกเป็น PDF
-            </button>
-            <button
-              type="button"
-              onClick={() => void copyNumbers()}
-              className="min-h-11 rounded-xl px-3 text-left text-label font-bold text-brand-700 hover:bg-[#f3effc]"
-            >
-              {copied ? 'คัดลอกแล้ว ✓' : 'คัดลอกตัวเลขทั้งชุด'}
-            </button>
-            {csvHref ? (
-              <Link href={csvHref} className="flex min-h-11 items-center rounded-xl px-3 text-label font-bold text-brand-700 hover:bg-[#f3effc]">
-                ดาวน์โหลด CSV
-              </Link>
-            ) : null}
-          </div>
-        </details>
-        <button type="button" onClick={() => void load()} className="t2-btn focus-ring">
-          คำนวณใหม่
-        </button>
-        <span className="t2-chip" data-tone="sky" title={`ห้อง ${roomCode ?? '-'}`}>
-          {report.headcount} คน
-        </span>
-        <InfoTip
-          label="เรื่องที่มาของตัวเลข"
-          text="ตัวเลขทุกค่าคำนวณที่ core/ ที่เดียว หน้านี้แสดงอย่างเดียว ส่งออกเป็นข้อความล้วนไม่มีชื่อนักเรียน"
-        />
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <p className="text-note text-[var(--c-ink-3)]">
+          ห้อง {roomCode ?? '-'} · {report.headcount} คน
+          <InfoTip
+            label="เรื่องที่มาของตัวเลข"
+            text="ตัวเลขทุกค่าคำนวณที่ core/ ที่เดียว หน้านี้แสดงอย่างเดียว ส่งออกเป็นข้อความล้วนไม่มีชื่อนักเรียน"
+          />
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => void load()} className="t2-btn focus-ring">
+            คำนวณใหม่
+          </button>
+          <details className="relative">
+            <summary className="t2-btn focus-ring" data-kind="primary" style={{ listStyle: 'none' }}>
+              ส่งออก
+            </summary>
+            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 grid min-w-60 gap-1 rounded-xl border border-[var(--c-line)] bg-white p-2 shadow-[var(--sh-pop)] print:hidden">
+              <button type="button" onClick={() => window.print()} className="min-h-10 rounded-lg px-3 text-left text-label font-medium text-[var(--c-ink)] hover:bg-[var(--c-sunken)]">
+                พิมพ์ / บันทึกเป็น PDF
+              </button>
+              <button type="button" onClick={() => void copyNumbers()} className="min-h-10 rounded-lg px-3 text-left text-label font-medium text-[var(--c-ink)] hover:bg-[var(--c-sunken)]">
+                {copied ? 'คัดลอกแล้ว ✓' : 'คัดลอกตัวเลขทั้งชุด'}
+              </button>
+              {csvHref ? (
+                <Link href={csvHref} className="flex min-h-10 items-center rounded-lg px-3 text-label font-medium text-[var(--c-ink)] hover:bg-[var(--c-sunken)]">
+                  ดาวน์โหลด CSV
+                </Link>
+              ) : null}
+            </div>
+          </details>
+        </div>
       </div>
 
       {/* ── ตัวเลขหลัก 4 ช่อง */}
-      <KpiGrid>
-        <Kpi
+      <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 lg:grid-cols-4">
+        <StatTile
           label="ประสิทธิภาพสื่อ E1/E2"
-          value={report.efficiency.label}
-          tone="yellow"
-          icon="trophy"
-          hint={
-            hasPost
-              ? `เกณฑ์ ${report.efficiency.standardLabel} · ${report.efficiency.meetsStandard ? 'ผ่าน' : 'ยังไม่ผ่าน'}`
-              : `เกณฑ์ ${report.efficiency.standardLabel} · ยังไม่มีข้อมูล`
+          value={<span className="text-[24px] sm:text-[28px]">{report.efficiency.label}</span>}
+          icon={<Icon3d name="trophy" size={30} />}
+          badge={
+            hasPost ? (
+              <StatusBadge status={report.efficiency.meetsStandard ? 'passed' : 'failed'}>
+                {report.efficiency.meetsStandard ? 'ผ่านเกณฑ์' : 'ยังไม่ผ่าน'}
+              </StatusBadge>
+            ) : (
+              <StatusBadge status="notstarted">ยังไม่มีข้อมูล</StatusBadge>
+            )
           }
-          tip="คะแนนของสื่อ ไม่ใช่คะแนนของนักเรียน E1 = ระหว่างเรียน E2 = หลังเรียน เชื่อถือได้เมื่อนักเรียนทำครบทั้งก่อนและหลังเรียน"
+          hint={`เกณฑ์ ${report.efficiency.standardLabel}`}
         />
-        <Kpi
+        <StatTile
           label="คะแนนก่อน → หลัง"
-          value={`${n2(t.pre.mean, 1)}→${n2(t.post.mean, 1)}`}
-          tone="mint"
-          icon="chart-increasing"
+          value={
+            <span className="text-[24px] sm:text-[28px]">
+              {n2(t.pre.mean, 1)} → {n2(t.post.mean, 1)}
+            </span>
+          }
+          icon={<Icon3d name="chart-increasing" size={30} />}
+          badge={
+            hasPost ? (
+              <StatusBadge status={t.post.mean - t.pre.mean >= 0 ? 'passed' : 'failed'}>
+                {t.post.mean - t.pre.mean >= 0 ? '▲' : '▼'} {n2(Math.abs(t.post.mean - t.pre.mean), 1)}
+              </StatusBadge>
+            ) : null
+          }
           hint={`เต็ม ${t.quizMax} · หลังเรียน ${t.post.n}/${report.headcount} คน`}
         />
-        <Kpi
+        <StatTile
           label="ขนาดอิทธิพล d"
           value={n2(t.effectSize.d, 2)}
-          tone="lilac"
-          icon="rocket"
-          hint={t.effectSize.level ? `ระดับ${t.effectSize.level}` : (t.effectSize.reason ?? '-')}
-          tip="Cohen's d บอกว่าผลต่างก่อน-หลังใหญ่แค่ไหน ส่วน Hake's ⟨g⟩ บอกว่าห้องเก็บช่องว่างที่เหลือไปได้กี่ส่วน เป็นคนละสถิติ"
+          icon={<Icon3d name="rocket" size={30} />}
+          badge={
+            t.effectSize.level ? (
+              <LevelBadge level={t.effectSize.level === 'ใหญ่' ? 'high' : t.effectSize.level === 'ปานกลาง' ? 'mid' : 'low'}>
+                ระดับ{t.effectSize.level}
+              </LevelBadge>
+            ) : (
+              <span>{t.effectSize.reason ?? '-'}</span>
+            )
+          }
         />
-        <Kpi
+        <StatTile
           label="พัฒนาการ Hake ⟨g⟩"
           value={n2(gain, 2)}
-          tone="sky"
-          icon="seedling"
-          hint={t.normalizedGain.level ? `ระดับ${t.normalizedGain.level}` : (t.normalizedGain.reason ?? '-')}
+          icon={<Icon3d name="seedling" size={30} />}
+          badge={
+            t.normalizedGain.level ? (
+              <LevelBadge level={t.normalizedGain.level === 'สูง' ? 'high' : t.normalizedGain.level === 'ปานกลาง' ? 'mid' : 'low'}>
+                ระดับ{t.normalizedGain.level}
+              </LevelBadge>
+            ) : (
+              <span>{t.normalizedGain.reason ?? '-'}</span>
+            )
+          }
         />
-      </KpiGrid>
+      </div>
+      <Legend
+        items={[
+          { color: 'var(--d-lv-low)', label: 'ระดับน้อย' },
+          { color: 'var(--d-lv-mid)', label: 'ปานกลาง' },
+          { color: 'var(--d-lv-high)', label: 'ใหญ่ / สูง' },
+        ]}
+      />
 
-      {/* ── เรดาร์ความเข้าใจรายภารกิจ + แถบจุดประสงค์ */}
+      {/* ── ผ่านเกณฑ์รายด่าน + จุดประสงค์ */}
       <div className="t2-grid-2">
         {masterySlot}
-        <section className="t2-card" aria-label="ผลตามจุดประสงค์">
-          <h2 className="t2-card-title">
-            <Icon3d name="bullseye" size={32} />
-            จุดประสงค์ 6 ข้อ
-            <InfoTip
-              label="เรื่องจุดประสงค์"
-              text="แถบสีคือร้อยละของคนที่ผ่านแต่ละจุดประสงค์ ชื่อเต็มของแต่ละข้ออยู่ในตารางสถิติละเอียดด้านล่าง"
-            />
-          </h2>
-          <Bars>
-            {objEntries.map(([id, count], i) => {
+        <VCard title="จุดประสงค์ 6 ข้อ" icon="bullseye" tip="ร้อยละของคนที่ผ่านแต่ละจุดประสงค์ ชื่อเต็มอยู่ในตารางสถิติละเอียดด้านล่าง" legend={<Legend items={RATE_LEGEND} />}>
+          <BarList>
+            {objEntries.map(([id, count]) => {
               const percent = report.objectivePercents?.[id] ?? 0
+              const st = statusFromRate(percent / 100)
               return (
-                <Bar
+                <ColorBar
                   key={id}
-                  color={objColor(i)}
+                  color={`var(--d-${st})`}
                   value={percent}
-                  display={`${count}/${report.headcount}`}
-                  label={
-                    <>
-                      <span className="t2-dot" style={{ background: BAR_COLOR[objColor(i)] }} />
-                      <span className="truncate">{OBJECTIVE_SHORT[id] ?? id}</span>
-                    </>
-                  }
+                  display={`${count}/${report.headcount} คน`}
+                  label={<span className="truncate">{OBJECTIVE_SHORT[id] ?? id}</span>}
+                  mark={<StatusBadge status={st} />}
                 />
               )
             })}
-          </Bars>
-        </section>
+          </BarList>
+        </VCard>
       </div>
 
-      {/* ── ภารกิจที่ยาก · ช่องทางที่ได้ผล · ความพึงพอใจ */}
+      {/* ── คะแนนเทียบเกณฑ์ · ภารกิจที่ยาก · ช่องทาง · ความพึงพอใจ */}
       <div className="t2-grid">
-        <section className="t2-card" aria-label="คะแนนเทียบเกณฑ์">
-          <h2 className="t2-card-title">
-            <Icon3d name="chart-increasing" size={32} />
-            คะแนนเทียบเกณฑ์
-            <InfoTip
-              label="เรื่องคะแนน"
-              text={`แถบแรกคือคะแนนเฉลี่ยก่อน-หลังเรียนเทียบคะแนนเต็ม ${t.quizMax} แถบ E1/E2 คือร้อยละของสื่อ เกณฑ์ ${report.efficiency.standardLabel}`}
+        <VCard
+          title="คะแนนเทียบเกณฑ์"
+          icon="chart-increasing"
+          tip={`คะแนนเฉลี่ยก่อน-หลังเรียนเทียบคะแนนเต็ม ${t.quizMax} · E1/E2 คือร้อยละของสื่อ เส้นดำคือเกณฑ์ ${report.efficiency.standardLabel}`}
+          legend={
+            <Legend
+              items={[
+                { color: 'var(--ch-pre)', label: 'ก่อนเรียน' },
+                { color: 'var(--ch-post)', label: 'หลังเรียน' },
+                { color: 'var(--d-passed)', label: 'E1/E2 ผ่านเกณฑ์' },
+                { color: 'var(--d-failed)', label: 'ไม่ผ่าน' },
+              ]}
             />
-          </h2>
-          <Bars>
-            <Bar
-              color="gold"
-              value={t.quizMax > 0 ? (t.pre.mean / t.quizMax) * 100 : 0}
-              display={`${n2(t.pre.mean, 1)}/${t.quizMax}`}
-              label="ก่อนเรียน"
+          }
+        >
+          <BarList>
+            <ColorBar color="var(--ch-pre)" value={t.quizMax > 0 ? (t.pre.mean / t.quizMax) * 100 : 0} display={`${n2(t.pre.mean, 1)}/${t.quizMax}`} label="ก่อนเรียน" />
+            <ColorBar color="var(--ch-post)" value={t.quizMax > 0 ? (t.post.mean / t.quizMax) * 100 : 0} display={hasPost ? `${n2(t.post.mean, 1)}/${t.quizMax}` : '-'} label="หลังเรียน" />
+            <ColorBar
+              color={report.efficiency.e1.percent >= 80 ? 'var(--d-passed)' : 'var(--d-failed)'}
+              value={report.efficiency.e1.percent}
+              threshold={80}
+              display={`${n2(report.efficiency.e1.percent, 1)}%`}
+              label="E1 ระหว่างเรียน"
             />
-            <Bar
-              color="green"
-              value={t.quizMax > 0 ? (t.post.mean / t.quizMax) * 100 : 0}
-              display={hasPost ? `${n2(t.post.mean, 1)}/${t.quizMax}` : '-'}
-              label="หลังเรียน"
+            <ColorBar
+              color={!hasPost ? 'var(--d-notstarted)' : report.efficiency.e2.percent >= 80 ? 'var(--d-passed)' : 'var(--d-failed)'}
+              value={report.efficiency.e2.percent}
+              threshold={80}
+              display={hasPost ? `${n2(report.efficiency.e2.percent, 1)}%` : '-'}
+              label="E2 หลังเรียน"
             />
-            <Bar color="blue" value={report.efficiency.e1.percent} display={`${n2(report.efficiency.e1.percent, 1)}%`} label="E1 ระหว่างเรียน" />
-            <Bar color="purple" value={report.efficiency.e2.percent} display={hasPost ? `${n2(report.efficiency.e2.percent, 1)}%` : '-'} label="E2 หลังเรียน" />
-          </Bars>
-        </section>
+          </BarList>
+        </VCard>
 
-        <section className="t2-card" aria-label="ภารกิจที่คนผ่านน้อย">
-          <h2 className="t2-card-title">
-            <Icon3d name="fire" size={32} />
-            ภารกิจที่ยาก
-          </h2>
+        <VCard title="ภารกิจที่ยาก" icon="fire" legend={<Legend items={RATE_LEGEND} />}>
           {report.hardestMissions.length === 0 ? (
             <p className="t2-empty">ยังไม่มีใครเล่น</p>
           ) : (
-            <Bars>
-              {report.hardestMissions.map((m) => (
-                <Bar
-                  key={m.missionId}
-                  color={m.passRate >= 0.8 ? 'green' : m.passRate >= 0.5 ? 'gold' : 'red'}
-                  value={Math.round(m.passRate * 100)}
-                  display={`${m.passed}/${m.played}`}
-                  label={<span className="truncate">{m.title}</span>}
-                  sub={`ลองเฉลี่ย ${n2(m.attemptsMean, 1)} ครั้ง`}
-                />
-              ))}
-            </Bars>
+            <BarList>
+              {report.hardestMissions.map((m) => {
+                const st = statusFromRate(m.passRate)
+                return (
+                  <ColorBar
+                    key={m.missionId}
+                    color={`var(--d-${st})`}
+                    value={Math.round(m.passRate * 100)}
+                    display={`${m.passed}/${m.played}`}
+                    label={<span className="truncate">{m.title}</span>}
+                    mark={<StatusBadge status={st} />}
+                    sub={`ลองเฉลี่ย ${n2(m.attemptsMean, 1)} ครั้ง`}
+                  />
+                )
+              })}
+            </BarList>
           )}
-        </section>
+        </VCard>
 
-        <section className="t2-card" aria-label="ช่องทางเรียนที่ได้ผล">
-          <h2 className="t2-card-title">
-            <Icon3d name="books" size={32} />
-            ช่องทางที่ได้ผล
-          </h2>
+        <VCard title="ช่องทางที่ได้ผล" icon="books" legend={<Legend items={RATE_LEGEND} />}>
           {report.helperEffectiveness.length === 0 ? (
             <p className="t2-empty">ยังไม่มีข้อมูล</p>
           ) : (
-            <Bars>
-              {report.helperEffectiveness.map((h, i) => (
-                <Bar
-                  key={h.route}
-                  color={objColor(i)}
-                  value={Math.round(h.passRate * 100)}
-                  label={<span className="truncate">{ROUTE_LABEL[h.route] ?? h.route}</span>}
-                  sub={`ใช้ ${h.used} ครั้ง · คำใบ้ ${n2(h.hintsPerMission, 1)}/ภารกิจ`}
-                />
-              ))}
-            </Bars>
+            <BarList>
+              {report.helperEffectiveness.map((h) => {
+                const st = statusFromRate(h.passRate)
+                return (
+                  <ColorBar
+                    key={h.route}
+                    color={`var(--d-${st})`}
+                    value={Math.round(h.passRate * 100)}
+                    label={<span className="truncate">{ROUTE_LABEL[h.route] ?? h.route}</span>}
+                    mark={<StatusBadge status={st} />}
+                    sub={`ใช้ ${h.used} ครั้ง · คำใบ้ ${n2(h.hintsPerMission, 1)}/ภารกิจ`}
+                  />
+                )
+              })}
+            </BarList>
           )}
-        </section>
+        </VCard>
 
-        <section className="t2-card" aria-label="ความพึงพอใจ">
-          <h2 className="t2-card-title">
-            <Icon3d name="sparkles" size={32} />
-            ความพึงพอใจ
-          </h2>
+        <VCard title="ความพึงพอใจ" icon="sparkles" tip="จำนวนคำตอบรวมทุกข้อ แยกตามคะแนน 1–5">
           {survey ? (
             <>
-              <p className="mb-3 flex items-baseline gap-2">
-                <span className="text-hero font-extrabold tabular-nums text-ink">{n2(survey.overallMean, 1)}</span>
-                <span className="text-label font-bold text-ink-muted">จาก 5 · ตอบ {survey.responses} คน</span>
+              <p className="mb-3 flex flex-wrap items-baseline gap-2">
+                <span className="text-[28px] leading-9 font-bold tabular-nums text-[var(--c-ink)]">{n2(survey.overallMean, 1)}</span>
+                <span className="text-note text-[var(--c-ink-3)]">จาก 5 · ตอบ {survey.responses} คน</span>
               </p>
-              <Distribution items={dist} color="var(--t2-purple)" />
+              <LikertDist items={dist} />
             </>
           ) : (
             <p className="t2-empty">ยังไม่มีคนตอบ</p>
           )}
-        </section>
+        </VCard>
       </div>
 
       {/* ── จุดประสงค์ที่ยังอ่อน + บทสอนซ่อม (กางอ่านเมื่อต้องการ) */}
@@ -643,7 +673,7 @@ export function ClassReportClient({
         <summary className="focus-ring">
           <Icon3d name="light-bulb" size={32} />
           ห้องนี้ยังอ่อนเรื่องไหน
-          <Chip tone={weak.length > 0 ? 'orange' : 'green'}>{weak.length > 0 ? `${weak.length} เรื่อง` : 'ผ่านครบ'}</Chip>
+          <StatusBadge status={weak.length > 0 ? 'atrisk' : 'passed'}>{weak.length > 0 ? `${weak.length} เรื่อง` : 'ผ่านครบ'}</StatusBadge>
         </summary>
         <div className="t2-more__body">
         {report.objectiveGaps.length > 0 ? (
@@ -1074,10 +1104,10 @@ export function ClassReportClient({
 
 function Stat({ label, value, note, good }: { label: string; value: string; note: string; good?: boolean }) {
   return (
-    <div className={cn('rounded-xl p-3 ring-1 ring-inset', good ? 'bg-quest-100/60 ring-quest-300' : 'bg-surface-sunken ring-line')}>
-      <dt className="text-note font-bold text-ink-muted">{label}</dt>
-      <dd className="mt-0.5 text-title-sm font-extrabold text-ink">{value}</dd>
-      <dd className="mt-0.5 text-note text-ink-muted">{note}</dd>
+    <div className="rounded-xl border border-[var(--c-line)] p-3" style={good ? { background: 'var(--d-passed-soft)' } : { background: 'var(--c-sunken)' }}>
+      <dt className="text-note font-medium text-[var(--c-ink-3)]">{label}</dt>
+      <dd className="mt-0.5 text-title-sm font-bold text-ink tabular-nums">{value}</dd>
+      <dd className="mt-0.5 text-note text-[var(--c-ink-3)]">{note}</dd>
     </div>
   )
 }

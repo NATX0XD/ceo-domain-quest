@@ -2,7 +2,8 @@ import rubric from '@/content/rubric.json'
 import { listPendingReview, listSubmissions, type Submission } from '@/lib/db/repo'
 import { TeacherConfirmScore, type RubricDimensionView } from '@/components/teacher-confirm-client'
 import { EmptyState, InfoIcon, CheckIcon, AlertIcon, DomeAvatar } from '@/components/ui'
-import { Chip, Fact, Icon3d, InfoTip } from './v2'
+import { Fact, Icon3d, InfoTip } from './v2'
+import { StatusBadge } from './ui'
 import { sourceLabel, type AiSourceInfo } from '@/components/server/ai'
 import { MAX_REVISION_ROUNDS } from '@/components/server/revision'
 import { isTeacherConfirmed } from '@/lib/db/submission-scores'
@@ -180,7 +181,7 @@ export async function ReviewList({
         return (
           <li key={row.id} className="t2-card">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="t2-avatar" data-level="yellow" aria-hidden>
+              <span className="t2-avatar" aria-hidden>
                 {initial}
               </span>
               <p className="min-w-0 flex-1 text-title-sm font-extrabold text-ink">{row.nickname}</p>
@@ -191,25 +192,25 @@ export async function ReviewList({
             </div>
 
             <p className="mt-3 flex flex-wrap items-center gap-2">
-              <Chip tone="sky">{row.emphasis_criterion ? 'ภารกิจใหญ่ CEO' : 'สถานี B · จดทะเบียน'}</Chip>
-              {row.emphasis_criterion ? <Chip tone="yellow">เน้น {emphasisName(row.emphasis_criterion)} ×2</Chip> : null}
-              <Chip>{FORMAT_THAI[row.format] ?? `ส่งงานแบบ ${row.format}`}</Chip>
+              <StatusBadge status="inprogress">{row.emphasis_criterion ? 'ภารกิจใหญ่ CEO' : 'สถานี B · จดทะเบียน'}</StatusBadge>
+              {row.emphasis_criterion ? <StatusBadge status="notstarted">เน้น {emphasisName(row.emphasis_criterion)} ×2</StatusBadge> : null}
+              <StatusBadge status="notstarted">{FORMAT_THAI[row.format] ?? `ส่งงานแบบ ${row.format}`}</StatusBadge>
               {versions.length > 1 ? (
-                <Chip tone="orange">
+                <StatusBadge status="atrisk">
                   ฉบับที่ {versionNo}/{versions.length}
-                </Chip>
+                </StatusBadge>
               ) : null}
             </p>
 
             {row.reason_text ? (
-              <p className="mt-3 rounded-[18px] bg-[#f6f2e8] p-3 text-body whitespace-pre-line text-ink">
+              <p className="mt-3 rounded-lg bg-[var(--c-sunken)] p-3 text-body whitespace-pre-line text-ink">
                 {row.reason_text}
               </p>
             ) : null}
 
             {/* ฉบับก่อนหน้า — เปิดดูเทียบได้ว่านักเรียนแก้อะไรมา */}
             {older.length > 0 ? (
-              <details className="mt-3 rounded-[18px] bg-[#f6f2e8] p-3">
+              <details className="mt-3 rounded-lg bg-[var(--c-sunken)] p-3">
                 <summary className="flex min-h-11 cursor-pointer items-center text-label font-extrabold text-ink">
                   ฉบับก่อนหน้า {older.length} ฉบับ
                 </summary>
@@ -217,7 +218,7 @@ export async function ReviewList({
                   {older.map((old, i) => {
                     const teacherBag = readTeacherScores(old.teacher_confirmed_scores)
                     return (
-                      <li key={old.id} className="rounded-[14px] bg-white p-3">
+                      <li key={old.id} className="rounded-md bg-white p-3">
                         <p className="text-label font-bold text-ink">
                           ฉบับที่ {older.length - i} · {old.domain_name}
                           {old.tld}
@@ -246,16 +247,15 @@ export async function ReviewList({
                   <Fact
                     label="ระบบตรวจให้"
                     icon="clipboard"
-                    tone="mint"
-                    value={`${ai.ruleScores?.weightedTotal ?? ai.score ?? '-'}/${ai.ruleScores?.weightedMax ?? ai.maxScore ?? '-'}`}
+                                        value={`${ai.ruleScores?.weightedTotal ?? ai.score ?? '-'}/${ai.ruleScores?.weightedMax ?? ai.maxScore ?? '-'}`}
                   />
-                  <Fact label="AI เสนอ" icon="robot" tone="lilac" value={aiTotal} />
+                  <Fact label="AI เสนอ" icon="robot" value={aiTotal} />
                 </dl>
                 {ai.feedback ? <p className="mt-2 text-label text-ink-muted">{ai.feedback}</p> : null}
                 {/* flow-1 ข้อ 17: ครูไม่ต้องรอ AI ก่อนยืนยัน */}
                 {ai.gradingStatus === 'pending-ai' && !ai.aiProposed ? (
                   <p className="mt-2 flex flex-wrap items-center gap-2">
-                    <Chip tone="yellow">AI กำลังอ่าน · ยืนยันได้เลยไม่ต้องรอ</Chip>
+                    <StatusBadge status="inprogress">AI กำลังอ่าน · ยืนยันได้เลยไม่ต้องรอ</StatusBadge>
                   </p>
                 ) : null}
                 <p className="mt-2 flex items-center gap-1 text-note font-bold text-ink-muted">
