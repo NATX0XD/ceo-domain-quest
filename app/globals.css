@@ -1539,9 +1539,10 @@ select {
   border: 3px solid #fff1d6;
   box-shadow: 0 5px 0 rgb(107 45 18 / .26);
 }
-.student-world .choice-card,
-.student-world [role='radiogroup'] > button,
-.student-world [role='radiogroup'] li > button {
+/* ไม่ทับสีของตัวเลือกที่ถูกเลือกแล้ว (aria-checked/aria-pressed) — เดิมทำให้กดเลือกแล้วดูเหมือนไม่ได้เลือก */
+.student-world .choice-card:not([aria-checked='true']):not([aria-pressed='true']),
+.student-world [role='radiogroup'] > button:not([aria-checked='true']):not([aria-pressed='true']),
+.student-world [role='radiogroup'] li > button:not([aria-checked='true']):not([aria-pressed='true']) {
   border: 2px solid rgb(107 45 18 / .18);
   background: rgb(255 249 231 / .95);
   box-shadow: 0 3px 0 rgb(107 45 18 / .12);
