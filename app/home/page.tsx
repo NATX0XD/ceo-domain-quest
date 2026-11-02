@@ -82,7 +82,6 @@ export default async function HomePage() {
               <img src={`/ui/home/shop-stage-${shopArtStage}.webp`} alt="" draggable={false} style={{ width: 62, height: 62 }} />
             </span>
             <div className="home-hero-sign">
-              <p className="home-eyebrow">CEO DOMAIN QUEST</p>
               <p className="home-greeting">สวัสดี {nickname}</p>
             </div>
             <div className="home-header-tools">
