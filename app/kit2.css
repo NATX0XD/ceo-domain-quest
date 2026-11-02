@@ -1,0 +1,103 @@
+/* CEO Domain Quest — kit2 asset classes (opt-in; not imported by the app yet)
+ *
+ * 9-slice insets are pixel insets from the source files:
+ *   Buttons: left/right 64px, center 16px tile strip, source height 160px.
+ *   panel-cream / panel-wood: 90px top/right/bottom/left.
+ *   modal-frame: 112px top, 74px right, 96px bottom, 74px left.
+ *   Signs are decorative headers and should use background-size: 100% 100%.
+ */
+
+.k2-btn {
+  --k2-cap: 64px;
+  --k2-left: url('/ui/kit2/btn-orange-left.webp');
+  --k2-mid: url('/ui/kit2/btn-orange-mid.webp');
+  --k2-right: url('/ui/kit2/btn-orange-right.webp');
+  align-items: center;
+  background-image: var(--k2-left), var(--k2-mid), var(--k2-right);
+  background-position: left center, center center, right center;
+  background-repeat: no-repeat;
+  background-size: var(--k2-cap) 100%, calc(100% - (var(--k2-cap) * 2)) 100%, var(--k2-cap) 100%;
+  background-color: transparent;
+  border: 0;
+  color: #fff9e9;
+  display: inline-flex;
+  font: 800 clamp(1rem, 2.4vw, 1.55rem)/1.1 system-ui, sans-serif;
+  justify-content: center;
+  min-height: 160px;
+  min-width: 200px;
+  padding: 0 calc(var(--k2-cap) + 18px);
+  position: relative;
+  text-align: center;
+  text-shadow: 0 3px 0 #662817, 0 5px 8px rgb(71 26 13 / 35%);
+  user-select: none;
+}
+
+.k2-btn--orange { --k2-left: url('/ui/kit2/btn-orange-left.webp'); --k2-mid: url('/ui/kit2/btn-orange-mid.webp'); --k2-right: url('/ui/kit2/btn-orange-right.webp'); }
+.k2-btn--green { --k2-left: url('/ui/kit2/btn-green-left.webp'); --k2-mid: url('/ui/kit2/btn-green-mid.webp'); --k2-right: url('/ui/kit2/btn-green-right.webp'); }
+.k2-btn--purple { --k2-left: url('/ui/kit2/btn-purple-left.webp'); --k2-mid: url('/ui/kit2/btn-purple-mid.webp'); --k2-right: url('/ui/kit2/btn-purple-right.webp'); }
+.k2-btn--blue { --k2-left: url('/ui/kit2/btn-blue-left.webp'); --k2-mid: url('/ui/kit2/btn-blue-mid.webp'); --k2-right: url('/ui/kit2/btn-blue-right.webp'); }
+.k2-btn--red { --k2-left: url('/ui/kit2/btn-red-left.webp'); --k2-mid: url('/ui/kit2/btn-red-mid.webp'); --k2-right: url('/ui/kit2/btn-red-right.webp'); }
+.k2-btn--cream { --k2-left: url('/ui/kit2/btn-cream-left.webp'); --k2-mid: url('/ui/kit2/btn-cream-mid.webp'); --k2-right: url('/ui/kit2/btn-cream-right.webp'); color: #6c2c1a; text-shadow: 0 2px 0 #fff8e7; }
+.k2-btn--grey, .k2-btn[aria-disabled='true'] { --k2-left: url('/ui/kit2/btn-grey-left.webp'); --k2-mid: url('/ui/kit2/btn-grey-mid.webp'); --k2-right: url('/ui/kit2/btn-grey-right.webp'); color: #fff; filter: saturate(.8); }
+
+.k2-sign {
+  align-items: center;
+  background: url('/ui/kit2/sign-wide.webp') center / 100% 100% no-repeat;
+  color: #6a2a17;
+  display: flex;
+  font: 900 clamp(1.2rem, 3.3vw, 2.4rem)/1.1 system-ui, sans-serif;
+  justify-content: center;
+  min-height: 170px;
+  padding: 28px 15%;
+  text-align: center;
+  text-shadow: 0 2px 0 #fff3d0;
+}
+.k2-sign--small { background-image: url('/ui/kit2/sign-small.webp'); min-height: 110px; }
+.k2-sign--hanging { background-image: url('/ui/kit2/sign-hanging.webp'); min-height: 190px; padding-top: 44px; }
+
+.k2-panel {
+  background: url('/ui/kit2/panel-cream.webp') center / 100% 100% no-repeat;
+  color: #5b2c1e;
+  min-height: 250px;
+  padding: 82px 94px;
+}
+.k2-panel--wood { background-image: url('/ui/kit2/panel-wood.webp'); }
+.k2-modal {
+  background: url('/ui/kit2/modal-frame.webp') center / 100% 100% no-repeat;
+  color: #5b2c1e;
+  min-height: 420px;
+  padding: 126px 82px 98px;
+}
+
+.k2-chip {
+  align-items: center;
+  background: url('/ui/kit2/chip-cream.webp') center / 100% 100% no-repeat;
+  color: #6a2a17;
+  display: inline-flex;
+  font-weight: 800;
+  min-height: 72px;
+  padding: 0 54px;
+}
+.k2-badge { background: center / 100% 100% no-repeat; display: inline-block; height: 88px; width: 88px; }
+.k2-badge--star { background-image: url('/ui/kit2/badge-star.webp'); }
+.k2-badge--check { background-image: url('/ui/kit2/badge-check.webp'); }
+.k2-tab {
+  align-items: center;
+  background: url('/ui/kit2/tab-active.webp') center / 100% 100% no-repeat;
+  color: #fff;
+  display: inline-flex;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 76px;
+  min-width: 220px;
+  padding: 0 52px;
+  text-shadow: 0 2px 0 #5d241b;
+}
+.k2-tab--idle { background-image: url('/ui/kit2/tab-idle.webp'); color: #6a2a17; text-shadow: 0 1px 0 #fff4d6; }
+.k2-progress { background: url('/ui/kit2/progress-track.webp') center / 100% 100% no-repeat; display: inline-block; min-height: 46px; min-width: 260px; padding: 8px; }
+.k2-progress__fill { background: url('/ui/kit2/progress-fill.webp') left center / 100% 100% no-repeat; height: 100%; width: 62%; }
+.k2-radio { background: url('/ui/kit2/radio-off.webp') center / 100% 100% no-repeat; display: inline-block; height: 76px; width: 76px; }
+.k2-radio--on { background-image: url('/ui/kit2/radio-on.webp'); }
+.k2-send, .k2-account { background: center / 100% 100% no-repeat; display: inline-block; height: 86px; width: 86px; }
+.k2-send { background-image: url('/ui/kit2/send-button.webp'); }
+.k2-account { background-image: url('/ui/kit2/icon-account.webp'); }

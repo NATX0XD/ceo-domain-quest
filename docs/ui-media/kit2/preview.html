@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CEO Domain Quest — Kit2 preview</title>
+  <link rel="stylesheet" href="../../../app/kit2.css">
+  <style>
+    :root { color-scheme: light; font-family: system-ui, "Noto Sans Thai", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: radial-gradient(circle at 50% 0%, #7b4d35, #38221d 64%); color: #fff5de; }
+    main { max-width: 1480px; margin: auto; padding: 30px clamp(16px, 4vw, 64px) 80px; }
+    h1, h2 { margin: 0; color: #fff1c9; text-shadow: 0 3px 0 #542719; }
+    h1 { font-size: clamp(1.8rem, 4vw, 3.5rem); }
+    h2 { margin-top: 48px; font-size: 1.5rem; }
+    p { color: #ffeec6; }
+    .note { max-width: 900px; }
+    .sample, .asset-grid, .widths { display: grid; gap: 18px; }
+    .sample { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: center; }
+    .widths { grid-template-columns: 240px 360px minmax(480px, 1fr); align-items: start; }
+    .width-card { background: rgb(255 242 211 / 12%); border: 1px solid rgb(255 239 194 / 30%); border-radius: 18px; padding: 14px; overflow: hidden; }
+    .width-card > small { color: #ffd98e; display: block; margin-bottom: 12px; }
+    .width-card .k2-btn { width: 100%; min-width: 0; padding-inline: 72px; }
+    .asset-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    figure { margin: 0; background: #f9e9c7; border-radius: 14px; padding: 12px; color: #5b2c1e; }
+    figure img { display: block; max-width: 100%; max-height: 150px; margin: auto; object-fit: contain; }
+    figcaption { font-size: .8rem; margin-top: 8px; overflow-wrap: anywhere; }
+    .wide { grid-column: 1 / -1; }
+    .wide img { max-height: 180px; width: 100%; }
+    .live-sign { min-height: 120px; }
+    .live-panel { min-height: 220px; }
+    .live-modal { min-height: 360px; }
+    .piece-row { align-items: center; display: flex; flex-wrap: wrap; gap: 18px; }
+    .piece-row span { color: #ffeec6; }
+    /* file:// preview overrides: production CSS intentionally uses /ui/kit2 URLs */
+    .k2-btn { background-color: transparent; background-image: url('../../../public/ui/kit2/btn-orange-left.webp'), url('../../../public/ui/kit2/btn-orange-mid.webp'), url('../../../public/ui/kit2/btn-orange-right.webp'); }
+    .k2-btn--orange { background-image: url('../../../public/ui/kit2/btn-orange-left.webp'), url('../../../public/ui/kit2/btn-orange-mid.webp'), url('../../../public/ui/kit2/btn-orange-right.webp'); }
+    .k2-btn--green { background-image: url('../../../public/ui/kit2/btn-green-left.webp'), url('../../../public/ui/kit2/btn-green-mid.webp'), url('../../../public/ui/kit2/btn-green-right.webp'); }
+    .k2-btn--purple { background-image: url('../../../public/ui/kit2/btn-purple-left.webp'), url('../../../public/ui/kit2/btn-purple-mid.webp'), url('../../../public/ui/kit2/btn-purple-right.webp'); }
+    .k2-btn--blue { background-image: url('../../../public/ui/kit2/btn-blue-left.webp'), url('../../../public/ui/kit2/btn-blue-mid.webp'), url('../../../public/ui/kit2/btn-blue-right.webp'); }
+    .k2-btn--red { background-image: url('../../../public/ui/kit2/btn-red-left.webp'), url('../../../public/ui/kit2/btn-red-mid.webp'), url('../../../public/ui/kit2/btn-red-right.webp'); }
+    .k2-btn--cream { background-image: url('../../../public/ui/kit2/btn-cream-left.webp'), url('../../../public/ui/kit2/btn-cream-mid.webp'), url('../../../public/ui/kit2/btn-cream-right.webp'); }
+    .k2-btn--grey { background-image: url('../../../public/ui/kit2/btn-grey-left.webp'), url('../../../public/ui/kit2/btn-grey-mid.webp'), url('../../../public/ui/kit2/btn-grey-right.webp'); }
+    .k2-sign { background-image: url('../../../public/ui/kit2/sign-wide.webp'); }
+    .k2-sign--small { background-image: url('../../../public/ui/kit2/sign-small.webp'); }
+    .k2-sign--hanging { background-image: url('../../../public/ui/kit2/sign-hanging.webp'); }
+    .k2-panel { background-image: url('../../../public/ui/kit2/panel-cream.webp'); }
+    .k2-panel--wood { background-image: url('../../../public/ui/kit2/panel-wood.webp'); }
+    .k2-modal { background-image: url('../../../public/ui/kit2/modal-frame.webp'); }
+    .k2-chip { background-image: url('../../../public/ui/kit2/chip-cream.webp'); }
+    .k2-badge--star { background-image: url('../../../public/ui/kit2/badge-star.webp'); }
+    .k2-badge--check { background-image: url('../../../public/ui/kit2/badge-check.webp'); }
+    .k2-tab { background-image: url('../../../public/ui/kit2/tab-active.webp'); }
+    .k2-tab--idle { background-image: url('../../../public/ui/kit2/tab-idle.webp'); }
+    .k2-progress { background-image: url('../../../public/ui/kit2/progress-track.webp'); }
+    .k2-progress__fill { background-image: url('../../../public/ui/kit2/progress-fill.webp'); }
+    .k2-radio { background-image: url('../../../public/ui/kit2/radio-off.webp'); }
+    .k2-radio--on { background-image: url('../../../public/ui/kit2/radio-on.webp'); }
+    .k2-send { background-image: url('../../../public/ui/kit2/send-button.webp'); }
+    .k2-account { background-image: url('../../../public/ui/kit2/icon-account.webp'); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>CEO Domain Quest · Kit2 art preview</h1>
+    <p class="note">ตัวอย่างข้อความเป็น HTML สด — ไม่มีตัวอักษรฝังอยู่ในภาพ ชุดปุ่มด้านล่างถูกยืดด้วยชิ้นกลางที่ความกว้าง 240, 360 และ 560px เพื่อเช็กการต่อขอบ</p>
+
+    <h2>Live classes at three widths</h2>
+    <section class="widths">
+      <div class="width-card"><small>240px</small><button class="k2-btn k2-btn--orange">เริ่มภารกิจ</button><div class="k2-sign live-sign">แผนที่เกาะธุรกิจ</div><div class="k2-panel live-panel">ภารกิจวันนี้: วางแผนร้านให้พร้อม</div></div>
+      <div class="width-card"><small>360px</small><button class="k2-btn k2-btn--purple">เลือกวิธีเรียนรู้</button><div class="k2-sign k2-sign--small live-sign">ร้านค้าของโดม</div><div class="k2-panel live-panel">เขียนคำตอบและบันทึกความคิดของเรา</div></div>
+      <div class="width-card"><small>560px</small><button class="k2-btn k2-btn--green">ส่งคำตอบให้คุณครู</button><div class="k2-sign k2-sign--hanging live-sign">ป้ายภารกิจพิเศษ</div><div class="k2-modal live-modal">หน้าต่างสรุปผลการเรียนรู้<br><br>โดมจะช่วยพาเราไปด่านถัดไป</div></div>
+    </section>
+
+    <h2>All blank source assets</h2>
+    <section class="asset-grid">
+      <figure class="wide"><img src="../../../public/ui/kit2/sign-wide.webp"><figcaption>sign-wide.webp</figcaption></figure>
+      <figure><img src="../../../public/ui/kit2/sign-small.webp"><figcaption>sign-small.webp</figcaption></figure>
+      <figure><img src="../../../public/ui/kit2/sign-hanging.webp"><figcaption>sign-hanging.webp</figcaption></figure>
+      <figure><img src="../../../public/ui/kit2/panel-cream.webp"><figcaption>panel-cream.webp</figcaption></figure>
+      <figure><img src="../../../public/ui/kit2/panel-wood.webp"><figcaption>panel-wood.webp</figcaption></figure>
+      <figure><img src="../../../public/ui/kit2/modal-frame.webp"><figcaption>modal-frame.webp</figcaption></figure>
+    </section>
+
+    <h2>Button slices</h2>
+    <section class="asset-grid">
+      <script>
+        for (const color of ['orange','green','purple','blue','red','cream','grey']) {
+          for (const piece of ['left','mid','right']) {
+            document.write(`<figure><img src="../../../public/ui/kit2/btn-${color}-${piece}.webp"><figcaption>btn-${color}-${piece}.webp</figcaption></figure>`);
+          }
+        }
+      </script>
+    </section>
+
+    <h2>Small pieces</h2>
+    <section class="asset-grid">
+      <script>
+        for (const name of ['chip-cream','badge-star','badge-check','tab-active','tab-idle','progress-track','progress-fill','radio-on','radio-off','send-button','icon-account']) {
+          document.write(`<figure><img src="../../../public/ui/kit2/${name}.webp"><figcaption>${name}.webp</figcaption></figure>`);
+        }
+      </script>
+    </section>
+    <div class="piece-row"><span>Live pieces:</span><span class="k2-chip">ชิปข้อมูล</span><span class="k2-badge k2-badge--star"></span><span class="k2-badge k2-badge--check"></span><span class="k2-tab">แท็บที่เลือก</span><span class="k2-tab k2-tab--idle">แท็บพัก</span><span class="k2-progress"><span class="k2-progress__fill"></span></span><span class="k2-radio k2-radio--on"></span><span class="k2-radio"></span><span class="k2-send"></span><span class="k2-account"></span></div>
+  </main>
+</body>
+</html>
