@@ -101,7 +101,7 @@ export function ModePopup({
     <motion.div
       className={
         drawer
-          ? 'fixed inset-0 z-[60] flex items-end justify-center overflow-y-auto bg-[#21150f]/20 p-0'
+          ? 'fixed inset-0 z-[60] flex items-end justify-center overflow-y-auto overscroll-contain bg-[#1b1030]/55 p-0'
           : 'fixed inset-0 z-[60] flex items-end justify-center overflow-y-auto bg-[#1d0f3a]/85 px-3 pb-4 pt-6 backdrop-blur-xl sm:items-center'
       }
       onMouseDown={(event) => {
@@ -135,11 +135,11 @@ export function ModePopup({
               }
             : undefined
         }
-        initial={reduce ? false : { opacity: 0, scale: 0.88, y: 28 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={reduce ? { duration: 0.01 } : spring}
+        initial={reduce ? false : drawer ? { y: '100%' } : { opacity: 0, scale: 0.88, y: 28 }}
+        animate={drawer ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+        transition={reduce ? { duration: 0.01 } : drawer ? { type: 'spring', stiffness: 300, damping: 32 } : spring}
       >
-        {drawer ? (
+        {drawer && !officialM1 ? (
           <span
             className="absolute left-1/2 top-2 z-20 h-1.5 w-14 -translate-x-1/2 rounded-full bg-[#8f775e]/55"
             aria-hidden="true"
@@ -289,45 +289,54 @@ function OfficialModeArtwork({
   onClose,
 }: Omit<ModePopupProps, 'presentation' | 'reason'>) {
   return (
-    <div className="relative aspect-[1122/1402] w-full max-w-[720px] select-none [container-type:inline-size]" aria-label={`เลือกวิธีเรียนสำหรับภารกิจที่ ${missionNo}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- ภาพทางการจาก UI/ ที่ลบข้อความเฉพาะภารกิจ 1 ออกแล้ว */}
-      <img src="/ui/mode/official-popup-blank.webp" alt="" aria-hidden="true" draggable={false} className="absolute inset-0 size-full object-contain" />
-      <p aria-hidden="true" className="absolute left-[53.7%] top-[17%] grid h-[9.3%] w-[39.6%] place-items-center text-center text-[3.3cqw] font-extrabold leading-[1.3] text-[#2d1a5e]">
-        <span>เลือกวิธีเรียนที่ถนัด<br />แล้วไปลุยภารกิจที่ {missionNo} กันเลย!</span>
-      </p>
-      <p aria-hidden="true" className="absolute left-[37.3%] top-[35.9%] grid h-[4.8%] w-[25.6%] place-items-center text-[3.6cqw] font-extrabold text-white [text-shadow:0_1px_0_#15803d]">
-        ภารกิจที่ {missionNo}
-      </p>
-      <h2 id="mode-popup-title" className="absolute left-[18.9%] top-[41.7%] grid h-[7.6%] w-[62.2%] place-items-center text-center text-[5.2cqw] font-extrabold leading-tight text-balance text-[#2a1458]">
-        {title}
-      </h2>
-      <button type="button" onClick={onClose} aria-label="ปิดและกลับไปแผนที่" className="absolute right-[3.2%] top-[34%] size-[10%] rounded-full bg-transparent" style={{ background: 'transparent', border: 0 }} />
-      {/* ปิดการ์ดในภาพ (มีวงกลม radio ที่ดูเหมือนเลข 0) แล้ววางการ์ด HTML ที่เห็นชัดว่าเลือกอันไหนอยู่ */}
-      <div aria-hidden="true" className="absolute inset-x-[5.4%] top-[52.6%] h-[32%] rounded-[4cqw] bg-[#fdf6ea]" />
-      <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="absolute inset-x-[6.2%] top-[55.6%] grid h-[28.2%] grid-cols-3 gap-[2.2cqw]">
-        {MODES.map((mode) => (
-          <ModeCard
-            key={mode.id}
-            mode={mode}
-            selected={picked === mode.id}
-            dimmed={picked !== null && picked !== mode.id}
-            recommended={recommended === mode.id}
-            onPick={onPick}
-            scaled
-          />
-        ))}
+    // กรอบทางการตัดขอบล่าง (ปุ่มส้มในภาพ) ออก แล้วต่อพื้นครีมลงถึงขอบจอ = ลิ้นชักล่างจริง ปุ่มเริ่มเป็น HTML มีระยะหายใจ
+    <div className="relative w-full max-w-[720px] select-none [container-type:inline-size]" aria-label={`เลือกวิธีเรียนสำหรับภารกิจที่ ${missionNo}`}>
+      <div className="relative z-10 aspect-[1122/1190] w-full">
+        <div className="absolute inset-x-0 top-0 aspect-[1122/1402]">
+          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-[84.88%] overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element -- ภาพทางการจาก UI/ ที่ลบข้อความเฉพาะภารกิจ 1 ออกแล้ว */}
+            <img src="/ui/mode/official-popup-blank.webp" alt="" draggable={false} className="absolute left-0 top-0 h-auto w-full max-w-none" />
+          </div>
+          <span aria-hidden="true" className="absolute left-1/2 top-[33.6%] h-[1.1%] w-[13%] -translate-x-1/2 rounded-full bg-[#8f775e]/45" />
+          <p aria-hidden="true" className="absolute left-[53.7%] top-[17%] grid h-[9.3%] w-[39.6%] place-items-center text-center text-[3.3cqw] font-extrabold leading-[1.3] text-[#2d1a5e]">
+            <span>เลือกวิธีเรียนที่ถนัด<br />แล้วไปลุยภารกิจที่ {missionNo} กันเลย!</span>
+          </p>
+          <p aria-hidden="true" className="absolute left-[37.3%] top-[35.9%] grid h-[4.8%] w-[25.6%] place-items-center text-[3.6cqw] font-extrabold text-white [text-shadow:0_1px_0_#15803d]">
+            ภารกิจที่ {missionNo}
+          </p>
+          <h2 id="mode-popup-title" className="absolute left-[18.9%] top-[41.7%] grid h-[7.6%] w-[62.2%] place-items-center text-center text-[5.2cqw] font-extrabold leading-tight text-balance text-[#2a1458]">
+            {title}
+          </h2>
+          <button type="button" onClick={onClose} aria-label="ปิดและกลับไปแผนที่" className="absolute right-[3.2%] top-[34%] size-[10%] rounded-full bg-transparent" style={{ background: 'transparent', border: 0 }} />
+          {/* ปิดการ์ดในภาพ (มีวงกลม radio ที่ดูเหมือนเลข 0) แล้ววางการ์ด HTML ที่เห็นชัดว่าเลือกอันไหนอยู่ */}
+          <div aria-hidden="true" className="absolute inset-x-[5.4%] top-[52.6%] h-[32.28%] rounded-t-[4cqw] bg-[#fdf6ea]" />
+          <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="absolute inset-x-[6.2%] top-[55.6%] grid h-[28.2%] grid-cols-3 gap-[2.2cqw]">
+            {MODES.map((mode) => (
+              <ModeCard
+                key={mode.id}
+                mode={mode}
+                selected={picked === mode.id}
+                dimmed={picked !== null && picked !== mode.id}
+                recommended={recommended === mode.id}
+                onPick={onPick}
+                scaled
+              />
+            ))}
+          </div>
+        </div>
       </div>
-      {error ? <p role="alert" className="absolute inset-x-[12%] top-[84%] text-center text-[clamp(10px,2.8vw,16px)] font-bold text-[#b42318]">{error}</p> : null}
-      <button
-        type="button"
-        onClick={onStart}
-        disabled={!picked || busy}
-        aria-label={picked ? `เริ่มภารกิจที่ ${missionNo} แบบ${MODES.find((m) => m.id === picked)?.title}` : 'เลือกวิธีเรียนก่อน'}
-        className="absolute inset-x-[6.5%] bottom-[6.5%] flex h-[8.3%] items-center justify-center rounded-full bg-transparent leading-none text-[4.6cqw] font-extrabold text-white outline-none [text-shadow:0_2px_0_#c2410c] focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/70 disabled:cursor-not-allowed"
-        style={{ background: 'transparent', border: 0 }}
-      >
-        {busy ? 'กำลังบันทึก' : `เริ่มภารกิจที่ ${missionNo} →`}
-      </button>
+      <div className="relative z-0 mx-[2.85%] -mt-px flex flex-col gap-2 bg-[#fdf3e6] px-[3.6%] pb-[calc(20px+env(safe-area-inset-bottom))] pt-[20px] shadow-[inset_2px_0_0_#efe2cc,inset_-2px_0_0_#efe2cc]">
+        {error ? <p role="alert" className="text-center text-[clamp(12px,3.2vw,16px)] font-bold text-[#b42318]">{error}</p> : null}
+        <button
+          type="button"
+          onClick={onStart}
+          disabled={!picked || busy}
+          aria-label={picked ? `เริ่มภารกิจที่ ${missionNo} แบบ${MODES.find((m) => m.id === picked)?.title}` : 'เลือกวิธีเรียนก่อน'}
+          className="flex min-h-14 w-full items-center justify-center rounded-full border-0 bg-gradient-to-b from-[#ffa047] to-[#f2661a] px-4 text-[clamp(18px,5.2cqw,28px)] font-extrabold leading-none text-white shadow-[0_5px_0_#c24f0d,0_10px_18px_rgba(194,79,13,0.3)] outline-none [text-shadow:0_2px_0_#c2410c] transition-transform active:translate-y-[3px] active:shadow-[0_2px_0_#c24f0d] focus-visible:ring-4 focus-visible:ring-[#7c4dd6]/70 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {busy ? 'กำลังบันทึก' : `เริ่มภารกิจที่ ${missionNo} →`}
+        </button>
+      </div>
     </div>
   )
 }
