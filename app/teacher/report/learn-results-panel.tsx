@@ -154,15 +154,15 @@ export function LearnResultsPanel({
             return (
               <div className="mt-3">
                 <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 lg:grid-cols-4">
-                  <StatTile label="เริ่มเรียนแล้ว" value={started.length} unit="คน" icon={<Icon3d name="rocket" size={30} />} hint={`จาก ${data.students.length} คน`} />
-                  <StatTile label="ครบอย่างน้อย 1 ด่าน" value={doneStudents} unit="คน" icon={<Icon3d name="check-mark-button" size={30} />} badge={doneStudents > 0 ? <StatusBadge status="passed" /> : undefined} />
-                  <StatTile
+                  <StatTile tone="amber" label="เริ่มเรียนแล้ว" value={started.length} unit="คน" icon={<Icon3d name="rocket" size={30} />} hint={`จาก ${data.students.length} คน`} />
+                  <StatTile tone="blue" label="ครบอย่างน้อย 1 ด่าน" value={doneStudents} unit="คน" icon={<Icon3d name="check-mark-button" size={30} />} badge={doneStudents > 0 ? <StatusBadge status="passed" /> : undefined} />
+                  <StatTile tone="rose"
                     label="ทำตามที่แนะนำ"
                     value={followed + different > 0 ? `${Math.round((followed / (followed + different)) * 100)}%` : '-'}
                     icon={<Icon3d name="bullseye" size={30} />}
                     hint={`${followed} จาก ${followed + different} ครั้ง`}
                   />
-                  <StatTile
+                  <StatTile tone="green"
                     label="ส่งตรวจ/ด่าน"
                     value={att.length ? n(att.reduce((a, m) => a + (m.attemptsAvg ?? 0), 0) / att.length) : '-'}
                     unit="ครั้ง"

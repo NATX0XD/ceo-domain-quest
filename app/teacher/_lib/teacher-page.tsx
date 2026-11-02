@@ -81,6 +81,9 @@ export interface TeacherSubPageProps {
   basePath?: string
   /** ปุ่มมุมขวาบน เช่น ปุ่มพิมพ์ */
   action?: ReactNode
+  icon?: ReactNode
+  tone?: 'purple' | 'blue' | 'green' | 'amber' | 'rose' | 'teal' | 'orange' | 'gray'
+  art?: string
   children: ReactNode
 }
 
@@ -90,10 +93,10 @@ export interface TeacherSubPageProps {
  * UX-6: โครงแดชบอร์ด (แถบบน + เมนูข้าง + สลับห้อง + ออกจากระบบ) ย้ายไปอยู่ที่ `app/teacher/layout.tsx`
  * แล้ว หน้าย่อยจึงเหลือแค่ชื่อหน้ากับเนื้อหา — ถ้ายังใส่ `AppShell` ของตัวเองจะกลายเป็นโครงซ้อนโครง
  */
-export function TeacherSubPage({ data, title, subtitle, action, children }: TeacherSubPageProps) {
+export function TeacherSubPage({ data, title, subtitle, action, icon, tone, art, children }: TeacherSubPageProps) {
   return (
     <PageBody>
-      <PageHead title={title} subtitle={subtitle} action={action} />
+      <PageHead title={title} subtitle={subtitle} action={action} icon={icon} tone={tone} art={art} />
 
       {data.roomNotFound ? (
         <p role="status" className="mt-3 rounded-xl bg-spark-50 p-3 text-label font-semibold text-ink ring-1 ring-spark-200">

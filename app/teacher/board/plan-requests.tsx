@@ -11,7 +11,7 @@ import {
   type PlanRequestStatus,
 } from '../../../core/plan-request'
 import { Icon3d, InfoTip } from '../_ux/v2'
-import { StatusBadge } from '../_ux/ui'
+import { Avatar, EmptyState, StatusBadge } from '../_ux/ui'
 
 /**
  * S-08 คำขอเปลี่ยนแผนจากผู้เรียน — ฝั่งครู
@@ -166,13 +166,12 @@ export function PlanRequests({
   const pending = rows.filter((r) => r.status === 'pending')
   const answered = rows.filter((r) => r.status !== 'pending')
 
-  const initial = (name: string | null) => Array.from((name ?? 'ผ').trim())[0] ?? '?'
 
   return (
-    <section className="t2-card" aria-label="คำขอเปลี่ยนแผนจากผู้เรียน">
+    <section className="t3-card p-4 sm:p-6" aria-label="คำขอเปลี่ยนแผนจากผู้เรียน">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="t2-card-title" style={{ margin: 0 }}>
-          <Icon3d name="speech-balloon" size={36} />
+        <h2 className="m-0 flex items-center gap-2.5 text-[18px] font-bold">
+          <span aria-hidden data-tone="blue" className="t3-tile size-10 rounded-xl"><Icon3d name="speech-balloon" size={24} /></span>
           คำขอจากนักเรียน
           {pending.length > 0 ? <StatusBadge status="atrisk">รอตอบ {pending.length}</StatusBadge> : null}
           <InfoTip
@@ -205,21 +204,24 @@ export function PlanRequests({
       ) : null}
 
       {pending.length === 0 ? (
-        <p className="mt-3 flex items-center gap-2 text-label font-extrabold text-ink">
-          <Icon3d name="sparkles" size={28} />
-          ยังไม่มีคำขอที่รอตอบ
-        </p>
+        <EmptyState
+          title="ยังไม่มีคำขอที่รอตอบ"
+          body="เมื่อนักเรียนขอเปลี่ยนระดับ ช่องทาง ขอข้าม หรือขอเวลาเพิ่ม คำขอจะเด้งขึ้นที่นี่ทันที"
+          action={
+            <button type="button" onClick={() => setShowAnswered(true)} className="inline-flex h-10 items-center rounded-xl bg-[var(--c-brand)] px-4 text-[15px] font-semibold text-white">
+              ดูคำขอที่ตอบแล้ว
+            </button>
+          }
+        />
       ) : (
-        <ul className="mt-3 flex flex-col gap-3">
+        <ul className="mt-4 grid gap-4 xl:grid-cols-2">
           {pending.map((row) => {
             const options = optionsFor(row.kind)
             const picked = granted[row.id] ?? ''
             return (
-              <li key={row.id} className="rounded-xl border border-[var(--c-line)] bg-white p-4">
+              <li key={row.id} className="rounded-2xl border border-[var(--c-line)] bg-white p-4 shadow-[var(--sh-1)]">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="t2-avatar" aria-hidden>
-                    {initial(row.nickname)}
-                  </span>
+                  <Avatar name={row.nickname ?? 'ผ'} size={44} />
                   <p className="min-w-0 flex-1 text-body-lg font-extrabold text-ink">
                     {row.nickname ?? 'ผู้เรียน'}
                     <span className="ml-2 align-middle">
@@ -232,7 +234,7 @@ export function PlanRequests({
                 <p className="mt-2 text-label font-extrabold text-ink">{row.summary}</p>
 
                 {/* ข้อความของเด็ก — ขึ้นเต็ม ไม่ตัด ไม่ย่อ */}
-                <blockquote className="mt-2 rounded-lg bg-[var(--c-sunken)] p-3 text-label text-pretty text-ink">
+                <blockquote className="mt-2 rounded-xl border-l-4 border-[var(--c-brand)] bg-[var(--c-brand-soft)] p-3 text-label text-pretty text-ink">
                   “{row.reason}”
                 </blockquote>
 

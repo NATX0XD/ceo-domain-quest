@@ -1,5 +1,7 @@
 'use client'
 
+import { Icon3d } from '../_ux/v2'
+
 import { useState } from 'react'
 import { Button, Card, Field, TextInput } from '../_ux/ui'
 
@@ -45,7 +47,7 @@ export function TeacherAccountPanel({ email, initialDisplayName }: Props) {
   const nameChanged = displayName.trim() !== initialDisplayName.trim()
   return (
     <div className="grid gap-4 lg:grid-cols-2" aria-labelledby="teacher-account-title">
-      <Card title={<span id="teacher-account-title">บัญชี</span>}>
+      <Card icon={<Icon3d name="bust-in-silhouette" size={22} />} tone="blue" title={<span id="teacher-account-title">บัญชี</span>}>
         <dl className="mb-4 grid gap-3 text-[15px] sm:grid-cols-2">
           <div><dt className="text-[14px] text-[var(--c-ink-3)]">อีเมล</dt><dd className="break-all font-medium text-[var(--c-ink)]">{email}</dd></div>
           <div><dt className="text-[14px] text-[var(--c-ink-3)]">ชื่อที่แสดง</dt><dd className="font-medium text-[var(--c-ink)]">{initialDisplayName || 'ยังไม่ได้ตั้งชื่อ'}</dd></div>
@@ -62,7 +64,7 @@ export function TeacherAccountPanel({ email, initialDisplayName }: Props) {
         </form>
       </Card>
 
-      <Card title="รหัสผ่าน">
+      <Card icon={<Icon3d name="locked" size={22} />} tone="rose" title="รหัสผ่าน">
         <form className="grid gap-4" onSubmit={(event) => { event.preventDefault(); void submit({ currentPassword, newPassword, confirmPassword }, 'password') }}>
           <Field label="รหัสผ่านปัจจุบัน" htmlFor="acc-cur">
             <TextInput id="acc-cur" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required />

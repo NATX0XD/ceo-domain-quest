@@ -6,7 +6,7 @@ import { AlertIcon } from '../../../components/ui'
 import { Dialog } from '../_ux/dialog'
 import { Icon3d, type Icon3dName } from '../_ux/v2'
 import {
-  Button, Card, DataTable, EmptyState, Field, Skeleton, StatTile, StatusBadge, TextInput, missionColor,
+  Avatar, Button, Card, EmptyState, Field, Ring, Skeleton, StatTile, StatusBadge, TextInput, missionColor,
 } from '../_ux/ui'
 import { LearnResultsPanel } from '../report/learn-results-panel'
 
@@ -66,6 +66,8 @@ interface BoardStudent {
   nickname: string
   earnedStars: number | null
   pendingReview: boolean
+  /** ด่านที่ผ่านแล้ว (จาก 5 ด่านรวม CEO) · ใช้วาดวงแหวนในรายชื่อ */
+  cleared?: number
 }
 
 const ROUTE_LABEL: Record<string, string> = {
@@ -136,7 +138,8 @@ export function StudentReportClient({
   initialReport?: StudentReport | null
 }) {
   const [roster, setRoster] = useState<BoardStudent[]>(initialRoster)
-  const [selected, setSelected] = useState<string | null>(studentId)
+  const [selected, setSelected] = useState<string | null>(studentId ?? initialRoster[0]?.studentId ?? null)
+  const [term, setTerm] = useState('')
   const [report, setReport] = useState<StudentReport | null>(initialReport)
   const [error, setError] = useState<string | null>(null)
   const [confirmRemove, setConfirmRemove] = useState(false)
@@ -146,27 +149,11 @@ export function StudentReportClient({
   const [certificateNameBusy, setCertificateNameBusy] = useState(false)
   const [certificateNameNotice, setCertificateNameNotice] = useState<string | null>(null)
 
-  // รายชื่อในห้องมาจากแผงห้องเรียน (endpoint เดิม ไม่ได้เพิ่มของใหม่)
+  // รายชื่อในห้องมาจากฝั่งเซิร์ฟเวอร์ (หน้า page.tsx) — ไม่พึ่ง endpoint แผงสดที่ปิดอยู่ในโหมดเรียนด้วยตนเอง
   useEffect(() => {
-    if (!classroomId) return
-    void (async () => {
-      try {
-        const res = await fetch(`/api/teacher/board?classroomId=${classroomId}`, { cache: 'no-store' })
-        if (!res.ok) return
-        const data = (await res.json()) as { board: BoardStudent[] }
-        const list = data.board.map((b) => ({
-          studentId: b.studentId,
-          nickname: b.nickname,
-          earnedStars: b.earnedStars,
-          pendingReview: b.pendingReview,
-        }))
-        setRoster(list)
-        setSelected((current) => current ?? list[0]?.studentId ?? null)
-      } catch {
-        // ไม่เป็นไร ครูยังกดจากแผงห้องเรียนเข้ามาตรง ๆ ได้
-      }
-    })()
-  }, [classroomId])
+    setRoster(initialRoster)
+    setSelected((current) => current ?? initialRoster[0]?.studentId ?? null)
+  }, [initialRoster])
 
   const load = useCallback(async () => {
     if (!selected) return
@@ -271,7 +258,6 @@ export function StudentReportClient({
   const chosen = str(profile?.learning_route)
   const chosenBy = str(profile?.channel_chosen_by)
 
-  const initial = (name: string) => Array.from(name.trim())[0] ?? '?'
   const current = roster.find((r) => r.studentId === selected) ?? null
   const pendingCount = roster.filter((r) => r.pendingReview).length
   const missionNo = (id: string): number | null => {
@@ -283,14 +269,14 @@ export function StudentReportClient({
 
   return (
     <div className="grid gap-6">
-      {/* เลือกคน — อยู่บนสุดเพราะครูใช้ไล่ทีละคนตอนให้คะแนน (รายชื่อยาวจึงใช้ช่องเลือกแทนปุ่มเรียงเต็มจอ) */}
-      <nav aria-label="เลือกนักเรียน" className="flex flex-wrap items-center gap-3 print:hidden">
+      {/* เลือกคน — มือถือใช้ช่องเลือก · จอใหญ่ใช้รายชื่อด้านข้าง */}
+      <nav aria-label="เลือกนักเรียน" className="flex flex-wrap items-center gap-3 print:hidden lg:hidden">
         <label className="flex items-center gap-2">
           <span className="text-[14px] font-medium text-[var(--c-ink)]">นักเรียน</span>
           <select
             value={selected ?? ''}
             onChange={(e) => setSelected(e.target.value || null)}
-            className="h-10 min-w-48 rounded-lg border border-[var(--c-line-strong)] bg-white px-3 text-[15px] text-[var(--c-ink)] outline-none focus:border-[var(--c-brand)] focus:ring-2 focus:ring-[var(--c-brand-ring)]"
+            className="h-11 min-w-48 rounded-xl border border-[var(--c-line-strong)] bg-white px-3 text-[15px] text-[var(--c-ink)] outline-none focus:border-[var(--c-brand)] focus:ring-2 focus:ring-[var(--c-brand-ring)]"
           >
             {roster.map((s) => (
               <option key={s.studentId} value={s.studentId}>
@@ -304,6 +290,47 @@ export function StudentReportClient({
         {pendingCount > 0 ? <StatusBadge status="inprogress">รอตรวจ {pendingCount} คน</StatusBadge> : null}
       </nav>
 
+      <div className="grid items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <aside aria-label="รายชื่อนักเรียน" className="t3-card sticky top-4 hidden max-h-[calc(100dvh-8rem)] flex-col overflow-hidden print:hidden lg:flex">
+          <div className="border-b border-[var(--c-line)] p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="m-0 text-[16px] font-bold">นักเรียนในห้อง</h2>
+              <span className="rounded-full bg-[var(--c-brand-soft)] px-2.5 text-[13px] font-bold text-[var(--c-brand)] tabular-nums">{roster.length}</span>
+            </div>
+            <label className="t3-search">
+              <span className="sr-only">ค้นหาชื่อนักเรียน</span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+              <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="ค้นหาชื่อ…" />
+            </label>
+            {pendingCount > 0 ? <p className="mt-2"><StatusBadge status="atrisk">รอตรวจ {pendingCount} คน</StatusBadge></p> : null}
+          </div>
+          <ul className="t3-scroll flex-1 overflow-y-auto p-2">
+            {roster.filter((r) => r.nickname.includes(term.trim())).map((r) => {
+              const on = r.studentId === selected
+              const pct = Math.round(((r.cleared ?? 0) / 5) * 100)
+              return (
+                <li key={r.studentId}>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(r.studentId)}
+                    aria-current={on ? 'true' : undefined}
+                    className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-[var(--c-brand-soft)] focus-visible:ring-2 focus-visible:ring-[var(--c-brand-ring)] focus-visible:outline-none"
+                    style={on ? { background: 'var(--c-brand-soft)', boxShadow: 'inset 3px 0 0 var(--c-brand)' } : undefined}
+                  >
+                    <Avatar name={r.nickname} size={38} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-semibold">{r.nickname}</span>
+                      <span className="block text-[12px] text-[var(--c-ink-3)] tabular-nums">{r.cleared ?? 0}/5 ด่าน{r.earnedStars != null ? ` · ${r.earnedStars} ดาว` : ''}</span>
+                    </span>
+                    {r.pendingReview ? <StatusBadge status="atrisk">รอตรวจ</StatusBadge> : <Ring value={pct} size={30} stroke={4} color="var(--d-passed)" label={`${pct}%`} />}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </aside>
+
+        <div className="grid min-w-0 gap-6">
       {roster.length === 0 ? (
         <Card>
           <EmptyState
@@ -324,16 +351,16 @@ export function StudentReportClient({
 
       {report ? (
         <>
-          <Card>
-            <div className="flex flex-wrap items-center gap-4">
-              <span className="grid size-14 shrink-0 place-items-center rounded-full bg-[var(--c-brand-soft)] text-[24px] font-semibold text-[var(--c-brand)]" aria-hidden>
-                {initial(report.student.nickname)}
-              </span>
+          <section className="t3-hero t3-hero--soft px-5 py-5 sm:px-7" data-tone="purple">
+            <div className="relative z-[1] flex flex-wrap items-center gap-5">
+              <Ring value={Math.round(((roster.find((r) => r.studentId === report.student.id)?.cleared ?? passedCount) / 5) * 100)} size={84} stroke={8} color="var(--d-passed)" label="ความคืบหน้ารวม">
+                <Avatar name={report.student.nickname} size={56} />
+              </Ring>
               <div className="min-w-[14rem] flex-1">
-                <h2 className="text-[20px] leading-7 font-bold text-[var(--c-ink)]">{report.student.nickname}</h2>
-                <p className="mt-1 flex flex-wrap items-center gap-2 text-[14px] text-[var(--c-ink-3)]">
-                  <span>{str(profile?.business_name) ?? 'ยังไม่ตั้งชื่อร้าน'}</span>
-                  {str(profile?.domain_name) ? <span className="rounded-md bg-[var(--c-sunken)] px-2 py-0.5 text-[13px] text-[var(--c-ink-2)]">{str(profile?.domain_name)}</span> : null}
+                <h2 className="m-0 text-[24px] leading-8 font-extrabold text-[var(--c-ink)]">{report.student.nickname}</h2>
+                <p className="mt-1 flex flex-wrap items-center gap-2 text-[14px] text-[var(--c-ink-2)]">
+                  <span className="inline-flex items-center gap-1.5"><Icon3d name="package" size={18} />{str(profile?.business_name) ?? 'ยังไม่ตั้งชื่อร้าน'}</span>
+                  {str(profile?.domain_name) ? <span className="rounded-full bg-white px-2.5 py-0.5 text-[13px] font-semibold text-[var(--c-brand)] shadow-[var(--sh-1)]">{str(profile?.domain_name)}</span> : null}
                   <StatusBadge status={passedCount === 0 ? 'notstarted' : 'inprogress'}>
                     ผ่านแล้ว {passedCount}/{report.missions.length || 0} ด่าน
                   </StatusBadge>
@@ -348,7 +375,7 @@ export function StudentReportClient({
                 <Button kind="danger" onClick={() => setConfirmRemove(true)}>ลบออกจากห้อง</Button>
               </div>
             </div>
-          </Card>
+          </section>
 
           <section aria-label="ชื่อบนเกียรติบัตร">
             <Card
@@ -394,20 +421,22 @@ export function StudentReportClient({
           </section>
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatTile label="ดาวที่ได้" value={`${report.stars?.earned ?? 0} ดวง`} icon={<Icon3d name="star" size={28} />} />
+            <StatTile tone="amber" label="ดาวที่ได้" value={`${report.stars?.earned ?? 0} ดวง`} icon={<Icon3d name="star" size={28} />} />
             <StatTile
-              label="เป้าหมายที่ตั้งเอง"
+              tone="rose" label="เป้าหมายที่ตั้งเอง"
               value={report.stars?.goalStars == null ? '—' : `${report.stars.goalStars} ดวง`}
               icon={<Icon3d name="bullseye" size={28} />}
               hint={report.stars?.goalStars == null ? 'ยังไม่ตั้งเป้า' : undefined}
             />
             <StatTile
+              tone="blue"
               label="ก่อนเรียน"
               value={report.tests.pre === null ? '—' : report.tests.pre}
               icon={<Icon3d name="memo" size={28} />}
               hint={report.tests.pre === null ? 'ยังไม่ทำ' : undefined}
             />
             <StatTile
+              tone="green"
               label="หลังเรียน"
               value={report.tests.post === null ? '—' : report.tests.post}
               icon={<Icon3d name="chart-increasing" size={28} />}
@@ -423,50 +452,41 @@ export function StudentReportClient({
           </div>
 
           {/* ── จุดประสงค์ที่ผ่าน */}
-          <Card title="ภารกิจและจุดประสงค์" flush>
-            <DataTable
-              caption="ภารกิจและจุดประสงค์"
-              rows={report.missions}
-              rowKey={(m) => m.missionId}
-              empty={<EmptyState title="ยังไม่ได้เริ่มภารกิจ" body="เมื่อนักเรียนเริ่มเล่น ผลของแต่ละด่านจะขึ้นที่นี่" />}
-              columns={[
-                {
-                  key: 'obj',
-                  header: 'จุดประสงค์',
-                  cell: (m) => {
-                    const n = missionNo(m.missionId)
-                    return (
-                      <span className="inline-flex items-center gap-2 font-medium">
-                        <span aria-hidden className="size-2.5 shrink-0 rounded-[2px]" style={{ background: n ? missionColor(n) : 'var(--d-notstarted)' }} />
-                        {MISSION_OBJECTIVE[m.missionId] ?? m.missionId}
+          <Card title="เส้นทางภารกิจและจุดประสงค์" icon={<Icon3d name="chequered-flag" size={22} />} tone="blue" flush>
+            {report.missions.length === 0 ? (
+              <EmptyState title="ยังไม่ได้เริ่มภารกิจ" body="เมื่อนักเรียนเริ่มเล่น ผลของแต่ละด่านจะขึ้นที่นี่" />
+            ) : (
+              <ol aria-label="ภารกิจและจุดประสงค์" className="m-0 list-none p-4 sm:p-5">
+                {report.missions.map((m, i) => {
+                  const n = missionNo(m.missionId)
+                  const c = n ? missionColor(n) : 'var(--d-notstarted)'
+                  const skipped = report.skips.find((sk) => sk.missionId === m.missionId)
+                  return (
+                    <li key={m.missionId} className="relative flex gap-4 pb-5 last:pb-0">
+                      {i < report.missions.length - 1 ? <span aria-hidden className="absolute top-9 bottom-0 left-[17px] w-0.5 bg-[var(--c-line)]" /> : null}
+                      <span aria-hidden className="relative z-[1] grid size-9 shrink-0 place-items-center rounded-full text-[14px] font-bold text-white" style={{ background: c }}>
+                        {m.passedAt ? '✓' : n === 6 ? 'C' : (n ?? '•')}
                       </span>
-                    )
-                  },
-                },
-                { key: 'route', header: 'ช่องทาง', cell: (m) => routeName(m.channelUsed) },
-                { key: 'att', header: 'ลอง', numeric: true, cell: (m) => m.attempts },
-                { key: 'hint', header: 'คำใบ้', numeric: true, cell: (m) => m.hintsUsed },
-                { key: 'star', header: 'ดาว', numeric: true, cell: (m) => <span className="font-semibold">{m.stars ?? 0}</span> },
-                { key: 'time', header: 'เวลา', className: 'hidden lg:table-cell', cell: (m) => timeText(m.secondsSpent) },
-                {
-                  key: 'res',
-                  header: 'ผล',
-                  cell: (m) => {
-                    const skipped = report.skips.find((sk) => sk.missionId === m.missionId)
-                    if (m.passedAt) return <StatusBadge status="passed" />
-                    if (skipped) return <StatusBadge status="atrisk">ข้าม</StatusBadge>
-                    /**
-                     * ด่านบอส**ไม่เคยมี passed_at โดยดีไซน์** (ดู board/route.ts)
-                     * สรุปว่า "ยังไม่ผ่าน" จึงผิด — ดูที่คะแนนที่ครูยืนยันแทน (UAT-7 ข้อ ค-5)
-                     */
-                    if (m.missionId === 'boss') {
-                      return <span title="ด่านบอสไม่มีสถานะผ่าน ดูที่คะแนนของครู"><StatusBadge status="inprogress">ดูคะแนนครู</StatusBadge></span>
-                    }
-                    return <StatusBadge status="notstarted">ยังไม่ผ่าน</StatusBadge>
-                  },
-                },
-              ]}
-            />
+                      <div className="min-w-0 flex-1 rounded-2xl border border-[var(--c-line)] bg-white p-3.5">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="m-0 min-w-0 text-[15px] font-bold text-[var(--c-ink)]">{MISSION_OBJECTIVE[m.missionId] ?? m.missionId}</p>
+                          {m.passedAt ? <StatusBadge status="passed" /> : skipped ? <StatusBadge status="atrisk">ข้าม</StatusBadge> : m.missionId === 'boss' ? (
+                            <span title="ด่านบอสไม่มีสถานะผ่าน ดูที่คะแนนของครู"><StatusBadge status="inprogress">ดูคะแนนครู</StatusBadge></span>
+                          ) : <StatusBadge status="notstarted">ยังไม่ผ่าน</StatusBadge>}
+                        </div>
+                        <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-[var(--c-ink-3)]">
+                          <div className="flex gap-1"><dt>ช่องทาง</dt><dd className="m-0 font-semibold text-[var(--c-ink-2)]">{routeName(m.channelUsed)}</dd></div>
+                          <div className="flex gap-1"><dt>ลอง</dt><dd className="m-0 font-semibold text-[var(--c-ink-2)] tabular-nums">{m.attempts}</dd></div>
+                          <div className="flex gap-1"><dt>คำใบ้</dt><dd className="m-0 font-semibold text-[var(--c-ink-2)] tabular-nums">{m.hintsUsed}</dd></div>
+                          <div className="flex gap-1"><dt>ดาว</dt><dd className="m-0 font-semibold text-[var(--c-ink-2)] tabular-nums">{m.stars ?? 0}</dd></div>
+                          <div className="flex gap-1"><dt>เวลา</dt><dd className="m-0 font-semibold text-[var(--c-ink-2)]">{timeText(m.secondsSpent)}</dd></div>
+                        </dl>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
             {report.skips.length > 0 ? (
               <p className="border-t border-[var(--c-line)] px-4 py-3 text-[14px] text-[var(--c-ink-3)] sm:px-5">
                 ข้ามภารกิจ {report.skips.length} ครั้ง:{' '}
@@ -637,6 +657,9 @@ export function StudentReportClient({
           <span className="sr-only">กำลังโหลดรายงาน</span>
         </div>
       ) : null}
+
+        </div>
+      </div>
 
       <Dialog
         open={confirmRemove}

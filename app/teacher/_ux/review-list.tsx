@@ -1,9 +1,10 @@
 import rubric from '@/content/rubric.json'
 import { listPendingReview, listSubmissions, type Submission } from '@/lib/db/repo'
 import { TeacherConfirmScore, type RubricDimensionView } from '@/components/teacher-confirm-client'
-import { EmptyState, InfoIcon, CheckIcon, AlertIcon, DomeAvatar } from '@/components/ui'
+import Link from 'next/link'
+import { InfoIcon, AlertIcon } from '@/components/ui'
 import { Fact, Icon3d, InfoTip } from './v2'
-import { StatusBadge } from './ui'
+import { Avatar, EmptyState, StatusBadge } from './ui'
 import { sourceLabel, type AiSourceInfo } from '@/components/server/ai'
 import { MAX_REVISION_ROUNDS } from '@/components/server/revision'
 import { isTeacherConfirmed } from '@/lib/db/submission-scores'
@@ -110,18 +111,21 @@ function readAiScores(value: unknown): AiScoreBag | null {
 export async function ReviewList({
   teacherId,
   classroomId,
+  selectedId = null,
 }: {
   teacherId: string
   classroomId: string | null
+  /** งานที่เปิดอยู่ในแผงขวา (ไม่ระบุ = ชิ้นแรกในคิว) */
+  selectedId?: string | null
 }) {
   if (!classroomId) {
     return (
-      <EmptyState
-        as="h2"
-        title="ยังไม่มีห้องเรียน"
-        description="เปิดห้องเรียนก่อน แล้วงานที่นักเรียนส่งจะมาโผล่ตรงนี้"
-        illustration={<DomeAvatar mood="greet" size={72} decorative />}
-      />
+      <div className="t3-card">
+        <EmptyState
+          title="ยังไม่มีห้องเรียน"
+          body="เปิดห้องเรียนก่อน แล้วงานที่นักเรียนส่งจะมาโผล่ตรงนี้"
+        />
+      </div>
     )
   }
 
@@ -140,12 +144,13 @@ export async function ReviewList({
 
   if (pending.length === 0) {
     return (
-      <EmptyState
-        as="h2"
-        title="ยังไม่มีงานรอตรวจ"
-        description="งานที่นักเรียนส่งจะขึ้นที่นี่"
-        illustration={<CheckIcon width={48} height={48} className="text-quest-600" />}
-      />
+      <div className="t3-card">
+        <EmptyState
+          title="ตรวจครบแล้ว ไม่มีงานค้าง"
+          body="งานที่นักเรียนส่งจะขึ้นที่นี่ ครูยืนยันคะแนนได้ทีละชิ้น"
+          action={<Link href={`/teacher/student?classroomId=${classroomId}`} className="inline-flex h-10 items-center rounded-xl bg-[var(--c-brand)] px-4 text-[15px] font-semibold text-white">ดูความคืบหน้ารายคน</Link>}
+        />
+      </div>
     )
   }
 
@@ -161,9 +166,40 @@ export async function ReviewList({
     historyByStudent.set(id, (lists[index] ?? []).filter((row) => row.emphasis_criterion !== null))
   })
 
+  const active = pending.find((r) => r.id === selectedId) ?? pending[0]!
+
   return (
-    <ul aria-live="polite" className="flex flex-col gap-4">
-      {pending.map((row) => {
+    <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
+      <nav aria-label="คิวงานรอตรวจ" className="t3-card overflow-hidden lg:sticky lg:top-4">
+        <div className="flex items-center justify-between border-b border-[var(--c-line)] px-4 py-3">
+          <h2 className="m-0 text-[16px] font-bold">คิวงานรอตรวจ</h2>
+          <span className="rounded-full bg-[var(--s-danger)] px-2.5 text-[13px] font-bold text-white tabular-nums">{pending.length}</span>
+        </div>
+        <ul className="t3-scroll max-h-[60vh] overflow-y-auto p-2">
+          {pending.map((q) => {
+            const on = q.id === active.id
+            return (
+              <li key={q.id}>
+                <Link
+                  href={`/teacher/review?classroomId=${classroomId}&submission=${q.id}`}
+                  aria-current={on ? 'true' : undefined}
+                  className="flex items-center gap-3 rounded-xl p-2.5 hover:bg-[var(--c-brand-soft)]"
+                  style={on ? { background: 'var(--c-brand-soft)', boxShadow: 'inset 3px 0 0 var(--c-brand)' } : undefined}
+                >
+                  <Avatar name={q.nickname ?? '?'} size={40} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-semibold">{q.nickname}</span>
+                    <span className="block truncate text-[13px] text-[var(--c-ink-3)]">{q.domain_name}{q.tld}</span>
+                  </span>
+                  <StatusBadge status={q.emphasis_criterion ? 'inprogress' : 'notstarted'}>{q.emphasis_criterion ? 'CEO' : 'สถานี B'}</StatusBadge>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
+      <ul aria-live="polite" className="m-0 flex min-w-0 list-none flex-col gap-4 p-0">
+      {[active].map((row) => {
         const ai = readAiScores(row.ai_scores)
         const aiDone = ai?.gradingStatus === 'done' && Boolean(ai?.aiProposed)
         // ฉบับทั้งหมดของคนนี้ ใหม่สุดอยู่หน้าสุด (listSubmissions เรียง created_at DESC)
@@ -179,7 +215,7 @@ export async function ReviewList({
               ? 'กำลังตรวจ…'
               : 'ไม่ได้เรียก AI'
         return (
-          <li key={row.id} className="t2-card">
+          <li key={row.id} className="t3-card p-4 sm:p-6">
             <div className="flex flex-wrap items-center gap-3">
               <span className="t2-avatar" aria-hidden>
                 {initial}
@@ -306,6 +342,7 @@ export async function ReviewList({
           </li>
         )
       })}
-    </ul>
+      </ul>
+    </div>
   )
 }

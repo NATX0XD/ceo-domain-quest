@@ -42,7 +42,7 @@ export default async function TeacherSettingsPage({
 
   return (
     <PageBody>
-      <PageHead title="ตั้งค่าห้อง" subtitle="บัญชี รหัสห้อง และการดาวน์โหลดข้อมูล" />
+      <PageHead tone="gray" icon={<Icon3d name="clipboard" size={36} />} title="ตั้งค่าห้อง" subtitle="บัญชี รหัสห้อง และการดาวน์โหลดข้อมูล" />
 
       <div className="grid gap-6">
         {teacher ? <TeacherAccountPanel email={teacher.email} initialDisplayName={teacher.name ?? ''} /> : null}
@@ -51,7 +51,7 @@ export default async function TeacherSettingsPage({
           <TeacherRoomClient roomCode={data.selectedRoomCode} joinPath={joinPath} />
 
           {qrSvg ? (
-            <Card title="สแกนเข้าห้อง" className="text-center">
+            <Card icon={<Icon3d name="door" size={22} />} tone="teal" title="สแกนเข้าห้อง" className="text-center">
               {/* eslint-disable-next-line react/no-danger */}
               <div
                 className="mx-auto w-full max-w-[12rem]"
@@ -66,6 +66,8 @@ export default async function TeacherSettingsPage({
 
         {data.selectedId ? (
           <Card
+            icon={<Icon3d name="package" size={22} />}
+            tone="amber"
             title="ดาวน์โหลด CSV"
             tip="ไฟล์ใช้ชื่อสมมติแทนชื่อจริงของนักเรียน (pseudonymize) นำไปวิเคราะห์ต่อได้เลย"
           >

@@ -182,13 +182,13 @@ export function TeacherConfirmScore({
   }
 
   return (
-    <div className="mt-4 rounded-[22px] bg-[#f6f2e8] p-3">
+    <div className="mt-4 rounded-2xl border border-[var(--c-line)] bg-[var(--c-bg)] p-4">
       {dimensions.length > 0 ? (
         <ul className="mb-4 flex flex-col gap-2">
           {dimensions.map((d) => (
             <li
               key={d.id}
-              className="rounded-[18px] bg-white p-3"
+              className="rounded-xl border border-[var(--c-line)] bg-white p-3"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-label font-extrabold text-ink">
@@ -210,7 +210,7 @@ export function TeacherConfirmScore({
                     )
                     setScore(String(total))
                   }}
-                  className="min-h-11 min-w-16 shrink-0 rounded-full bg-white px-4 text-body font-extrabold text-ink ring-2 ring-line-contrast ring-inset outline-none focus-ring focus:ring-brand-500"
+                  className="min-h-11 min-w-16 shrink-0 rounded-xl bg-[var(--c-brand-soft)] px-4 text-body font-extrabold text-[var(--c-brand)] ring-2 ring-[var(--c-brand-ring)] ring-inset outline-none focus-ring"
                 >
                   {[1, 2, 3].map((v) => (
                     <option key={v} value={v}>
@@ -238,7 +238,7 @@ export function TeacherConfirmScore({
       ) : null}
 
       {/* ก่อน → หลัง: คะแนนที่ระบบเสนอ เทียบกับคะแนนที่ครูกำลังจะยืนยัน */}
-      <div className="flex items-center gap-2 rounded-[18px] bg-white p-3">
+      <div className="flex items-center gap-2 rounded-xl border border-[var(--c-line)] bg-white p-3">
         <div className="min-w-0 flex-1">
           <p className="text-note font-bold text-ink-muted">ระบบเสนอ</p>
           <p className="text-body-lg font-bold tabular-nums text-ink-muted">
@@ -286,7 +286,7 @@ export function TeacherConfirmScore({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="เช่น เหตุผลข้อ 2 ชัดมาก ลองเพิ่มว่าลูกค้าเป็นใครอีกนิด"
-            className="mt-2 w-full rounded-[18px] bg-white p-3 text-body text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus focus:ring-brand-500"
+            className="mt-2 w-full rounded-xl border border-[var(--c-line)] bg-white p-3 text-body text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus focus:ring-brand-500"
           />
         </div>
 
@@ -304,7 +304,7 @@ export function TeacherConfirmScore({
       </div>
 
       {/* ทางที่สองของครู: ยังไม่ให้คะแนนสุดท้าย แต่ส่งกลับไปให้แก้ก่อน (สเปกข้อ 3.3) */}
-      <details className="mt-3 rounded-[18px] bg-white p-3">
+      <details className="mt-3 rounded-xl border border-[var(--c-line)] bg-white p-3">
         <summary className="flex min-h-11 cursor-pointer items-center text-label font-extrabold text-ink">
           ส่งกลับให้แก้ · แก้มาแล้ว {roundsUsed}/{maxRounds} รอบ
         </summary>
@@ -345,7 +345,7 @@ export function TeacherConfirmScore({
           value={reviseNote}
           onChange={(e) => setReviseNote(e.target.value)}
           placeholder="เช่น เขียนเพิ่มว่าลูกค้าเป็นใคร แล้วส่งกลับมาได้เลย"
-          className="mt-2 w-full rounded-[18px] bg-[#f6f2e8] p-3 text-body text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus focus:ring-brand-500"
+          className="mt-2 w-full rounded-xl bg-white p-3 text-body text-ink ring-2 ring-line-contrast ring-inset outline-none placeholder:text-ink-subtle focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus focus:ring-brand-500"
         />
 
         {roundsUsed >= maxRounds ? (

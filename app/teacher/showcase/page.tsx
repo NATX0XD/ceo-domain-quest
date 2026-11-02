@@ -8,6 +8,8 @@ import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/te
 import { PageBody, PageHead } from '../_ux/page-head'
 import { InfoTip } from '../_ux/v2'
 
+import { Icon3d } from '../_ux/v2'
+
 export const metadata: Metadata = { title: 'ผลงานและจอหน้าห้อง — สำหรับครู' }
 export const dynamic = 'force-dynamic'
 
@@ -51,6 +53,9 @@ export default async function TeacherShowcasePage({
   return (
     <PageBody>
       <PageHead
+        tone="amber"
+        icon={<Icon3d name="glowing-star" size={36} />}
+        art="/ui/rewards/mission-medal.webp"
         title="ผลงานเด่น"
         subtitle="กลั่นกรองผลงานที่เพื่อนจะเห็น"
       />

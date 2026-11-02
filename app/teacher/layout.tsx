@@ -41,7 +41,8 @@ export default async function TeacherLayout({ children }: { children: ReactNode 
     <>
       <Suspense fallback={<TeacherLoading />}>
         <TeacherShell
-          teacherEmail={me.data?.name || me.data?.email || 'ครู'}
+          teacherEmail={me.data?.email || me.data?.name || 'ครู'}
+          teacherName={me.data?.name || undefined}
           classrooms={sorted.map((c) => ({
             id: c.id,
             roomCode: c.room_code,

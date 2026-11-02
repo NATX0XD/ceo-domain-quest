@@ -471,6 +471,21 @@ access token ของ Supabase **ไม่ถูกส่งกลับไป�
     }),
   },
 
+  '/api/teacher/pending-count': {
+    get: op({
+      id: 'pendingCount',
+      summary: 'จำนวนงานรอตรวจของห้อง (ตัวเลขบนระฆัง/เมนู)',
+      tags: [TEACHER],
+      security: TEACHER_ONLY,
+      description: 'อ่านอย่างเดียว · ตรวจเจ้าของห้องจากคุกกี้ครู ไม่ใช่ห้องของครู = 404',
+      parameters: [classroomQuery],
+      responses: {
+        ...ok('จำนวนงานรอตรวจ', obj({ ok: bool('สำเร็จ'), pendingCount: { type: 'integer', description: 'จำนวนงานที่รอครูยืนยัน' } })),
+        ...failures([400, ['bad-request']], [401, ['unauthorized']], [404, ['not-found']]),
+      },
+    }),
+  },
+
   '/api/teacher/flags': {
     get: op({
       id: 'flagsList',

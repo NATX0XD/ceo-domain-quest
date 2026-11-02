@@ -49,9 +49,9 @@ export async function ReflectionPanel({
         ทบทวนตัวเอง
       </h2>
       <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-3">
-        <StatTile label="ทบทวนแล้ว" value={answered} unit="คน" icon={<Icon3d name="busts-in-silhouette" size={30} />} />
-        <StatTile label="มั่นใจเฉลี่ย (เต็ม 5)" value={avgConf === null ? '-' : avgConf.toFixed(1)} icon={<Icon3d name="glowing-star" size={30} />} />
-        <StatTile label="ยังสงสัย" value={wonders.length} unit="เรื่อง" icon={<Icon3d name="speech-balloon" size={30} />} />
+        <StatTile tone="amber" label="ทบทวนแล้ว" value={answered} unit="คน" icon={<Icon3d name="busts-in-silhouette" size={30} />} />
+        <StatTile tone="blue" label="มั่นใจเฉลี่ย (เต็ม 5)" value={avgConf === null ? '-' : avgConf.toFixed(1)} icon={<Icon3d name="glowing-star" size={30} />} />
+        <StatTile tone="rose" label="ยังสงสัย" value={wonders.length} unit="เรื่อง" icon={<Icon3d name="speech-balloon" size={30} />} />
       </div>
       {feelTotal > 0 ? (
         <div className="mt-5">

@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Button, Card, EmptyState, Tabs, Toggle, missionColor } from '@/app/teacher/_ux/ui'
+import { Button, Card, EmptyState, missionColor, type Tone } from '@/app/teacher/_ux/ui'
+import { Icon3d, type Icon3dName } from '@/app/teacher/_ux/v2'
 
 type MissionId = 'm1' | 'm2' | 'm3' | 'm4' | 'ceo'
 type Bag = Record<string, unknown>
@@ -51,6 +52,57 @@ const FIELDS: Record<MissionId, Array<{ key: string; label: string; help: string
   ],
 }
 
+const HERO: Record<MissionId, { icon: Icon3dName; art: string }> = {
+  m1: { icon: 'books', art: '/ui/mode/dome.webp' },
+  m2: { icon: 'magnifying-glass-tilted-left', art: '/landing/dome-wave.webp' },
+  m3: { icon: 'handshake', art: '/ui/welcome/official-dome.webp' },
+  m4: { icon: 'bullseye', art: '/landing/dome-wave.webp' },
+  ceo: { icon: 'crown', art: '/ui/rewards/mission-medal.webp' },
+}
+
+/** กลุ่มของช่องตั้งค่าในแต่ละด่าน — ช่องที่ไม่อยู่ในกลุ่มไหนไปรวมที่ "อื่น ๆ" */
+const GROUPS: Record<MissionId, Array<{ title: string; icon: Icon3dName; tone: Tone; keys: string[] }>> = {
+  m1: [
+    { title: 'รูปแบบการเรียน', icon: 'television', tone: 'blue', keys: ['modesEnabled.watch', 'modesEnabled.read', 'modesEnabled.do'] },
+    { title: 'เกณฑ์และตัวช่วย', icon: 'bullseye', tone: 'green', keys: ['passScore', 'aiFeedback'] },
+  ],
+  m2: [
+    { title: 'การฝึกเขียน', icon: 'memo', tone: 'purple', keys: ['textAttempts', 'simStages'] },
+    { title: 'เกณฑ์และตัวช่วย', icon: 'bullseye', tone: 'green', keys: ['exitQuestions', 'passScore', 'aiFeedback'] },
+  ],
+  m3: [
+    { title: 'ช่วงฝึกซ้อม', icon: 'light-bulb', tone: 'amber', keys: ['practiceEnabled', 'hints', 'domeQuota'] },
+    { title: 'รอบจริงหน้าร้าน', icon: 'stopwatch', tone: 'orange', keys: ['realCustomers', 'customerSeconds', 'extendSeconds', 'handbookSeconds', 'customerQuestions'] },
+    { title: 'เกณฑ์ผ่าน', icon: 'check-mark-button', tone: 'green', keys: ['tagPass', 'stampPass'] },
+  ],
+  m4: [
+    { title: 'เวลาและงบ', icon: 'alarm-clock', tone: 'teal', keys: ['timerSeconds', 'startCoins', 'tutorialEnabled'] },
+    { title: 'เกณฑ์ผ่าน', icon: 'check-mark-button', tone: 'green', keys: ['explainPass', 'eventsPass'] },
+  ],
+  ceo: [
+    { title: 'การตรวจงาน', icon: 'robot', tone: 'purple', keys: ['aiGrading', 'revisions'] },
+    { title: 'ช่องทางส่งงาน', icon: 'speech-balloon', tone: 'rose', keys: ['submitModes.write', 'submitModes.voice', 'submitModes.design'] },
+  ],
+}
+
+/** ประโยค "นักเรียนจะเจอ" แบบสดจากค่าที่กำลังตั้ง */
+function previewOf(id: MissionId, v: (k: string) => unknown): string {
+  const n = (k: string) => (v(k) === null || v(k) === undefined ? null : Number(v(k)))
+  const on = (k: string) => v(k) === true
+  const mins = (sec: number | null) => (sec === null ? '-' : sec >= 60 ? `${Math.round((sec / 60) * 10) / 10} นาที` : `${sec} วินาที`)
+  if (id === 'm1') {
+    const modes = [on('modesEnabled.watch') && 'ดูคลิป', on('modesEnabled.read') && 'อ่านการ์ด', on('modesEnabled.do') && 'ลงมือทำ'].filter(Boolean)
+    return `เลือกเรียนได้ ${modes.length > 0 ? modes.join(' / ') : 'ยังไม่เปิดรูปแบบใดเลย'} · ผ่านเมื่อได้ ${n('passScore')} คะแนน`
+  }
+  if (id === 'm2') return `ฝึกเขียนได้ ${n('textAttempts')} ครั้ง · จำลอง ${n('simStages')} ช่วง · ตอบเช็กความเข้าใจ ${n('exitQuestions')} ข้อ · ผ่านที่ ${n('passScore')} คะแนน`
+  if (id === 'm3') return `${on('practiceEnabled') ? `ลูกค้าฝึก 1 + ` : 'ข้ามช่วงฝึก · '}จริง ${n('realCustomers')} คน · ${mins(n('customerSeconds'))}/คน · อ่านคู่มือ ${mins(n('handbookSeconds'))} · ใบ้ได้ ${n('hints')} ใบ`
+  if (id === 'm4') return `เวลา ${mins(n('timerSeconds'))} · เริ่มด้วย ${n('startCoins')?.toLocaleString('th-TH')} เหรียญ · ต้องอธิบายถูก ${n('explainPass')} ข้อ และผ่าน ${n('eventsPass')} เหตุการณ์`
+  const sub = [on('submitModes.write') && 'เขียน', on('submitModes.voice') && 'เสียง', on('submitModes.design') && 'ออกแบบ'].filter(Boolean)
+  return `ส่งงานแบบ ${sub.length > 0 ? sub.join(' / ') : 'ยังไม่เปิดช่องทางใดเลย'} · แก้ไขได้ ${n('revisions')} รอบ · ${on('aiGrading') ? 'โดมช่วยตรวจเบื้องต้น แล้วครูยืนยัน' : 'ครูตรวจเองทั้งหมด'}`
+}
+
+const stepFor = (suffix?: string) => (suffix === 'วินาที' ? 5 : suffix === 'เหรียญ' ? 500 : 1)
+
 function getValue(settings: Bag, key: string): unknown {
   return key.split('.').reduce<unknown>((current, part) => (current && typeof current === 'object' ? (current as Bag)[part] : undefined), settings)
 }
@@ -74,6 +126,7 @@ export function TeacherMissionSettings({ classroomId, initial }: { classroomId: 
   const [notice, setNotice] = useState<string | null>(null)
   const current = values?.[active]
   const fields = useMemo(() => FIELDS[active], [active])
+  const fieldByKey = useMemo(() => new Map(fields.map((f) => [f.key, f])), [fields])
 
   function update(key: string, value: unknown) {
     if (!values) return
@@ -115,85 +168,167 @@ export function TeacherMissionSettings({ classroomId, initial }: { classroomId: 
 
   const activeNo = IDS.indexOf(active) + 1
   const bad = Boolean(notice && notice.includes('ไม่สำเร็จ'))
+  const color = missionColor(activeNo)
+  const hero = HERO[active]
+  const groups = [
+    ...GROUPS[active],
+  ]
+  const used = new Set(groups.flatMap((g) => g.keys))
+  const rest = fields.filter((f) => !used.has(f.key)).map((f) => f.key)
+  if (rest.length > 0) groups.push({ title: 'อื่น ๆ', icon: 'gear', tone: 'gray', keys: rest })
+  const get = (k: string) => getValue(current.settings, k)
 
   return (
-    <section className="grid gap-4" aria-label="ตั้งค่าด่าน">
-      <Tabs
-        label="เลือกด่าน"
-        value={active}
-        onChange={(id) => { setActive(id); setNotice(null) }}
-        options={IDS.map((id, index) => ({
-          value: id,
-          label: (
-            <span className="inline-flex items-center gap-2">
-              <span aria-hidden className="size-2.5 rounded-[2px]" style={{ background: missionColor(index + 1) }} />
-              ด่าน {index < 4 ? index + 1 : 'CEO'}
-            </span>
-          ),
-        }))}
-      />
-      <Card
-        title={
-          <span className="inline-flex items-center gap-2">
-            <span aria-hidden className="size-3 rounded-[3px]" style={{ background: missionColor(activeNo) }} />
-            {current.label}
-          </span>
-        }
-        action={
+    <section className="grid gap-5" aria-label="ตั้งค่าด่าน">
+      <div role="tablist" aria-label="เลือกด่าน" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {IDS.map((id, index) => {
+          const on = id === active
+          const c = missionColor(index + 1)
+          return (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => { setActive(id); setNotice(null) }}
+              className="flex items-center gap-3 rounded-2xl border bg-white p-3 text-left transition-all focus-visible:ring-2 focus-visible:ring-[var(--c-brand-ring)] focus-visible:outline-none"
+              style={{
+                borderColor: on ? c : 'var(--c-line)',
+                boxShadow: on ? `0 0 0 3px color-mix(in srgb, ${c} 22%, transparent), var(--sh-1)` : 'var(--sh-1)',
+              }}
+            >
+              <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-xl" style={{ background: `color-mix(in srgb, ${c} 16%, white)` }}>
+                <Icon3d name={HERO[id].icon} size={26} />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[15px] font-bold" style={{ color: on ? c : 'var(--c-ink)' }}>ด่าน {index < 4 ? index + 1 : 'CEO'}</span>
+                <span className="block truncate text-[12px] text-[var(--c-ink-3)]">{values[id].label.split('·')[1]?.trim()}</span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div
+        className="relative overflow-hidden rounded-[20px] px-6 py-6 text-white sm:px-8"
+        style={{ background: `linear-gradient(120deg, color-mix(in srgb, ${color} 85%, black) 0%, ${color} 60%, color-mix(in srgb, ${color} 70%, white) 100%)`, boxShadow: '0 14px 30px rgb(40 30 90 / .2)' }}
+      >
+        <div className="relative z-[1] flex flex-wrap items-center justify-between gap-4 sm:pr-[min(24%,8rem)]">
+          <div className="flex min-w-0 flex-1 items-center gap-4 max-sm:basis-full">
+            <span aria-hidden className="grid size-16 shrink-0 place-items-center rounded-2xl bg-white shadow-lg"><Icon3d name={hero.icon} size={40} /></span>
+            <div className="min-w-0">
+              <h2 className="m-0 text-[22px] leading-8 font-extrabold sm:text-[26px]">{current.label}</h2>
+              <p className="mt-0.5 text-[14px] leading-6 text-white/90">{current.help} ค่าเริ่มต้นถูกเลือกให้เหมาะกับเนื้อหาปัจจุบัน</p>
+            </div>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" onClick={reset}>คืนค่าเริ่มต้น</Button>
-            <Button size="sm" kind="primary" onClick={() => void save()} disabled={saving}>
+            <Button size="sm" kind="primary" onClick={() => void save()} disabled={saving} className="!bg-white !text-[var(--c-brand)] !shadow-lg">
               {saving ? 'กำลังบันทึก…' : 'บันทึกด่านนี้'}
             </Button>
           </div>
-        }
-      >
-        <p className="mb-4 text-[14px] text-[var(--c-ink-3)]">{current.help} ค่าเริ่มต้นถูกเลือกให้เหมาะกับเนื้อหาปัจจุบัน</p>
-        <div className="divide-y divide-[var(--c-line)]">
-          {fields.map((field) => {
-            const value = getValue(current.settings, field.key)
-            const isToggle = field.min === undefined
-            if (isToggle) {
-              return (
-                <div key={field.key} className="py-3 first:pt-0 last:pb-0">
-                  <Toggle label={field.label} description={field.help} checked={value === true} onChange={(v) => update(field.key, v)} />
-                </div>
-              )
-            }
-            return (
-              <div key={field.key} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-                <div className="min-w-0">
-                  <p className="text-[15px] font-medium text-[var(--c-ink)]">{field.label}</p>
-                  <p className="text-[14px] text-[var(--c-ink-3)]">{field.help}</p>
-                </div>
-                <span className="inline-flex items-center gap-2">
-                  <Button size="sm" aria-label={`ลด ${field.label}`} onClick={() => update(field.key, Math.max(field.min!, Number(value ?? field.min) - 1))}>−</Button>
-                  <input
-                    aria-label={field.label}
-                    type="number"
-                    min={field.min}
-                    max={field.max}
-                    value={value === null ? '' : Number(value)}
-                    onChange={(event) => update(field.key, event.target.value === '' ? null : Number(event.target.value))}
-                    className="h-9 w-20 rounded-lg border border-[var(--c-line-strong)] bg-white px-2 text-center text-[15px] tabular-nums outline-none focus:border-[var(--c-brand)] focus:ring-2 focus:ring-[var(--c-brand-ring)]"
-                  />
-                  <Button size="sm" aria-label={`เพิ่ม ${field.label}`} onClick={() => update(field.key, Math.min(field.max!, Number(value ?? field.min) + 1))}>+</Button>
-                  {field.suffix ? <span className="w-14 text-[14px] text-[var(--c-ink-3)]">{field.suffix}</span> : null}
-                </span>
-              </div>
-            )
-          })}
         </div>
-        {notice ? (
-          <p
-            role="status"
-            className="mt-4 rounded-lg px-3 py-2 text-[14px] font-medium"
-            style={{ background: bad ? 'var(--s-danger-soft)' : 'var(--s-success-soft)', color: bad ? 'var(--s-danger-ink)' : 'var(--s-success-ink)' }}
-          >
-            {notice}
-          </p>
-        ) : null}
-      </Card>
+        {/* eslint-disable-next-line @next/next/no-img-element -- ภาพตกแต่งนิ่ง */}
+        <img src={hero.art} alt="" aria-hidden draggable={false} className="t3-hero-art max-sm:hidden" style={{ height: '105%', maxWidth: '20%' }} />
+      </div>
+
+      <div className="t3-card flex flex-wrap items-center gap-3 p-4" style={{ borderColor: `color-mix(in srgb, ${color} 35%, white)`, background: `color-mix(in srgb, ${color} 7%, white)` }}>
+        <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xl bg-white shadow-[var(--sh-1)]"><Icon3d name="eyes" size={24} /></span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-bold" style={{ color }}>นักเรียนจะเจอ</p>
+          <p className="text-[15px] font-semibold text-[var(--c-ink)]" aria-live="polite">{previewOf(active, get)}</p>
+        </div>
+      </div>
+
+      {notice ? (
+        <p
+          role="status"
+          className="rounded-xl px-4 py-2.5 text-[14px] font-semibold"
+          style={{ background: bad ? 'var(--s-danger-soft)' : 'var(--s-success-soft)', color: bad ? 'var(--s-danger-ink)' : 'var(--s-success-ink)' }}
+        >
+          {notice}
+        </p>
+      ) : null}
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        {groups.map((g) => {
+          const gf = g.keys.map((k) => fieldByKey.get(k)).filter(Boolean) as typeof fields
+          if (gf.length === 0) return null
+          return (
+            <Card key={g.title} title={g.title} icon={<Icon3d name={g.icon} size={22} />} tone={g.tone} className={gf.length > 3 && g.keys.length > 3 ? 'lg:col-span-2' : ''}>
+              <div className={`grid gap-3 ${gf.length > 3 ? 'lg:grid-cols-2' : ''}`}>
+                {gf.map((field) => {
+                  const value = get(field.key)
+                  if (field.min === undefined) {
+                    const checked = value === true
+                    return (
+                      <button
+                        key={field.key}
+                        type="button"
+                        role="switch"
+                        aria-checked={checked}
+                        onClick={() => update(field.key, !checked)}
+                        className="flex w-full items-center justify-between gap-4 rounded-2xl border p-3.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-[var(--c-brand-ring)] focus-visible:outline-none"
+                        style={{ borderColor: checked ? 'var(--s-success)' : 'var(--c-line)', background: checked ? 'var(--s-success-soft)' : '#fff' }}
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-[15px] font-bold text-[var(--c-ink)]">{field.label}</span>
+                          <span className="block text-[13px] text-[var(--c-ink-3)]">{field.help}</span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span className="text-[12px] font-bold" style={{ color: checked ? 'var(--s-success-ink)' : 'var(--c-ink-3)' }}>{checked ? 'เปิด' : 'ปิด'}</span>
+                          <span aria-hidden className="relative h-6 w-11 rounded-full transition-colors" style={{ background: checked ? 'var(--s-success)' : 'var(--c-line-strong)' }}>
+                            <span className="absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform" style={{ transform: checked ? 'translateX(20px)' : 'none' }} />
+                          </span>
+                        </span>
+                      </button>
+                    )
+                  }
+                  const step = stepFor(field.suffix)
+                  const num = value === null || value === undefined ? null : Number(value)
+                  return (
+                    <div key={field.key} className="rounded-2xl border border-[var(--c-line)] bg-white p-3.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[15px] font-bold text-[var(--c-ink)]">{field.label}</p>
+                          <p className="text-[13px] text-[var(--c-ink-3)]">{field.help}</p>
+                        </div>
+                        <span className="shrink-0 rounded-xl px-2.5 py-1 text-[15px] font-extrabold tabular-nums" style={{ background: `color-mix(in srgb, ${color} 12%, white)`, color }}>
+                          {num === null ? 'ไม่จำกัด' : `${num.toLocaleString('th-TH')} ${field.suffix ?? ''}`}
+                        </span>
+                      </div>
+                      <div className="mt-3 flex items-center gap-2.5">
+                        <Button size="sm" aria-label={`ลด ${field.label}`} onClick={() => update(field.key, Math.max(field.min!, Number(value ?? field.min) - step))}>−</Button>
+                        <input
+                          aria-label={`${field.label} (แถบเลื่อน)`}
+                          type="range"
+                          className="t3-range"
+                          min={field.min}
+                          max={field.max}
+                          step={step}
+                          value={num ?? field.min}
+                          onChange={(event) => update(field.key, Number(event.target.value))}
+                          style={{ background: `linear-gradient(to right, ${color} ${(((num ?? field.min!) - field.min!) / ((field.max! - field.min!) || 1)) * 100}%, var(--c-line) 0)`, ['--thumb' as string]: color }}
+                        />
+                        <Button size="sm" aria-label={`เพิ่ม ${field.label}`} onClick={() => update(field.key, Math.min(field.max!, Number(value ?? field.min) + step))}>+</Button>
+                        <input
+                          aria-label={field.label}
+                          type="number"
+                          min={field.min}
+                          max={field.max}
+                          value={num === null ? '' : num}
+                          onChange={(event) => update(field.key, event.target.value === '' ? null : Number(event.target.value))}
+                          className="h-9 w-20 shrink-0 rounded-xl border border-[var(--c-line-strong)] bg-white px-2 text-center text-[15px] tabular-nums outline-none focus:border-[var(--c-brand)] focus:ring-2 focus:ring-[var(--c-brand-ring)]"
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+          )
+        })}
+      </div>
     </section>
   )
 }

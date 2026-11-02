@@ -479,7 +479,7 @@ export function ClassReportClient({
 
       {/* ── ตัวเลขหลัก 4 ช่อง */}
       <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 lg:grid-cols-4">
-        <StatTile
+        <StatTile tone="amber"
           label="ประสิทธิภาพสื่อ E1/E2"
           value={<span className="text-[24px] sm:text-[28px]">{report.efficiency.label}</span>}
           icon={<Icon3d name="trophy" size={30} />}
@@ -494,7 +494,7 @@ export function ClassReportClient({
           }
           hint={`เกณฑ์ ${report.efficiency.standardLabel}`}
         />
-        <StatTile
+        <StatTile tone="blue"
           label="คะแนนก่อน → หลัง"
           value={
             <span className="text-[24px] sm:text-[28px]">
@@ -511,7 +511,7 @@ export function ClassReportClient({
           }
           hint={`เต็ม ${t.quizMax} · หลังเรียน ${t.post.n}/${report.headcount} คน`}
         />
-        <StatTile
+        <StatTile tone="rose"
           label="ขนาดอิทธิพล d"
           value={n2(t.effectSize.d, 2)}
           icon={<Icon3d name="rocket" size={30} />}
@@ -525,7 +525,7 @@ export function ClassReportClient({
             )
           }
         />
-        <StatTile
+        <StatTile tone="green"
           label="พัฒนาการ Hake ⟨g⟩"
           value={n2(gain, 2)}
           icon={<Icon3d name="seedling" size={30} />}

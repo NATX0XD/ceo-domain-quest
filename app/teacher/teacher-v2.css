@@ -8,11 +8,11 @@
 
 .teacher-cms {
   /* ---- neutrals ---- */
-  --c-bg: #f7f6f3;
+  --c-bg: #f4f3fa;
   --c-surface: #fff;
-  --c-sunken: #f1efea;
-  --c-line: #e6e3dc;
-  --c-line-strong: #d3cfc5;
+  --c-sunken: #f1effa;
+  --c-line: #e7e4f1;
+  --c-line-strong: #d4d0e4;
   --c-ink: #1f1d1a;
   --c-ink-2: #4a463f;
   --c-ink-3: #6b665d;
@@ -48,8 +48,10 @@
   /* ---- data palette F: likert 1-5 (light to dark brand) ---- */
   --lk-1: #e4dcf6; --lk-2: #c3b2ea; --lk-3: #9f86db; --lk-4: #7558c0; --lk-5: #4b3a7a;
   /* ---- shape ---- */
-  --r-card: 12px; --r-ctl: 8px; --r-chip: 6px;
-  --sh-1: 0 1px 0 rgb(0 0 0 / 0.03), 0 1px 2px rgb(0 0 0 / 0.04);
+  --r-card: 16px; --r-ctl: 8px; --r-chip: 6px;
+  --sh-1: 0 1px 2px rgb(40 28 100 / 0.05), 0 6px 18px rgb(40 28 100 / 0.06);
+  /* ---- sidebar ---- */
+  --c-side: #3b2a7a; --c-side-2: #2b1d5c; --c-accent: #7a5cf0;
   --sh-pop: 0 8px 24px rgb(0 0 0 / 0.12);
   font-family: var(--font-sans);
 
@@ -138,32 +140,6 @@
   border-radius: 1.15rem;
   background: linear-gradient(180deg, #fff8e7 0%, #ffdca8 100%);
   box-shadow: 0 5px 0 #6b2d12;
-}
-
-.teacher-cms aside[aria-label='เมนูของครู'] {
-  background: #fffdf8;
-  border-color: var(--t2-line);
-}
-
-.teacher-cms aside[aria-label='เมนูของครู'] a {
-  border-radius: 14px;
-}
-
-.teacher-cms aside[aria-label='เมนูของครู'] a[aria-current='page'] {
-  background: var(--t2-lilac);
-  color: var(--t2-brand);
-  box-shadow: none;
-}
-
-.teacher-cms header {
-  background: #fffdf8;
-  border-color: var(--t2-line);
-}
-
-.teacher-cms header input,
-.teacher-cms header select {
-  background: var(--t2-canvas);
-  border-radius: 999px;
 }
 
 .teacher-cms .t2-ico {
@@ -952,3 +928,58 @@
 @media (min-width: 1024px) {
   .teacher-cms .teacher-cockpit > .grid.min-h-0 { min-height: 26rem; }
 }
+
+/* ==========================================================================
+   v3 — polished education-admin look: brand sidebar, hero banners, coloured
+   icon tiles, soft cards (radius 16), avatars, rings.  Scoped to .teacher-cms
+   ========================================================================== */
+
+/* tone = coloured rounded icon square / chip. set data-tone on any element using .t3-tone */
+.teacher-cms [data-tone='purple'] { --tn: #6a4fd6; --tn-soft: #efeafb; --tn-ink: #3b2a8f; }
+.teacher-cms [data-tone='blue']   { --tn: #2f7fc4; --tn-soft: #e3f0fb; --tn-ink: #14507f; }
+.teacher-cms [data-tone='green']  { --tn: #1f8f5c; --tn-soft: #e1f5ea; --tn-ink: #0f5a37; }
+.teacher-cms [data-tone='amber']  { --tn: #d98a0b; --tn-soft: #fdf1d3; --tn-ink: #7a4b00; }
+.teacher-cms [data-tone='rose']   { --tn: #d0527a; --tn-soft: #fae3ea; --tn-ink: #8a2447; }
+.teacher-cms [data-tone='teal']   { --tn: #1f9d8f; --tn-soft: #dff4f1; --tn-ink: #0f5f57; }
+.teacher-cms [data-tone='orange'] { --tn: #e07b39; --tn-soft: #fcebdd; --tn-ink: #82400f; }
+.teacher-cms [data-tone='gray']   { --tn: #7a7690; --tn-soft: #efeef5; --tn-ink: #4a4760; }
+.teacher-cms .t3-tile { display: grid; place-items: center; flex: none; border-radius: 14px; background: var(--tn-soft, var(--c-sunken)); color: var(--tn, var(--c-brand)); }
+
+/* sidebar */
+.teacher-cms .t3-side { background: linear-gradient(175deg, var(--c-side) 0%, var(--c-side-2) 100%); color: #fff; }
+.teacher-cms .t3-side-panel { background: #fff; color: var(--c-ink); border-radius: 20px; box-shadow: 0 10px 30px rgb(10 5 40 / .28); }
+.teacher-cms .t3-nav-link { position: relative; display: flex; align-items: center; gap: .65rem; height: 2.75rem; padding: 0 .75rem; border-radius: 12px; font-size: .9375rem; font-weight: 500; color: var(--c-ink-2); transition: background .15s, color .15s; }
+.teacher-cms .t3-nav-link:hover { background: var(--c-brand-soft); color: var(--c-brand); }
+.teacher-cms .t3-nav-link[aria-current='page'] { background: linear-gradient(135deg, #5a43b0, #3e2c86); color: #fff; font-weight: 600; box-shadow: 0 6px 14px rgb(75 58 122 / .35); }
+.teacher-cms .t3-nav-link[aria-current='page'] .t3-nav-ico { background: rgb(255 255 255 / .96); }
+.teacher-cms .t3-nav-ico { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 10px; background: var(--c-sunken); flex: none; }
+.teacher-cms .t3-group-title { padding: 0 .85rem .3rem; font-size: .75rem; font-weight: 700; letter-spacing: .02em; color: var(--c-ink-3); }
+
+/* top bar */
+.teacher-cms .t3-top { background: #fff; border-bottom: 1px solid var(--c-line); }
+.teacher-cms .t3-search { display: flex; align-items: center; gap: .5rem; height: 2.5rem; padding: 0 .85rem; border-radius: 12px; background: var(--c-bg); border: 1px solid var(--c-line); color: var(--c-ink-3); }
+.teacher-cms .t3-search:focus-within { border-color: var(--c-brand); box-shadow: 0 0 0 3px var(--c-brand-ring); background: #fff; }
+.teacher-cms .t3-search input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; font: inherit; font-size: .9375rem; color: var(--c-ink); }
+.teacher-cms .t3-chip-select { display: inline-flex; align-items: center; gap: .5rem; height: 2.5rem; padding: 0 .75rem; border-radius: 12px; background: var(--c-brand-soft); border: 1px solid transparent; color: var(--c-brand); font-weight: 600; font-size: .9375rem; }
+.teacher-cms .t3-chip-select:hover { border-color: var(--c-brand-ring); }
+
+/* hero banners */
+.teacher-cms .t3-hero { position: relative; overflow: hidden; border-radius: 20px; color: #fff; background: radial-gradient(120% 140% at 85% 0%, #7a5cf0 0%, #4b3a7a 45%, #2f2163 100%); box-shadow: 0 14px 34px rgb(60 40 140 / .28); }
+.teacher-cms .t3-hero::after { content: ''; position: absolute; inset: 0; background: url('/ui/kit/fx/sparkles.webp') right 8% top 10% / 220px no-repeat; opacity: .35; pointer-events: none; }
+.teacher-cms .t3-hero--soft { color: var(--c-ink); background: linear-gradient(120deg, #fff 0%, var(--tn-soft, #efeafb) 100%); box-shadow: var(--sh-1); border: 1px solid var(--c-line); }
+.teacher-cms .t3-hero--soft::after { display: none; }
+.teacher-cms .t3-hero-art { position: absolute; right: 1.5rem; bottom: 0; height: 118%; width: auto; max-width: 38%; object-fit: contain; object-position: bottom right; pointer-events: none; user-select: none; filter: drop-shadow(0 10px 18px rgb(20 10 70 / .35)); }
+@media (max-width: 767px) { .teacher-cms .t3-hero-art { height: 70%; opacity: .9; right: .25rem; } .teacher-cms .t3-hero::after { display: none; } }
+
+/* cards / rows */
+.teacher-cms .t3-card { background: #fff; border: 1px solid var(--c-line); border-radius: 16px; box-shadow: var(--sh-1); min-width: 0; }
+.teacher-cms .t3-row-hover:hover { background: #faf9ff; }
+.teacher-cms .t3-avatar { display: grid; place-items: center; flex: none; border-radius: 999px; font-weight: 700; color: var(--tn-ink, var(--c-brand)); background: var(--tn-soft, var(--c-brand-soft)); }
+.teacher-cms .t2-avatar { display: grid; place-items: center; flex: none; width: 2.5rem; height: 2.5rem; border-radius: 999px; font-weight: 700; background: var(--c-brand-soft); color: var(--c-brand); }
+.teacher-cms .t3-quick { display: flex; flex-direction: column; align-items: center; gap: .45rem; padding: .85rem .5rem; border-radius: 14px; text-align: center; font-size: .875rem; font-weight: 600; color: var(--c-ink); transition: transform .15s, box-shadow .15s, background .15s; }
+.teacher-cms .t3-quick:hover { transform: translateY(-2px); background: var(--c-brand-soft); box-shadow: var(--sh-1); }
+.teacher-cms .t3-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.teacher-cms .t3-scroll::-webkit-scrollbar-thumb { background: #cfc9e6; border-radius: 99px; }
+.teacher-cms input[type='range'].t3-range { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; border-radius: 99px; outline: none; cursor: pointer; }
+.teacher-cms input[type='range'].t3-range::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 4px solid var(--thumb, var(--c-brand)); box-shadow: 0 2px 6px rgb(0 0 0 / .25); }
+.teacher-cms input[type='range'].t3-range::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 4px solid var(--thumb, var(--c-brand)); }

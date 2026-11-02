@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import Link from 'next/link'
 import { InfoTip } from './v2'
 
 /**
@@ -24,6 +25,8 @@ export { SideDrawer as Drawer } from './cms'
 const cx = (...p: (string | false | null | undefined)[]) => p.filter(Boolean).join(' ')
 
 /* ───────────────────────── data palette ───────────────────────── */
+
+export type Tone = 'purple' | 'blue' | 'green' | 'amber' | 'rose' | 'teal' | 'orange' | 'gray'
 
 export type PassStatus = 'passed' | 'inprogress' | 'atrisk' | 'failed' | 'notstarted'
 
@@ -58,6 +61,8 @@ export function Card({
   children,
   className,
   flush,
+  icon,
+  tone,
 }: {
   title?: ReactNode
   tip?: ReactNode
@@ -66,24 +71,27 @@ export function Card({
   className?: string
   /** true = ไม่ใส่ padding ให้เนื้อหา (ตารางเต็มกว้าง) */
   flush?: boolean
+  /** ไอคอน 3 มิติหน้าชื่อการ์ด (ใส่ในช่องสี tone) */
+  icon?: ReactNode
+  tone?: Tone
 }) {
   return (
-    <section
-      className={cx(
-        'rounded-xl border border-[var(--c-line)] bg-[var(--c-surface)] shadow-[var(--sh-1)]',
-        className,
-      )}
-    >
+    <section className={cx('t3-card', className)}>
       {title || action ? (
-        <header className="flex min-h-14 items-center justify-between gap-3 border-b border-[var(--c-line)] px-4 py-3 sm:px-5">
-          <h2 className="flex min-w-0 items-center gap-2 text-[16px] leading-6 font-semibold text-[var(--c-ink)]">
+        <header className="flex min-h-14 items-center justify-between gap-3 px-4 py-3 sm:px-5">
+          <h2 className="flex min-w-0 items-center gap-2.5 text-[16px] leading-6 font-bold text-[var(--c-ink)]">
+            {icon ? (
+              <span data-tone={tone ?? 'purple'} aria-hidden className="t3-tile size-9 rounded-[11px]">
+                {icon}
+              </span>
+            ) : null}
             <span className="truncate">{title}</span>
             {tip ? <InfoTip text={tip} /> : null}
           </h2>
           {action ? <div className="shrink-0">{action}</div> : null}
         </header>
       ) : null}
-      <div className={flush ? '' : 'p-4 sm:p-5'}>{children}</div>
+      <div className={flush ? 'border-t border-[var(--c-line)]' : title || action ? 'px-4 pb-4 sm:px-5 sm:pb-5' : 'p-4 sm:p-5'}>{children}</div>
     </section>
   )
 }
@@ -102,7 +110,7 @@ export function StatusBadge({
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[13px] leading-5 font-medium whitespace-nowrap',
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[13px] leading-5 font-semibold whitespace-nowrap',
         className,
       )}
       style={{ background: `var(--d-${status}-soft)`, color: `var(--d-${status}-ink)` }}
@@ -133,6 +141,8 @@ export function StatTile({
   icon,
   badge,
   hint,
+  tone = 'purple',
+  href,
 }: {
   label: string
   value: ReactNode
@@ -141,30 +151,36 @@ export function StatTile({
   icon?: ReactNode
   badge?: ReactNode
   hint?: ReactNode
+  tone?: Tone
+  href?: string
 }) {
-  return (
-    <div className="min-w-0 rounded-xl border border-[var(--c-line)] bg-[var(--c-surface)] p-4 shadow-[var(--sh-1)] sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[14px] leading-6 text-[var(--c-ink-3)]">{label}</p>
-          <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-[28px] leading-9 font-bold text-[var(--c-ink)] tabular-nums">
-            <span className="break-words">{value}</span>
-            {unit ? <span className="text-[14px] font-medium text-[var(--c-ink-3)]">{unit}</span> : null}
-          </p>
-        </div>
-        {icon ? (
-          <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-lg bg-[var(--c-sunken)]">
-            {icon}
-          </span>
+  const body = (
+    <>
+      {icon ? (
+        <span aria-hidden className="t3-tile size-14 shrink-0 rounded-2xl">
+          {icon}
+        </span>
+      ) : null}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[14px] leading-5 text-[var(--c-ink-3)]">{label}</p>
+        <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[28px] leading-9 font-extrabold text-[var(--c-ink)] tabular-nums">
+          <span className="break-words">{value}</span>
+          {unit ? <span className="text-[14px] font-medium text-[var(--c-ink-3)]">{unit}</span> : null}
+        </p>
+        {badge || hint ? (
+          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[13px] font-semibold" style={{ color: 'var(--tn-ink)' }}>
+            {badge}
+            {hint ? <span>{hint}</span> : null}
+          </div>
         ) : null}
       </div>
-      {badge || hint ? (
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-[14px] text-[var(--c-ink-3)]">
-          {badge}
-          {hint ? <span>{hint}</span> : null}
-        </div>
-      ) : null}
-    </div>
+    </>
+  )
+  const cls = 't3-card flex min-w-0 items-center gap-4 p-4 sm:p-5'
+  return href ? (
+    <Link href={href} data-tone={tone} className={cx(cls, 'transition-transform hover:-translate-y-0.5')}>{body}</Link>
+  ) : (
+    <div data-tone={tone} className={cls}>{body}</div>
   )
 }
 
@@ -197,7 +213,7 @@ export function DataTable<T>({
     <div className="max-h-[70vh] overflow-auto">
       <table className="w-full min-w-[32rem] border-collapse text-left text-[15px]">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
-        <thead className="sticky top-0 z-[1] bg-[var(--c-sunken)] text-[13px] font-semibold text-[var(--c-ink-3)]">
+        <thead className="sticky top-0 z-[1] bg-[#f7f6fc] text-[13px] font-semibold text-[var(--c-ink-3)]">
           <tr>
             {columns.map((c) => (
               <th
@@ -214,7 +230,7 @@ export function DataTable<T>({
           {rows.map((row) => (
             <tr
               key={rowKey(row)}
-              className="h-12 border-b border-[var(--c-line)] last:border-b-0 hover:bg-[#faf9f6]"
+              className="t3-row-hover h-14 border-b border-[var(--c-line)] last:border-b-0"
             >
               {columns.map((c) => (
                 <td
@@ -265,7 +281,7 @@ export function Button({
 }) {
   const tone =
     kind === 'primary'
-      ? 'bg-[var(--c-brand)] text-white border-[var(--c-brand)] hover:bg-[var(--c-brand-hover)]'
+      ? 'bg-[var(--c-brand)] text-white border-[var(--c-brand)] shadow-[0_4px_12px_rgb(75_58_122/0.3)] hover:bg-[var(--c-brand-hover)]'
       : kind === 'danger'
         ? 'bg-white text-[var(--s-danger-ink)] border-[var(--s-danger)] hover:bg-[var(--s-danger-soft)]'
         : kind === 'ghost'
@@ -276,7 +292,7 @@ export function Button({
       type="button"
       {...rest}
       className={cx(
-        'inline-flex items-center justify-center gap-1.5 rounded-lg border font-semibold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-[var(--c-brand-ring)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center justify-center gap-1.5 rounded-xl border font-semibold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-[var(--c-brand-ring)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
         size === 'sm' ? 'h-9 px-3 text-[14px]' : 'h-10 px-4 text-[15px]',
         tone,
         className,
@@ -486,21 +502,160 @@ export function EmptyState({
   title,
   body,
   action,
+  art = '/landing/dome-wave.webp',
 }: {
   icon?: ReactNode
   title: string
   body?: ReactNode
   action?: ReactNode
+  /** ภาพประกอบ (ค่าเริ่มต้น = โดมตัวเล็ก) ใส่ null เพื่อใช้ไอคอนแทน */
+  art?: string | null
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
-      <span aria-hidden className="mb-1 grid size-10 place-items-center rounded-lg bg-[var(--c-sunken)]">
-        {icon}
-      </span>
-      <p className="text-[16px] font-semibold text-[var(--c-ink)]">{title}</p>
+    <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+      {art ? (
+        // eslint-disable-next-line @next/next/no-img-element -- ภาพตกแต่งนิ่ง
+        <img src={art} alt="" aria-hidden draggable={false} className="mb-1 object-contain" style={{ height: 112, width: 'auto', maxWidth: 200 }} />
+      ) : (
+        <span aria-hidden data-tone="purple" className="t3-tile mb-1 size-14 rounded-2xl">
+          {icon}
+        </span>
+      )}
+      <p className="text-[17px] font-bold text-[var(--c-ink)]">{title}</p>
       {body ? <p className="max-w-sm text-[14px] text-[var(--c-ink-3)]">{body}</p> : null}
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
+  )
+}
+
+/* ───────────────────────── Avatar / Ring / Donut ───────────────────────── */
+
+const AVATAR_TONES: Tone[] = ['purple', 'blue', 'green', 'amber', 'rose', 'teal', 'orange']
+export function toneFor(key: string): Tone {
+  let h = 0
+  for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+  return AVATAR_TONES[h % AVATAR_TONES.length] ?? 'purple'
+}
+
+export function Avatar({ name, size = 40, tone }: { name: string; size?: number; tone?: Tone }) {
+  const ch = Array.from((name ?? '?').trim())[0] ?? '?'
+  return (
+    <span
+      aria-hidden
+      data-tone={tone ?? toneFor(name)}
+      className="t3-avatar"
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.42) }}
+    >
+      {ch}
+    </span>
+  )
+}
+
+/** วงแหวนความคืบหน้า 0-100 · ตัวเลข/ข้อความกลางวงเป็นของที่เรียกใช้ใส่เอง */
+export function Ring({
+  value,
+  size = 56,
+  stroke = 6,
+  color = 'var(--c-brand)',
+  children,
+  label,
+}: {
+  value: number
+  size?: number
+  stroke?: number
+  color?: string
+  children?: ReactNode
+  label?: string
+}) {
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  const pct = Math.max(0, Math.min(100, value))
+  return (
+    <span
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      className="relative inline-grid shrink-0 place-items-center"
+      style={{ width: size, height: size }}
+    >
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--c-sunken)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${(pct / 100) * c} ${c}`}
+        />
+      </svg>
+      <span className="absolute inset-0 grid place-items-center text-center">{children}</span>
+    </span>
+  )
+}
+
+/** โดนัทหลายส่วน — ทุกส่วนต้องมีคำอธิบาย (legend) ข้าง ๆ เสมอ */
+export function Donut({
+  parts,
+  size = 150,
+  stroke = 20,
+  center,
+}: {
+  parts: { value: number; color: string; label: string }[]
+  size?: number
+  stroke?: number
+  center?: ReactNode
+}) {
+  const total = parts.reduce((a, p) => a + p.value, 0)
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  let offset = 0
+  return (
+    <span
+      role="img"
+      aria-label={parts.map((p) => `${p.label} ${p.value}`).join(' · ')}
+      className="relative inline-grid shrink-0 place-items-center"
+      style={{ width: size, height: size }}
+    >
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--c-sunken)" strokeWidth={stroke} />
+        {total > 0
+          ? parts.map((p) => {
+              const len = (p.value / total) * c
+              const el = p.value > 0 ? (
+                <circle
+                  key={p.label}
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={r}
+                  fill="none"
+                  stroke={p.color}
+                  strokeWidth={stroke}
+                  strokeDasharray={`${Math.max(0, len - 2)} ${c}`}
+                  strokeDashoffset={-offset}
+                />
+              ) : null
+              offset += len
+              return el
+            })
+          : null}
+      </svg>
+      <span className="absolute inset-0 grid place-items-center text-center">{center}</span>
+    </span>
+  )
+}
+
+/** ปุ่มลัดแบบไอคอนสีในกริด (Quick Access) */
+export function QuickTile({ href, icon, label, tone = 'purple', badge }: { href: string; icon: ReactNode; label: string; tone?: Tone; badge?: number }) {
+  return (
+    <Link href={href} data-tone={tone} className="t3-quick relative">
+      <span aria-hidden className="t3-tile size-14 rounded-2xl">{icon}</span>
+      <span>{label}</span>
+      {badge ? (
+        <span className="absolute top-2 right-3 grid min-w-5 place-items-center rounded-full bg-[var(--s-danger)] px-1.5 text-[11px] leading-5 font-bold text-white">{badge}</span>
+      ) : null}
+    </Link>
   )
 }
 

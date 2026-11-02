@@ -3,8 +3,8 @@ import { getClassroomReportRaw, listPendingReview } from '@/lib/db/repo'
 import { TeacherLoginClient } from '@/components/teacher-login-client'
 import { readTeacherSession } from '@/app/api/_lib/session-cookie'
 import { loadTeacherPage, type SearchParams } from './_lib/teacher-page'
-import Link from 'next/link'
-import { PageBody, PageHead } from './_ux/page-head'
+import { PageBody } from './_ux/page-head'
+import { getServiceClient } from '@/lib/db/client'
 import { HomeOverview, type HomeStudent } from './_ux/home-overview'
 
 export const metadata: Metadata = { title: 'สำหรับครู — CEO Domain Quest' }
@@ -42,7 +42,6 @@ export default async function TeacherPage({
       ])
     : [null, null]
 
-  const q = data.selectedId ? `?classroomId=${data.selectedId}` : ''
   const students: HomeStudent[] = (raw?.students ?? []).map((student) => ({
     studentId: student.studentId,
     nickname: student.nickname,
@@ -52,19 +51,20 @@ export default async function TeacherPage({
     pre: student.profile?.preTestScore ?? null,
   }))
 
+  const me = await getServiceClient().from('teachers').select('name, email').eq('id', data.teacherId).maybeSingle()
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Bangkok' }).format(new Date()))
+  const greeting = hour < 12 ? 'สวัสดีตอนเช้า' : hour < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น'
+
   return (
     <PageBody>
-      <PageHead
-        title="ห้องเรียนของคุณ"
-        subtitle="ดูความคืบหน้าของแต่ละคนได้ทันที ผู้เรียนเริ่มด่านตามความพร้อมของตัวเอง"
-        action={
-          <>
-            <Link href={`/teacher/report${q}`} className="t2-btn">ดูรายงานห้อง</Link>
-            <Link href={`/teacher/missions${q}`} className="t2-btn" data-kind="primary">ตั้งค่าด่าน</Link>
-          </>
-        }
+      <HomeOverview
+        students={students}
+        pendingCount={pending?.length ?? 0}
+        classroomId={data.selectedId}
+        roomCode={data.selectedRoomCode ?? null}
+        greeting={greeting}
+        teacherName={me.data?.name || me.data?.email?.split('@')[0] || null}
       />
-      <HomeOverview students={students} pendingCount={pending?.length ?? 0} classroomId={data.selectedId} roomCode={data.selectedRoomCode ?? null} />
     </PageBody>
   )
 }
