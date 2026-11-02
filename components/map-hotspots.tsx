@@ -146,12 +146,6 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
           <span className="map-wave map-wave-one" />
           <span className="map-wave map-wave-two" />
           <span className="map-wave map-wave-three" />
-          <span className="map-dome-guide">
-            {/* eslint-disable-next-line @next/next/no-img-element -- มาสคอตตกแต่งในฉากแผนที่ */}
-            <img src="/dome/mascot/dome-greet.webp" alt="" draggable={false} />
-            <i className="map-dome-blink map-dome-blink-left" />
-            <i className="map-dome-blink map-dome-blink-right" />
-          </span>
         </div>
 
         <Link href="/home" aria-label="กลับหน้าหลัก" className="map-back-hotspot focus-ring">
