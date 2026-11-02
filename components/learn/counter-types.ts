@@ -22,7 +22,11 @@ export interface CounterQuestion {
   docs?: string[]
   /** ประเภทผู้ขอที่รู้จากคำตอบข้อนี้ (ช่องบนการ์ดคำขอ G03) */
   who?: string
+  /** สีหน้าลูกค้าตอนตอบข้อนี้ (ไม่ใส่ = neutral) */
+  mood?: CounterMood
 }
+
+export type CounterMood = 'neutral' | 'happy' | 'confused' | 'upset'
 
 export interface CounterCase {
   id: string
@@ -45,6 +49,9 @@ export interface CounterData {
   title: string
   intro: string
   maxQuestions: number
+  /** จำนวนลูกค้าต่อกะ (เซิร์ฟเวอร์จับจากคลังเคส) */
+  shiftSize: number
+  /** คำใบ้ของโดม ต่อลูกค้า 1 คน (ชื่อเดิมคงไว้ให้เนื้อหาเก่าใช้ได้) */
   hintsPerShift: number
   handbookSeconds: number
   categories: { id: CounterCategory; label: string; short: string }[]
@@ -106,9 +113,11 @@ export interface CounterStepResult {
   reasonCorrect?: boolean
   /** มีเฉพาะตอนลองแก้ครั้งที่ 2 แล้วยังไม่ถูก */
   explanation: string
+  /** บทลูกค้าตอนตัดสินถูก (บางเคส) */
+  line?: string
 }
 
-/** ระดับความช่วยเหลือ: คู่มือ 20/15/10 วินาที · ใบ้ 3/2/1 ครั้ง */
+/** ระดับความช่วยเหลือ: คู่มือ 20/15/10 วินาที · ใบ้ 3/2/1 ครั้งต่อลูกค้า */
 export type CounterLevel = 'support' | 'standard' | 'challenge'
 
 export const COUNTER_LEVELS: Record<CounterLevel, { handbookSeconds: number; hints: number }> = {

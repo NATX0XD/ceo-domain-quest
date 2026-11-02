@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import answers from '../../content/learn-counter-answers.json'
 import publicJson from '../../content/learn-counter.json'
 import type { CounterDecision, CounterDetail } from '../learn/counter-types'
-import { checkCounterStep, publicCounterData, scoreCounter } from './learn-counter'
+import { LEGACY_SHIFT, checkCounterStep, counterPoolIds, drawShift, newShiftSeed, publicCounterData, scoreCounter, validShift } from './learn-counter'
 
 type Answer = (typeof answers.cases)[number]
+/** เทสต์คะแนนเดิมใช้กะชุดเดิม 4 คน (ค่าเริ่มต้นของ scoreCounter) */
+const legacy = answers.cases.filter((a) => (LEGACY_SHIFT as readonly string[]).includes(a.caseId))
 
 function perfect(a: Answer): CounterDecision {
   return {
@@ -18,16 +20,16 @@ function perfect(a: Answer): CounterDecision {
 
 describe('scoreCounter ด่าน 3 เคาน์เตอร์รับจดโดเมน', () => {
   it('ตอบถูกหมดได้ 100 และผ่าน', () => {
-    const r = scoreCounter({ decisions: answers.cases.map(perfect) })
+    const r = scoreCounter({ decisions: legacy.map(perfect) })
     const detail = r.detail as CounterDetail
     expect(r.score).toBe(100)
     expect(r.passed).toBe(true)
-    expect(detail.cases).toHaveLength(answers.cases.length)
+    expect(detail.cases).toHaveLength(legacy.length)
     expect(detail.cases.every((c) => c.stampCorrect && c.askedKeyQuestion)).toBe(true)
   })
 
   it('ป้ายถูกหมดแต่ตราผิดทุกเคส ได้ 50 ยังไม่ผ่าน', () => {
-    const decisions = answers.cases.map((a) => ({
+    const decisions = legacy.map((a) => ({
       ...perfect(a),
       stamp: a.stamp === 'reject' ? 'approve' : 'reject',
       extension: null,
@@ -40,7 +42,7 @@ describe('scoreCounter ด่าน 3 เคาน์เตอร์รับจ
   it('ตราถูกหมดแต่ป้ายถูกต่ำกว่า 80% ยังไม่ผ่านแม้คะแนนเกิน 60', () => {
     // ทำป้ายผิด 2 ใบจาก 8 = 75%
     let wrongLeft = 2
-    const decisions = answers.cases.map((a) => {
+    const decisions = legacy.map((a) => {
       const d = perfect(a)
       const tags = { ...d.tags }
       for (const name of Object.keys(tags)) {
@@ -60,12 +62,12 @@ describe('scoreCounter ด่าน 3 เคาน์เตอร์รับจ
   })
 
   it('ตราเสนอนามสกุลใหม่ แต่นามสกุลที่เสนอไม่อยู่ในรายการที่ยอมรับ นับว่าตราผิด', () => {
-    const decisions = answers.cases.map((a) =>
+    const decisions = legacy.map((a) =>
       a.acceptedExtensions.length > 0 ? { ...perfect(a), extension: '.go.th' } : perfect(a),
     )
     const r = scoreCounter({ decisions })
     const detail = r.detail as CounterDetail
-    const withExt = answers.cases.filter((a) => a.acceptedExtensions.length > 0).map((a) => a.caseId)
+    const withExt = legacy.filter((a) => a.acceptedExtensions.length > 0).map((a) => a.caseId)
     for (const c of detail.cases) expect(c.stampCorrect).toBe(!withExt.includes(c.caseId))
   })
 
@@ -97,15 +99,15 @@ describe('scoreCounter ด่าน 3 เคาน์เตอร์รับจ
   })
 
   it('ตราถูกตอนลองแก้ (attempt 2) ได้ 1 แต้ม ถูกครั้งแรกได้ 2 แต้ม', () => {
-    const decisions = answers.cases.map((a, i) => ({ ...perfect(a), attempt: (i === 0 ? 2 : 1) as 1 | 2 }))
+    const decisions = legacy.map((a, i) => ({ ...perfect(a), attempt: (i === 0 ? 2 : 1) as 1 | 2 }))
     const detail = scoreCounter({ decisions }).detail as CounterDetail
-    expect(detail.cases.map((c) => c.points)).toEqual(answers.cases.map((_, i) => (i === 0 ? 1 : 2)))
-    expect(detail.stampPoints).toBe(answers.cases.length * 2 - 1)
-    expect(detail.stampMax).toBe(answers.cases.length * 2)
+    expect(detail.cases.map((c) => c.points)).toEqual(legacy.map((_, i) => (i === 0 ? 1 : 2)))
+    expect(detail.stampPoints).toBe(legacy.length * 2 - 1)
+    expect(detail.stampMax).toBe(legacy.length * 2)
   })
 
   it('ตราผิดได้ 0 แต้ม และไม่ผ่านเมื่อแต้มตราต่ำกว่า 60% แม้ป้ายถูกหมด', () => {
-    const decisions = answers.cases.map((a, i) =>
+    const decisions = legacy.map((a, i) =>
       i < 2 ? perfect(a) : { ...perfect(a), stamp: a.stamp === 'reject' ? 'approve' : 'reject', extension: null },
     )
     const r = scoreCounter({ decisions })
@@ -116,23 +118,23 @@ describe('scoreCounter ด่าน 3 เคาน์เตอร์รับจ
   })
 
   it('ตอบถูกตอนลองแก้ทุกคน ได้แต้มตรา 50% ยังไม่ผ่าน แต่ถ้าถูกครั้งแรกบางคนผ่านได้', () => {
-    const allRetry = scoreCounter({ decisions: answers.cases.map((a) => ({ ...perfect(a), attempt: 2 as const })) })
+    const allRetry = scoreCounter({ decisions: legacy.map((a) => ({ ...perfect(a), attempt: 2 as const })) })
     expect(allRetry.passed).toBe(false)
     const mixed = scoreCounter({
-      decisions: answers.cases.map((a, i) => ({ ...perfect(a), attempt: (i < 2 ? 1 : 2) as 1 | 2 })),
+      decisions: legacy.map((a, i) => ({ ...perfect(a), attempt: (i < 2 ? 1 : 2) as 1 | 2 })),
     })
     expect(mixed.passed).toBe(true)
   })
 
   it('สรุปป้ายแยกกลุ่ม รวมแล้วเท่ากับจำนวนโดเมนทั้งหมด', () => {
-    const detail = scoreCounter({ decisions: answers.cases.map(perfect) }).detail as CounterDetail
-    const total = answers.cases.reduce((n, a) => n + Object.keys(a.tags).length, 0)
+    const detail = scoreCounter({ decisions: legacy.map(perfect) }).detail as CounterDetail
+    const total = legacy.reduce((n, a) => n + Object.keys(a.tags).length, 0)
     expect(detail.groups.reduce((n, g) => n + g.total, 0)).toBe(total)
     expect(detail.groups.every((g) => g.correct === g.total)).toBe(true)
   })
 
   it('checkCounterStep: ถูกไม่มีคำอธิบาย ผิดครั้งแรกบอกป้ายที่ผิดแต่ไม่เฉลย ผิดครั้งที่ 2 ให้คำอธิบาย', () => {
-    const a = answers.cases[1]!
+    const a = legacy[1]!
     const ok = checkCounterStep(perfect(a)).result
     expect(ok).toMatchObject({ correct: true, wrongTags: [], explanation: '' })
 
@@ -155,13 +157,13 @@ describe('scoreCounter ด่าน 3 เคาน์เตอร์รับจ
 
   it('การ์ดเหตุผล (S14): ตรวจแยก ไม่เปลี่ยนคะแนน/เกณฑ์ผ่าน และข้อมูลสาธารณะไม่บอกใบที่ถูก', () => {
     const data = publicCounterData()
-    for (const a of answers.cases) {
+    for (const a of legacy) {
       const c = data.cases.find((x) => x.id === a.caseId)!
       expect(c.reasons?.map((r) => r.id)).toContain(a.reason)
     }
     expect(JSON.stringify(publicJson)).not.toMatch(/"reason"\s*:/)
-    const right = answers.cases.map((a) => ({ ...perfect(a), reason: a.reason }))
-    const wrong = answers.cases.map((a) => ({ ...perfect(a), reason: a.reason === 'r1' ? 'r2' : 'r1' }))
+    const right = legacy.map((a) => ({ ...perfect(a), reason: a.reason }))
+    const wrong = legacy.map((a) => ({ ...perfect(a), reason: a.reason === 'r1' ? 'r2' : 'r1' }))
     const r1 = scoreCounter({ decisions: right })
     const r2 = scoreCounter({ decisions: wrong })
     expect(r1.score).toBe(100)
@@ -174,12 +176,65 @@ describe('scoreCounter ด่าน 3 เคาน์เตอร์รับจ
   })
 
   it('ลูกค้าทุกคนมีภาพและคำลงท้ายตรงเพศ (ชาย ครับ / หญิง ค่ะ)', () => {
-    const male = new Set(['c2', 'c3', 'c5'])
+    const male = new Set(['c2', 'c3', 'c7', 'c9'])
     for (const c of publicCounterData().cases) {
-      expect(c.portrait).toMatch(/^c[1-6]$/)
+      expect(c.portrait).toMatch(/^c([1-9]|10)$/)
       const text = [c.greeting, ...c.questions.map((q) => q.reply)].join(' ')
       if (male.has(c.portrait!)) expect(text).not.toMatch(/ค่ะ|คะ/)
       else expect(text).not.toMatch(/ครับ/)
     }
+  })
+
+  it('คลังลูกค้ามีอย่างน้อย 8 คน ครบทั้ง 4 ตรา และครบ 3 ชั้นของคู่มือ', () => {
+    expect(counterPoolIds().length).toBeGreaterThanOrEqual(8)
+    const stamps = new Set(answers.cases.map((a) => a.stamp))
+    for (const s of ['approve', 'suggest', 'first-step', 'reject']) expect(stamps.has(s)).toBe(true)
+    const cats = new Set(answers.cases.flatMap((a) => Object.values(a.tags)))
+    expect(cats.size).toBe(3)
+  })
+})
+
+describe('drawShift สุ่มลูกค้าต่อกะ', () => {
+  const stampOf = (id: string) => answers.cases.find((a) => a.caseId === id)!.stamp
+  it('seed เดิมได้ชุดเดิมและลำดับเดิม (รีเฟรชไม่สลับ)', () => {
+    for (const seed of [1, 42, 99999, 2 ** 31 - 1]) expect(drawShift(seed)).toEqual(drawShift(seed))
+  })
+  it('ได้ 4 คนไม่ซ้ำ มีอนุมัติ เสนอใหม่ และขั้นแรก/ปฏิเสธ ครบ 3 ชั้นทุก seed', () => {
+    const seen = new Set<string>()
+    for (let seed = 0; seed < 300; seed++) {
+      const ids = drawShift(seed)
+      expect(ids).toHaveLength(4)
+      expect(new Set(ids).size).toBe(4)
+      const stamps = ids.map(stampOf)
+      expect(stamps).toContain('approve')
+      expect(stamps).toContain('suggest')
+      expect(stamps.some((s) => s === 'first-step' || s === 'reject')).toBe(true)
+      const cats = new Set(ids.flatMap((id) => Object.values(answers.cases.find((a) => a.caseId === id)!.tags)))
+      expect(cats.size).toBe(3)
+      ids.forEach((id) => seen.add(id))
+    }
+    // สุ่มหลายกะแล้วลูกค้าทุกคนในคลังได้ออกบ้าง
+    expect(seen.size).toBe(counterPoolIds().length)
+  })
+  it('กะใหม่ไม่ซ้ำชุดเดิม และ validShift กรอง id แปลก', () => {
+    const prev = drawShift(7)
+    let n = 0
+    const fake = () => ((n = (n * 9301 + 49297) % 233280), n / 233280)
+    const next = newShiftSeed(prev, fake)
+    expect(next.caseIds).toEqual(drawShift(next.seed))
+    expect([...next.caseIds].sort()).not.toEqual([...prev].sort())
+    expect(validShift(['c1', 'zzz', 'c1', 5])).toEqual(['c1'])
+    expect(validShift([])).toEqual([...LEGACY_SHIFT])
+  })
+  it('scoreCounter ตรวจเฉพาะลูกค้าในกะ: ตอบถูกครบกะได้ 100 ส่งเคสนอกกะไม่ช่วย', () => {
+    const ids = drawShift(123)
+    const inShift = answers.cases.filter((a) => ids.includes(a.caseId))
+    const r = scoreCounter({ decisions: inShift.map(perfect) }, ids)
+    expect(r.score).toBe(100)
+    expect((r.detail as CounterDetail).cases.map((c) => c.caseId)).toEqual(ids)
+    const outside = answers.cases.filter((a) => !ids.includes(a.caseId))
+    const r2 = scoreCounter({ decisions: outside.slice(0, 4).map(perfect) }, ids)
+    expect(r2.score).toBe(0)
+    expect(publicCounterData(ids).cases.map((c) => c.id)).toEqual(ids)
   })
 })

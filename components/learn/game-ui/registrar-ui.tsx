@@ -6,6 +6,7 @@ import { AlertIcon, CheckIcon, cn } from "@/components/ui";
 import { useExitConfirm } from "@/components/student-navigation";
 import { GameHeader } from "../game-header";
 import { GameButton, buzz, useGameMotion } from "./index";
+import { useM3Sound } from "./counter-shell";
 
 /** ชิ้นส่วนร่วมของเกมด่านบอส m4 แบบ "Pixel Boss" (docs/design-ref/pixel/m4-*.png):
  *  ฉากพิกเซลเต็มจอ · HUD แถวเดียว (ด่านบอส / ขั้น / เหรียญ / เวลา) · แผงกระดาษขอบม่วงมีคลิปหนีบ ·
@@ -154,7 +155,7 @@ export function BossShell({
   /** ป้ายม่วงใต้ป้ายไม้ (ชื่อขั้นที่กำลังเล่น) */
   stage?: string;
 }) {
-  const [soundOn, setSoundOn] = useState(true);
+  const [soundOn, toggleSound] = useM3Sound();
   const exit = useExitConfirm({
     href: "/map",
     note: "ความคืบหน้าในด่านนี้ยังไม่ถูกบันทึก ถ้าออกตอนนี้ต้องเริ่มด่านใหม่",
@@ -168,7 +169,7 @@ export function BossShell({
           onBack={exit.request}
           backLabel="ออกจากด่าน กลับแผนที่"
           soundOn={soundOn}
-          onSound={() => setSoundOn((v) => !v)}
+          onSound={toggleSound}
         />
         <div className="relative flex min-h-0 flex-1 flex-col">{children}</div>
       </div>
@@ -184,6 +185,7 @@ export function BossHud({
   coins,
   coinNode,
   timer,
+  urgent = false,
 }: {
   stage?: string;
   step: number;
@@ -191,6 +193,8 @@ export function BossHud({
   coins: number;
   coinNode: ReactNode;
   timer?: string;
+  /** 10 วินาทีสุดท้าย: ชิปเวลาแดงสั่น */
+  urgent?: boolean;
 }) {
   const shown = Math.min(step, total);
   const people = Math.round((shown / Math.max(1, total)) * 3);
@@ -222,7 +226,7 @@ export function BossHud({
         </b>
       </span>
       {timer ? (
-        <span className="m4-chip m4-chip-time">
+        <span className={cn("m4-chip m4-chip-time", urgent && "is-urgent")}>
           <PxIcon kind="clock" />
           <span className="sr-only">เวลา</span>
           <b className="tabular-nums">{timer}</b>

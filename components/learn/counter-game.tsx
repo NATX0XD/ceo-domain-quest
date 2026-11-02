@@ -1,11 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ConveyorDrill, type DrillItem } from './game-ui/conveyor-drill'
 import { CounterFinalSelf, CounterOnboarding } from './game-ui/counter-prep'
 import { Cta, DomeSay, M3Stage, Panel, sfx } from './game-ui/counter-shell'
-import { PixelReport, PixelShift } from './game-ui/pixel-counter'
+import { PixelReport, PixelShift, coachKey } from './game-ui/pixel-counter'
 import {
   COUNTER_LEVELS,
   type CounterCase,
@@ -66,6 +66,8 @@ export function CounterGame({
   data,
   onSubmit,
   onCheck,
+  onNewShift,
+  studentId,
   level,
   shopName,
   business,
@@ -76,6 +78,10 @@ export function CounterGame({
   onSubmit: (payload: unknown) => Promise<SubmitResult>
   /** ตรวจทีละลูกค้า (action: 'step') ถ้าไม่ส่งมา เกมจะไม่มีรอบลองแก้ */
   onCheck?: (decision: CounterDecision) => Promise<CounterStepResult>
+  /** เริ่มกะใหม่: เซิร์ฟเวอร์จับลูกค้าชุดใหม่ (ไม่ส่ง = ใช้ชุดเดิม) */
+  onNewShift?: () => Promise<CounterData['cases']>
+  /** ใช้จำว่าเคยดูบทแนะนำแล้ว (ต่อนักเรียน) */
+  studentId?: string
   /** ระดับตามคะแนนวอร์มอัพ ไม่ส่ง = ใช้ค่าในเนื้อหา */
   level?: CounterLevel
   /** ธุรกิจของผู้เล่น ใช้กับลูกค้าคนสุดท้าย (S17) */
@@ -97,7 +103,29 @@ export function CounterGame({
   const [rounds, setRounds] = useState(0)
   const bump = (k: 'handbook' | 'dome') => setStats((x) => ({ ...x, [k]: x[k] + 1 }))
 
-  const cases = useMemo(() => data.cases.map((c) => toView(c)), [data.cases])
+  const [shiftCases, setShiftCases] = useState(data.cases)
+  const cases = useMemo(() => shiftCases.map((c) => toView(c)), [shiftCases])
+  const shiftData = useMemo(() => ({ ...data, cases: shiftCases }), [data, shiftCases])
+  // บทแนะนำครั้งแรก: อ่านครั้งเดียวตอนเปิด (กัน StrictMode เรียก effect ซ้ำ)
+  const [coach, setCoach] = useState(false)
+  const coachRead = useRef(false)
+  useEffect(() => {
+    if (coachRead.current) return
+    coachRead.current = true
+    try {
+      setCoach(window.localStorage.getItem(coachKey(studentId)) !== '1')
+    } catch {
+      setCoach(false)
+    }
+  }, [studentId])
+  const coachDone = () => {
+    setCoach(false)
+    try {
+      window.localStorage.setItem(coachKey(studentId), '1')
+    } catch {
+      /* ไม่มีที่เก็บก็แค่แสดงซ้ำ */
+    }
+  }
   const lv = level ? COUNTER_LEVELS[level] : { handbookSeconds: data.handbookSeconds, hints: data.hintsPerShift }
   const detail = result && isDetail(result.detail) ? result.detail : null
 
@@ -119,6 +147,20 @@ export function CounterGame({
     setStage('drill')
   }
 
+  /** เข้ากะใหม่ด้วยลูกค้าชุดใหม่ (สุ่มที่เซิร์ฟเวอร์) ล้มเหลว = ใช้ชุดเดิม */
+  async function reshuffle() {
+    if (onNewShift) {
+      try {
+        const next = await onNewShift()
+        if (next.length > 0) setShiftCases(next)
+      } catch {
+        /* เน็ตล้ม: เล่นชุดเดิมต่อ เซิร์ฟเวอร์ยังตรวจกับกะเดิม */
+      }
+    }
+    setSelfCard(null)
+    newShift()
+  }
+
   function newShift() {
     setResult(null)
     setStats({ handbook: 0, dome: 0 })
@@ -130,7 +172,7 @@ export function CounterGame({
   const finish = onFinish ?? (() => router.push('/map?done=m3'))
 
   if (stage === 'onboarding') {
-    return <CounterOnboarding data={data} onReady={() => setStage('play')} onExit={onExit} />
+    return <CounterOnboarding data={shiftData} onReady={() => setStage('play')} onExit={onExit} />
   }
 
   if (stage === 'final') {
@@ -151,7 +193,7 @@ export function CounterGame({
   if (stage === 'report' && result) {
     return (
       <PixelReport
-        data={data}
+        data={shiftData}
         result={result}
         stats={stats}
         selfCard={selfCard}
@@ -159,7 +201,7 @@ export function CounterGame({
         weak={pickWeak(detail?.groups)}
         onExit={onExit}
         onRemedial={startRemedial}
-        onRetry={newShift}
+        onRetry={() => void reshuffle()}
         onFinish={finish}
       />
     )
@@ -191,7 +233,7 @@ export function CounterGame({
     return (
       <PixelShift
         key="practice"
-        data={data}
+        data={shiftData}
         cases={practiceCases}
         practice
         hbSeconds={lv.handbookSeconds}
@@ -206,7 +248,7 @@ export function CounterGame({
   return (
     <PixelShift
       key={`run-${run}`}
-      data={data}
+      data={shiftData}
       cases={cases}
       hbSeconds={lv.handbookSeconds}
       hintsTotal={lv.hints}
@@ -214,6 +256,9 @@ export function CounterGame({
       onStat={bump}
       onExit={onExit}
       onComplete={finishShift}
+      tutorial={coach && run === 0}
+      onTutorialDone={coachDone}
+      onRestart={reshuffle}
     />
   )
 }

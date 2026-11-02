@@ -29,6 +29,7 @@ const counterDataSchema = z.object({
   title: z.string(),
   intro: z.string(),
   maxQuestions: z.number().int().positive(),
+  shiftSize: z.number().int().positive().default(4),
   hintsPerShift: z.number().int().nonnegative(),
   handbookSeconds: z.number().int().positive(),
   categories: z.array(z.object({ id: category, label: z.string(), short: z.string() })),
@@ -61,6 +62,7 @@ const counterDataSchema = z.object({
             reply: z.string(),
             docs: z.array(z.string()).optional(),
             who: z.string().optional(),
+            mood: z.enum(['neutral', 'happy', 'confused', 'upset']).optional(),
           }),
         ),
         extensionOptions: z.array(z.string()),
@@ -79,6 +81,8 @@ const answersSchema = z.object({
       acceptedExtensions: z.array(z.string()),
       reason: z.string().optional(),
       keyQuestions: z.array(z.string()),
+      /** บทลูกค้าตอนตัดสินถูก (ไม่มี = เกมใช้บทกลาง) */
+      line: z.string().optional(),
       explanation: z.string(),
     }),
   ),
@@ -115,11 +119,102 @@ function judge(ans: Answer, d: Decision | undefined) {
 const DATA: CounterData = counterDataSchema.parse(publicJson)
 const ANSWERS = answersSchema.parse(answersJson)
 
-export function publicCounterData(): CounterData {
-  return DATA
+/** ชุดลูกค้าเดิม 4 คน ใช้เมื่ออ่านกะของนักเรียนไม่ได้ */
+export const LEGACY_SHIFT = ['c1', 'c2', 'c3', 'c4'] as const
+
+/* ---------- สุ่มลูกค้าต่อกะ (กำหนดด้วย seed ซ้ำได้เสมอ) ---------- */
+
+function rng(seed: number) {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
 }
 
-export function scoreCounter(payload: unknown): { score: number; passed: boolean; detail: unknown } {
+function shuffled<T>(list: readonly T[], rand: () => number): T[] {
+  const a = [...list]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1))
+    ;[a[i], a[j]] = [a[j]!, a[i]!]
+  }
+  return a
+}
+
+/**
+ * จับลูกค้า `size` คนจากคลังเคส ให้ได้ส่วนผสมที่ดี:
+ * อนุมัติ 1 · เสนอนามสกุลใหม่ 1 · ทำขั้นแรกก่อน/ปฏิเสธ 1 · ที่เหลือสุ่ม และป้ายครบทั้ง 3 ชั้นของคู่มือ
+ * seed เดิมได้ชุดเดิมและลำดับเดิมทุกครั้ง (รีเฟรชไม่สลับลูกค้า)
+ */
+export function drawShift(seed: number, size = DATA.shiftSize): string[] {
+  const pool = ANSWERS.cases.filter((a) => DATA.cases.some((c) => c.id === a.caseId))
+  const n = Math.min(size, pool.length)
+  const groups = [
+    pool.filter((a) => a.stamp === 'approve'),
+    pool.filter((a) => a.stamp === 'suggest'),
+    pool.filter((a) => a.stamp === 'first-step' || a.stamp === 'reject'),
+  ]
+  const covers = (ids: string[]) => {
+    const cats = new Set(pool.filter((a) => ids.includes(a.caseId)).flatMap((a) => Object.values(a.tags)))
+    return COUNTER_CATEGORIES.every((c) => cats.has(c))
+  }
+  const rand = rng(seed)
+  let pick: string[] = []
+  for (let attempt = 0; attempt < 30; attempt++) {
+    pick = []
+    for (const g of groups) {
+      const c = shuffled(g, rand)[0]
+      if (c && pick.length < n) pick.push(c.caseId)
+    }
+    for (const c of shuffled(pool, rand)) {
+      if (pick.length >= n) break
+      if (!pick.includes(c.caseId)) pick.push(c.caseId)
+    }
+    if (covers(pick)) break
+  }
+  return shuffled(pick, rand)
+}
+
+/** สุ่ม seed ใหม่ที่ได้ชุดลูกค้าไม่ซ้ำกับกะก่อน (ถ้าทำได้) */
+export function newShiftSeed(previous?: readonly string[] | null, random: () => number = Math.random): { seed: number; caseIds: string[] } {
+  const same = (ids: string[]) => !!previous && ids.length === previous.length && ids.every((id) => previous.includes(id))
+  let seed = Math.floor(random() * 2 ** 31)
+  let caseIds = drawShift(seed)
+  for (let i = 0; i < 8 && same(caseIds); i++) {
+    seed = Math.floor(random() * 2 ** 31)
+    caseIds = drawShift(seed)
+  }
+  return { seed, caseIds }
+}
+
+/** id ในกะที่ใช้ได้จริง (กรองของแปลก/ซ้ำออก) ไม่เหลือเลย = ชุดเดิม */
+export function validShift(caseIds: readonly unknown[] | null | undefined): string[] {
+  const ids = [...new Set((caseIds ?? []).filter((x): x is string => typeof x === 'string'))].filter((id) =>
+    ANSWERS.cases.some((a) => a.caseId === id),
+  )
+  return ids.length > 0 ? ids : [...LEGACY_SHIFT]
+}
+
+/** ข้อมูลสาธารณะของเกม ส่งเฉพาะลูกค้าในกะนี้ (เรียงตามลำดับในกะ) */
+export function publicCounterData(caseIds?: readonly string[]): CounterData {
+  if (!caseIds) return DATA
+  const cases = caseIds.map((id) => DATA.cases.find((c) => c.id === id)).filter((c): c is CounterData['cases'][number] => !!c)
+  return { ...DATA, cases }
+}
+
+/** คลังลูกค้าทั้งหมด (ใช้ในเทสต์/ตรวจเนื้อหา) */
+export function counterPoolIds(): string[] {
+  return DATA.cases.map((c) => c.id)
+}
+
+/**
+ * ให้คะแนนทั้งกะ — นับเฉพาะลูกค้าใน `caseIds` (กะที่เซิร์ฟเวอร์จับให้นักเรียนคนนี้)
+ * ไม่ส่ง = ใช้ชุดเดิม 4 คน
+ */
+export function scoreCounter(payload: unknown, caseIds: readonly string[] = LEGACY_SHIFT): { score: number; passed: boolean; detail: unknown } {
   const parsed = payloadSchema.safeParse(payload)
   if (!parsed.success) {
     const detail: CounterDetail = {
@@ -133,6 +228,8 @@ export function scoreCounter(payload: unknown): { score: number; passed: boolean
     }
     return { score: 0, passed: false, detail }
   }
+  const shift = validShift(caseIds)
+  const shiftAnswers = shift.map((id) => ANSWERS.cases.find((a) => a.caseId === id)).filter((a): a is Answer => !!a)
 
   // เคสซ้ำ: ใช้คำตอบแรกเท่านั้น
   const byCase = new Map<string, (typeof parsed.data.decisions)[number]>()
@@ -143,7 +240,7 @@ export function scoreCounter(payload: unknown): { score: number; passed: boolean
   let stampPoints = 0
   const groupMap = new Map<string, CounterGroupResult>()
 
-  const cases: CounterCaseResult[] = ANSWERS.cases.map((ans) => {
+  const cases: CounterCaseResult[] = shiftAnswers.map((ans) => {
     const d = byCase.get(ans.caseId)
     const { domains, wrongTags, stampCorrect, reasonCorrect } = judge(ans, d)
     const tagsCorrect = domains.length - wrongTags.length
@@ -175,7 +272,7 @@ export function scoreCounter(payload: unknown): { score: number; passed: boolean
     }
   })
 
-  const stampMax = ANSWERS.cases.length * 2
+  const stampMax = shiftAnswers.length * 2
   const tagAccuracy = tagsTotalAll > 0 ? tagsCorrectAll / tagsTotalAll : 0
   const stampAccuracy = stampMax > 0 ? stampPoints / stampMax : 0
   const score = Math.round(50 * tagAccuracy + 50 * stampAccuracy)
@@ -215,6 +312,7 @@ export function checkCounterStep(payload: unknown): {
       wrongTags,
       ...(reasonCorrect === undefined ? {} : { reasonCorrect }),
       explanation: !correct && attempt === 2 ? ans.explanation : '',
+      ...(correct && ans.line ? { line: ans.line } : {}),
     },
     log: { caseId: d.caseId, attempt, correct },
   }

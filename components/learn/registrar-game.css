@@ -919,3 +919,8 @@
   .m4-outcomes li, .m4-dns-node { transition: none; }
   .m4-slot.is-next .m4-slot-empty, .m4-mail-list li.is-new, .m4-dns-diagram.is-run li + li::before { animation: none; }
 }
+
+/* 10 วินาทีสุดท้าย (ใช้ hook ร่วมกับด่าน 3) */
+.m4-chip-time.is-urgent { border-color: #5c0b0b; background: #d01f1f; box-shadow: 0 3px 0 #5c0b0b, 0 0 0 3px rgba(255, 90, 90, 0.45); animation: m4-urgent 0.5s ease-in-out infinite; }
+@keyframes m4-urgent { 0%, 100% { transform: translateX(0) scale(1); } 25% { transform: translateX(-2px) scale(1.06); } 75% { transform: translateX(2px) scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .m4-chip-time.is-urgent { animation: none; } }

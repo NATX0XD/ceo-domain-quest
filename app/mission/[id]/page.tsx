@@ -22,6 +22,7 @@ import { M2Flow } from '@/components/learn/m2-flow'
 import { ReplayMarker } from '@/components/mission-revisit'
 import { PASS_SCORE, findLearnPath, loadLearnState, type LearnState } from '@/components/server/learn-path'
 import { publicCounterData } from '@/components/server/learn-counter'
+import { currentShift } from '@/components/server/m3-shift'
 import { publicRegistrarData } from '@/components/server/learn-registrar'
 import { requireShopProfile } from '@/components/server/shop-gate'
 import { loadShopProfile } from '@/components/server/game-state'
@@ -113,7 +114,7 @@ export default async function MissionPage({
           replay={replaying}
           passScore={PASS_SCORE}
           gameData={kind === 'game' ? buildGameData(studentMission, session.studentId) : null}
-          counterData={kind === 'counter' ? publicCounterData() : null}
+          counterData={kind === 'counter' ? publicCounterData((await currentShift(session.studentId)).caseIds) : null}
           registrarData={kind === 'registrar' ? publicRegistrarData() : null}
           registrarCard={kind === 'registrar' ? await registrarCardFor(session.studentId) : null}
           recommendedMode={recommendedMode}

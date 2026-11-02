@@ -62,6 +62,9 @@
 .px-chip--coin { flex: 0 1 auto; }
 .px-chip--timer { background: #3b2a8f; color: #fff; }
 .px-chip--timer.is-low { background: #c2410c; animation: px-blink 1s steps(2) infinite; }
+/* 10 วินาทีสุดท้าย: แดงเข้ม สั่น + เต้นเร็วขึ้น (ลดการเคลื่อนไหว = แค่สีแดง) */
+.px-chip--timer.is-urgent { border-color: #5c0b0b; background: #d01f1f; box-shadow: 0 3px 0 #5c0b0b, 0 0 0 3px rgba(255, 90, 90, 0.45); animation: px-urgent 0.5s ease-in-out infinite; }
+@keyframes px-urgent { 0%, 100% { transform: translateX(0) scale(1); } 25% { transform: translateX(-2px) scale(1.06); } 75% { transform: translateX(2px) scale(1.06); } }
 @keyframes px-blink { 50% { filter: brightness(1.25); } }
 .px-people { display: inline-flex; gap: 1px; }
 .px-people i { width: 6px; height: 10px; border-radius: 3px 3px 1px 1px; background: #c9bdf2; }
@@ -180,27 +183,47 @@
 
 /* ---------- ลูกค้า + ฟองคำพูด ---------- */
 .px-cust { position: relative; display: flex; flex: 0 0 auto; height: clamp(140px, 27vh, 250px); align-items: flex-end; justify-content: center; }
-.px-cust.is-card { display: none; }
-.px-cust.is-interview,
-.px-cust.is-stamp { height: clamp(116px, 19vh, 175px); }
-.px-cust.is-result { height: clamp(150px, 28vh, 260px); }
 .px-cust-sprite { position: relative; height: 100%; }
 .px-cust-sprite .px-sprite { display: block; width: auto; max-width: none !important; height: 100%; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.3)); }
-/* ขั้นสัมภาษณ์/ตรา พื้นที่เตี้ย: ครอปครึ่งตัวบนแบบภาพอ้างอิง */
-.px-cust.is-interview .px-cust-sprite,
-.px-cust.is-stamp .px-cust-sprite { overflow: hidden; }
-.px-cust.is-interview .px-cust-sprite .px-sprite,
-.px-cust.is-stamp .px-cust-sprite .px-sprite { height: 185%; }
+/* ขั้นใบคำขอ/สัมภาษณ์/ตรา: ลูกค้าครึ่งตัวบน (หัวถึงเอว) อยู่ซ้าย ฟองคำพูดอยู่ขวา ไม่มีแผงไหนทับตัวลูกค้า */
+.px-cust.is-card,
+.px-cust.is-interview,
+.px-cust.is-stamp,
+.px-cust.is-result { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 6px; height: clamp(118px, 19vh, 170px); }
+.px-cust.is-result { height: clamp(130px, 22vh, 200px); }
+.px-cust.is-interview:not(.is-result) { height: clamp(196px, 31vh, 290px); align-items: stretch; }
+.px-cust .px-cust-sprite { align-self: end; height: 100%; aspect-ratio: 0.7; overflow: hidden; border-radius: 0 0 10px 10px; }
+.px-cust .px-cust-sprite .px-sprite { position: absolute; top: 0; left: 50%; height: 196%; transform: translateX(-50%); }
+.px-cust .px-speech { position: relative; top: auto; right: auto; align-self: center; max-width: 100%; border-radius: 12px 12px 12px 3px; }
+.px-cust .px-speech::before { position: absolute; bottom: 8px; left: -11px; width: 12px; height: 12px; border-bottom: 3px solid var(--ink); border-left: 3px solid var(--ink); background: #fff; content: ""; transform: rotate(45deg); }
 .px-qmark { position: absolute; top: -4px; left: -14px; color: var(--purple); font-size: 46px; font-weight: 900; text-shadow: 3px 3px 0 #fff, -2px -2px 0 #fff; animation: px-bob 1.2s ease-in-out infinite; }
+.px-cust .px-qmark { top: 0; left: 4px; font-size: 36px; }
 .px-speech { position: absolute; top: 0; right: 0; z-index: 2; max-width: 58%; margin: 0; padding: 7px 11px; border: 3px solid var(--ink); border-radius: 12px 12px 3px 12px; background: #fff; box-shadow: 0 3px 0 var(--ink); color: #241a44; font-size: 14.5px; font-weight: 800; line-height: 1.4; }
-.px-dome-mini { position: absolute; right: 0; bottom: 0; width: 92px; height: auto; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3)); image-rendering: auto !important; animation: px-bob 2.2s ease-in-out infinite; }
-.px-cust.is-stamp .px-speech { right: auto; left: 0; border-radius: 12px 12px 12px 3px; }
+.px-dome-mini { position: absolute; right: 0; bottom: 0; width: 72px; height: auto; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3)); image-rendering: auto !important; animation: px-bob 2.2s ease-in-out infinite; }
+.px-cust.is-stamp:not(.is-result) .px-speech { align-self: start; margin-top: 8px; margin-right: 60px; }
 .px-fore { display: grid; gap: 8px; }
 @keyframes px-bob { 50% { transform: translateY(-5px); } }
 
+/* บทสนทนาเป็นฟองคำพูด (ล่าสุดอยู่ล่าง ฟองลูกค้ามีหางชี้ไปที่ตัวลูกค้า) */
+.px-talk { display: flex; flex-direction: column; gap: 5px; min-height: 0; padding: 2px 2px 4px 8px; overflow-y: auto; scrollbar-width: none; }
+.px-talk::-webkit-scrollbar { display: none; }
+.px-talk > :first-child { margin-top: auto; }
+.px-b-pair { display: grid; gap: 4px; }
+.px-b-pair.is-old { opacity: 0.62; }
+.px-b-pair.is-old .px-b-them,
+.px-b-pair.is-old .px-b-me { font-size: 12px; }
+.px-b-me { justify-self: end; max-width: 92%; margin: 0; padding: 4px 9px; border: 2px solid #241552; border-radius: 12px 12px 3px 12px; background: var(--purple); color: #fff; font-size: 12.5px; font-weight: 800; line-height: 1.35; }
+.px-b-them { position: relative; justify-self: start; max-width: 100%; margin: 0; padding: 6px 10px; border: 3px solid var(--ink); border-radius: 12px 12px 12px 3px; background: #fff; box-shadow: 0 3px 0 var(--ink); color: #241a44; font-size: 14px; font-weight: 800; line-height: 1.4; }
+.px-b-them::before { position: absolute; bottom: 6px; left: -10px; width: 11px; height: 11px; border-bottom: 3px solid var(--ink); border-left: 3px solid var(--ink); background: #fff; content: ""; transform: rotate(45deg); }
+.px-b-them.is-chat { background: #fffbe8; }
+.px-b-them.is-chat::before { background: #fffbe8; }
+.px-b-them small { display: block; margin-top: 2px; color: #8a6d1d; font-size: 11px; font-weight: 800; }
+.px-b-more { align-self: center; margin: 0; padding: 1px 8px; border-radius: 99px; background: rgba(255, 250, 240, 0.85); color: #6b5a8f; font-size: 11px; font-weight: 800; }
+
 /* ---------- 2 การ์ดคำขอ ---------- */
 .px-request { padding-bottom: 12px; }
-.px-who { display: grid; grid-template-columns: 86px 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
+.px-who { display: grid; grid-template-columns: 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
+.px-who .px-photo { display: none; }
 .px-photo { display: grid; width: 86px; height: 100px; overflow: hidden; place-items: start center; border: 3px solid var(--ink); border-radius: 6px; background: linear-gradient(180deg, #d9d0ff, #b7a8f0); }
 .px-photo .px-sprite { width: 170% !important; max-width: none !important; height: auto; margin-top: 2px; }
 .px-who dl { display: grid; gap: 1px; margin: 0; }
@@ -234,6 +257,11 @@
 
 /* ---------- 3 สัมภาษณ์ ---------- */
 .px-interview { display: grid; gap: 8px; }
+.px-infostrip { padding: 6px 8px; }
+.px-infostrip .px-fields { gap: 3px; }
+.px-infostrip .px-fields > div { grid-template-columns: 104px 1fr; }
+.px-infostrip .px-fields dt { padding: 2px 6px; font-size: 11.5px; }
+.px-infostrip .px-fields dd { padding: 2px 8px; font-size: 13px; }
 .px-chat { display: grid; gap: 6px; max-height: 32vh; padding: 8px; overflow-y: auto; border: 3px solid var(--ink); border-radius: 10px; background: rgba(255, 250, 240, 0.94); }
 .px-pair { display: grid; gap: 4px; }
 .px-ask-me { justify-self: end; max-width: 86%; margin: 0; padding: 6px 10px; border-radius: 12px 12px 3px 12px; background: var(--purple); color: #fff; font-size: 13.5px; font-weight: 800; line-height: 1.35; }
@@ -242,7 +270,7 @@
 .px-ask-title { display: flex; align-items: center; justify-content: space-between; margin: 0; color: var(--ink); font-size: 14.5px; font-weight: 900; }
 .px-ask-title span { padding: 1px 8px; border-radius: 99px; background: #fff; color: var(--purple); font-size: 12.5px; }
 .px-qgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.px-qchip { min-height: 48px; padding: 5px 8px; border: 2px solid #9b86ea; border-radius: 8px; background: #fff; box-shadow: 0 3px 0 #9b86ea; color: var(--ink); font: inherit; font-size: 13px; font-weight: 800; line-height: 1.3; text-align: left; cursor: pointer; }
+.px-qchip { min-height: 44px; padding: 4px 8px; border: 2px solid #9b86ea; border-radius: 8px; background: #fff; box-shadow: 0 3px 0 #9b86ea; color: var(--ink); font: inherit; font-size: 13px; font-weight: 800; line-height: 1.3; text-align: left; cursor: pointer; }
 .px-qchip:active { transform: translateY(2px); box-shadow: 0 1px 0 #9b86ea; }
 .px-typebox { display: flex; gap: 6px; }
 .px-typebox input { flex: 1; min-width: 0; min-height: 44px; padding: 6px 10px; border: 2px solid #9b86ea; border-radius: 8px; background: #fff; color: #241a44; font: inherit; font-size: 16px; }
@@ -319,6 +347,8 @@
 .px-hbtimer b { font-size: 16px; font-weight: 900; text-shadow: 0 2px 0 rgba(110, 45, 5, 0.6); }
 .px-hbtimer i { display: block; height: 10px; overflow: hidden; border: 2px solid #6e2d05; border-radius: 3px; background: #ffe9d4; }
 .px-hbtimer i span { display: block; height: 100%; background: #ffcf3d; transition: width 1s linear; }
+.px-hbtimer.is-free { border-color: #1f5a32; background: linear-gradient(180deg, #5fd28a, #2f9e5a); box-shadow: 0 4px 0 #0f3d22; }
+.px-hbtimer.is-free b { text-shadow: 0 2px 0 rgba(15, 61, 34, 0.5); }
 .px-shelf { display: grid; gap: 4px; padding: 8px; border: 4px solid #4a2a12; border-radius: 6px; background: rgba(122, 74, 36, 0.92); box-shadow: inset 0 0 0 2px #b37a46, 0 4px 0 #2b170a; }
 .px-shelf-row { display: grid; grid-template-columns: 76px 1fr; align-items: stretch; gap: 6px; padding: 3px 3px 7px; border-bottom: 6px solid #4a2a12; }
 .px-shelf-row:last-child { padding-bottom: 3px; border-bottom: 0; }
@@ -341,12 +371,40 @@
 .px-manual li.is-hot b { width: fit-content; padding: 0 6px; border-radius: 4px; background: #f47a1f; color: #fff; }
 
 /* ---------- หันขวา: โต๊ะโดม ---------- */
-.px-domedesk { position: relative; display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: flex-end; min-height: 320px; padding-bottom: 6px; }
-.px-dome-bubble { position: relative; z-index: 1; max-width: 90%; margin: 0 0 14px; padding: 10px 14px; border: 3px solid var(--ink); border-radius: 12px; background: #fff; box-shadow: 0 4px 0 var(--ink); color: #241a44; font-size: 16px; font-weight: 900; line-height: 1.5; text-align: center; }
-.px-dome-bubble::after { position: absolute; bottom: -11px; left: 44%; width: 16px; height: 16px; border-right: 3px solid var(--ink); border-bottom: 3px solid var(--ink); background: #fff; content: ""; transform: rotate(45deg); }
-.px-dome-big { width: min(54vw, 220px); height: auto; filter: drop-shadow(0 8px 8px rgba(20, 10, 40, 0.4)); image-rendering: auto !important; animation: px-bob 2.4s ease-in-out infinite; }
-.px-hint-sign { position: absolute; bottom: 10px; left: 0; display: grid; justify-items: center; padding: 6px 10px; border: 3px solid #4a2a12; border-radius: 6px; background: #fff3d1; box-shadow: 0 4px 0 #4a2a12; color: #4a2a12; font-size: 13px; font-weight: 900; transform: rotate(-4deg); }
-.px-hint-sign b { font-size: 26px; line-height: 1.05; }
+.px-domedesk { position: relative; display: flex; flex: 1; flex-direction: column; justify-content: flex-end; gap: 6px; min-height: 0; }
+.px-dome-log { display: flex; flex: 1 1 auto; flex-direction: column; gap: 6px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.px-dome-log > :first-child { margin-top: auto; }
+.px-dome-pair { display: grid; gap: 4px; }
+.px-dome-kicker { justify-self: start; margin: 0; padding: 1px 8px; border-radius: 99px; background: #ffe27a; color: #4a2a00; font-size: 11.5px; font-weight: 900; }
+.px-dome-bubble { position: relative; z-index: 1; justify-self: stretch; margin: 0; padding: 8px 12px; border: 3px solid var(--ink); border-radius: 12px; background: #fff; box-shadow: 0 4px 0 var(--ink); color: #241a44; font-size: 15px; font-weight: 800; line-height: 1.45; }
+.px-dome-bubble.is-typing { color: #6b5a8f; font-style: italic; }
+.px-dome-row { position: relative; display: flex; flex: 0 0 auto; align-items: flex-end; justify-content: center; min-height: 120px; }
+.px-dome-big { width: min(40vw, 170px); height: auto; filter: drop-shadow(0 8px 8px rgba(20, 10, 40, 0.4)); image-rendering: auto !important; animation: px-bob 2.4s ease-in-out infinite; }
+.px-hint-sign { position: absolute; bottom: 8px; left: 0; display: grid; justify-items: center; padding: 5px 9px; border: 3px solid #4a2a12; border-radius: 6px; background: #fff3d1; box-shadow: 0 4px 0 #4a2a12; color: #4a2a12; font-size: 12px; font-weight: 900; line-height: 1.2; transform: rotate(-4deg); }
+.px-hint-sign b { font-size: 22px; line-height: 1.05; }
+.px-dome-ask { display: grid; flex: 0 0 auto; gap: 6px; }
+.px-dome-ask .px-btn { min-height: 48px; font-size: 16px; }
+.px-report-dome .px-dome-bubble { max-width: 90%; margin: 0 0 14px; text-align: center; }
+.px-report-dome .px-dome-bubble::after { position: absolute; bottom: -11px; left: 44%; width: 16px; height: 16px; border-right: 3px solid var(--ink); border-bottom: 3px solid var(--ink); background: #fff; content: ""; transform: rotate(45deg); }
+
+/* ---------- กล่องหมดเวลา (กรอบ kit2) ---------- */
+.px-timeup { display: grid; justify-items: center; gap: 8px; width: min(88vw, 380px); text-align: center; }
+.px-timeup h2 { margin: 0; color: #b0302a; font-size: 26px; font-weight: 900; }
+.px-timeup p { margin: 0; color: #4b260f; font-size: 15px; font-weight: 800; line-height: 1.5; }
+.px-timeup .px-stack { width: 100%; }
+.px-timeup-dome { width: 84px; height: auto; margin-top: -6px; image-rendering: auto !important; }
+
+/* ---------- โค้ชมาร์ก (บทแนะนำครั้งแรก) ---------- */
+.px-coach { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+.px-coach-ring { position: fixed; border: 4px solid #ffbe2e; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(20, 10, 40, 0.38), 0 0 18px 4px rgba(255, 190, 46, 0.8); transition: top 0.25s, left 0.25s, width 0.25s, height 0.25s; animation: px-coach-pulse 1.3s ease-in-out infinite; }
+@keyframes px-coach-pulse { 50% { border-color: #fff3b0; } }
+.px-coach-card { position: fixed; right: 10px; left: 10px; display: grid; grid-template-columns: 46px 1fr; align-items: start; gap: 8px; max-width: 540px; margin: 0 auto; padding: 8px 10px; border: 3px solid var(--ink); border-radius: 12px; background: #fffaf0; box-shadow: 0 5px 0 var(--ink); pointer-events: auto; }
+.px-coach-dome { width: 46px; height: auto; image-rendering: auto !important; }
+.px-coach-card small { color: var(--purple); font-size: 12px; font-weight: 900; }
+.px-coach-card p { margin: 1px 0 2px; color: #241a44; font-size: 14.5px; font-weight: 800; line-height: 1.45; }
+.px-coach-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.px-coach-actions .px-link { margin: 0; padding: 4px 2px; font-size: 13px; color: #6b5a8f; }
+.px-coach-next { min-height: 40px; padding: 4px 16px; border: 3px solid var(--ink); border-radius: 8px; background: var(--purple); box-shadow: 0 3px 0 var(--ink); color: #fff; font: inherit; font-size: 15px; font-weight: 900; cursor: pointer; }
 
 /* ---------- รายงานจบกะ ---------- */
 .px-report { display: grid; gap: 8px; }
@@ -408,6 +466,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .px-chip--timer.is-urgent { animation: none !important; }
+  .px-coach-ring { animation: none; transition: none; }
   .px *,
   .px *::before,
   .px *::after { animation: none !important; transition: none !important; }

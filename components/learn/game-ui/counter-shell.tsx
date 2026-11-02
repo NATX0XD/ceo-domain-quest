@@ -79,6 +79,55 @@ export function sfx(kind: Sfx) {
   }
 }
 
+/**
+ * นาฬิกาติ๊กตื่นเต้นช่วงท้าย (ใช้ร่วมด่าน 3 และ 4) — สร้างด้วย WebAudio ไม่ต้องมีไฟล์
+ * เหลือ ≤ `from` วินาทีและ `active` = ติ๊กทุกวินาที เร่งเป็น 2 และ 4 ครั้ง/วินาทีเมื่อใกล้ศูนย์
+ * ปิดเสียงตามปุ่มเสียงของเกม · หยุดทันทีเมื่อ active เป็น false (ตัดสิน/หมดเวลา/ออกจากจอ)
+ * คืนค่า true เมื่ออยู่ในช่วงเร่งด่วน (ใช้ทำชิปเวลากะพริบแดง)
+ */
+export function useUrgentTick(secondsLeft: number | null | undefined, active: boolean, from = 10): boolean {
+  const urgent = active && secondsLeft != null && secondsLeft > 0 && secondsLeft <= from
+  useEffect(() => {
+    if (!urgent || secondsLeft == null || muted || typeof window === 'undefined') return
+    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!AC) return
+    const nodes: OscillatorNode[] = []
+    try {
+      ctx ??= new AC()
+      const c = ctx
+      if (c.state === 'suspended') void c.resume().catch(() => {})
+      const n = secondsLeft <= 3 ? 4 : secondsLeft <= 6 ? 2 : 1
+      const vol = secondsLeft <= 3 ? 0.11 : 0.07
+      for (let i = 0; i < n; i++) {
+        const t = c.currentTime + 0.02 + i / n
+        const osc = c.createOscillator()
+        const gain = c.createGain()
+        osc.type = 'square'
+        osc.frequency.value = i % 2 === 0 ? 1560 : 1170
+        gain.gain.setValueAtTime(0.0001, t)
+        gain.gain.exponentialRampToValueAtTime(vol, t + 0.004)
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05)
+        osc.connect(gain).connect(c.destination)
+        osc.start(t)
+        osc.stop(t + 0.06)
+        nodes.push(osc)
+      }
+    } catch {
+      /* เสียงเป็นของแถม */
+    }
+    return () => {
+      for (const o of nodes) {
+        try {
+          o.stop()
+        } catch {
+          /* หยุดไปแล้ว */
+        }
+      }
+    }
+  }, [urgent, secondsLeft])
+  return urgent
+}
+
 /* ---------- โครงจอ ---------- */
 
 export function M3Stage({

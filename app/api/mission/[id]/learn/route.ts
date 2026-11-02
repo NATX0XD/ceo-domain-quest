@@ -16,7 +16,8 @@ import {
   scoreWarmup,
 } from '@/components/server/learn-path'
 import { ai } from '@/components/server/ai'
-import { checkCounterStep, scoreCounter } from '@/components/server/learn-counter'
+import { LEGACY_SHIFT, checkCounterStep, publicCounterData, scoreCounter } from '@/components/server/learn-counter'
+import { readShift, startNewShift } from '@/components/server/m3-shift'
 import { checkRegistrarStep, scoreRegistrar } from '@/components/server/learn-registrar'
 import { handleM2Step } from '@/components/server/m2-flow'
 import { hasShopProfile } from '@/components/server/shop-gate'
@@ -51,6 +52,8 @@ const RequestSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('m2'), payload: z.unknown() }),
   /** ตรวจทีละจังหวะระหว่างเล่น (ลูกค้าทีละคนของด่าน 3 · เหตุการณ์/คำอธิบายบอสของด่าน 4) */
   z.object({ action: z.literal('step'), payload: z.unknown() }),
+  /** ด่าน 3: เริ่มกะใหม่ = จับลูกค้าชุดใหม่ (เก็บ seed ไว้ที่เซิร์ฟเวอร์ ใช้ตรวจตอนส่งกะ) */
+  z.object({ action: z.literal('shift') }),
 ])
 
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -139,6 +142,13 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
       return NextResponse.json(result)
     }
 
+    if (body.action === 'shift') {
+      if (path.do.kind !== 'counter') return errorResponse('bad-request', 'ด่านนี้ไม่มีการสุ่มลูกค้า', 400)
+      const before = await readShift(studentId).catch(() => null)
+      const shift = await startNewShift(studentId, before?.caseIds)
+      return NextResponse.json({ cases: publicCounterData(shift.caseIds).cases })
+    }
+
     if (body.action === 'step') {
       const step =
         path.do.kind === 'counter'
@@ -154,7 +164,9 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     // action === 'do'
     let result: { score: number; passed: boolean; detail: unknown }
     if (path.do.kind === 'counter') {
-      result = scoreCounter(body.payload)
+      // ตรวจกับลูกค้าในกะที่เซิร์ฟเวอร์จับให้ ไม่เชื่อรายชื่อเคสจากเบราว์เซอร์
+      const shift = await readShift(studentId).catch(() => null)
+      result = scoreCounter(body.payload, shift?.caseIds ?? LEGACY_SHIFT)
     } else if (path.do.kind === 'registrar') {
       result = scoreRegistrar(body.payload)
     } else if (path.do.kind === 'cards') {

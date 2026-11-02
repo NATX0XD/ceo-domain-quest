@@ -14,7 +14,8 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
 import { cn } from '@/components/ui'
 import { GameHeader } from '@/components/learn/game-header'
-import { M3_ASSET, sfx, useM3Sound } from './counter-shell'
+import { M3_ASSET, sfx, useM3Sound, useUrgentTick } from './counter-shell'
+import { matchIntent, smallTalkReply } from '../counter-intent'
 import { CountUp, Stars, useGameMotion } from './index'
 import type {
   CounterCase,
@@ -23,6 +24,7 @@ import type {
   CounterData,
   CounterDecision,
   CounterDetail,
+  CounterMood,
   CounterStampId,
   CounterStep,
   CounterStepResult,
@@ -32,7 +34,18 @@ import './pixel-counter.css'
 /* ---------- ภาพ (ไฟล์ใหม่ก่อน ไม่มีก็ใช้ภาพเดิม) ---------- */
 
 const PIX = '/learn/pixel'
-const OLD_CUSTOMER: Record<string, string> = { c1: 'customer-1', c2: 'customer-3', c3: 'customer-2', c4: 'customer-4', c6: 'customer-4' }
+const OLD_CUSTOMER: Record<string, string> = {
+  c1: 'customer-1',
+  c2: 'customer-3',
+  c3: 'customer-2',
+  c4: 'customer-4',
+  c5: 'customer-4',
+  c6: 'customer-4',
+  c7: 'customer-3',
+  c8: 'customer-1',
+  c9: 'customer-2',
+  c10: 'customer-4',
+}
 
 export const PX_ASSET = {
   bg: {
@@ -127,7 +140,11 @@ export function PxHud({
         </b>
       </span>
       {timer != null ? (
-        <span className={cn('px-chip px-chip--timer', timer <= 30 && 'is-low')} role="timer" aria-label={`เวลาของลูกค้าคนนี้ ${mmss(timer)}`}>
+        <span
+          className={cn('px-chip px-chip--timer', timer <= 30 && 'is-low', timer <= 10 && timer > 0 && 'is-urgent')}
+          role="timer"
+          aria-label={`เวลาของลูกค้าคนนี้ ${mmss(timer)}`}
+        >
           <i className="px-ico px-ico--clock" aria-hidden />
           <b>{mmss(timer)}</b>
         </span>
@@ -169,8 +186,11 @@ export function PxBtn({
   busy,
   className,
   ariaLabel,
+  tut,
 }: {
   children: ReactNode
+  /** จุดยึดของบทแนะนำ (data-tut) */
+  tut?: string
   onClick?: () => void
   tone?: 'purple' | 'cream' | 'orange' | 'gold' | 'green'
   disabled?: boolean
@@ -185,6 +205,7 @@ export function PxBtn({
       disabled={disabled || busy}
       aria-busy={busy || undefined}
       aria-label={ariaLabel}
+      data-tut={tut}
       onClick={() => {
         sfx('tap')
         onClick?.()
@@ -200,7 +221,10 @@ export function PxBtn({
 
 type ViewCase = Omit<CounterCase, 'domains'> & { domains: { name: string; role: string; label: string }[] }
 type Page = 'queue' | 'card' | 'interview' | 'stamp'
-type Mood = 'neutral' | 'happy' | 'confused'
+type Mood = CounterMood
+/** บทสนทนากับลูกค้า (ถามจากปุ่ม/พิมพ์ที่ตรงคำถาม = ask · คุยนอกเรื่อง = chat ไม่เสียสิทธิ์) */
+type Talk = { key: string; q: string; a: string; mood: Mood; kind: 'ask' | 'chat' | 'again' }
+type DomeLine = { key: string; q?: string; a: string; kind: 'hint' | 'free' }
 type Feedback =
   | { kind: 'right'; points: number }
   | { kind: 'retry'; wrongTags: string[]; stampWrong: boolean }
@@ -216,26 +240,27 @@ const FALLBACK_REASONS = [
   'ลูกค้าไม่ใช่หน่วยงานที่หมวดสงวนรับ หรือข้อมูลไม่ตรงความจริง',
 ]
 const CUSTOMER_SECONDS = 180
+/** เล่นต่อหลังหมดเวลา: เพิ่มเวลา + หักเหรียญบน HUD (ไม่กระทบคะแนนที่เซิร์ฟเวอร์ตรวจ) */
+const EXTRA_SECONDS = 60
+const EXTRA_COST = 1
 
-/** จับคำถามที่พิมพ์เองกับคำถามสำเร็จรูปที่ใกล้ที่สุด */
-function matchQuestion(text: string, qs: { id: string; text: string }[]): string | null {
-  const grams = (s: string) => {
-    const t = s.replace(/\s+/g, '').toLowerCase()
-    const set = new Set<string>()
-    for (let i = 0; i < t.length - 1; i++) set.add(t.slice(i, i + 2))
-    return set
-  }
-  const mine = grams(text)
-  if (mine.size === 0) return null
-  let best: { id: string; score: number } | null = null
-  for (const q of qs) {
-    const g = grams(q.text)
-    let hit = 0
-    for (const x of mine) if (g.has(x)) hit++
-    const score = hit / Math.max(4, Math.min(mine.size, g.size))
-    if (!best || score > best.score) best = { id: q.id, score }
-  }
-  return best && best.score >= 0.3 ? best.id : null
+/* ---------- บทแนะนำครั้งแรก (โค้ชมาร์กบนลูกค้าคนแรก) ---------- */
+type Tut = 'call' | 'card' | 'ask' | 'book' | 'book-back' | 'dome' | 'dome-back' | 'stamp'
+const TUT_ORDER: Tut[] = ['call', 'card', 'ask', 'book', 'book-back', 'dome', 'dome-back', 'stamp']
+const TUT: Record<Tut, { target: string; text: string; skippable?: boolean }> = {
+  call: { target: '[data-tut="go"]', text: 'ลูกค้าคนแรกมาแล้ว กด เรียกคิว ให้ลูกค้าเดินมาที่เคาน์เตอร์' },
+  card: { target: '.px-tagbox', text: 'อ่านใบคำขอ ดูนามสกุลท้ายชื่อโดเมน แล้วเลือกชั้นให้ทุกชื่อ จากนั้นกด สัมภาษณ์ลูกค้า' },
+  ask: { target: '.px-askpanel', text: 'ถามให้รู้ว่าลูกค้าเป็นใคร มีเอกสารอะไร กดคำถามหรือพิมพ์ถามเองก็ได้ ถามได้ 3 ข้อ' },
+  book: { target: '[data-tut="book"]', text: 'ไม่แน่ใจกฎ กด ‹ คู่มือ เพื่อหันซ้ายไปเปิดคู่มือ (ปัดจอไปทางขวาก็ได้)', skippable: true },
+  'book-back': { target: '.px-manual', text: 'นี่คือคู่มือ ดูว่านามสกุลอยู่ชั้นไหน ใครจดได้ แล้วกด หันกลับเคาน์เตอร์', skippable: true },
+  dome: { target: '[data-tut="dome"]', text: 'ติดตรงไหน กด ถามโดม › เพื่อหันขวา ขอคำใบ้หรือพิมพ์ถามโดมได้', skippable: true },
+  'dome-back': { target: '.px-dome-ask', text: 'โดมใบ้ได้ 2 ครั้งต่อลูกค้า พิมพ์ถามเพิ่มได้ แล้วกด หันกลับเคาน์เตอร์', skippable: true },
+  stamp: { target: '[data-tut="go"]', text: 'พร้อมแล้วไปประทับตรา เลือกตรา เลือกเหตุผล แล้วกด ประทับตรา' },
+}
+const TUT_STAMP_DESK = 'เลือกตรา 1 อัน (ถ้าต้องเสนอนามสกุลให้เลือกด้วย) เลือกเหตุผล แล้วกด ประทับตรา'
+
+export function coachKey(studentId?: string | null) {
+  return `m3-coach-v1:${studentId ?? 'guest'}`
 }
 
 /** นาฬิกากะ: เริ่ม 09:00 เดิน 1 นาทีทุก 8 วินาที */
@@ -258,10 +283,18 @@ export function PixelShift({
   onComplete,
   onStat,
   onExit,
+  tutorial = false,
+  onTutorialDone,
+  onRestart,
 }: {
   data: CounterData
   cases: ViewCase[]
   practice?: boolean
+  /** แสดงบทแนะนำบนลูกค้าคนแรก (ครั้งแรกของนักเรียน) */
+  tutorial?: boolean
+  onTutorialDone?: () => void
+  /** หมดเวลาแล้วเลือก "เริ่มกะใหม่" — ผู้เรียกจับลูกค้าชุดใหม่แล้วเปิดกะใหม่ */
+  onRestart?: () => Promise<void>
   onStat?: (k: 'handbook' | 'dome') => void
   hbSeconds: number
   hintsTotal: number
@@ -278,7 +311,8 @@ export function PixelShift({
   const step = STEP_OF[page]
   const [asked, setAsked] = useState<string[]>([])
   const [typed, setTyped] = useState('')
-  const [miss, setMiss] = useState<string | null>(null)
+  const [talk, setTalk] = useState<Talk[]>([])
+  const [custMood, setCustMood] = useState<Mood>('neutral')
   const [tags, setTags] = useState<Record<string, CounterCategory>>({})
   const [stamp, setStamp] = useState<CounterStampId | null>(null)
   const [extension, setExtension] = useState<string | null>(null)
@@ -287,10 +321,17 @@ export function PixelShift({
   const [attempt, setAttempt] = useState<1 | 2>(1)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [reasonOk, setReasonOk] = useState<boolean | undefined>(undefined)
+  const [custLine, setCustLine] = useState<string | null>(null)
   const [points, setPoints] = useState(0)
   const [wrongHint, setWrongHint] = useState<string[]>([])
   const [hintsLeft, setHintsLeft] = useState(hintsTotal)
-  const [hintLog, setHintLog] = useState<string[]>([])
+  const [domeLog, setDomeLog] = useState<DomeLine[]>([])
+  const [domeTyped, setDomeTyped] = useState('')
+  const [domeBusy, setDomeBusy] = useState(false)
+  const [timeUp, setTimeUp] = useState(false)
+  const [restarting, setRestarting] = useState(false)
+  const [penalty, setPenalty] = useState(0)
+  const [tut, setTut] = useState<Tut | null>(tutorial && !practice ? 'call' : null)
   const [look, setLook] = useState<Look>('counter')
   const [turnDir, setTurnDir] = useState<'l' | 'r' | null>(null)
   const [hbLeft, setHbLeft] = useState(hbSeconds)
@@ -301,6 +342,8 @@ export function PixelShift({
   const [error, setError] = useState<string | null>(null)
   const stampTimer = useRef<number | null>(null)
   const chatRef = useRef<HTMLDivElement | null>(null)
+  const timeUpRef = useRef<HTMLDialogElement | null>(null)
+  const domeRef = useRef<HTMLDivElement | null>(null)
   const swipe = useRef<{ x: number; y: number; id: number; active: boolean } | null>(null)
   const swallowClick = useRef(false)
 
@@ -314,20 +357,48 @@ export function PixelShift({
   const locked = stamping || busy
 
   // เวลาของลูกค้าคนนี้ เดินตั้งแต่การ์ดเปิดจนตัดสินเสร็จ (เดินต่อแม้หันไปดูคู่มือ/ถามโดม) ไม่หักคะแนน
-  const timerRunning = page !== 'queue' && !feedback
+  // หยุดระหว่างบทแนะนำ ระหว่างกล่องหมดเวลา และตอนรอผลตรวจ
+  const timerRunning = page !== 'queue' && !feedback && !timeUp && !tut && !stamping && !busy
   useEffect(() => {
     if (!timerRunning) return
     const id = window.setInterval(() => setCustLeft((s) => Math.max(0, s - 1)), 1000)
     return () => window.clearInterval(id)
   }, [timerRunning])
 
+  // หมดเวลา: เปิดกล่องถาม เล่นต่อ (+เวลา หักเหรียญ) หรือเริ่มกะใหม่ (สุ่มลูกค้าใหม่)
+  useEffect(() => {
+    if (custLeft > 0 || !timerRunning) return
+    sfx('bad')
+    setTimeUp(true)
+  }, [custLeft, timerRunning])
+  useEffect(() => {
+    const d = timeUpRef.current
+    if (!d) return
+    if (timeUp && !d.open) d.showModal()
+    if (!timeUp && d.open) d.close()
+  }, [timeUp])
+
+  // นาฬิกาติ๊กเร่งจังหวะ 10 วินาทีสุดท้าย (เคารพปุ่มเสียง) หยุดเมื่อตัดสิน/หมดเวลา
+  useUrgentTick(custLeft, timerRunning)
+
   useEffect(() => {
     const el = chatRef.current
     if (!el) return
     el.scrollTop = el.scrollHeight
-    const id = window.setTimeout(() => (el.scrollTop = el.scrollHeight), 750)
+    const id = window.setTimeout(() => (el.scrollTop = el.scrollHeight), 450)
     return () => window.clearTimeout(id)
-  }, [asked.length, miss])
+  }, [talk.length])
+
+  useEffect(() => {
+    const el = domeRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [domeLog.length, domeBusy])
+
+  // เปลี่ยนขั้น/ได้ผลตรวจ: เลื่อนเคาน์เตอร์กลับบนสุด ให้เห็นลูกค้าเต็มตัวก่อนเสมอ
+  const feedbackKind = feedback?.kind ?? null
+  useEffect(() => {
+    document.querySelector('.px-view--counter')?.scrollTo({ top: 0 })
+  }, [page, feedbackKind, caseIndex])
 
   useEffect(
     () => () => {
@@ -339,7 +410,7 @@ export function PixelShift({
   // โหลดภาพลูกค้าคนนี้ทุกสีหน้าไว้ก่อน (กันภาพว่างตอนการ์ดเด้ง/ผลลัพธ์)
   const portrait = current?.portrait ?? 'c1'
   useEffect(() => {
-    for (const m of ['neutral', 'happy', 'confused'] as const) {
+    for (const m of ['neutral', 'happy', 'confused', 'upset'] as const) {
       const img = new Image()
       img.src = PX_ASSET.customer(portrait, m)[0]!
     }
@@ -356,8 +427,10 @@ export function PixelShift({
   }, [stamp, extension, needsExt, reduce])
 
   // หันซ้ายเปิดคู่มือได้ hbSeconds วินาทีต่อครั้ง หมดเวลาหันกลับเคาน์เตอร์เอง
+  // หลังตัดสินแล้ว (หน้าผลลัพธ์) เปิดดูได้ไม่จำกัดเวลา · ระหว่างบทแนะนำก็ไม่จับเวลา
+  const hbFree = !!feedback || !!tut
   useEffect(() => {
-    if (look !== 'book') return
+    if (look !== 'book' || hbFree) return
     setHbLeft(hbSeconds)
     let n = hbSeconds
     const id = window.setInterval(() => {
@@ -370,7 +443,7 @@ export function PixelShift({
       }
     }, 1000)
     return () => window.clearInterval(id)
-  }, [look, hbSeconds])
+  }, [look, hbSeconds, hbFree])
 
   useEffect(() => {
     if (!turnDir) return
@@ -451,12 +524,18 @@ export function PixelShift({
     setPage('queue')
     setAsked([])
     setTyped('')
-    setMiss(null)
+    setTalk([])
+    setCustMood('neutral')
+    setHintsLeft(hintsTotal)
+    setDomeLog([])
+    setDomeTyped('')
+    setTimeUp(false)
     setTags({})
     setStamp(null)
     setExtension(null)
     setReason(null)
     setReasonOk(undefined)
+    setCustLine(null)
     setStamping(false)
     setAttempt(1)
     setFeedback(null)
@@ -465,6 +544,7 @@ export function PixelShift({
     setCustLeft(CUSTOMER_SECONDS)
   }
 
+  /** คำใบ้จากปุ่ม: จำกัดต่อลูกค้า 1 คน (ลูกค้าคนใหม่ได้ครบอีกครั้ง) */
   function askDome() {
     if (hintsLeft <= 0) return
     onStat?.('dome')
@@ -472,30 +552,71 @@ export function PixelShift({
     const list = data.hints[step]
     const used = hintsTotal - hintsLeft
     const text = list[used % list.length]
-    if (text) setHintLog((l) => [...l, text])
+    if (text) setDomeLog((l) => [...l, { key: `h${l.length}`, a: text, kind: 'hint' }])
     setHintsLeft((n) => n - 1)
   }
 
-  function ask(id: string) {
+  /** พิมพ์ถามโดม (AI ผ่าน /api/dome มีตัวกันหัวข้อ + กฎสำรอง) ไม่ใช้คำใบ้ และไม่บอกคำตอบของลูกค้าตรง ๆ */
+  async function askDomeFree() {
+    const q = domeTyped.trim()
+    if (!q || domeBusy) return
     sfx('tap')
-    setMiss(null)
-    setAsked((a) => (a.length < data.maxQuestions && !a.includes(id) ? [...a, id] : a))
+    onStat?.('dome')
+    setDomeTyped('')
+    setDomeBusy(true)
+    const key = `f${Date.now()}`
+    let a = ''
+    try {
+      const ctl = new AbortController()
+      const t = window.setTimeout(() => ctl.abort(), 9000)
+      const res = await fetch('/api/dome', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ message: q, missionId: 'm3' }),
+        signal: ctl.signal,
+      })
+      window.clearTimeout(t)
+      const body = (await res.json().catch(() => null)) as { reply?: string; message?: string } | null
+      a = res.ok ? (body?.reply ?? '') : (body?.message ?? '')
+    } catch {
+      a = ''
+    }
+    if (!a.trim()) a = domeFallback(q, data.handbook)
+    setDomeLog((l) => [...l, { key, q, a, kind: 'free' }])
+    setDomeBusy(false)
   }
 
-  function sendTyped() {
-    if (!current || !typed.trim()) return
-    const id = matchQuestion(
-      typed,
-      current.questions.filter((q) => !asked.includes(q.id)),
-    )
-    if (id) {
-      ask(id)
-      setTyped('')
-    } else {
-      sfx('bad')
-      setMiss(typed.trim())
-      setTyped('')
+  /** ถามจากปุ่มคำถามสำเร็จรูป (ใช้สิทธิ์ถาม 1 ครั้ง) */
+  function ask(id: string, typedText?: string) {
+    if (!current) return
+    const q = current.questions.find((x) => x.id === id)
+    if (!q) return
+    if (asked.includes(id)) {
+      setTalk((t) => [...t, { key: `a${t.length}`, q: typedText ?? q.text, a: `ตอบไปแล้วนะ${current.particle ?? ''} ${q.reply}`, mood: 'neutral', kind: 'again' }])
+      return
     }
+    if (asked.length >= data.maxQuestions) return
+    sfx('tap')
+    const mood = q.mood ?? 'neutral'
+    setAsked((a) => (a.includes(id) ? a : [...a, id]))
+    setCustMood(mood)
+    setTalk((t) => [...t, { key: `q${t.length}`, q: typedText ?? q.text, a: q.reply, mood, kind: 'ask' }])
+  }
+
+  /** พิมพ์ถามลูกค้าเอง: ตรงเจตนาคำถามข้อไหนจริงจึงนับเป็นข้อนั้น ไม่เกี่ยว = ลูกค้าคุยตามบท ไม่เสียสิทธิ์ */
+  function sendTyped() {
+    const text = typed.trim()
+    if (!current || !text) return
+    setTyped('')
+    const id = matchIntent(text, current.questions.map((q) => q.id))
+    if (id && (asked.includes(id) || asked.length < data.maxQuestions)) {
+      ask(id, text)
+      return
+    }
+    const chat = smallTalkReply(text, current.particle ?? '')
+    sfx(chat.mood === 'confused' ? 'bad' : 'tap')
+    setCustMood(chat.mood)
+    setTalk((t) => [...t, { key: `c${t.length}`, q: text, a: chat.reply, mood: chat.mood, kind: 'chat' }])
   }
 
   async function complete(all: CounterDecision[]) {
@@ -552,6 +673,9 @@ export function PixelShift({
       return
     }
     setBusy(false)
+    // ปลดล็อกปุ่มหันซ้าย/ขวา (เดิมค้าง stamping = true จึงเปิดคู่มือจากหน้าผลไม่ได้)
+    setStamping(false)
+    setCustLine(r.correct ? (r.line ?? null) : null)
     setReasonOk(r.reasonCorrect)
     if (!r.correct && attempt === 1) {
       sfx('bad')
@@ -582,10 +706,69 @@ export function PixelShift({
     stampTimer.current = window.setTimeout(() => void afterStamp(), reduce ? 120 : 900)
   }
 
+  /* ---------- หมดเวลา ---------- */
+  function keepPlaying() {
+    sfx('ok')
+    setPenalty((n) => n + EXTRA_COST)
+    setPoints((p) => Math.max(0, p - EXTRA_COST))
+    setCustLeft((s) => s + EXTRA_SECONDS)
+    setTimeUp(false)
+  }
+
+  async function restartShift() {
+    if (restarting) return
+    setRestarting(true)
+    try {
+      if (onRestart) await onRestart()
+      else {
+        setCaseIndex(0)
+        setDecisions([])
+        setPoints(0)
+        resetCase()
+      }
+    } catch {
+      setError('เริ่มกะใหม่ยังไม่สำเร็จ ลองกดอีกครั้ง')
+      setRestarting(false)
+    }
+  }
+
+  /* ---------- บทแนะนำ: เลื่อนขั้นตามสิ่งที่ผู้เล่นทำจริง ---------- */
+  const finishTut = useRef(onTutorialDone)
+  finishTut.current = onTutorialDone
+  function endTut() {
+    setTut(null)
+    finishTut.current?.()
+  }
+  useEffect(() => {
+    if (!tut) return
+    if (caseIndex > 0) return endTut()
+    const next = (t: Tut) => setTut(t)
+    if (tut === 'call' && page !== 'queue') next('card')
+    else if (tut === 'card' && page === 'interview') next('ask')
+    else if (tut === 'card' && page === 'stamp') next('book')
+    else if (tut === 'ask' && asked.length > 0) next('book')
+    else if (tut === 'book' && look === 'book') next('book-back')
+    else if (tut === 'book-back' && look === 'counter') next('dome')
+    else if (tut === 'dome' && look === 'dome') next('dome-back')
+    else if (tut === 'dome-back' && look === 'counter') next('stamp')
+    else if (tut === 'stamp' && feedback) endTut()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- เลื่อนตามสถานะเกมเท่านั้น
+  }, [tut, page, asked.length, look, feedback, caseIndex])
+
+  function skipTutStep() {
+    if (!tut) return
+    const i = TUT_ORDER.indexOf(tut)
+    // ข้ามขั้นหันซ้าย/ขวา: ถ้าหันไปแล้วให้หันกลับด้วย
+    if (look !== 'counter') turn('counter')
+    const after = tut === 'book' || tut === 'book-back' ? 'dome' : tut === 'dome' || tut === 'dome-back' ? 'stamp' : TUT_ORDER[i + 1]
+    if (after) setTut(after)
+    else endTut()
+  }
+
   if (!current) return null
 
   const p = current.particle ?? ''
-  const mood: Mood = feedback ? (feedback.kind === 'right' ? 'happy' : 'confused') : 'neutral'
+  const mood: Mood = feedback ? (feedback.kind === 'right' ? 'happy' : feedback.kind === 'retry' ? 'confused' : 'upset') : page === 'interview' ? custMood : 'neutral'
   const left = data.maxQuestions - asked.length
   const exchanges = asked
     .map((qid) => current.questions.find((x) => x.id === qid))
@@ -599,27 +782,29 @@ export function PixelShift({
   const base = wanted.split('.')[0] ?? wanted
   const resultDomain =
     needsExt && extension ? (current.domains.find((d) => d.name.endsWith(extension))?.name ?? `${base}${extension}`) : wanted
+  const recent = talk.slice(-3)
 
   const say = feedback
     ? feedback.kind === 'right'
-      ? stamp === 'approve'
-        ? `ขอบคุณ${p || 'นะ'} ได้ ${resultDomain} แล้ว`
-        : stamp === 'first-step'
-          ? `อ๋อ ต้องจด ${resultDomain} ก่อนสินะ${p}`
-          : `อ๋อ เข้าใจแล้ว${p} งั้นเอา ${resultDomain} ${p}`.trim()
+      ? (custLine ??
+        (stamp === 'approve'
+          ? `ขอบคุณ${p || 'นะ'} ได้ ${resultDomain} แล้ว`
+          : stamp === 'first-step'
+            ? `เข้าใจแล้ว${p} จะทำขั้นแรกให้เรียบร้อยแล้วจด ${resultDomain}`
+            : stamp === 'reject'
+              ? `เข้าใจแล้ว${p} จะเตรียมข้อมูลจริงมายื่นใหม่`
+              : `อ๋อ เข้าใจแล้ว${p} งั้นเอา ${resultDomain}`))
       : `เอ๊ะ ทำไมล่ะ${p} ช่วยดูอีกทีได้ไหม`
-    : page === 'interview'
-      ? exchanges.length || miss
-        ? null
-        : current.greeting
-      : page === 'queue' || page === 'stamp'
-        ? null
+    : page === 'queue' || page === 'interview'
+      ? null
+      : page === 'stamp'
+        ? `ตกลงจดได้ไหม${p}`
         : current.greeting
 
   /* ---------- ด็อกล่าง ---------- */
   const turnTools = (primary: ReactNode) => (
     <div className="px-tools">
-      <button type="button" className="px-turn" onClick={() => turn('book')} disabled={locked} aria-label="หันซ้าย เปิดคู่มือ">
+      <button type="button" className="px-turn" data-tut="book" onClick={() => turn('book')} disabled={locked} aria-label="หันซ้าย เปิดคู่มือ">
         <span className="px-chev" aria-hidden>
           ‹
         </span>
@@ -627,7 +812,14 @@ export function PixelShift({
         <span>คู่มือ</span>
       </button>
       {primary}
-      <button type="button" className="px-turn" onClick={() => turn('dome')} disabled={locked} aria-label={`หันขวา ถามโดม คำใบ้เหลือ ${hintsLeft}`}>
+      <button
+        type="button"
+        className="px-turn"
+        data-tut="dome"
+        onClick={() => turn('dome')}
+        disabled={locked}
+        aria-label={`หันขวา ถามโดม คำใบ้ลูกค้าคนนี้เหลือ ${hintsLeft}`}
+      >
         <PxImg srcs={PX_ASSET.dome('neutral')} className="px-turn-dome" />
         <span>ถามโดม</span>
         <span className="px-chev px-chev--r" aria-hidden>
@@ -648,6 +840,15 @@ export function PixelShift({
           <i className="px-ico px-ico--book" aria-hidden /> ดูคู่มือ
         </PxBtn>
       </div>
+    ) : feedback.kind === 'explain' ? (
+      <div className="px-row">
+        <PxBtn tone="gold" busy={busy} onClick={() => advance(decisions)}>
+          {isLast ? (practice ? 'จบการซ้อม ›' : error ? 'ส่งอีกครั้ง' : 'ส่งผลทั้งกะ ›') : 'คนต่อไป ›'}
+        </PxBtn>
+        <PxBtn tone="cream" className="px-btn--narrow" onClick={() => turn('book')}>
+          <i className="px-ico px-ico--book" aria-hidden /> ดูคู่มือ
+        </PxBtn>
+      </div>
     ) : (
       <PxBtn tone="gold" busy={busy} onClick={() => advance(decisions)}>
         {isLast ? (practice ? 'จบการซ้อม ›' : error ? 'ส่งอีกครั้ง' : 'ส่งผลทั้งกะ ›') : 'ลูกค้าคนต่อไป ›'}
@@ -656,6 +857,7 @@ export function PixelShift({
   ) : page === 'queue' ? (
     turnTools(
       <PxBtn
+        tut="go"
         onClick={() => {
           sfx('ok')
           setPage('card')
@@ -666,19 +868,19 @@ export function PixelShift({
     )
   ) : page === 'card' ? (
     turnTools(
-      <PxBtn onClick={() => setPage(attempt === 2 ? 'stamp' : 'interview')} disabled={!allTagged}>
+      <PxBtn tut="go" onClick={() => setPage(attempt === 2 ? 'stamp' : 'interview')} disabled={!allTagged}>
         {allTagged ? (attempt === 2 ? 'ไปตัดสินใหม่ ›' : 'สัมภาษณ์ลูกค้า') : 'จัดชั้นนามสกุลก่อน'}
       </PxBtn>,
     )
   ) : page === 'interview' ? (
     turnTools(
-      <PxBtn onClick={() => setPage('stamp')} disabled={asked.length === 0}>
+      <PxBtn tut="go" onClick={() => setPage('stamp')} disabled={asked.length === 0}>
         {asked.length === 0 ? 'ถามอย่างน้อย 1 ข้อ' : 'ไปประทับตรา ›'}
       </PxBtn>,
     )
   ) : (
     turnTools(
-      <PxBtn onClick={pressStamp} disabled={!canStamp || locked} busy={busy}>
+      <PxBtn tut="go" onClick={pressStamp} disabled={!canStamp || locked} busy={busy}>
         {!stamp ? 'เลือกตรา 1 อัน' : needsExt && !extension ? 'เลือกนามสกุลที่เสนอ' : reason == null ? 'เลือกเหตุผล' : 'ประทับตรา'}
       </PxBtn>,
     )
@@ -761,12 +963,18 @@ export function PixelShift({
           >
             {/* ---------- หันซ้าย: ชั้นคู่มือ ---------- */}
             <section className="px-view px-view--book" aria-label="ชั้นคู่มือ" aria-hidden={look !== 'book'} inert={look !== 'book'}>
-              <div className="px-hbtimer" role="timer" aria-label={`เปิดคู่มือได้อีก ${hbLeft} วินาที`}>
-                <b>เปิดคู่มือได้อีก {hbLeft} วินาที</b>
-                <i>
-                  <span style={{ width: `${(hbLeft / Math.max(1, hbSeconds)) * 100}%` }} />
-                </i>
-              </div>
+              {hbFree ? (
+                <div className="px-hbtimer is-free">
+                  <b>{feedback ? 'ทบทวนคู่มือได้ไม่จำกัดเวลา' : 'บทแนะนำ ยังไม่จับเวลาคู่มือ'}</b>
+                </div>
+              ) : (
+                <div className="px-hbtimer" role="timer" aria-label={`เปิดคู่มือได้อีก ${hbLeft} วินาที`}>
+                  <b>เปิดคู่มือได้อีก {hbLeft} วินาที</b>
+                  <i>
+                    <span style={{ width: `${(hbLeft / Math.max(1, hbSeconds)) * 100}%` }} />
+                  </i>
+                </div>
+              )}
               <div className="px-shelf">
                 {data.handbook.map((f, i) => (
                   <div key={f.category} className={cn('px-shelf-row', i === 2 && 'is-reserved')}>
@@ -839,16 +1047,16 @@ export function PixelShift({
                 </div>
               ) : (
                 <>
-                  {/* ลูกค้า + ฟองคำพูด */}
+                  {/* ลูกค้า + ฟองคำพูด (ขั้นสัมภาษณ์: บทสนทนาเป็นฟองข้างหัวลูกค้า) */}
                   <div className={cn('px-cust', `is-${page}`, feedback && 'is-result')}>
                     <motion.div
                       key={`${caseIndex}-${mood}`}
                       className="px-cust-sprite"
                       initial={reduce ? false : { scale: 0.96 }}
-                      animate={mood === 'happy' && !reduce ? { scale: 1, y: [0, -12, 0] } : { scale: 1 }}
+                      animate={mood === 'happy' && !reduce ? { scale: 1, y: [0, -12, 0] } : mood === 'upset' && !reduce ? { scale: 1, x: [0, -5, 5, -3, 0] } : { scale: 1 }}
                       transition={{ duration: 0.6 }}
                     >
-                      <PxImg srcs={PX_ASSET.customer(current.portrait ?? 'c1', mood)} alt={`ลูกค้า ${current.name}`} className="px-sprite" />
+                      <PxImg srcs={PX_ASSET.customer(current.portrait ?? 'c1', mood)} alt={`ลูกค้า ${current.name} สีหน้า${MOOD_LABEL[mood]}`} className="px-sprite" />
                       {mood === 'confused' ? (
                         <span className="px-qmark" aria-hidden>
                           ?
@@ -856,20 +1064,49 @@ export function PixelShift({
                       ) : null}
                     </motion.div>
                     {page === 'stamp' && !feedback ? <PxImg srcs={PX_ASSET.dome('thinking')} className="px-dome-mini" /> : null}
-                    <AnimatePresence mode="wait">
-                      {say ? (
-                        <motion.p
-                          key={say}
-                          className="px-speech"
-                          initial={reduce ? false : { scale: 0.6, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={reduce ? undefined : { opacity: 0 }}
-                          transition={spring}
-                        >
-                          {say}
-                        </motion.p>
-                      ) : null}
-                    </AnimatePresence>
+                    {page === 'interview' && !feedback ? (
+                      <div className="px-talk" ref={chatRef} aria-live="polite" aria-label="บทสนทนากับลูกค้า">
+                        {talk.length === 0 ? <p className="px-b-them">{current.greeting}</p> : null}
+                        {talk.length > recent.length ? <p className="px-b-more">คุยกันไปแล้ว {talk.length} รอบ</p> : null}
+                        <AnimatePresence initial={false}>
+                          {recent.map((t, i) => (
+                            <motion.div
+                              key={t.key}
+                              className={cn('px-b-pair', i < recent.length - 1 && 'is-old')}
+                              initial={reduce ? false : { opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.25 }}
+                            >
+                              <p className="px-b-me">{t.q}</p>
+                              <motion.p
+                                className={cn('px-b-them', t.kind !== 'ask' && 'is-chat')}
+                                initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={reduce ? { duration: 0 } : { ...spring, delay: 0.25 }}
+                              >
+                                {t.a}
+                                {t.kind === 'chat' ? <small>ไม่นับเป็นคำถาม</small> : null}
+                              </motion.p>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                    ) : (
+                      <AnimatePresence mode="wait">
+                        {say ? (
+                          <motion.p
+                            key={say}
+                            className="px-speech"
+                            initial={reduce ? false : { scale: 0.6, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={reduce ? undefined : { opacity: 0 }}
+                            transition={spring}
+                          >
+                            {say}
+                          </motion.p>
+                        ) : null}
+                      </AnimatePresence>
+                    )}
                   </div>
 
                   <AnimatePresence mode="wait" initial={false}>
@@ -1007,65 +1244,42 @@ export function PixelShift({
                         </div>
                       ) : page === 'interview' ? (
                         <div className="px-interview">
-                          <div className="px-card px-card--clip px-card--compact">
-                            <dl className="px-fields">
-                              <div>
-                                <dt>
-                                  <i className="px-ico px-ico--person" aria-hidden />
-                                  ชื่อ
-                                </dt>
-                                <dd>{current.name}</dd>
-                              </div>
-                            </dl>
-                            {fieldRows}
-                          </div>
-                          {exchanges.length > 0 || miss ? (
-                            <div className="px-chat" ref={chatRef} aria-live="polite">
-                              {exchanges.map((q) => (
-                                <div key={q.id} className="px-pair">
-                                  <p className="px-ask-me">{q.text}</p>
-                                  <p className="px-ask-them">{q.reply}</p>
-                                </div>
-                              ))}
-                              {miss ? (
-                                <div className="px-pair">
-                                  <p className="px-ask-me">{miss}</p>
-                                  <p className="px-ask-them">ขอโทษ{p || 'นะ'} ไม่แน่ใจว่าถามเรื่องอะไร ลองถามใหม่ได้ไหม</p>
-                                </div>
-                              ) : null}
-                            </div>
-                          ) : null}
+                          <div className="px-card px-card--compact px-infostrip">{fieldRows}</div>
                           <div className="px-card px-askpanel">
                             <p className="px-ask-title">
-                              สัมภาษณ์ลูกค้า <span>ถามได้อีก {left} ครั้ง</span>
+                              ถามลูกค้า <span>ถามได้อีก {left} ข้อ</span>
                             </p>
                             {left <= 0 ? (
                               <p className="px-note px-note--ok">ถามครบ {data.maxQuestions} ข้อแล้ว กดไปประทับตราได้เลย</p>
                             ) : (
-                              <>
-                                <div className="px-qgrid">
-                                  {current.questions
-                                    .filter((q) => !asked.includes(q.id))
-                                    .map((q) => (
-                                      <button key={q.id} type="button" className="px-qchip" onClick={() => ask(q.id)}>
-                                        {q.text}
-                                      </button>
-                                    ))}
-                                </div>
-                                <form
+                              <div className="px-qgrid">
+                                {current.questions
+                                  .filter((q) => !asked.includes(q.id))
+                                  .map((q) => (
+                                    <button key={q.id} type="button" className="px-qchip" onClick={() => ask(q.id)}>
+                                      {q.text}
+                                    </button>
+                                  ))}
+                              </div>
+                            )}
+                            <form
                                   className="px-typebox"
                                   onSubmit={(e) => {
                                     e.preventDefault()
                                     sendTyped()
                                   }}
                                 >
-                                  <input aria-label="พิมพ์คำถามเอง" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="พิมพ์คำถามเอง" />
+                                  <input
+                                    aria-label="พิมพ์ถามลูกค้าเอง"
+                                    value={typed}
+                                    maxLength={120}
+                                    onChange={(e) => setTyped(e.target.value)}
+                                    placeholder="พิมพ์ถามลูกค้าเอง"
+                                  />
                                   <button type="submit" disabled={!typed.trim()} aria-label="ส่งคำถาม">
                                     ›
                                   </button>
                                 </form>
-                              </>
-                            )}
                           </div>
                         </div>
                       ) : (
@@ -1115,10 +1329,11 @@ export function PixelShift({
                           </div>
                           {needsExt ? (
                             <div className="px-card px-offer">
-                              <p className="px-pill-title">{stamp === 'first-step' ? 'ให้จดก่อน' : 'เสนอเป็น'}</p>
+                              <p className="px-pill-title">{stamp === 'first-step' ? 'ทำขั้นแรกแล้วให้จดนามสกุลไหน' : 'เสนอเป็น'}</p>
                               <div className="px-radios" role="radiogroup" aria-label="นามสกุลที่เสนอ">
                                 {current.extensionOptions
-                                  .filter((x) => !wanted.endsWith(x))
+                                  // ทำขั้นแรกก่อน: นามสกุลเดิมก็เลือกได้ (เช่น ยื่นเอกสารให้ครบแล้วค่อยจดชื่อเดิม)
+                                  .filter((x) => stamp === 'first-step' || !wanted.endsWith(x))
                                   .map((ext) => (
                                     <button
                                       key={ext}
@@ -1177,30 +1392,63 @@ export function PixelShift({
             {/* ---------- หันขวา: โต๊ะโดม ---------- */}
             <section className="px-view px-view--dome" aria-label="โต๊ะโดม ขอคำใบ้" aria-hidden={look !== 'dome'} inert={look !== 'dome'}>
               <div className="px-domedesk">
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={hintLog.length}
-                    className="px-dome-bubble"
-                    aria-live="polite"
-                    initial={reduce ? false : { scale: 0.7, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={reduce ? undefined : { opacity: 0 }}
-                    transition={spring}
-                  >
-                    {hintLog.length === 0 ? `ติดตรงไหนถามได้นะ ใบ้ได้ ${hintsTotal} ครั้งต่อกะ โดมจะชวนคิด ไม่บอกคำตอบ` : hintLog[hintLog.length - 1]}
-                  </motion.p>
-                </AnimatePresence>
-                <PxImg srcs={PX_ASSET.dome(hintLog.length ? 'thinking' : 'neutral')} alt="โดม" className="px-dome-big" />
-                <span className="px-hint-sign">
-                  คำใบ้เหลือ
-                  <b>
-                    {hintsLeft}/{hintsTotal}
-                  </b>
-                </span>
+                <div className="px-dome-log" ref={domeRef} aria-live="polite">
+                  {domeLog.length === 0 ? (
+                    <p className="px-dome-bubble">
+                      ติดตรงไหนถามได้นะ คำใบ้ของลูกค้าคนนี้มี {hintsTotal} ครั้ง หรือพิมพ์ถามโดมได้ โดมจะชวนคิด ไม่บอกคำตอบ
+                    </p>
+                  ) : (
+                    domeLog.slice(-3).map((d) => (
+                      <motion.div
+                        key={d.key}
+                        className="px-dome-pair"
+                        initial={reduce ? false : { opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25 }}
+                      >
+                        {d.q ? <p className="px-b-me">{d.q}</p> : <p className="px-dome-kicker">คำใบ้</p>}
+                        <p className="px-dome-bubble">{d.a}</p>
+                      </motion.div>
+                    ))
+                  )}
+                  {domeBusy ? <p className="px-dome-bubble is-typing">โดมกำลังคิด…</p> : null}
+                </div>
+                <div className="px-dome-row">
+                  <PxImg srcs={PX_ASSET.dome(domeBusy || domeLog.length ? 'thinking' : 'neutral')} alt="โดม" className="px-dome-big" />
+                  <span className="px-hint-sign" aria-label={`คำใบ้ลูกค้าคนนี้ เหลือ ${hintsLeft} จาก ${hintsTotal}`}>
+                    คำใบ้ลูกค้าคนนี้
+                    <span>
+                      เหลือ{' '}
+                      <b>
+                        {hintsLeft}/{hintsTotal}
+                      </b>
+                    </span>
+                  </span>
+                </div>
               </div>
-              <PxBtn tone="cream" onClick={askDome} disabled={hintsLeft <= 0}>
-                {hintsLeft > 0 ? `ขอคำใบ้เรื่อง${STEP_LABEL[step]}` : 'ใช้คำใบ้ครบแล้ว'}
-              </PxBtn>
+              <div className="px-dome-ask">
+                <PxBtn tone="cream" onClick={askDome} disabled={hintsLeft <= 0}>
+                  {hintsLeft > 0 ? `ขอคำใบ้เรื่อง${STEP_LABEL[step]}` : 'คำใบ้ลูกค้าคนนี้หมดแล้ว'}
+                </PxBtn>
+                <form
+                  className="px-typebox"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    void askDomeFree()
+                  }}
+                >
+                  <input
+                    aria-label="พิมพ์ถามโดม"
+                    value={domeTyped}
+                    maxLength={200}
+                    onChange={(e) => setDomeTyped(e.target.value)}
+                    placeholder="พิมพ์ถามโดม เช่น .or.th ใครจดได้"
+                  />
+                  <button type="submit" disabled={!domeTyped.trim() || domeBusy} aria-label="ส่งคำถามถึงโดม">
+                    ›
+                  </button>
+                </form>
+              </div>
             </section>
           </div>
         </main>
@@ -1208,6 +1456,136 @@ export function PixelShift({
         <div className="px-dock">{dock}</div>
       </div>
       {exit.dialog}
+      <dialog
+        ref={timeUpRef}
+        className="px-dialog"
+        aria-label="หมดเวลาแล้ว"
+        onCancel={(e) => e.preventDefault()}
+      >
+        <div className="kit-modal px-timeup">
+          <PxImg srcs={PX_ASSET.dome('thinking')} className="px-timeup-dome" />
+          <h2>หมดเวลาแล้ว</h2>
+          <p>
+            {current.name} รอนานแล้ว จะเล่นต่ออีก {EXTRA_SECONDS} วินาที (หัก {EXTRA_COST} เหรียญ) หรือเริ่มกะใหม่กับลูกค้าชุดใหม่
+          </p>
+          {penalty > 0 ? <p className="px-muted">กะนี้ต่อเวลาไปแล้ว {penalty} ครั้ง</p> : null}
+          {error && timeUp ? (
+            <p role="alert" className="px-note px-note--warn">
+              {error}
+            </p>
+          ) : null}
+          <div className="px-stack">
+            <PxBtn tone="gold" onClick={keepPlaying} disabled={restarting}>
+              เล่นต่อ +{EXTRA_SECONDS} วิ (−{EXTRA_COST} เหรียญ)
+            </PxBtn>
+            <PxBtn tone="cream" onClick={() => void restartShift()} busy={restarting}>
+              เริ่มกะใหม่ (สุ่มลูกค้าใหม่)
+            </PxBtn>
+          </div>
+        </div>
+      </dialog>
+      {tut && !timeUp ? (
+        <Coach
+          key={tut}
+          target={tut === 'stamp' && page === 'stamp' ? '.px-stamps' : TUT[tut].target}
+          text={tut === 'stamp' && page === 'stamp' ? TUT_STAMP_DESK : TUT[tut].text}
+          step={TUT_ORDER.indexOf(tut) + 1}
+          total={TUT_ORDER.length}
+          onNext={TUT[tut].skippable ? skipTutStep : undefined}
+          onSkip={endTut}
+        />
+      ) : null}
+    </div>
+  )
+}
+
+/* ---------- โค้ชมาร์ก (บทแนะนำ) ---------- */
+
+const MOOD_LABEL: Record<Mood, string> = { neutral: 'ปกติ', happy: 'ยิ้ม', confused: 'สงสัย', upset: 'ไม่สบายใจ' }
+
+/** โดมตอบด้วยกฎเมื่อ AI/เน็ตไม่พร้อม: ชี้ไปที่คู่มือ ไม่บอกคำตอบของลูกค้า */
+function domeFallback(q: string, handbook?: CounterData['handbook']): string {
+  const t = q.toLowerCase()
+  for (const [i, f] of (handbook ?? []).entries()) {
+    for (const r of f.rows) {
+      const hit = r.suffix.split(/\s+/).find((sx) => sx && t.includes(sx.toLowerCase()))
+      if (hit) return `${hit} อยู่ชั้น${SHELF[i] ?? f.floor} ในคู่มือเขียนว่า ${r.who} ลองเทียบกับคำตอบของลูกค้านะ`
+    }
+  }
+  if (/เอกสาร|บัตร|หนังสือ/.test(t)) return 'ลองถามลูกค้าว่ามีเอกสารอะไรบ้าง แล้วเทียบกับชั้นของนามสกุลที่ขอในคู่มือนะ'
+  if (/ตรา|อนุมัติ|ปฏิเสธ|เสนอ/.test(t)) return 'ดูว่าคำตอบของลูกค้าตรงกับเงื่อนไขในคู่มือไหม ถ้าไม่ตรง เขายังจดนามสกุลอื่นได้หรือเปล่า หรือข้อมูลเป็นเท็จ'
+  return 'โดมตอบตรง ๆ ไม่ได้นะ ลองดูว่านามสกุลที่ขออยู่ชั้นไหน แล้วลูกค้ามีคุณสมบัติตรงชั้นนั้นไหม'
+}
+
+function Coach({
+  target,
+  text,
+  step,
+  total,
+  onNext,
+  onSkip,
+}: {
+  target: string
+  text: string
+  step: number
+  total: number
+  onNext?: () => void
+  onSkip: () => void
+}) {
+  const [rect, setRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
+  useEffect(() => {
+    const measure = () => {
+      const els = [...document.querySelectorAll<HTMLElement>(target)].filter((el) => !el.closest('[inert]'))
+      const el = els[0]
+      const r = el?.getBoundingClientRect()
+      if (!r || r.width === 0 || r.right < 0 || r.left > window.innerWidth) return setRect(null)
+      setRect((old) =>
+        old && Math.abs(old.top - r.top) < 1 && Math.abs(old.left - r.left) < 1 && Math.abs(old.width - r.width) < 1 && Math.abs(old.height - r.height) < 1
+          ? old
+          : { top: r.top, left: r.left, width: r.width, height: r.height },
+      )
+    }
+    measure()
+    const id = window.setInterval(measure, 250)
+    return () => window.clearInterval(id)
+  }, [target])
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 800
+  const below = rect ? rect.top + rect.height / 2 < vh * 0.45 : false
+  const pad = 6
+  return (
+    <div className="px-coach" role="dialog" aria-modal="false" aria-label={`บทแนะนำ ขั้น ${step} จาก ${total}`}>
+      {rect ? (
+        <span
+          className="px-coach-ring"
+          aria-hidden
+          style={{ top: rect.top - pad, left: rect.left - pad, width: rect.width + pad * 2, height: rect.height + pad * 2 }}
+        />
+      ) : null}
+      <div
+        className={cn('px-coach-card', below ? 'is-below' : 'is-above')}
+        style={
+          // เป้าอยู่ครึ่งบน = การ์ดอยู่ใต้เป้า · เป้าอยู่ครึ่งล่าง = การ์ดชิดขอบบน (ทับหัวจอ/HUD แทนลูกค้าและบทสนทนา)
+          rect && below ? { top: Math.min(vh - 170, rect.top + rect.height + 14) } : { top: 'max(8px, env(safe-area-inset-top))' }
+        }
+      >
+        <PxImg srcs={PX_ASSET.dome('happy')} className="px-coach-dome" />
+        <div>
+          <small>
+            บทแนะนำ {step}/{total}
+          </small>
+          <p>{text}</p>
+          <div className="px-coach-actions">
+            <button type="button" className="px-link" onClick={onSkip}>
+              ข้ามบทแนะนำ
+            </button>
+            {onNext ? (
+              <button type="button" className="px-coach-next" onClick={onNext}>
+                ต่อไป ›
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

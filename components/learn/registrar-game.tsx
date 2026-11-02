@@ -19,6 +19,7 @@ import {
   type Submission,
 } from './game-ui/registrar-screens'
 import { ClearScreen, ExplainScreen, RepairScreen, TimeScreen } from './game-ui/registrar-finale'
+import { useUrgentTick } from './game-ui/counter-shell'
 import './registrar-game.css'
 import {
   SAMPLE_CARD,
@@ -96,6 +97,8 @@ export function RegistrarGame({ data, onSubmit, onStep, card, onFinish }: Props)
     return () => window.clearInterval(t)
   }, [])
   const clock = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`
+  // 10 วินาทีสุดท้าย: ติ๊กเร่งจังหวะ + ชิปเวลาแดงสั่น (หยุดเมื่อผ่านด่าน/ส่งผล)
+  const urgent = useUrgentTick(sec, view !== 'clear' && !result && !submitting)
   useEffect(() => {
     alive.current = true
     return () => {
@@ -220,7 +223,7 @@ export function RegistrarGame({ data, onSubmit, onStep, card, onFinish }: Props)
               : 'ค้นชื่อจริง'
 
   const scene: SceneKind = view === 'intro' ? 'door' : view === 'explain' || view === 'repair' ? 'boss' : view === 'time' ? 'calendar' : 'office'
-  const hud = <BossHud stage={stageName} step={view === 'intro' ? 0 : stepNow} total={total} coins={coins} coinNode={<CountUp to={coins} />} timer={clock} />
+  const hud = <BossHud stage={stageName} step={view === 'intro' ? 0 : stepNow} total={total} coins={coins} coinNode={<CountUp to={coins} />} timer={clock} urgent={urgent} />
 
   // ─── R01 เปิดด่านบอส รับบัตรนามสกุล ───
   if (view === 'intro') {

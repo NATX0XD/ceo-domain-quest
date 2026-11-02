@@ -39,6 +39,7 @@ export type LearnBody =
   | { action: 'do'; payload: unknown }
   | { action: 'm2'; payload: unknown }
   | { action: 'step'; payload: unknown }
+  | { action: 'shift' }
 
 export type LearnPost<T> = { ok: true; data: T } | { ok: false; message: string }
 

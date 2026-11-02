@@ -352,6 +352,13 @@ export function LearnPathClient({
     return res.data
   }
 
+  /** ด่าน 3 เริ่มกะใหม่: เซิร์ฟเวอร์จับลูกค้าชุดใหม่แล้วส่งข้อมูลสาธารณะกลับมา */
+  async function newCounterShift(): Promise<CounterData['cases']> {
+    const res = await postLearn<{ cases: CounterData['cases'] }>(missionId, { action: 'shift' })
+    if (!res.ok) throw new Error(res.message)
+    return res.data.cases
+  }
+
   /** ตรวจทีละจังหวะของด่าน 4 (action 'step') ผลมาจากเซิร์ฟเวอร์ ไม่เก็บคะแนน */
   async function checkRegistrar(payload: RegistrarStepPayload): Promise<unknown> {
     const res = await postLearn<unknown>(missionId, { action: 'step', payload })
@@ -1353,6 +1360,8 @@ export function LearnPathClient({
                   data={counterData}
                   onSubmit={submitDo}
                   onCheck={checkCounter}
+                  onNewShift={newCounterShift}
+                  studentId={studentId}
                   level={undefined}
                   onExit={exit.request}
                   onFinish={() => go('done')}
