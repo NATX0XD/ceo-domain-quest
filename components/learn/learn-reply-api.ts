@@ -8,8 +8,8 @@ export const DOME_REPLY_FIXED: Record<'watch' | 'read', string> = {
   read: 'ได้รับคำตอบแล้วครับ ไปข้อถัดไปกัน',
 }
 
-/** งบฝั่งเซิร์ฟเวอร์ 4.5 วินาที + เผื่อเดินทาง */
-export const DOME_REPLY_CLIENT_TIMEOUT_MS = 5500
+/** งบฝั่งเซิร์ฟเวอร์ 7 วินาที + เผื่อเดินทาง */
+export const DOME_REPLY_CLIENT_TIMEOUT_MS = 8500
 
 export async function fetchDomeReply(
   missionId: string,

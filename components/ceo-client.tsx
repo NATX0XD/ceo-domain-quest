@@ -25,7 +25,6 @@ import {
   SendIcon,
   StopIcon,
   CreamCard,
-  WoodSign,
   cn,
 } from '@/components/ui'
 
@@ -615,9 +614,15 @@ export function CeoClient({
           className="ceo-world-shell ceo-submitted-world-shell ceo-submitted-shell"
           withBottomNav
           header={
-            <WoodSign title="ด่านบอส CEO">
-              <span className="ceo-sign-detail">ส่งใบเสนอชื่อเว็บแล้ว</span>
-            </WoodSign>
+            <GameHeader
+              className="ceo-done-head"
+              title="ด่านบอส CEO"
+              subtitle="ส่งใบเสนอชื่อเว็บแล้ว"
+              onBack={() => {
+                window.location.assign('/map')
+              }}
+              backLabel="กลับแผนที่"
+            />
           }
           footer={
             <AppFooter className="ceo-submitted-footer">
@@ -645,11 +650,6 @@ export function CeoClient({
           }
         >
           <main className="ceo-submitted">
-            <Link href="/map" className="ceo-map-link">
-              <img src="/ui/kit2/back-button.webp" alt="" aria-hidden width={34} height={34} draggable={false} />
-              <span>กลับแผนที่</span>
-            </Link>
-
             <CreamCard className="ceo-success-panel" aria-labelledby="ceo-success-title">
               <div className="ceo-success-hero">
                 <div className="ceo-success-art" aria-hidden="true">
@@ -659,7 +659,7 @@ export function CeoClient({
                 <div className="ceo-success-copy">
                   <p className="ceo-success-kicker">ใบเสนอชื่อเว็บของเรา</p>
                   <h1 id="ceo-success-title">
-                    ส่งงานสำเร็จ{nickname ? <span className="ceo-success-nickname"> · {nickname}</span> : null}
+                    ส่งงานสำเร็จ{nickname ? <span className="ceo-success-nickname">{nickname}</span> : null}
                   </h1>
                   <p className="ceo-success-shop">{shopName || 'ร้านของเรา'}</p>
                 </div>

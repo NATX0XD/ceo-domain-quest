@@ -55,16 +55,19 @@ describe('domeLearnReply', () => {
     expect(aiCallsUsed('stu-1')).toBe(0)
   })
 
-  it('AI ช้าเกินงบ = ข้อความเดิม (timeout)', async () => {
+  it('AI ช้าเกินงบ = คำติชมตามเกณฑ์ของข้อนั้น (timeout)', async () => {
     const slow = { learnCheck: () => new Promise<LearnCheckResult>(() => {}) }
     const r = await domeLearnReply(path, 'watch', 'm1-wq2', ANSWER, { checker: slow, budgetMs: 30 })
-    expect(r).toMatchObject({ reply: DOME_REPLY_FALLBACK.watch, source: 'fallback', fallbackReason: 'timeout' })
+    expect(r).toMatchObject({ source: 'fallback', fallbackReason: 'timeout' })
+    expect(r?.reply).not.toBe(DOME_REPLY_FALLBACK.watch)
+    expect(r?.reply).toMatch(/DNS/)
   })
 
-  it('AI เผยวลีเฉลย = ข้อความเดิม (filtered)', async () => {
+  it('AI เผยวลีเฉลย = คำติชมตามเกณฑ์ (filtered)', async () => {
     const { checker } = typhoonClient('DNS เป็นระบบช่วยค้นหาหมายเลข IP ที่สัมพันธ์กับชื่อโดเมนครับ')
     const r = await domeLearnReply(path, 'watch', 'm1-wq2', ANSWER, { checker })
-    expect(r).toMatchObject({ reply: DOME_REPLY_FALLBACK.watch, source: 'fallback', fallbackReason: 'filtered' })
+    expect(r).toMatchObject({ source: 'fallback', fallbackReason: 'filtered' })
+    expect(r?.reply).not.toBe(DOME_REPLY_FALLBACK.watch)
   })
 
   it('AI ชมว่าครบทั้งที่ยังขาด = ข้อความเดิม', async () => {

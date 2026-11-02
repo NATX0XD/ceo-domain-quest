@@ -152,7 +152,14 @@
   text-shadow: 0 1px 0 #fff8e7;
 }
 
-.ceo-success-nickname { font-weight: 800; }
+.ceo-success-nickname {
+  display: block;
+  font-size: .82em;
+  font-weight: 800;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.ceo-done-head { padding-top: 10px; padding-bottom: 6px; }
 
 .ceo-success-shop {
   max-width: 100%;

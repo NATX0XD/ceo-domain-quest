@@ -23,7 +23,7 @@ export const DOME_REPLY_FALLBACK: Record<'watch' | 'read', string> = {
 }
 
 /** งบเวลาที่ผู้เรียนรอโดมพิมพ์ — สั้นกว่างบ 5 วินาทีของชั้น AI เล็กน้อย ให้ผลกลับถึงจอทันงบ */
-export const DOME_REPLY_BUDGET_MS = 4500
+export const DOME_REPLY_BUDGET_MS = 7000
 /** โควตาการตอบกลับรายข้อต่อคนต่อ 10 นาที (กันงบ AI) */
 export const DOME_REPLY_MAX_PER_WINDOW = 20
 
@@ -47,8 +47,10 @@ export async function domeLearnReply(
   const question = path[mode].questions.find((q) => q.id === questionId)
   if (!question) return null
   const startedAt = Date.now()
+  // ระบบเดิมสำรอง: มี rubric = ใช้คำติชมตามเกณฑ์ของข้อนั้น (ผ่าน/ลองเพิ่ม) แทนข้อความกลาง ๆ
+  let scripted: string | null = null
   const fallback = (reason: DomeReplyReason, provider: DomeReply['provider'] = 'rules'): DomeReply => ({
-    reply: DOME_REPLY_FALLBACK[mode],
+    reply: scripted ?? DOME_REPLY_FALLBACK[mode],
     source: 'fallback',
     provider,
     fallbackReason: reason,
@@ -62,6 +64,7 @@ export async function domeLearnReply(
   try {
     const rubric = await loadRubric(path.missionId, questionId)
     if (!rubric) return fallback('error')
+    scripted = scoreOpenAnswer(rubric, questionId, text).feedback?.trim() || null
     const budget = options.budgetMs ?? DOME_REPLY_BUDGET_MS
     let timer: ReturnType<typeof setTimeout> | undefined
     const timeout = new Promise<'timeout'>((resolve) => {
