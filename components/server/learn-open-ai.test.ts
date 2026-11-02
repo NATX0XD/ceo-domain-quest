@@ -198,6 +198,30 @@ describe('โดมตอบกลับด้วยคำแนะนำจร�
     expect(r.perQuestion[0]!.feedback).not.toContain('จำง่าย')
   })
 
+  it('AI ให้คะแนนต่ำกว่าคำสำคัญ แต่คำแนะนำปลอดภัยและน้ำเสียงตรงกับผล = ยังใช้คำแนะนำของ AI (คะแนนคงตามคำสำคัญ)', async () => {
+    const zero = (feedback: string) =>
+      typhoonPayload({ results: [{ id: 'm1-wq1', concepts: [{ quote: '', covered: false }, { quote: '', covered: false }], feedback }] })
+    const { checker } = typhoonClient(zero('เก่งมากครับ อธิบายด้วยคำของตัวเองได้ชัดเลย'))
+    const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': KEYWORD_FULL, 'm1-wq2': '' }, { checker })
+    expect(r.perQuestion[0]).toMatchObject({ keywordScore: 100, aiScore: 0, score: 100, feedbackSource: 'ai' })
+    expect(r.perQuestion[0]!.feedback).toContain('เก่งมาก')
+  })
+
+  it('ข้อที่ผ่านตามคำสำคัญ แต่ AI บอกว่ายังไม่ได้พูดถึง = ขัดกับผล ใช้ข้อความเดิม', async () => {
+    const zero = typhoonPayload({
+      results: [{ id: 'm1-wq1', concepts: [{ quote: '', covered: false }, { quote: '', covered: false }], feedback: 'ยังไม่ได้พูดถึงเรื่องชื่อเว็บนะครับ' }],
+    })
+    const { checker } = typhoonClient(zero)
+    const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': KEYWORD_FULL, 'm1-wq2': '' }, { checker })
+    expect(r.perQuestion[0]).toMatchObject({ score: 100, feedbackSource: 'script' })
+  })
+
+  it('คำเดี่ยวสั้นของแนวคิดที่ขาดไม่นับเป็นเฉลยหลุด', async () => {
+    const { checker } = typhoonClient(partial('เปรียบเป็นป้ายเห็นภาพดีครับ แล้วคนพิมพ์อะไรแทนป้ายนี้ได้บ้างครับ'))
+    const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': PARAPHRASE, 'm1-wq2': '' }, { checker })
+    expect(r.perQuestion[0]!.feedbackSource).toBe('ai')
+  })
+
   it('คำแนะนำที่ลอกคำตอบตัวอย่างมาตรง ๆ = เฉลยหลุด', async () => {
     const { checker } = typhoonClient(partial('ใกล้แล้วครับ คำตอบคือ ช่วยให้คนจำได้ง่ายกว่าตัวเลข นะครับ'))
     const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': PARAPHRASE, 'm1-wq2': '' }, { checker })

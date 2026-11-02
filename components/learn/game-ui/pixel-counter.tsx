@@ -15,7 +15,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { cn } from '@/components/ui'
 import { GameHeader } from '@/components/learn/game-header'
 import { M3_ASSET, sfx, useM3Sound, useUrgentTick } from './counter-shell'
-import { matchIntent, smallTalkReply } from '../counter-intent'
+import { answersAskedSuffix, matchIntent, smallTalkReply } from '../counter-intent'
 import { CountUp, Stars, useGameMotion } from './index'
 import type {
   CounterCase,
@@ -258,6 +258,9 @@ const TUT: Record<Tut, { target: string; text: string; skippable?: boolean }> = 
   'dome-back': { target: '.px-dome-ask', text: 'โดมใบ้ได้ 2 ครั้งต่อลูกค้า พิมพ์ถามเพิ่มได้ แล้วกด หันกลับเคาน์เตอร์', skippable: true },
   stamp: { target: '[data-tut="go"]', text: 'พร้อมแล้วไปประทับตรา เลือกตรา เลือกเหตุผล แล้วกด ประทับตรา' },
 }
+/** เลขขั้นที่แสดง: หันไป-หันกลับ (คู่มือ/โดม) นับเป็นขั้นเดียวกัน ข้ามแล้วเลขยังเดินทีละ 1 */
+const TUT_STEP: Record<Tut, number> = { call: 1, card: 2, ask: 3, book: 4, 'book-back': 4, dome: 5, 'dome-back': 5, stamp: 6 }
+const TUT_STEPS = 6
 const TUT_STAMP_DESK = 'เลือกตรา 1 อัน (ถ้าต้องเสนอนามสกุลให้เลือกด้วย) เลือกเหตุผล แล้วกด ประทับตรา'
 
 export function coachKey(studentId?: string | null) {
@@ -573,7 +576,7 @@ export function PixelShift({
       const res = await fetch('/api/dome', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ message: q, missionId: 'm3' }),
+        body: JSON.stringify({ message: q, missionId: 'm3', desk: 'm3-handbook' }),
         signal: ctl.signal,
       })
       window.clearTimeout(t)
@@ -582,7 +585,7 @@ export function PixelShift({
     } catch {
       a = ''
     }
-    if (!a.trim()) a = domeFallback(q, data.handbook)
+    if (!a.trim() || !answersAskedSuffix(q, a, data.handbook)) a = domeFallback(q, data.handbook)
     setDomeLog((l) => [...l, { key, q, a, kind: 'free' }])
     setDomeBusy(false)
   }
@@ -1490,8 +1493,8 @@ export function PixelShift({
           key={tut}
           target={tut === 'stamp' && page === 'stamp' ? '.px-stamps' : TUT[tut].target}
           text={tut === 'stamp' && page === 'stamp' ? TUT_STAMP_DESK : TUT[tut].text}
-          step={TUT_ORDER.indexOf(tut) + 1}
-          total={TUT_ORDER.length}
+          step={TUT_STEP[tut]}
+          total={TUT_STEPS}
           onNext={TUT[tut].skippable ? skipTutStep : undefined}
           onSkip={endTut}
         />

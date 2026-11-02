@@ -228,6 +228,8 @@ export async function askDome(input: {
   missionId?: string
   role?: 'dome'
   history?: DomeTurn[]
+  /** ข้อเท็จจริงเฉพาะหน้าจอ (คู่มือ m3) — ตั้งแล้วไม่ส่งชื่อร้าน/ประวัติแชตให้โมเดล กันคำตอบเอนไปทางร้านตัวเอง */
+  context?: string
   /** ขออนุญาตเรียกโมเดล (ลิมิตต่อคน) เรียกเฉพาะเมื่อข้อความจะถึงโมเดลจริง; false = ใช้กฎแทน */
   allowAi?: boolean | (() => boolean)
   ai?: Pick<AiClient, 'domeChat'>
@@ -267,7 +269,11 @@ export async function askDome(input: {
   const client = input.ai ?? createAiClient()
   let result
   try {
-    result = await client.domeChat({ missionId, message: text, mode, shopName: input.shopName, history: input.history })
+    result = await client.domeChat(
+      input.context
+        ? { missionId, message: text, mode, shopName: null, history: [], context: input.context }
+        : { missionId, message: text, mode, shopName: input.shopName, history: input.history },
+    )
   } catch (error) {
     return scriptedFallback(text, scope, `domeChat throw ${error instanceof Error ? error.message : 'unknown'}`)
   }

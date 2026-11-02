@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { isAiEnabledForStudent, listRecentChatMessages, saveChatMessage } from '@/lib/db/repo'
 import { askDome, domeQuickReplies } from '@/components/server/dome-brain'
 import { loadSelfProfileDb, loadShopProfile } from '@/components/server/game-state'
+import { counterHandbookFacts } from '@/components/server/learn-counter'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { moderateStudentText } from '@/components/server/moderation'
 import {
@@ -42,6 +43,8 @@ const RequestSchema = z.object({
   message: z.string().max(500).default(''),
   quickReplyId: z.string().max(40).nullable().optional(),
   missionId: z.string().regex(/^m[1-5]$/).optional(),
+  /** ถามจากโต๊ะ m3: เซิร์ฟเวอร์แนบคู่มือเอง (ไม่รับข้อความ context จากหน้าจอ) */
+  desk: z.literal('m3-handbook').optional(),
 })
 
 export async function POST(request: Request) {
@@ -79,6 +82,7 @@ export async function POST(request: Request) {
     selfProfileDone: selfProfile.route !== null,
     missionId,
     role: 'dome',
+    context: parsed.data.desk === 'm3-handbook' ? counterHandbookFacts() : undefined,
     history: recent.map((m) => ({ role: m.role === 'student' ? 'student' : 'dome', text: m.text })),
     allowAi: () => aiOn && takeAiSlot(session.studentId),
   })

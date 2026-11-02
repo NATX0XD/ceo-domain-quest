@@ -155,3 +155,19 @@ describe('no answer leak', () => {
     expect(reply.source).toBe('fallback')
   })
 })
+
+describe('askDome · คำถามจากโต๊ะ m3 (แนบคู่มือ)', () => {
+  it('มี context = ส่งคู่มือให้โมเดล ไม่ส่งชื่อร้านและประวัติแชต (กันคำตอบเอนไปทางร้านตัวเอง)', async () => {
+    const ai = fakeAi(aiReply('.or.th สำหรับองค์กรไม่แสวงหากำไร เช่น มูลนิธิ สมาคม'))
+    await askDome({
+      message: '.or.th ใครจดได้บ้าง',
+      shopName: 'ร้านทดสอบ',
+      missionId: 'm3',
+      context: '.or.th = องค์กรไม่แสวงหากำไร',
+      history: [{ role: 'student', text: 'ร้านฉันจะจด .in.th' }],
+      ai,
+    })
+    const input = ai.domeChat.mock.calls[0]![0]
+    expect(input).toMatchObject({ shopName: null, history: [], context: '.or.th = องค์กรไม่แสวงหากำไร' })
+  })
+})

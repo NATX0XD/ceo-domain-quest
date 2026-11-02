@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { matchIntent, smallTalkReply } from './counter-intent'
+import { answersAskedSuffix, matchIntent, smallTalkReply } from './counter-intent'
 
 const ALL = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6']
 
@@ -44,5 +44,17 @@ describe('smallTalkReply ลูกค้าตอบนอกเรื่อง�
     expect(r.mood).toBe('confused')
     expect(r.reply).not.toMatch(/ค่ะค่ะ/)
     expect(r.reply).toMatch(/จดชื่อเว็บ/)
+  })
+})
+
+describe('answersAskedSuffix', () => {
+  const hb = [{ rows: [{ suffix: '.com .net .org' }, { suffix: '.in.th' }, { suffix: '.or.th' }, { suffix: '.net.th' }] }]
+  it('ถาม .or.th แต่ตอบเรื่อง .in.th = ตอบผิดเรื่อง', () => {
+    expect(answersAskedSuffix('.or.th ใครจดได้บ้าง', '.in.th ใช้บัตรประชาชนจดได้เลย', hb)).toBe(false)
+    expect(answersAskedSuffix('.or.th ใครจดได้บ้าง', '.or.th สำหรับมูลนิธิหรือสมาคม', hb)).toBe(true)
+  })
+  it('.net.th ไม่ถูกนับเป็น .net และคำถามทั่วไปผ่านเสมอ', () => {
+    expect(answersAskedSuffix('.net.th คืออะไร', 'ผู้ได้รับใบอนุญาต .net.th', hb)).toBe(true)
+    expect(answersAskedSuffix('ต้องใช้เอกสารอะไร', 'ดูคู่มือนะ', hb)).toBe(true)
   })
 })

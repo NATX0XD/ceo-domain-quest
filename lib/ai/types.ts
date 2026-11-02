@@ -233,6 +233,8 @@ export interface DomeChatInput {
   shopName?: string | null
   /** บทสนทนาล่าสุดสั้น ๆ เรียงเก่า → ใหม่ */
   history?: Array<{ role: 'student' | 'dome'; text: string }>
+  /** ข้อเท็จจริงเฉพาะหน้าจอ (เช่นคู่มือ m3) ให้ตอบจากนี้ตรงคำถาม ไม่อิงร้านของนักเรียน */
+  context?: string
 }
 
 export interface DomeChatResult extends AiMeta {

@@ -198,6 +198,13 @@ export function validShift(caseIds: readonly unknown[] | null | undefined): stri
   return ids.length > 0 ? ids : [...LEGACY_SHIFT]
 }
 
+/** ข้อเท็จจริงจากคู่มือเคาน์เตอร์ (ชั้นนามสกุล) ส่งให้โดมตอบคำถามที่โต๊ะ m3 */
+export function counterHandbookFacts(): string {
+  return DATA.handbook
+    .map((f) => `${f.floor} (${f.category}): ` + f.rows.map((r) => `${r.suffix} = ${r.who}`).join(' | '))
+    .join('\n')
+}
+
 /** ข้อมูลสาธารณะของเกม ส่งเฉพาะลูกค้าในกะนี้ (เรียงตามลำดับในกะ) */
 export function publicCounterData(caseIds?: readonly string[]): CounterData {
   if (!caseIds) return DATA

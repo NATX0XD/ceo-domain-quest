@@ -234,12 +234,16 @@ export function scoreOpenAnswer(rubric: Rubric, id: string, text: string): Quest
 
 /** คำสำคัญสั้นกว่านี้ (เช่น ip) ไม่นับเป็นเฉลยหลุด กันตัดคำแนะนำทิ้งเกินเหตุ */
 const GIVEAWAY_MIN_CHARS = 3
+/** คำสำคัญของแนวคิดที่ขาดยาวเท่านี้ขึ้นไป (หลังตัดช่องว่าง) = วลีเฉลย ไม่ใช่คำเดี่ยวทั่วไป */
+const GIVEAWAY_PHRASE_CHARS = 8
 /** ท่อนต่อเนื่องของคำตอบตัวอย่างที่ยาวเท่านี้ขึ้นไป = ลอกเฉลยมาให้ */
 const GIVEAWAY_MODEL_WINDOW = 14
 
 /**
- * คำแนะนำของ AI เผยเฉลยหรือไม่ — มีคำสำคัญของแนวคิดที่ยังขาด ทั้งที่นักเรียนกับโจทย์ไม่ได้พูดคำนั้น
- * หรือยกท่อนยาวของคำตอบตัวอย่างมาตรง ๆ = เฉลยหลุด ต้องใช้ข้อความจากไฟล์เฉลยแทน
+ * คำแนะนำของ AI เผยเฉลยหรือไม่ — กันเฉพาะ "วลีเฉลย" ที่ยกมาตรง ๆ:
+ *  - ท่อนยาวของคำตอบตัวอย่าง (modelAnswer) ที่นักเรียนกับโจทย์ไม่ได้พูด
+ *  - วลียาวของแนวคิดที่ยังขาด ที่นักเรียนกับโจทย์ไม่ได้พูด
+ * คำเดี่ยวสั้น ๆ ทั่วไปไม่นับ (คำแนะนำแบบชี้ทางจะได้ไม่ถูกตัดทิ้งเกินเหตุ)
  */
 export function feedbackGivesAway(
   rubric: Rubric,
@@ -248,13 +252,13 @@ export function feedbackGivesAway(
 ): boolean {
   const fb = normalizeAnswer(feedback)
   const said = normalizeAnswer(`${context.answer} ${context.question}`)
-  const keywordLeak = context.missing.some((i) =>
+  const phraseLeak = context.missing.some((i) =>
     (rubric.concepts[i]?.any ?? []).some((word) => {
       const w = normalizeAnswer(word)
-      return w.length >= GIVEAWAY_MIN_CHARS && fb.includes(w) && !said.includes(w)
+      return w.length >= GIVEAWAY_PHRASE_CHARS && fb.includes(w) && !said.includes(w)
     }),
   )
-  if (keywordLeak) return true
+  if (phraseLeak) return true
   const model = normalizeAnswer(rubric.modelAnswer)
   for (let i = 0; i + GIVEAWAY_MODEL_WINDOW <= model.length; i++) {
     const chunk = model.slice(i, i + GIVEAWAY_MODEL_WINDOW)
@@ -263,12 +267,23 @@ export function feedbackGivesAway(
   return false
 }
 
+/** น้ำเสียงว่ายังขาด/ยังไม่ถูก — ใช้ไม่ได้กับข้อที่ผ่านแล้ว */
+const NEGATIVE_TONE = /ยังไม่|ยังขาด|ขาดเรื่อง|ขาดอีก|ไม่ถูก|ผิด|ลองเพิ่ม|ลองเติม|เติมอีก|ลองอธิบายเพิ่ม|ไม่ครบ/
+/** น้ำเสียงว่าครบ/ผ่านแล้ว — ใช้ไม่ได้กับข้อที่ยังไม่ผ่าน */
+const FULL_PRAISE = /ครบแล้ว|ครบถ้วน|ถูกต้องทั้งหมด|ผ่านแล้ว|สมบูรณ์แล้ว|ถูกต้องแล้ว/
+
+/** คำแนะนำของ AI ไม่ขัดกับผลที่ใช้จริง (ผ่าน = ไม่บอกว่ายังขาด · ไม่ผ่าน = ไม่ชมว่าครบ) */
+export function feedbackFitsResult(feedback: string, passed: boolean): boolean {
+  return passed ? !NEGATIVE_TONE.test(feedback) : !FULL_PRAISE.test(feedback)
+}
+
 /**
  * รวมผลคำสำคัญกับผล AI ของข้อเดียว — **คะแนน = max(คำสำคัญ, AI)**
  * AI จึงช่วยได้แค่คำตอบที่ใช้คำของตัวเอง ไม่มีวันทำให้เข้มกว่าเดิม
  *
- * คำตอบกลับของโดม (feedback) ใช้ของ AI เมื่อ: AI ไม่ได้ให้คะแนนต่ำกว่าคำสำคัญ (คำแนะนำจะได้ตรงกับคะแนนจริง)
- * ผ่านตัวกรองชั้น AI แล้ว และไม่เผยเฉลย — ไม่เข้าเงื่อนไขข้อใด = ข้อความจากไฟล์เฉลยแบบเดิมทุกตัวอักษร
+ * คำตอบกลับของโดม (feedback) แยกจากการรวมคะแนน: ใช้ของ AI เสมอเมื่อ ผ่านตัวกรองชั้น AI แล้ว
+ * ไม่เผยวลีเฉลย และน้ำเสียงไม่ขัดกับผลที่ใช้จริง (แม้คะแนน AI จะถูกทิ้งเพราะต่ำกว่าคำสำคัญ)
+ * ไม่เข้าเงื่อนไข = ข้อความจากไฟล์เฉลยแบบเดิมทุกตัวอักษร
  */
 export function mergeAiCheck(
   rubric: Rubric,
@@ -279,8 +294,6 @@ export function mergeAiCheck(
 ): QuestionScore {
   const aiScore = clampScore(rubric.concepts.reduce((s, c, i) => s + (check.covered[i] ? c.points : 0), 0))
   const base: QuestionScore = { ...keyword, source: provider, aiScore }
-  if (aiScore < keyword.keywordScore) return base
-
   const aiWins = aiScore > keyword.keywordScore
   const merged: QuestionScore = aiWins
     ? {
@@ -290,15 +303,16 @@ export function mergeAiCheck(
         feedback: aiScore > PASS_SCORE ? rubric.feedbackPass : rubric.feedbackRetry,
       }
     : base
-  if (!check.feedback) return merged
-  // แนวคิดที่ยังขาดตามผลที่ใช้จริง — คำสำคัญของข้อเหล่านี้ห้ามโผล่ในคำแนะนำ
+  if (!check.feedback?.trim()) return merged
+  // แนวคิดที่ยังขาดจริง (AI ไม่ว่าครอบคลุม และนักเรียนไม่ได้พูดคำของแนวคิดนั้น) — วลีของข้อเหล่านี้ห้ามโผล่ในคำแนะนำ
   const answerNorm = normalizeAnswer(context.answer)
   const missingIdx = rubric.concepts
     .map((c, i) => ({ c, i }))
     .filter(({ c, i }) => !check.covered[i] && !c.any.some((w) => normalizeAnswer(w).length > 0 && answerNorm.includes(normalizeAnswer(w))))
     .map(({ i }) => i)
   if (feedbackGivesAway(rubric, check.feedback, { ...context, missing: missingIdx })) return merged
-  return { ...merged, feedback: check.feedback, feedbackSource: 'ai' }
+  if (!feedbackFitsResult(check.feedback, merged.score > PASS_SCORE)) return merged
+  return { ...merged, feedback: check.feedback.trim(), feedbackSource: 'ai' }
 }
 
 /** คำสำคัญของแนวคิดที่นักเรียนยังไม่ได้พูด บอกโมเดลว่าห้ามใช้ในคำแนะนำ (ตัวกรอง feedbackGivesAway ยังตรวจซ้ำเสมอ) */

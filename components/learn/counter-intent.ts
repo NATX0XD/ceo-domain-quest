@@ -109,3 +109,16 @@ export function smallTalkReply(text: string, particle = ''): CustomerChat {
 function tidy(s: string): string {
   return s.replace(/(ครับ|ค่ะ|จ้า)\1+/g, '$1').replace(/\s{2,}/g, ' ').trim()
 }
+
+/** คำถามเอ่ยนามสกุลในคู่มือ → คำตอบต้องเอ่ยนามสกุลนั้นด้วย ไม่งั้นถือว่าตอบผิดเรื่อง */
+export function answersAskedSuffix(q: string, a: string, handbook?: ReadonlyArray<{ rows: ReadonlyArray<{ suffix: string }> }>): boolean {
+  const t = q.toLowerCase()
+  const asked = (handbook ?? [])
+    .flatMap((f) => f.rows.flatMap((r) => r.suffix.split(/\s+/)))
+    .filter((sx) => sx && t.includes(sx.toLowerCase()))
+  // .in.th ซ้อนอยู่ใน .th ฯลฯ: เอาเฉพาะตัวที่ยาวที่สุดที่ไม่เป็นส่วนของตัวอื่น
+  const top = asked.filter((sx) => !asked.some((o) => o !== sx && o.toLowerCase().includes(sx.toLowerCase())))
+  if (top.length === 0) return true
+  const al = a.toLowerCase()
+  return top.some((sx) => al.includes(sx.toLowerCase()))
+}
