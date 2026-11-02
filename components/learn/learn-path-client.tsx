@@ -134,6 +134,7 @@ export function LearnPathClient({
   const [preferStills, setPreferStills] = useState(false)
   const [videoFailed, setVideoFailed] = useState(false)
   const [videoProgress, setVideoProgress] = useState(0)
+  const [videoPlaying, setVideoPlaying] = useState(false)
   const [videoDuration, setVideoDuration] = useState(0)
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -1037,7 +1038,9 @@ export function LearnPathClient({
                   preload="metadata"
                   title={path.watch.title}
                   aria-label={path.watch.title}
-                  onEnded={() => setVideoEnded(true)}
+                  onEnded={() => { setVideoEnded(true); setVideoPlaying(false) }}
+                  onPlay={() => setVideoPlaying(true)}
+                  onPause={() => setVideoPlaying(false)}
                   onError={() => setVideoFailed(true)}
                   onLoadedMetadata={(event) => {
                     setVideoDuration(event.currentTarget.duration)
@@ -1055,7 +1058,24 @@ export function LearnPathClient({
               <div className="m1-video-bar">
                 <button
                   type="button"
-                  className="m1-round-sm"
+                  className="m1-vbtn m1-vbtn--main"
+                  aria-label={videoPlaying ? 'หยุดคลิปชั่วคราว' : 'เล่นคลิป'}
+                  onClick={() => {
+                    const v = videoRef.current
+                    if (!v) return
+                    if (v.paused) void v.play()
+                    else v.pause()
+                  }}
+                >
+                  {videoPlaying ? (
+                    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="currentColor" /><rect x="14" y="5" width="4" height="14" rx="1.5" fill="currentColor" /></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" fill="currentColor" /></svg>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="m1-vbtn"
                   aria-label="เล่นซ้ำตั้งแต่ต้น"
                   onClick={() => {
                     const v = videoRef.current
@@ -1065,8 +1085,7 @@ export function LearnPathClient({
                     void v.play()
                   }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนชุดภารกิจ */}
-                  <img src="/learn/m1/kit/icon_replay.webp" alt="" />
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.6 4.7" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" /><path d="M4.2 4.5v5h5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
                 <div
                   className="m1-video-track"

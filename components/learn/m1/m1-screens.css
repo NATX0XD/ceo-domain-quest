@@ -228,3 +228,8 @@
   color: #4b2810;
 }
 .m1-shell .m1-chathead p { color: #4b2810; }
+/* ปุ่มคลิป: ปุ่มกลมไม้แบบ kit2 ไอคอนชัด เล่น/หยุด + เล่นซ้ำ */
+.m1-vbtn { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border: 3px solid #6b2d12; border-radius: 9999px; background: linear-gradient(180deg, #fff6df, #f3d9a6); color: #6b2d12; box-shadow: 0 3px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .8); cursor: pointer; transition: transform 120ms ease; }
+.m1-vbtn--main { width: 48px; height: 48px; background: linear-gradient(180deg, #ffd25a, #ff9a1f); color: #4a1f0a; }
+.m1-vbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #6b2d12; }
+.m1-video-bar { gap: 8px; }
