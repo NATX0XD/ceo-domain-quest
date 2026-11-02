@@ -2,17 +2,19 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { PageHeading, Section, StudentShell } from '@/components/student-shell'
-import { AppFooter } from '@/components/app-shell'
+import { Section } from '@/components/student-shell'
+import { AppFooter, AppShell } from '@/components/app-shell'
+import { SessionClock } from '@/components/session-clock'
+import { GameHeader } from '@/components/learn/game-header'
 import {
   Button,
   CheckIcon,
   ChoiceCard,
-  ProgressBar,
   TextField,
   Toast,
   ToastViewport,
 } from '@/components/ui'
+import './setup-form.css'
 
 /**
  * ฟอร์มตั้งค่าร้าน — ส่งขึ้นเซิร์ฟเวอร์ที่ POST /api/profile
@@ -58,7 +60,9 @@ export function SetupForm({
     () => businessTypes.find((business) => business.id === businessTypeId),
     [businessTypes, businessTypeId],
   )
-  const previewImage = businessTypeId ? `/setup/${businessTypeId}.webp` : '/setup/empty-lot.webp'
+  // ภาพร้านชุดเดียวกับหน้า /home — นักเรียนใหม่เริ่มที่ร้านขั้น 1 แล้วร้านโตตามภารกิจที่ผ่าน
+  const previewImage = '/ui/home/shop-stage-1.webp'
+  const SETUP_STEPS = 5
 
   async function handleSubmit() {
     if (!ready || isRegisteredCompany === null || audience === null || saving) return
@@ -98,11 +102,15 @@ export function SetupForm({
   }
 
   return (
-    <StudentShell
-      backHref="/home"
-      className="setup-world-shell"
-      // ฟอร์ม 3 ข้อยาวเกินจอ ปุ่มบันทึกจึงอยู่แถบท้ายที่ไม่เลื่อน
-      // ข้อความบนปุ่มบอกด้วยว่าเหลืออีกกี่ข้อ นักเรียนไม่ต้องเลื่อนขึ้นไปดูแถบความคืบหน้า
+    <AppShell
+      className="student-world student-display setup-world-shell"
+      header={
+        <>
+          <GameHeader className="setup-game-header" title="ตั้งค่าร้านของเรา" onBack={() => router.push('/home')} backLabel="กลับหน้าหลัก" />
+          <SessionClock />
+        </>
+      }
+      // ฟอร์ม 5 ข้อยาวเกินจอ ปุ่มบันทึกจึงอยู่แถบท้ายที่ไม่เลื่อน
       footer={
         <AppFooter>
           <Button
@@ -120,43 +128,60 @@ export function SetupForm({
         </AppFooter>
       }
     >
+      <div className="setup-page">
       {error ? (
         <ToastViewport>
           <Toast tone="error" message={error} duration={null} onDismiss={() => setError(null)} />
         </ToastViewport>
       ) : null}
 
-      <PageHeading
-        eyebrow="ก่อนเริ่มภารกิจ"
-        title="ตั้งค่าร้านของเรา"
-        description="เลือกร้าน ตั้งชื่อ แล้วเริ่มภารกิจ"
-      />
+      <section className="setup-panel setup-progress" aria-label={`ตั้งค่าร้านไปแล้ว ${filledCount} จาก ${SETUP_STEPS} ข้อ`}>
+        <div className="setup-progress-top">
+          <p>ตั้งค่าร้านไปแล้ว</p>
+          <strong>
+            {filledCount}
+            <span> / {SETUP_STEPS} ข้อ</span>
+          </strong>
+        </div>
+        {/* มาตรแบบเกมชุดเดียวกับหน้า /rewards: รางหนาขอบน้ำตาล ไส้ทอง หมุดทุกข้อ */}
+        <div
+          className="setup-gauge"
+          role="progressbar"
+          aria-label="ข้อที่ตั้งค่าแล้ว"
+          aria-valuemin={0}
+          aria-valuemax={SETUP_STEPS}
+          aria-valuenow={filledCount}
+        >
+          <span
+            className={`setup-gauge-fill${filledCount > 0 ? '' : ' is-empty'}`}
+            style={{ width: `${(filledCount / SETUP_STEPS) * 100}%` }}
+          />
+          {Array.from({ length: SETUP_STEPS - 1 }, (_, i) => i + 1).map((at) => (
+            <span
+              key={at}
+              className={`setup-gauge-tick${filledCount >= at ? ' is-lit' : ''}`}
+              style={{ left: `${(at / SETUP_STEPS) * 100}%` }}
+              aria-hidden="true"
+            />
+          ))}
+        </div>
+      </section>
 
-      <ProgressBar
-        value={filledCount}
-        max={5}
-        tone="brand"
-        label={`ตั้งค่าร้านไปแล้ว ${filledCount} จาก 5 ข้อ`}
-        showValue={false}
-      />
-
-      <div className="setup-preview-sticky" aria-live="polite">
-        <div className="setup-preview-art">
-          <img src={previewImage} alt="" draggable={false} />
-          <div className="setup-preview-sign">
-            <span>{selectedBusiness?.label ?? 'ที่ดินว่าง รอร้านของเรา'}</span>
-            <strong>{trimmedName || 'ป้ายชื่อร้านของเรา'}</strong>
-            {domainName.trim() ? <small>{domainName.trim()}</small> : null}
-          </div>
+      <div className="setup-panel setup-preview" aria-live="polite">
+        <div className="setup-preview-scene">
+          <img src={previewImage} alt="" draggable={false} className="setup-preview-art" />
+        </div>
+        <div className="setup-preview-sign">
+          <span>{selectedBusiness?.label.split('/')[0]?.trim() ?? 'ร้านของเรา'}</span>
+          <strong>{trimmedName || 'ป้ายชื่อร้านของเรา'}</strong>
+          {domainName.trim() ? <small>{domainName.trim()}</small> : null}
         </div>
         <p className="setup-preview-caption">
-          {businessTypeId
-            ? `${selectedBusiness?.label ?? 'ร้านของเรา'}${trimmedName ? ` · ${trimmedName}` : ' · รอชื่อร้าน'}`
-            : 'เลือกประเภทร้าน แล้วตั้งชื่อให้ร้านของเรา'}
+          {trimmedName ? 'ร้านนี้จะไปรอที่หน้าหลัก แล้วโตขึ้นทุกภารกิจ' : 'พิมพ์ชื่อร้าน แล้วดูป้ายเปลี่ยนตาม'}
         </p>
       </div>
 
-      <Section title="1. ร้านของเราชื่ออะไร" description="พิมพ์ภาษาไทยหรืออังกฤษก็ได้">
+      <Section className="setup-panel" title="1. ร้านของเราชื่ออะไร" description="พิมพ์ภาษาไทยหรืออังกฤษก็ได้">
         <TextField
           label="ชื่อร้าน"
           value={shopName}
@@ -170,11 +195,13 @@ export function SetupForm({
           inputClassName="text-body-lg font-bold"
         />
 
-        <h3 className="mt-6 text-title-sm font-bold text-balance text-ink">2. ร้านของเราขายอะไร</h3>
+      </Section>
+
+      <Section className="setup-panel" title="2. ร้านของเราขายอะไร">
         <div
           role="radiogroup"
           aria-label="ประเภทของร้าน"
-          className="mt-3 grid grid-cols-2 gap-2"
+          className="grid grid-cols-2 gap-2"
         >
           {businessTypes.map((b) => (
             <ChoiceCard
@@ -190,7 +217,7 @@ export function SetupForm({
         </div>
       </Section>
 
-      <Section title="3. ชื่อเว็บของร้าน" description="ใช้ชื่อสั้น ๆ ภาษาอังกฤษหรือตัวเลขก็ได้">
+      <Section className="setup-panel" title="3. ชื่อเว็บของร้าน" description="ใช้ชื่อสั้น ๆ ภาษาอังกฤษหรือตัวเลขก็ได้">
         <TextField
           label="ชื่อโดเมนชั่วคราว"
           value={domainName}
@@ -205,7 +232,7 @@ export function SetupForm({
         />
       </Section>
 
-      <Section title="4. จดทะเบียนนิติบุคคลแล้วหรือยัง">
+      <Section className="setup-panel" title="4. จดทะเบียนนิติบุคคลแล้วหรือยัง">
         <div
           role="radiogroup"
           aria-label="สถานะการจดทะเบียนนิติบุคคล"
@@ -226,7 +253,7 @@ export function SetupForm({
         </div>
       </Section>
 
-      <Section title="5. ลูกค้าของเราอยู่ที่ไหน">
+      <Section className="setup-panel" title="5. ลูกค้าของเราอยู่ที่ไหน">
         <div role="radiogroup" aria-label="กลุ่มลูกค้าของร้าน" className="flex flex-col gap-2">
           <ChoiceCard
             label="ในไทย"
@@ -242,7 +269,7 @@ export function SetupForm({
           />
         </div>
       </Section>
-
-    </StudentShell>
+      </div>
+    </AppShell>
   )
 }
