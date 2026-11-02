@@ -43,3 +43,10 @@ All transparent webp, same pixel style and purple accent, no baked text. Code pa
 - icon-globe.webp, icon-shop.webp (shop front, purple awning), icon-server.webp (DNS server) for the DNS diagram [/icons/3d/*]
 - badge-ceo.webp         200x220 purple ribbon medal with gold crown (clear screen "ฉายา CEO ตัวจริง") [CSS medal]
 - coin.webp              64x64 gold pixel coin (HUD + pay button) [CSS coin]
+
+## m3 extra customers (pool for random shifts)
+- c7 น้องเจ   male teen ~16, hoodie + headphones, gamer/YouTuber kid, holds phone — speaks ครับ
+- c8 พี่ฝน    female 20s, café owner, barista apron, holds coffee cup — speaks ค่ะ
+- c9 หมอกฤต  male 30s, doctor white coat + stethoscope (private clinic) — speaks ครับ
+- c10 คุณแพร female 40s, foundation/NGO worker, polo shirt + volunteer badge, holds folder — speaks ค่ะ
+Each: c{n}-neutral, c{n}-happy, c{n}-confused, c{n}-upset, c{n}-walk (.webp, 768x1024 transparent), same pixel style/scale/baseline as c1..c6.
