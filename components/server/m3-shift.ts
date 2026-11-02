@@ -53,12 +53,12 @@ export async function startNewShift(studentId: string, previous?: readonly strin
   return shift
 }
 
-/** กะปัจจุบัน ยังไม่มี = จับใหม่ · DB ล่ม = ชุดสำรอง 3 คน (เล่นต่อได้เสมอ) */
+/** กะปัจจุบัน ยังไม่มี/เป็นกะเก่า 3 คน = จับใหม่ · DB ล่ม = ชุดสำรอง 2 คน (เล่นต่อได้เสมอ) */
 export async function currentShift(studentId: string): Promise<M3Shift> {
   try {
     const current = await readShift(studentId)
-    // Migrate shifts created before the 3-customer rule; never render an old 4-customer run.
-    if (current && current.caseIds.length === 3) return current
+    // Migrate shifts created before the 2-customer rule; never render an old 3-customer run.
+    if (current && current.caseIds.length === 2) return current
     return await startNewShift(studentId, current?.caseIds)
   } catch (err) {
     console.error('[m3-shift]', err)

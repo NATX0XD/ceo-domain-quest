@@ -14,36 +14,26 @@ import type { CounterData } from '../counter-types'
 import { Building, Cta, DomeSay, FLOORS, M3Stage, M3_ASSET, Panel, sfx, useDragDrop } from './counter-shell'
 import { PxImg } from './pixel-counter'
 
-type Screen = 'start' | 'tutorial' | 'choose' | 'video' | 'chat' | 'sort'
+type Screen = 'start' | 'choose' | 'video' | 'chat' | 'sort'
 type PrepMode = 'video' | 'chat' | 'sort'
-
-const SEEN_KEY = 'm3-tutorial-seen'
 
 export function CounterOnboarding({
   data,
+  replay = false,
   onReady,
+  onPracticeAgain,
   onExit,
 }: {
   data: CounterData
+  replay?: boolean
   onReady: () => void
+  onPracticeAgain?: () => void
   onExit?: () => void
 }) {
   const [screen, setScreen] = useState<Screen>('start')
-  const [seen, setSeen] = useState(false)
-
-  useEffect(() => {
-    setSeen(window.localStorage.getItem(SEEN_KEY) === '1')
-  }, [])
-
-  function finishTutorial() {
-    window.localStorage.setItem(SEEN_KEY, '1')
-    setSeen(true)
-    setScreen('choose')
-  }
 
   const toChoose = () => setScreen('choose')
 
-  if (screen === 'tutorial') return <Tutorial onDone={finishTutorial} onExit={onExit} />
   if (screen === 'choose') return <PrepChoose onPick={(m) => setScreen(m)} onBack={() => setScreen('start')} />
   if (screen === 'video') return <PrepVideo onBack={toChoose} onDone={onReady} />
   if (screen === 'chat') return <PrepChat onBack={toChoose} onDone={onReady} />
@@ -52,10 +42,10 @@ export function CounterOnboarding({
     <MissionBrief
       cases={data.cases.length}
       maxQuestions={data.maxQuestions}
-      seen={seen}
+      replay={replay}
       onExit={onExit}
-      onStart={() => setScreen(seen ? 'choose' : 'tutorial')}
-      onTutorial={() => setScreen('tutorial')}
+      onStart={() => setScreen('choose')}
+      onPracticeAgain={onPracticeAgain}
     />
   )
 }
@@ -65,16 +55,16 @@ export function CounterOnboarding({
 function MissionBrief({
   cases,
   maxQuestions,
-  seen,
+  replay,
   onStart,
-  onTutorial,
+  onPracticeAgain,
   onExit,
 }: {
   cases: number
   maxQuestions: number
-  seen: boolean
+  replay: boolean
   onStart: () => void
-  onTutorial: () => void
+  onPracticeAgain?: () => void
   onExit?: () => void
 }) {
   const steps = [
@@ -89,12 +79,12 @@ function MissionBrief({
       label="เริ่มภารกิจที่ 3"
       dock={
         <Cta onClick={onStart}>
-          {seen ? 'เริ่มภารกิจ' : 'เริ่มกะแรก'} <span aria-hidden>→</span>
+          {replay ? 'เริ่มรอบจริง' : 'เริ่มเตรียมตัว'} <span aria-hidden>→</span>
         </Cta>
       }
     >
       <Panel className="m3s-brief" kicker="กติกา · เจ้าหน้าที่รับจดโดเมน" title="เลือกนามสกุลให้ถูกประเภท">
-        <p className="m3s-lead">ลูกค้า {cases} คนมาขอจดชื่อเว็บ ถามให้รู้ว่าเขาเป็นใคร แล้วตัดสินว่าจดนามสกุลนั้นได้ไหม</p>
+        <p className="m3s-lead">ฝึกกับลูกค้าตัวอย่าง 1 คนก่อน แล้วรับลูกค้าของจริง {cases} คน ถามให้รู้ว่าเขาเป็นใคร แล้วตัดสินว่าจดนามสกุลนั้นได้ไหม</p>
         <Building className="m3s-building--brief" showTags />
         <ol className="m3s-steps" aria-label="ขั้นตอนต่อลูกค้า 1 คน">
           {steps.map((s, i) => (
@@ -123,9 +113,9 @@ function MissionBrief({
           </span>
         </div>
         <DomeSay>พร้อมรับลูกค้าคนแรกหรือยังครับ จำไว้ว่า ถามว่าเขาเป็นใคร ไม่ใช่ถามว่าชอบอันไหน</DomeSay>
-        {seen ? (
-          <button type="button" className="m3s-link" onClick={onTutorial}>
-            ดูบทฝึกป้าส้มอีกครั้ง
+        {replay && onPracticeAgain ? (
+          <button type="button" className="m3s-link" onClick={onPracticeAgain}>
+            ฝึกอีกครั้ง
           </button>
         ) : null}
       </Panel>
@@ -133,9 +123,9 @@ function MissionBrief({
   )
 }
 
-/* ---------- S02–S04 Tutorial ป้าส้ม (ไฮไลต์ทีละจุด) ---------- */
+/* ---------- Legacy tutorial UI (unused; live tutorial is PixelShift) ---------- */
 
-function Tutorial({ onDone, onExit }: { onDone: () => void; onExit?: () => void }) {
+export function Tutorial({ onDone, onExit }: { onDone: () => void; onExit?: () => void }) {
   const { reduce, spring } = useGameMotion()
   const [step, setStep] = useState(0)
   const [asked, setAsked] = useState(false)

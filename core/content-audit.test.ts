@@ -818,9 +818,9 @@ describe('เนื้อหาเส้นทางเรียน (learn-*) �
     expect(question.review).toEqual({ from: 3, to: 3 })
   })
 
-  it('เกมเคาน์เตอร์ด่าน 3 มีคลังลูกค้าอย่างน้อย 18 คน (สุ่ม 3 คนต่อกะ) และเฉลยรหัสตรงกัน', () => {
+  it('เกมเคาน์เตอร์ด่าน 3 มีคลังลูกค้าอย่างน้อย 18 คน (สุ่ม 2 คนต่อกะ) และเฉลยรหัสตรงกัน', () => {
     expect(learnCounterJson.cases.length).toBeGreaterThanOrEqual(18)
-    expect(learnCounterJson.shiftSize).toBe(3)
+    expect(learnCounterJson.shiftSize).toBe(2)
     expect(learnCounterAnswersJson.cases.map((c) => c.caseId)).toEqual(
       learnCounterJson.cases.map((c) => c.id),
     )

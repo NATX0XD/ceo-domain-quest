@@ -275,6 +275,7 @@ export function PixelShift({
   data,
   cases,
   practice = false,
+  practiceLabel,
   hbSeconds,
   hintsTotal,
   onCheck,
@@ -289,9 +290,11 @@ export function PixelShift({
   data: CounterData
   cases: ViewCase[]
   practice?: boolean
+  /** ป้ายสถานะ practice ที่ต้องเห็นในหัวจอ */
+  practiceLabel?: string
   /** ที่เก็บความคืบหน้าของกะนี้ (ผู้เรียกถือไว้) — PixelShift ถูก remount กลางกะแล้วกลับมาที่ลูกค้าคนเดิม */
   progress?: ProgressStore
-  /** แสดงบทแนะนำบนลูกค้าคนแรก (ครั้งแรกของนักเรียน ไม่ว่ากะจริงหรือโหมดซ้อม) */
+  /** แสดงบทแนะนำทีละขั้นบนลูกค้าฝึก */
   tutorial?: boolean
   onTutorialDone?: () => void
   /** หมดเวลาแล้วเลือก "เริ่มกะใหม่" — ผู้เรียกจับลูกค้าชุดใหม่แล้วเปิดกะใหม่ */
@@ -694,9 +697,9 @@ export function PixelShift({
       setFeedback({ kind: 'retry', wrongTags: r.wrongTags, stampWrong: !r.stampCorrect })
       return
     }
-    const earned = r.stampCorrect ? (attempt === 1 ? 2 : 1) : 0
+    const earned = practice ? 0 : r.stampCorrect ? (attempt === 1 ? 2 : 1) : 0
     sfx(r.correct ? 'win' : 'bad')
-    setPoints((p) => p + earned)
+    if (!practice) setPoints((p) => p + earned)
     commit(decision)
     setFeedback(r.correct ? { kind: 'right', points: earned } : { kind: 'explain', text: r.explanation, points: earned })
   }
@@ -959,7 +962,9 @@ export function PixelShift({
               ? 'หันซ้าย · ชั้นคู่มือ'
               : look === 'dome'
                 ? 'หันขวา · โต๊ะโดม'
-                : `${practice ? 'โหมดซ้อม · ' : ''}ลูกค้า ${caseIndex + 1}/${total} · ${feedback ? 'ผลลัพธ์' : STEP_LABEL[step]}`
+                : practice
+                  ? practiceLabel ?? `โหมดซ้อม · ลูกค้า ${caseIndex + 1}/${total}`
+                  : `ลูกค้า ${caseIndex + 1}/${total} · ${feedback ? 'ผลลัพธ์' : STEP_LABEL[step]}`
           }
           onBack={exit.open}
           soundOn={soundOn}
@@ -1148,9 +1153,9 @@ export function PixelShift({
                             </ul>
                             {reasonOk === false ? <p className="px-note px-note--warn">เหตุผลที่บอกลูกค้ายังไม่ตรงกับคู่มือ ลองเทียบอีกทีกับลูกค้าคนต่อไป</p> : null}
                             <div className="px-gift">
-                              <i className="px-ico px-ico--gift" aria-hidden />
-                              <b>+{feedback.points} คะแนน</b>
-                              <small>{feedback.points === 2 ? 'ตัดสินถูกตั้งแต่ครั้งแรก' : 'แก้ได้ถูกในรอบที่ 2'}</small>
+                              <i className={cn('px-ico', practice ? 'px-ico--check' : 'px-ico--gift')} aria-hidden />
+                              <b>{practice ? 'ฝึกผ่าน · ยังไม่นับคะแนน' : `+${feedback.points} คะแนน`}</b>
+                              <small>{practice ? 'ลองทำตามขั้นตอนนี้กับลูกค้าของจริง 2 คน' : feedback.points === 2 ? 'ตัดสินถูกตั้งแต่ครั้งแรก' : 'แก้ได้ถูกในรอบที่ 2'}</small>
                             </div>
                           </div>
                         ) : (
@@ -1692,7 +1697,7 @@ export function PixelReport({
   }, [result.passed])
 
   const metrics = [
-    { k: 'ลูกค้าพอใจ', v: `${happy}/${data.cases.length}`, ico: 'people' },
+    { k: 'ลูกค้าของจริงที่ตัดสินถูก', v: `${happy}/${data.cases.length}`, ico: 'people' },
     { k: 'ถามตรงจุด', v: `${keyPct}%`, ico: 'target' },
     { k: 'ใช้คู่มือ', v: `${stats.handbook} ครั้ง`, ico: 'book' },
     { k: 'ถามโดม', v: `${stats.dome} ครั้ง`, ico: 'dome' },
@@ -1709,7 +1714,13 @@ export function PixelReport({
         </div>
       </div>
       <div className="px-stage">
-        <GameHeader title="ภารกิจที่ 3" subtitle={result.passed ? 'รายงานจบกะ · ผ่าน' : 'รายงานจบกะ · เกือบแล้ว'} onBack={exit.open} soundOn={soundOn} onSound={toggleSound} />
+        <GameHeader
+          title="ภารกิจที่ 3"
+          subtitle={result.passed ? `ผลลูกค้าของจริง ${data.cases.length} คน · ผ่าน` : `ผลลูกค้าของจริง ${data.cases.length} คน · เกือบแล้ว`}
+          onBack={exit.open}
+          soundOn={soundOn}
+          onSound={toggleSound}
+        />
         <PxHud clock={clock} queue={{ at: data.cases.length, total: data.cases.length }} coins={detail?.stampPoints ?? 0} />
         <main className="px-scroll">
           <motion.div
@@ -1718,7 +1729,7 @@ export function PixelReport({
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 16 }}
           >
-            <h2 className="px-card-title">{result.passed ? 'รายงานจบกะ' : 'รายงานจบกะ · เกือบแล้ว'}</h2>
+            <h2 className="px-card-title">{result.passed ? `ผลรอบจริง · ${data.cases.length} คน` : `ผลรอบจริง · ${data.cases.length} คน · เกือบแล้ว`}</h2>
             <div className="px-report-stars">
               <Stars count={stars} size={44} />
               <span className="px-score">
@@ -1775,7 +1786,7 @@ export function PixelReport({
           </motion.div>
 
           <div className="px-card px-cases">
-            <p className="px-pill-title">ดูรายลูกค้า</p>
+            <p className="px-pill-title">ดูรายลูกค้าของจริง {data.cases.length} คน</p>
             <ul>
               {data.cases.map((c) => {
                 const r = byId.get(c.id)
@@ -1806,7 +1817,7 @@ export function PixelReport({
             <p className="px-dome-bubble">
               {result.passed
                 ? 'เก่งมากเจ้าหน้าที่ ด่านต่อไปเราจะไปจดชื่อเว็บจริงกัน'
-                : `เกือบแล้ว มาฝึก${weak.length ? `ชั้น${groupLabel(weak[0]!)}` : 'จัดชั้น'}อีกนิด แล้วเข้ากะใหม่นะ`}
+                : `เกือบแล้ว ทบทวน${weak.length ? `ชั้น${groupLabel(weak[0]!)}` : 'การจัดชั้น'}อีกนิด แล้วเข้ารอบจริงใหม่นะ`}
             </p>
           </div>
         </main>
@@ -1816,14 +1827,14 @@ export function PixelReport({
               <PxBtn onClick={onFinish}>ไปด่านต่อไป ›</PxBtn>
               {weak.length > 0 ? (
                 <PxBtn tone="cream" onClick={onRemedial}>
-                  ฝึกชั้นที่พลาด 30 วินาที
+                  ทบทวนชั้นที่พลาด 30 วินาที
                 </PxBtn>
               ) : null}
             </div>
           ) : (
             <div className="px-stack">
               <PxBtn tone="gold" onClick={onRemedial}>
-                เริ่มฝึก 30 วินาที ›
+                ทบทวน 30 วินาที ›
               </PxBtn>
               <PxBtn tone="cream" onClick={onRetry}>
                 เข้ากะใหม่เลย

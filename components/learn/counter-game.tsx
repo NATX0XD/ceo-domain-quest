@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ConveyorDrill, type DrillItem } from './game-ui/conveyor-drill'
 import { CounterFinalSelf, CounterOnboarding } from './game-ui/counter-prep'
 import { Cta, DomeSay, M3Stage, Panel, sfx } from './game-ui/counter-shell'
-import { PixelReport, PixelShift, coachKey } from './game-ui/pixel-counter'
+import { PixelReport, PixelShift } from './game-ui/pixel-counter'
 import type { ProgressStore, ShiftProgress } from './game-ui/shift-progress'
 import { isFreshM3Shift, M3_CUSTOMER_POOL_SIZE, M3_SHIFT_SIZE, readM3Seen, rememberM3Customers } from './m3-customer-rotation'
 import {
@@ -62,10 +62,11 @@ function buildDrill(data: CounterData, focus: CounterCategory[]): DrillItem[] {
   return shuffle([...mine.slice(0, 6), ...other.slice(0, 2)])
 }
 
-type Stage = 'onboarding' | 'play' | 'final' | 'report' | 'drill' | 'practice' | 'ready'
+type Stage = 'onboarding' | 'play' | 'final' | 'report' | 'drill' | 'practice' | 'transition' | 'ready'
 
 export function CounterGame({
   data,
+  practiceData,
   onSubmit,
   onCheck,
   onNewShift,
@@ -78,6 +79,8 @@ export function CounterGame({
   replay,
 }: {
   data: CounterData
+  /** ลูกค้าตัวอย่าง c6 ใช้เฉพาะ tutorial ไม่ส่งเข้า scorer/rotation */
+  practiceData?: CounterData | null
   onSubmit: (payload: unknown) => Promise<SubmitResult>
   /** ตรวจทีละลูกค้า (action: 'step') ถ้าไม่ส่งมา เกมจะไม่มีรอบลองแก้ */
   onCheck?: (decision: CounterDecision) => Promise<CounterStepResult>
@@ -102,7 +105,8 @@ export function CounterGame({
   const [run, setRun] = useState(0)
   const [result, setResult] = useState<SubmitResult | null>(null)
   const [drillItems, setDrillItems] = useState<DrillItem[]>([])
-  const [practiceCases, setPracticeCases] = useState<ViewCase[]>([])
+  const [remedialCases, setRemedialCases] = useState<ViewCase[]>([])
+  const [practiceKind, setPracticeKind] = useState<'tutorial' | 'remedial'>('tutorial')
   const [stats, setStats] = useState({ handbook: 0, dome: 0 })
   const [selfCard, setSelfCard] = useState<{ extension: string; reason: string } | null>(null)
   const [rounds, setRounds] = useState(0)
@@ -119,6 +123,7 @@ export function CounterGame({
   const [replayReady, setReplayReady] = useState(!replay)
   const cases = useMemo(() => shiftCases.map((c) => toView(c)), [shiftCases])
   const shiftData = useMemo(() => ({ ...data, cases: shiftCases }), [data, shiftCases])
+  const tutorialCases = useMemo(() => (practiceData?.cases.slice(0, 1) ?? []).map((c) => toView(c)), [practiceData])
 
   function rememberShift(ids: readonly string[]) {
     try {
@@ -174,26 +179,6 @@ export function CounterGame({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replay])
 
-  // บทแนะนำครั้งแรก: อ่านครั้งเดียวตอนเปิด (กัน StrictMode เรียก effect ซ้ำ)
-  const [coach, setCoach] = useState(false)
-  const coachRead = useRef(false)
-  useEffect(() => {
-    if (coachRead.current) return
-    coachRead.current = true
-    try {
-      setCoach(window.localStorage.getItem(coachKey(studentId)) !== '1')
-    } catch {
-      setCoach(false)
-    }
-  }, [studentId])
-  const coachDone = () => {
-    setCoach(false)
-    try {
-      window.localStorage.setItem(coachKey(studentId), '1')
-    } catch {
-      /* ไม่มีที่เก็บก็แค่แสดงซ้ำ */
-    }
-  }
   const lv = level ? COUNTER_LEVELS[level] : { handbookSeconds: data.handbookSeconds, hints: data.hintsPerShift }
   const detail = result && isDetail(result.detail) ? result.detail : null
 
@@ -210,7 +195,8 @@ export function CounterGame({
       const r = byId.get(c.id)
       return r && !(r.stampCorrect && r.tagsCorrect === r.tagsTotal)
     })
-    setPracticeCases(missed.slice(0, 2))
+    setRemedialCases(missed.slice(0, 2))
+    setPracticeKind('remedial')
     progressMap.current.delete('practice')
     const weak = pickWeak(detail?.groups)
     setDrillItems(buildDrill(data, weak.length > 0 ? weak : data.categories.map((c) => c.id)))
@@ -251,7 +237,40 @@ export function CounterGame({
         </M3Stage>
       )
     }
-    return <CounterOnboarding data={shiftData} onReady={() => { rememberShift(shiftCases.map((c) => c.id)); setStage('play') }} onExit={onExit} />
+    return (
+      <CounterOnboarding
+        data={shiftData}
+        replay={replay}
+        onReady={() => {
+          rememberShift(shiftCases.map((c) => c.id))
+          setStage(replay ? 'play' : 'practice')
+        }}
+        onPracticeAgain={() => {
+          setPracticeKind('tutorial')
+          setStage('practice')
+        }}
+        onExit={onExit}
+      />
+    )
+  }
+
+  if (stage === 'transition') {
+    return (
+      <M3Stage
+        pill="ต่อไป: รอบจริง"
+        onBack={onExit}
+        bg="counter"
+        dock={<Cta onClick={newShift}>เริ่มรอบจริง →</Cta>}
+      >
+        <Panel kicker="บทฝึกจบแล้ว" title="ฝึกเสร็จแล้ว! ต่อไปของจริง 2 คน นับคะแนน">
+          <p className="m3s-lead">ลูกค้าฝึกไม่นับคะแนน รอบถัดไปคือการรับลูกค้าของจริง 2 คน</p>
+        </Panel>
+        <DomeSay>พร้อมแล้วครับ รอบจริงถามให้ครบ แล้วตัดสินตามคู่มือได้เลย</DomeSay>
+        <button type="button" className="m3s-link" onClick={() => { setPracticeKind('tutorial'); setStage('practice') }}>
+          ฝึกอีกครั้ง
+        </button>
+      </M3Stage>
+    )
   }
 
   if (stage === 'final') {
@@ -292,7 +311,7 @@ export function CounterGame({
         items={drillItems}
         bins={data.categories.map((c) => ({ id: c.id, label: c.label }))}
         onExit={onExit}
-        onDone={() => setStage(practiceCases.length > 0 ? 'practice' : 'ready')}
+        onDone={() => setStage(remedialCases.length > 0 ? 'practice' : 'ready')}
       />
     )
   }
@@ -309,20 +328,21 @@ export function CounterGame({
   }
 
   if (stage === 'practice') {
+    const isTutorial = practiceKind === 'tutorial'
     return (
       <PixelShift
-        key="practice"
-        data={shiftData}
-        cases={practiceCases}
+        key={isTutorial ? 'tutorial' : 'practice'}
+        data={isTutorial ? practiceData ?? shiftData : shiftData}
+        cases={isTutorial ? tutorialCases : remedialCases}
         practice
+        practiceLabel={isTutorial ? 'ลูกค้าฝึก · ยังไม่นับคะแนน' : undefined}
         hbSeconds={lv.handbookSeconds}
         hintsTotal={lv.hints}
         onCheck={onCheck}
         onExit={onExit}
-        onComplete={async () => setStage('ready')}
-        progress={progressFor('practice')}
-        tutorial={coach}
-        onTutorialDone={coachDone}
+        onComplete={async () => setStage(isTutorial ? 'transition' : 'ready')}
+        progress={progressFor(isTutorial ? 'tutorial' : 'practice')}
+        tutorial={isTutorial}
       />
     )
   }
@@ -338,8 +358,6 @@ export function CounterGame({
       onStat={bump}
       onExit={onExit}
       onComplete={finishShift}
-      tutorial={coach && run === 0}
-      onTutorialDone={coachDone}
       onRestart={reshuffle}
       progress={progressFor(`run-${run}`)}
     />

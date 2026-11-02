@@ -16,7 +16,7 @@ import {
 } from '@/components/server/learn-path'
 import { ai } from '@/components/server/ai'
 import { LEGACY_SHIFT, checkCounterStep, publicCounterData, scoreCounter } from '@/components/server/learn-counter'
-import { readShift, startNewShift } from '@/components/server/m3-shift'
+import { currentShift, readShift, startNewShift } from '@/components/server/m3-shift'
 import { checkRegistrarStep, scoreRegistrar } from '@/components/server/learn-registrar'
 import { handleM2Step } from '@/components/server/m2-flow'
 import { hasShopProfile } from '@/components/server/shop-gate'
@@ -169,7 +169,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     let result: { score: number; passed: boolean; detail: unknown }
     if (path.do.kind === 'counter') {
       // ตรวจกับลูกค้าในกะที่เซิร์ฟเวอร์จับให้ ไม่เชื่อรายชื่อเคสจากเบราว์เซอร์
-      const shift = await readShift(studentId).catch(() => null)
+      const shift = await currentShift(studentId).catch(() => null)
       result = scoreCounter(body.payload, shift?.caseIds ?? LEGACY_SHIFT)
     } else if (path.do.kind === 'registrar') {
       result = scoreRegistrar(body.payload)

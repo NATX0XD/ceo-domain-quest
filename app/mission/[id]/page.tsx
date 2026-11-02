@@ -120,6 +120,7 @@ export default async function MissionPage({
           passScore={PASS_SCORE}
           gameData={kind === 'game' ? buildGameData(studentMission, session.studentId) : null}
           counterData={kind === 'counter' ? publicCounterData((await currentShift(session.studentId)).caseIds) : null}
+          counterPracticeData={kind === 'counter' ? publicCounterData(['c6']) : null}
           registrarData={kind === 'registrar' ? publicRegistrarData() : null}
           registrarCard={kind === 'registrar' ? await registrarCardFor(session.studentId) : null}
           recommendedMode={recommendedMode}

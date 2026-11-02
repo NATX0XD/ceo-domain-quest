@@ -1,4 +1,4 @@
-export const M3_SHIFT_SIZE = 3
+export const M3_SHIFT_SIZE = 2
 export const M3_CUSTOMER_POOL_SIZE = 18
 
 export function m3SeenKey(studentId?: string | null): string {

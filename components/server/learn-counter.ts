@@ -29,7 +29,7 @@ const counterDataSchema = z.object({
   title: z.string(),
   intro: z.string(),
   maxQuestions: z.number().int().positive(),
-  shiftSize: z.number().int().positive().default(3),
+  shiftSize: z.number().int().positive().default(2),
   hintsPerShift: z.number().int().nonnegative(),
   handbookSeconds: z.number().int().positive(),
   categories: z.array(z.object({ id: category, label: z.string(), short: z.string() })),
@@ -119,8 +119,8 @@ function judge(ans: Answer, d: Decision | undefined) {
 const DATA: CounterData = counterDataSchema.parse(publicJson)
 const ANSWERS = answersSchema.parse(answersJson)
 
-/** ชุดสำรอง 3 คน ใช้เมื่ออ่านกะของนักเรียนไม่ได้ */
-export const LEGACY_SHIFT = ['c1', 'c2', 'c3'] as const
+/** ชุดสำรอง 2 คน ใช้เมื่ออ่านกะของนักเรียนไม่ได้ */
+export const LEGACY_SHIFT = ['c1', 'c2'] as const
 
 /* ---------- สุ่มลูกค้าต่อกะ (กำหนดด้วย seed ซ้ำได้เสมอ) ---------- */
 
@@ -226,7 +226,7 @@ export function counterPoolIds(): string[] {
 
 /**
  * ให้คะแนนทั้งกะ — นับเฉพาะลูกค้าใน `caseIds` (กะที่เซิร์ฟเวอร์จับให้นักเรียนคนนี้)
- * ไม่ส่ง = ใช้ชุดสำรอง 3 คน
+ * ไม่ส่ง = ใช้ชุดสำรอง 2 คน
  */
 export function scoreCounter(payload: unknown, caseIds: readonly string[] = LEGACY_SHIFT): { score: number; passed: boolean; detail: unknown } {
   const parsed = payloadSchema.safeParse(payload)

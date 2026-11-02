@@ -88,6 +88,7 @@ export interface LearnPathClientProps {
   passScore: number
   gameData?: GameData | null
   counterData?: CounterData | null
+  counterPracticeData?: CounterData | null
   registrarData?: RegistrarData | null
   registrarCard?: RegistrarCard | null
   recommendedMode?: LearnModeId | null
@@ -104,6 +105,7 @@ export function LearnPathClient({
   passScore,
   gameData,
   counterData,
+  counterPracticeData,
   registrarData,
   registrarCard,
   recommendedMode = null,
@@ -1396,6 +1398,7 @@ export function LearnPathClient({
               ) : path.do.kind === 'counter' && counterData ? (
                 <CounterGame
                   data={counterData}
+                  practiceData={counterPracticeData}
                   onSubmit={submitDo}
                   onCheck={checkCounter}
                   onNewShift={newCounterShift}

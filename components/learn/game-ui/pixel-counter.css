@@ -82,6 +82,8 @@
 .px-ico--doc { background-image: url("/icons/3d/memo.webp"); }
 .px-ico--bank { background-image: url("/icons/3d/school.webp"); }
 .px-ico--gift { background-image: url("/icons/3d/party-popper.webp"); }
+.px-ico--check { display: inline-grid; place-items: center; border: 2px solid #2f9e5a; border-radius: 99px; background: #d9f5df; color: #2f9e5a; font-size: 13px; font-style: normal; font-weight: 900; }
+.px-ico--check::after { content: "✓"; }
 .px-ico--bulb { background-image: url("/icons/3d/light-bulb.webp"); }
 .px-ico--target { background-image: url("/icons/3d/bullseye.webp"); }
 .px-ico--dome { background-image: url("/dome/mascot/dome-greet.webp"); }
