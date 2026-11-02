@@ -32,7 +32,15 @@ export { Toast, ToastViewport, type ToastProps, type ToastViewportProps } from '
 export { Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonGroupProps } from './skeleton'
 export { EmptyState, type EmptyStateProps } from './empty-state'
 export { Sheet, type SheetProps } from './sheet'
-export { CreamCard, GameButton, ThemedPage, WoodSign, type GameButtonProps } from './game-primitives'
+export {
+  CreamCard,
+  DomeBoardFrame,
+  GameButton,
+  ThemedPage,
+  WoodSign,
+  type GameButtonProps,
+  type GameButtonVariant,
+} from './game-primitives'
 export { SceneDecor, type SceneDecorProps } from './scene-decor'
 export {
   ShopScene,

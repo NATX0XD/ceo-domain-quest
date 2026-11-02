@@ -23,3 +23,19 @@
    - ตัวเลือก: เดา cookie/credential / ใช้ลิงก์และ cookie จริงโดยไม่พิมพ์ค่า / บันทึกเป็น blocked พร้อมทำ local verification
    - เลือก: จะใช้เฉพาะค่าในไฟล์ preview ที่อ่านเข้า process แบบไม่ print; หาก cookie/สิทธิ์หมดอายุให้บันทึก blocked พร้อม evidence แทนการเดาหรือสร้าง secret ใหม่
    - หลักฐาน: `~/Desktop/ceo-domain-quest-preview-link.txt`, `docs/qa/ai-verification.md`
+
+5. **ข้อความบนแผ่นปุ่มของทีมมี baked label แต่ปุ่มในเกมต้องเปลี่ยนข้อความได้**
+   - เลือก: ใช้ขอบซ้าย/ขวาจาก art จริงแบบ 9-slice แล้ววางข้อความสดเป็น HTML ตรงกลาง เพื่อคง accessibility และรองรับ label ใหม่
+   - หลักฐาน: `public/ui/kit/buttons/*-left.webp`, `public/ui/kit/buttons/*-right.webp`, `app/globals.css`
+
+6. **วิดีโอ 1015.mp4 มีความยาวเท่ากับ stop-point เดิมอยู่แล้ว**
+   - เลือก: transcode เป็น H.264 Main/yuv420p + faststart ที่ 960×540 โดยไม่เปลี่ยนความยาว 31.35 วินาที จึงคง review ranges เดิมของ m1
+   - หลักฐาน: `content/learn-paths.json`, `public/videos/m1-watch.mp4`, `public/ui/m1/watch-poster.webp`
+
+7. **m2 storyboard เป็น reference ของลำดับ interaction ไม่ใช่ชุด answer ใหม่**
+   - เลือก: คง server contract/AI grading และ content m2 เดิม, ใช้โครง mode-driven เดิมเป็นฐาน; ไม่ฝัง storyboard เป็นภาพกดแทน HTML input
+   - หลักฐาน: `docs/ui-media/m2-modes/`, `components/learn/learn-path-client.tsx`, `app/api/mission/[id]/learn/route.ts`
+
+8. **Landing hero มีโลโก้แนวนอนคนละ composition กับ welcome sign 101**
+   - เลือก: เปลี่ยน `/` เป็น welcome logo 101 ตาม owner pick แต่คงโลโก้แนวนอนเดิมของ `/landing` เพื่อไม่บีบ layout desktop ที่จัด art เป็น split hero อยู่แล้ว
+   - หลักฐาน: `app/page.tsx`, `components/landing/hero.tsx`

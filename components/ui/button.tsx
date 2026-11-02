@@ -40,11 +40,11 @@ export type ButtonProps =
 
 const VARIANT_CLASS: Record<ButtonVariant, string> = {
   primary:
-    'game-button game-button--primary text-ink-onbrand shadow-soft-2 hover:bg-brand-700 active:bg-brand-700 active:translate-y-px active:shadow-soft-1',
+    'game-button game-button--orange',
   secondary:
-    'game-button game-button--secondary bg-brand-100 text-brand-700 hover:bg-brand-200 active:bg-brand-200 active:text-brand-800 active:translate-y-px',
+    'game-button game-button--cream',
   success:
-    'bg-quest-600 text-ink-onbrand shadow-soft-2 hover:bg-quest-700 active:bg-quest-700 active:translate-y-px active:shadow-soft-1',
+    'game-button game-button--green',
   ghost:
     'bg-transparent text-brand-700 hover:bg-brand-50 active:bg-brand-100 active:translate-y-px',
 }

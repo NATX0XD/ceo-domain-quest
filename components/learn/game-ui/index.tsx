@@ -160,6 +160,7 @@ export function GameButton({
 }) {
   const { reduce } = useGameMotion()
   const off = disabled || loading
+  const skin = variant === 'ghost' ? 'purple' : variant === 'paper' || variant === 'dark' ? 'cream' : 'orange'
   return (
     <motion.button
       type={type}
@@ -172,14 +173,10 @@ export function GameButton({
         onClick?.()
       }}
       className={cn(
-        'inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 px-4 text-body font-extrabold',
+        'game-button inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 text-body font-extrabold',
         'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        variant === 'primary' && 'border-[#7a3a00] bg-[#ff8a3d] text-[#2e1500] shadow-[0_4px_0_#7a3a00]',
-        variant === 'gold' && 'border-[#b8860b] bg-[#ffcf4a] text-[#4a3000] shadow-[0_4px_0_#b8860b]',
-        variant === 'paper' && 'border-[#7a5a3a] bg-[#fff6dc] text-[#3a2a18] shadow-[0_4px_0_#5c4228]',
-        variant === 'dark' && 'border-[#7a5a3a] bg-[#f1e2c3] text-[#3a2a18] shadow-[0_4px_0_#5c4228]',
-        variant === 'ghost' && 'border-transparent bg-white/10 text-white backdrop-blur-sm',
+        `game-button--${skin}`,
         className,
       )}
     >

@@ -1,13 +1,34 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react'
 import { cn } from './cn'
 
+export type GameButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'orange'
+  | 'green'
+  | 'blue'
+  | 'purple'
+  | 'cream'
+  | 'red'
+  | 'grey'
+  | 'home'
+
 export type GameButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary'
+  variant?: GameButtonVariant
 }
 
 /** ปุ่มหลักของโลกเกม: มีขอบแสง เงาลึก และสถานะ disabled ที่ยังอ่านว่าเป็นปุ่มเกม */
 export function GameButton({ variant = 'primary', className, ...props }: GameButtonProps) {
-  return <button className={cn('game-button', `game-button--${variant}`, className)} {...props} />
+  const skin = variant === 'primary' ? 'orange' : variant === 'secondary' ? 'cream' : variant
+  return <button className={cn('game-button', `game-button--${skin}`, className)} {...props} />
+}
+
+export function DomeBoardFrame({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={cn('dome-board-frame', className)} {...props}>
+      <div className="dome-board-frame__content">{children}</div>
+    </div>
+  )
 }
 
 export function WoodSign({ title, children, className, ...props }: HTMLAttributes<HTMLDivElement> & { title: ReactNode }) {
