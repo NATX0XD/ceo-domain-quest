@@ -47,11 +47,24 @@
 }
 
 .home-header {
+  position: relative;
   padding: 8px 14px calc(6px + var(--home-hero-fade, 26px)) !important;
+  padding-right: 80px !important;
   border: 0 !important;
   background: transparent !important;
   backdrop-filter: none !important;
 }
+
+/* /home เท่านั้น: ย้ายปุ่มโดมจากเหนือเมนูล่างมาอยู่มุมขวาบน และกันพื้นที่ไม่ให้ชนคำทักทาย */
+.home-header-dome {
+  top: 7px;
+  right: 12px;
+  z-index: 4;
+  transform: scale(.86);
+  transform-origin: top right;
+}
+
+.home-shell .game-bottom-nav__dome { display: none; }
 
 .home-hero {
   display: flex;
@@ -588,7 +601,8 @@
 .home-path-cta:focus-visible { outline: 3px solid #7651d3; outline-offset: 3px; }
 
 @media (max-width: 370px) {
-  .home-header { padding-inline: 11px !important; }
+  .home-header { padding-left: 11px !important; padding-right: 76px !important; }
+  .home-header-dome { right: 8px; transform: scale(.78); }
   .home-hero { gap: 6px; }
   .home-hero-avatar { width: 46px; height: 46px; }
   .home-hero-sign { border-width: .45rem .95rem .5rem; border-image-width: .45rem .95rem .5rem; }

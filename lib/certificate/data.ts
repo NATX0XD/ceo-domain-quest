@@ -53,6 +53,8 @@ export interface LayoutOptions {
   /** ชื่อวิชา ใส่ทับได้จากหน้าจอ */
   courseName?: string
   schoolName?: string
+  /** ชื่อเต็มบนเกียรติบัตร; ว่างหรือไม่ส่ง = ใช้ nickname */
+  displayName?: string
   /** วันที่ออกใบประกาศ (epoch ms) ไม่ส่งมาจะไม่พิมพ์บรรทัดวันที่ */
   issuedAt?: number | null
 }
@@ -100,7 +102,7 @@ export function thaiDate(epochMs: number): string {
 
 /**
  * ลดขนาดตัวอักษรเมื่อข้อความยาวเกินความกว้างที่มีอยู่
- * ชื่อเล่นยาว ๆ อย่าง "น้องน้ำหวานคนสวยแห่งห้อง ปวช.1/2" ต้องไม่ล้นขอบกระดาษ
+ * ชื่อที่ผู้เรียนกำหนดเองยาว ๆ ต้องไม่ล้นขอบกระดาษ
  *
  * ประมาณความกว้างจากจำนวนอักขระ เพราะฟอนต์ไทยที่ฝังไว้เป็นความกว้างไม่คงที่
  * ตัววาดจะวัดความกว้างจริงอีกชั้นแล้วย่อซ้ำได้ ค่าที่นี่คือขอบเขตบนที่ปลอดภัย
@@ -132,7 +134,7 @@ export function certificateLayout(
 ): CertificateLayout {
   const centerX = PAGE_WIDTH_MM / 2
   const contentWidth = PAGE_WIDTH_MM - MARGIN_MM * 2
-  const nickname = clampText(data?.nickname ?? '', 60)
+  const nickname = clampText(options.displayName || data?.nickname || '', 60)
   const shopName = (data?.shopName ?? '').trim()
   const domainFull = (data?.domainFull ?? '').trim()
   const starsTotal = Number.isFinite(data?.starsTotal) ? data.starsTotal : 0
@@ -193,16 +195,6 @@ export function certificateLayout(
       x: centerX,
       y: 116,
       size: fitFontSize(shopLine, contentWidth, 16),
-      bold: false,
-      align: 'center',
-      maxWidth: contentWidth,
-    },
-    {
-      id: 'level',
-      text: `ระดับ ${data?.level ?? 'เข้าร่วม'} · เก็บดาวได้ ${starsTotal} จาก ${starsMax} ดวง`,
-      x: centerX,
-      y: 132,
-      size: 14,
       bold: false,
       align: 'center',
       maxWidth: contentWidth,

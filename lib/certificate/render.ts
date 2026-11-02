@@ -123,8 +123,8 @@ export function renderCertificate(
   return renderCertificatePdf(certificateLayout(data, options), fonts, options)
 }
 
-/** ชื่อไฟล์ที่เสนอตอนดาวน์โหลด ใช้ชื่อเล่นของผู้เรียนเพื่อไม่ให้ไฟล์ทับกันตอนครูเก็บรวม */
-export function certificateFileName(data: CertificateData): string {
-  const nickname = (data?.nickname ?? '').trim().replace(/[\\/:*?"<>|\s]+/g, '-')
-  return `เกียรติบัตร-${nickname || 'ผู้เรียน'}.pdf`
+/** ชื่อไฟล์ที่เสนอตอนดาวน์โหลด ใช้ชื่อบนเกียรติบัตรเพื่อไม่ให้ไฟล์ทับกันตอนครูเก็บรวม */
+export function certificateFileName(data: CertificateData, displayName?: string): string {
+  const name = (displayName || data?.nickname || '').trim().replace(/[\\/:*?"<>|\s]+/g, '-')
+  return `เกียรติบัตร-${name || 'ผู้เรียน'}.pdf`
 }

@@ -18,6 +18,7 @@ import { pretestRequirement } from '@/components/server/pretest-required'
 import { resolveShopArt } from '@/components/server/shop-art-file'
 import { shopArtFallbackSrc, shopArtStageFromLevel } from '@/components/shop-art'
 import { ShopArtImg } from '@/components/shop-art-img'
+import { DomeFab } from '@/components/dome-fab'
 
 export const metadata: Metadata = { title: 'หน้าหลัก — CEO Domain Quest' }
 
@@ -118,6 +119,7 @@ export default async function HomePage() {
               {stepsLeft > 0 ? ` · เหลืออีก ${stepsLeft} ขั้น` : ' · ครบทุกขั้นแล้ว'}
             </p>
           </div>
+          <DomeFab from="/home" className="home-header-dome" />
         </AppHeader>
       }
       footer={<BottomNav />}

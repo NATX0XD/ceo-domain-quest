@@ -11,6 +11,8 @@ import type { CertArt, CertImage, CertTheme } from './art'
 
 export interface GameCertificateInput {
   nickname: string
+  /** ชื่อเต็มบนใบประกาศ; ว่างหรือไม่ส่ง = ใช้ nickname */
+  displayName?: string
   shopName: string
   /** ชื่อเว็บเต็มจากใบเสนอ CEO เช่น mycake.co.th */
   domainFull: string
@@ -53,11 +55,14 @@ export function gameCertificateContent(input: GameCertificateInput): GameCertifi
   const shopLabel = shop.startsWith('ร้าน') ? shop : `ร้าน${shop}`
   const shopLine = shop && domain ? `CEO ${shopLabel} · ${domain}` : shop ? `CEO ${shopLabel}` : domain ? `เจ้าของชื่อเว็บ ${domain}` : 'CEO ผู้ตั้งชื่อเว็บให้ร้านของตัวเอง'
   const score = input.ceoScore
+  const displayName = input.displayName
+    ? clean(input.displayName, 60) || 'ผู้เรียน'
+    : clean(input.nickname, 32) || 'ผู้เรียน'
   return {
     title: 'เกียรติบัตร',
     product: 'CEO Domain Quest',
     presentTo: 'ขอมอบเกียรติบัตรนี้ให้ไว้เพื่อแสดงว่า',
-    nickname: clean(input.nickname, 32) || 'ผู้เรียน',
+    nickname: displayName,
     shopLine,
     achievement: `ผ่านภารกิจครบ ${input.missionsPassed}/${input.missionsTotal} ด่าน และส่งใบเสนอด่านบอส CEO แล้ว`,
     scoreLine: score

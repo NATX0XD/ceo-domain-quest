@@ -35,6 +35,11 @@ describe('เกียรติบัตรแบบเกม', () => {
     expect(c.starsTotal).toBe(15)
   })
 
+  it('ใช้ชื่อเต็มที่ตั้งไว้แทนชื่อเล่นเมื่อมีค่า', () => {
+    expect(gameCertificateContent({ ...input, displayName: 'ณัฐวัฒน์ ใจดี' }).nickname).toBe('ณัฐวัฒน์ ใจดี')
+    expect(gameCertificateContent({ ...input, displayName: 'ก'.repeat(60) }).nickname).toHaveLength(60)
+  })
+
   it('ไม่มีรูปประกอบเลยก็ยังวาด PDF ได้ (รูปทรงสำรอง)', () => {
     const pdf = renderGameCertificatePdf(input, fonts, {})
     expect(new TextDecoder().decode(pdf.slice(0, 5))).toBe('%PDF-')

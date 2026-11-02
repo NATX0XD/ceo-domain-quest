@@ -55,7 +55,7 @@ describe('คุมข้อความไม่ให้ล้นกระด�
   })
 
   it('ชื่อยาวมากถูกย่อขนาดลง แต่ไม่เล็กกว่าที่อ่านออก', () => {
-    const longName = 'น้องน้ำหวานคนสวยแห่งห้อง ปวช.1/2 วิทยาลัยเทคนิคกาญจนบุรี'
+    const longName = 'น้องน้ำหวานคนสวยแห่งห้องเรียนออนไลน์วิทยาลัยเทคนิคกาญจนบุรี'
     const size = fitFontSize(longName, 261, 32)
     expect(size).toBeLessThan(32)
     expect(size).toBeGreaterThanOrEqual(10)
@@ -77,13 +77,13 @@ describe('โครงใบประกาศ', () => {
     expect(layout.heightMm).toBe(PAGE_HEIGHT_MM)
   })
 
-  it('มีข้อความครบตามแบบ ทั้งหัวเรื่อง ชื่อรุ่น ชื่อเล่น ร้าน ดาว วันที่ วิชา และสถานศึกษา', () => {
+  it('มีข้อความครบตามแบบ ทั้งหัวเรื่อง ชื่อ ร้าน ดาว วันที่ วิชา และสถานศึกษา', () => {
     expect(block(layout, 'title')?.text).toBe('เกียรติบัตร')
     expect(block(layout, 'subtitle')?.text).toBe('นักธุรกิจออนไลน์รุ่นเยาว์')
     expect(block(layout, 'nickname')?.text).toBe('นิด')
     expect(block(layout, 'shop')?.text).toContain('ขนมหวาน')
     expect(block(layout, 'shop')?.text).toContain('kanomwan.in.th')
-    expect(block(layout, 'level')?.text).toContain('12 จาก 15 ดวง')
+    expect(block(layout, 'level')).toBeUndefined()
     expect(block(layout, 'issued-at')?.text).toContain('29 กันยายน 2569')
     expect(block(layout, 'course')?.text).toContain('21910-2002')
     expect(block(layout, 'school')?.text.length).toBeGreaterThan(0)
@@ -105,7 +105,7 @@ describe('โครงใบประกาศ', () => {
 
   it('ชื่อเล่นยาวมากถูกย่อขนาด ไม่ใช่ปล่อยให้ล้น', () => {
     const long = certificateLayout(
-      makeData({ nickname: 'น้องน้ำหวานคนสวยแห่งห้อง ปวช.1/2 วิทยาลัยเทคนิคกาญจนบุรี' }),
+      makeData({ nickname: 'น้องน้ำหวานคนสวยแห่งห้องเรียนออนไลน์วิทยาลัยเทคนิคกาญจนบุรี' }),
     )
     expect(block(long, 'nickname')!.size).toBeLessThan(block(layout, 'nickname')!.size)
   })
@@ -148,7 +148,6 @@ describe('ใบประกาศออกให้ทุกคนที่เ�
     const layout = certificateLayout(makeData({ starsTotal: 0, level: 'เข้าร่วม' }))
     expect(layout.blocks.length).toBeGreaterThan(0)
     expect(block(layout, 'nickname')?.text).toBe('นิด')
-    expect(block(layout, 'level')?.text).toContain('0 จาก 15 ดวง')
     expect(layout.stars.filled).toBe(0)
   })
 
@@ -170,5 +169,10 @@ describe('ใบประกาศออกให้ทุกคนที่เ�
     })
     expect(block(layout, 'course')?.text).toBe('วิชาทดสอบ')
     expect(block(layout, 'school')?.text).toBe('โรงเรียนทดสอบ')
+  })
+
+  it('ใช้ชื่อที่ผู้เรียนกำหนดบนเกียรติบัตรแทนชื่อเล่นได้', () => {
+    const layout = certificateLayout(makeData({ nickname: 'อาร์ม' }), { displayName: 'อาร์ม ใจดี' })
+    expect(block(layout, 'nickname')?.text).toBe('อาร์ม ใจดี')
   })
 })

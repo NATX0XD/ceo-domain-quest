@@ -1,9 +1,15 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
+import { reviewStudentText } from '@/core/content-filter'
 import { ProfileClient, type LevelId, type RouteId } from '@/components/profile-client'
 import { SignInGate } from '@/components/student-shell'
 import { fillTemplate, preferenceQuestionsForClient, selfProfile } from '@/components/server/lesson-content'
-import { getClassroomById, getStudent } from '@/lib/db/repo'
+import { getClassroomById, getProfile, getStudent } from '@/lib/db/repo'
+import {
+  CERTIFICATE_DISPLAY_NAME_MAX_LENGTH,
+  certificateDisplayNameFromProfile,
+  saveCertificateDisplayName,
+} from '@/lib/certificate/profile'
 import { loadSelfProfileDb, saveOwnGoalTextDb } from '@/components/server/game-state'
 import { moderateStudentText } from '@/components/server/moderation'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
@@ -20,6 +26,7 @@ export const dynamic = 'force-dynamic'
  * ห้ามให้ข้อความที่เขาพิมพ์หายไปเพราะถูกทัก
  */
 const GOAL_NOTICE_COOKIE = 'dbq_goal_notice'
+const CERTIFICATE_NAME_NOTICE_COOKIE = 'dbq_certificate_name_notice'
 
 interface GoalNotice {
   ok: boolean
@@ -99,6 +106,53 @@ async function saveOwnGoal(formData: FormData) {
   )
 }
 
+/** บันทึกชื่อเต็มบนเกียรติบัตร — ใช้ตัวกรองกลางและเก็บข้อความเดิมไว้เมื่อถูกปฏิเสธ */
+async function saveCertificateName(formData: FormData) {
+  'use server'
+
+  const session = await readStudentSession()
+  if (!session) return
+
+  const original = String(formData.get('certificateDisplayName') ?? '').trim()
+  const jar = await cookies()
+  const noticeOptions = {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    path: '/profile',
+    maxAge: 30,
+  }
+
+  if (original.length > CERTIFICATE_DISPLAY_NAME_MAX_LENGTH) {
+    jar.set(
+      CERTIFICATE_NAME_NOTICE_COOKIE,
+      encodeNotice({ ok: false, message: `ชื่อเกียรติบัตรยาวได้ไม่เกิน ${CERTIFICATE_DISPLAY_NAME_MAX_LENGTH} ตัวอักษร`, original }),
+      noticeOptions,
+    )
+    return
+  }
+
+  const verdict = reviewStudentText(original, { field: 'certificate-name', studentId: session.studentId })
+  if (!verdict.accepted) {
+    jar.set(
+      CERTIFICATE_NAME_NOTICE_COOKIE,
+      encodeNotice({ ok: false, message: verdict.studentMessage ?? 'ชื่อนี้ยังใช้ไม่ได้ ลองเขียนใหม่อีกครั้งนะ', original }),
+      noticeOptions,
+    )
+    return
+  }
+
+  const saved = await saveCertificateDisplayName(session.studentId, original || null)
+  jar.set(
+    CERTIFICATE_NAME_NOTICE_COOKIE,
+    encodeNotice({
+      ok: saved,
+      message: saved ? 'บันทึกชื่อบนเกียรติบัตรแล้ว' : 'ยังบันทึกไม่ได้ ระบบจะใช้ชื่อเล่นแทนจนกว่าจะอัปเดตฐานข้อมูล',
+      original,
+    }),
+    noticeOptions,
+  )
+}
+
 /**
  * ขั้นที่ 2 รู้จักตัวเอง
  * เซิร์ฟเวอร์โหลดเนื้อหา ตัดน้ำหนักคะแนนของตัวเลือกทิ้ง แล้วส่งเฉพาะข้อความให้หน้าจอ
@@ -110,9 +164,10 @@ export default async function ProfilePage() {
     return <SignInGate message="ใส่รหัสห้อง 6 ตัวกับรหัส 4 หลักที่ครูให้ก่อน แล้วโดมจะช่วยหาเส้นทางที่เหมาะกับเรา" />
   }
 
-  const [state, student] = await Promise.all([
+  const [state, student, profile] = await Promise.all([
     loadSelfProfileDb(session.studentId),
     getStudent(session.studentId),
+    getProfile(session.studentId),
   ])
 
   /**
@@ -129,8 +184,12 @@ export default async function ProfilePage() {
     subtitle: fillTemplate(selfProfile.identityCard.subtitle, { nickname }),
   }
   const notice = decodeNotice((await cookies()).get(GOAL_NOTICE_COOKIE)?.value)
+  const certificateNameNotice = decodeNotice((await cookies()).get(CERTIFICATE_NAME_NOTICE_COOKIE)?.value)
   // ถูกทักแล้วต้องเห็นข้อความเดิมของตัวเองในช่อง ไม่ใช่ช่องว่างเปล่า
   const goalFieldValue = notice && !notice.ok ? notice.original : (state.ownGoalText ?? '')
+  const certificateNameFieldValue = certificateNameNotice && !certificateNameNotice.ok
+    ? certificateNameNotice.original
+    : (certificateDisplayNameFromProfile(profile) ?? '')
 
   const suggestion =
     state.suggestedRoute && state.suggestedLevel
@@ -173,6 +232,35 @@ export default async function ProfilePage() {
           goalId: state.goalId,
           finished: state.goalId !== null && state.route !== null,
         }}
+        certificateNameForm={
+          <form action={saveCertificateName} className="game-card rounded-2xl bg-surface-raised p-3 ring-1 ring-line ring-inset">
+            <label htmlFor="certificate-display-name" className="text-label font-bold text-ink">
+              ชื่อที่จะแสดงบนเกียรติบัตร
+            </label>
+            <p className="mt-1 text-note text-ink-muted">ใส่ชื่อ-นามสกุลเต็มได้ ชื่อนี้จะใช้บน PDF และตัวอย่างผลงาน ถ้าเว้นว่างจะใช้ชื่อเล่น</p>
+            <input
+              id="certificate-display-name"
+              name="certificateDisplayName"
+              defaultValue={certificateNameFieldValue}
+              maxLength={CERTIFICATE_DISPLAY_NAME_MAX_LENGTH}
+              placeholder="เช่น อาร์ม ใจดี"
+              className="mt-2 min-h-11 w-full rounded-xl bg-surface-sunken px-3 text-label text-ink ring-1 ring-line ring-inset outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            />
+            {certificateNameNotice ? (
+              <p
+                role="status"
+                className={certificateNameNotice.ok
+                  ? 'mt-2 rounded-xl bg-quest-100 p-2 text-note font-semibold text-quest-700'
+                  : 'mt-2 rounded-xl bg-spark-100 p-2 text-note font-semibold text-spark-700'}
+              >
+                {certificateNameNotice.message}
+              </p>
+            ) : null}
+            <button type="submit" className="btn-base mt-2 w-full rounded-xl bg-brand-600 text-label font-bold text-ink-onbrand hover:bg-brand-700">
+              บันทึกชื่อบนเกียรติบัตร
+            </button>
+          </form>
+        }
         goalForm={
       /*
         เป้าหมายที่ผู้เรียนพิมพ์เอง (Personalized Learning: ระบบเสนอได้ แต่ผู้เรียนตั้งเป้าเอง)

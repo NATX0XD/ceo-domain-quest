@@ -238,20 +238,24 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
 
       <section className="map-boss-entry" aria-label="ด่านบอส CEO">
         {boss.unlocked ? (
-          <Link href={boss.href} className="map-boss-button focus-ring">
-            <span>
-              <span className="map-boss-kicker">ปลดล็อกแล้ว</span>
-              <strong>ด่านบอส CEO · {boss.title}</strong>
+          <Link href={boss.href} className="map-boss-button focus-ring" aria-label={`ด่านบอส CEO ${boss.title} ปลดล็อกแล้ว`}>
+            <span className="map-boss-art" aria-hidden="true">
+              <img src="/ui/map/ceo-boss-gate.png" alt="" draggable={false} />
             </span>
-            <CheckIcon aria-hidden width={22} height={22} strokeWidth={3} />
+            <strong>ด่านบอส CEO</strong>
+            <span className="map-boss-status-badge map-boss-status-badge--open" aria-hidden="true">
+              <CheckIcon width={18} height={18} strokeWidth={3} />
+            </span>
           </Link>
         ) : (
-          <button type="button" className="map-boss-button map-boss-locked focus-ring" onClick={() => setToast(true)}>
-            <span>
-              <span className="map-boss-kicker">ด่านบอส CEO</span>
-              <strong>ผ่านภารกิจ 1–4 ก่อนจึงจะปลดล็อก</strong>
+          <button type="button" className="map-boss-button map-boss-locked focus-ring" onClick={() => setToast(true)} aria-label="ด่านบอส CEO ล็อกอยู่ ต้องผ่านภารกิจ 1 ถึง 4 ก่อน">
+            <span className="map-boss-art" aria-hidden="true">
+              <img src="/ui/map/ceo-boss-gate.png" alt="" draggable={false} />
             </span>
-            <LockIcon aria-hidden width={22} height={22} />
+            <strong>ด่านบอส CEO</strong>
+            <span className="map-boss-status-badge map-boss-status-badge--locked" aria-hidden="true">
+              <LockIcon width={17} height={17} />
+            </span>
           </button>
         )}
       </section>

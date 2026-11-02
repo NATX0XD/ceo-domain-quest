@@ -39,13 +39,38 @@
 }
 
 .map-boss-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
   min-height: 46px;
   border-radius: 14px;
-  padding: 5px 12px;
+  padding: 4px 10px 4px 7px;
 }
 
-.map-boss-button strong { font-size: 13px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-.map-boss-kicker { font-size: 11px; }
+.map-boss-art {
+  display: grid;
+  width: 48px;
+  height: 42px;
+  flex: 0 0 48px;
+  place-items: center;
+  overflow: hidden;
+}
+.map-boss-art img { display: block; width: 56px; height: 56px; object-fit: contain; }
+.map-boss-button strong { min-width: 0; flex: 1 1 auto; overflow: hidden; font-size: 14px; line-height: 1.2; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.map-boss-status-badge {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border: 2px solid #6b2d12;
+  border-radius: 999px;
+  color: #fff;
+  box-shadow: 0 2px 0 #4a1f0a;
+}
+.map-boss-status-badge--open { background: #1f9d55; }
+.map-boss-status-badge--locked { background: #7047d6; }
 
 .map-ambient,
 .map-dome-guide {

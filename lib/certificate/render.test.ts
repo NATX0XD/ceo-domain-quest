@@ -87,7 +87,6 @@ describe('ภาษาไทยใน PDF ต้องไม่เพี้ย�
       'นักธุรกิจออนไลน์รุ่นเยาว์',
       'ผู้เรียน',
       'ขนมบ้านยาย',
-      'ทำได้ดี',
     ]) {
       expect(extracted).toContain(word)
     }
@@ -101,8 +100,9 @@ describe('ภาษาไทยใน PDF ต้องไม่เพี้ย�
     const extracted = text()
     expect(extracted).toContain('kanombanyai.in.th')
     expect(extracted).toContain('29 กันยายน 2569')
-    expect(extracted).toContain('12 จาก 15 ดวง')
     expect(extracted).toContain('21910-2002')
+    expect(extracted).not.toContain('ทำได้ดี')
+    expect(extracted).not.toContain('ระดับ')
   })
 
   it('ชื่อร้านภาษาไทยที่มีวรรณยุกต์บนสระ ออกมาเรียงอักขระเหมือนต้นฉบับทุกตัว', () => {
@@ -119,8 +119,7 @@ describe('ใบประกาศให้ทุกคนที่เข้า�
     const extracted = extractText(pdf)
     expect(pdf.length).toBeGreaterThan(1000)
     expect(extracted).toContain('ผู้เรียน')
-    expect(extracted).toContain('เข้าร่วม')
-    expect(extracted).toContain('0 จาก 15 ดวง')
+    expect(extracted).not.toContain('ระดับ')
   })
 
   it('ยังไม่มีชื่อร้านและยังไม่ได้จดโดเมน ก็ยังออกใบได้', () => {
@@ -131,7 +130,7 @@ describe('ใบประกาศให้ทุกคนที่เข้า�
 })
 
 describe('ชื่อยาวต้องไม่ล้นขอบกระดาษ', () => {
-  const longNickname = 'น้องน้ำหวานคนสวยแห่งห้อง ปวช.1/2 วิทยาลัยเทคนิคกาญจนบุรี'
+  const longNickname = 'น้องน้ำหวานคนสวยแห่งห้องเรียนออนไลน์วิทยาลัยเทคนิคกาญจนบุรี'
 
   it('ชื่อเล่นยาวมากยังอยู่ครบบนใบ ไม่ถูกตัดหาย', () => {
     const extracted = extractText(renderCertificate(makeData({ nickname: longNickname }), fonts))

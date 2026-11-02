@@ -26,6 +26,7 @@ import { gameCertificateContent } from '@/lib/certificate/game'
 import { certificateProgressOf } from '@/lib/certificate/progress'
 import { CERT_THEME, certArtPresence, resolveCertTheme } from '@/lib/certificate/art'
 import { certificateDomain } from '@/components/server/showcase-safety'
+import { certificateDisplayNameFor } from '@/lib/certificate/profile'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { loadShopProfile, loadSelfProfileDb } from '@/components/server/game-state'
@@ -122,6 +123,7 @@ export default async function ResultPage({
   const showPosttest = postGate.open && (profileRow?.post_test_score ?? null) === null
 
   const nickname = student?.nickname ?? 'ยังไม่มีข้อมูล'
+  const displayName = certificateDisplayNameFor(profileRow, nickname)
   const goalStars = data.goalStars ?? 0
   const compare = data.outcome ? goalCompareCard(data.outcome) : null
   const weakTopic =
@@ -148,6 +150,7 @@ export default async function ResultPage({
   const certContent = earned
     ? gameCertificateContent({
         nickname,
+        displayName,
         shopName: shop?.shopName ?? '',
         // ชื่อเว็บติดตัวกรองคำ = ใบประกาศแสดงแค่ชื่อร้าน (ตรงกับ PDF)
         domainFull: certificateDomain(certDomain),

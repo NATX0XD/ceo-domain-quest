@@ -120,6 +120,7 @@ export function ProfileClient({
   goalPolicyNote,
   initial,
   goalForm,
+  certificateNameForm,
 }: {
   /**
    * ฟอร์ม "เป้าหมายของฉันเอง" ที่หน้า /profile เรนเดอร์มา (เป็น Server Action ล้วน)
@@ -127,6 +128,7 @@ export function ProfileClient({
    * เพราะโครงแบบแอปมี AppShell ได้หน้าละหนึ่งตัว อะไรที่อยู่นอกนั้นจะถูกตัดหาย
    */
   goalForm?: ReactNode
+  certificateNameForm?: ReactNode
   meta: { headline: string; subHeadline: string; ownershipNote: string; finishButtonLabel: string; minuteFrom: number; minuteTo: number }
   questions: ProfileQuestion[]
   channels: ProfileChannel[]
@@ -379,6 +381,7 @@ export function ProfileClient({
           </li>
         ))}
       </ol>
+      {certificateNameForm ? <div className="profile-certificate-name">{certificateNameForm}</div> : null}
       <span className="sr-only">
         ใช้เวลาประมาณ {meta.minuteFrom}-{meta.minuteTo} นาที
       </span>

@@ -11,6 +11,7 @@ import { loadThaiFonts, type ThaiFontSet } from '@/lib/certificate/font'
 import { getProfile, getStudent, listMissionProgress, listSubmissions } from '@/lib/db/repo'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
 import { certificateDomain } from '@/components/server/showcase-safety'
+import { certificateDisplayNameFor } from '@/lib/certificate/profile'
 import { errorResponse, readStudentSession, unauthorized } from '../_lib/session-cookie'
 
 /**
@@ -83,6 +84,7 @@ export async function GET(request: Request) {
     listSubmissions(session.studentId),
     lessonSummary(session.studentId),
   ])
+  const displayName = certificateDisplayNameFor(profile, student.nickname)
 
   /**
    * ใบประกาศต้องอ้างชื่อเว็บจาก "ใบเสนอของภารกิจใหญ่" ก่อนเสมอ
@@ -130,6 +132,7 @@ export async function GET(request: Request) {
   const pdf = renderGameCertificatePdf(
     {
       nickname: data.nickname,
+      displayName,
       shopName: data.shopName,
       // ชื่อเว็บติดตัวกรองคำ = แสดงแค่ชื่อร้าน (ตรงกับพรีวิวหน้า /result)
       domainFull: certificateDomain(data.domainFull),
@@ -149,7 +152,7 @@ export async function GET(request: Request) {
     headers: {
       'content-type': 'application/pdf',
       'content-length': String(pdf.byteLength),
-      'content-disposition': contentDisposition(certificateFileName(data)),
+      'content-disposition': contentDisposition(certificateFileName(data, displayName)),
       // ใบประกาศเป็นข้อมูลรายบุคคล ห้ามให้ proxy หรือ CDN เก็บไว้แจกซ้ำ
       'cache-control': 'private, no-store',
     },
