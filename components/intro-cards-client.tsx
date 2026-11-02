@@ -58,7 +58,7 @@ export function IntroCardsClient({
 
   return (
     <AppShell
-      className="student-world student-display media-shell"
+      className="student-world student-display media-shell intro-shell"
       mainClassName="flex flex-col"
       footer={
         <AppFooter className="flex flex-col gap-3">
