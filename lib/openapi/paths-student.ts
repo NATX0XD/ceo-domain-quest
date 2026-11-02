@@ -160,6 +160,30 @@ export const studentPaths: Record<string, PathItemObject> = {
     }),
   },
 
+  '/api/student/logout': {
+    post: op({
+      id: 'studentLogout',
+      summary: 'นักเรียนออกจากระบบ (ลบคุกกี้นักเรียน)',
+      tags: [JOIN],
+      security: STUDENT_ONLY,
+      description: `
+ลบคุกกี้ \`dbq_student\` ทิ้ง — ใช้กับปุ่ม "ออกจากระบบ" ในแผ่นบัญชีของฉันบนหน้า \`/profile\`
+
+· session เป็น token ในคุกกี้ล้วน ไม่มีแถว session ในฐานข้อมูลให้ลบ · **ข้อมูลความคืบหน้าไม่หาย**
+· กลับมาเล่นต่อได้ด้วย \`POST /api/join/resume\` (รหัสห้อง + ชื่อเล่น + PIN เดิม)
+⚠️ **ไม่มีคุกกี้มาด้วยได้ \`401\` ไม่ใช่ \`200\`** — เหมือนเส้นอื่นที่ต้องมี session
+⚠️ ลบคุกกี้ด้วยออปชันชุดเดียวกับตอนตั้ง (\`path\`/\`secure\`/\`sameSite\`) ไม่งั้นเบราว์เซอร์ถือว่าคนละใบ
+· ไม่รับพารามิเตอร์และไม่อ่าน body
+`,
+      responses: {
+        ...ok('ออกจากระบบแล้ว — คุกกี้ถูกลบใน `set-cookie`', obj({ ok: bool('สำเร็จ') }), {
+          ok: true,
+        }),
+        ...failures([401, ['unauthorized'], 'ไม่มีคุกกี้นักเรียนมาด้วย']),
+      },
+    }),
+  },
+
   '/api/health': {
     get: op({
       id: 'health',

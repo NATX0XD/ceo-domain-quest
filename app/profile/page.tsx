@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { ProfileClient, type LevelId, type RouteId } from '@/components/profile-client'
 import { SignInGate } from '@/components/student-shell'
 import { fillTemplate, preferenceQuestionsForClient, selfProfile } from '@/components/server/lesson-content'
-import { getStudent } from '@/lib/db/repo'
+import { getClassroomById, getStudent } from '@/lib/db/repo'
 import { loadSelfProfileDb, saveOwnGoalTextDb } from '@/components/server/game-state'
 import { moderateStudentText } from '@/components/server/moderation'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
@@ -121,6 +121,8 @@ export default async function ProfilePage() {
    * เด็กจึงเห็นหัวข้อว่า "การ์ดตัวตนของ {nickname}" (FLOW-1 ข้อ 9)
    */
   const nickname = student?.nickname ?? 'เรา'
+  // รหัสห้องโชว์ในกล่องยืนยันออกจากระบบ ให้เด็กจดไว้ใช้กลับเข้ามา (ไม่มีก็ยังออกได้)
+  const classroom = student?.classroom_id ? await getClassroomById(student.classroom_id).catch(() => null) : null
   const identity = {
     ...selfProfile.identityCard,
     title: fillTemplate(selfProfile.identityCard.title, { nickname }),
@@ -162,6 +164,7 @@ export default async function ProfilePage() {
         goalPolicyNote={selfProfile.goalPolicy.explainerForStudent}
         initial={{
           nickname,
+          roomCode: classroom?.room_code ?? null,
           prefAnswers: state.prefAnswers,
           suggestion,
           route: (state.route ?? null) as RouteId | null,

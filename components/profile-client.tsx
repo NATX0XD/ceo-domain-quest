@@ -152,6 +152,8 @@ export function ProfileClient({
   goalPolicyNote: string
   initial: {
     nickname: string
+    /** รหัสห้อง — โชว์ในกล่องยืนยันออกจากระบบ */
+    roomCode?: string | null
     prefAnswers: Record<string, string>
     suggestion: Suggestion | null
     route: RouteId | null
@@ -367,7 +369,7 @@ export function ProfileClient({
           stage={`รู้จักตัวเอง · ขั้น ${stepNo} จาก ${stepList.length}`}
           className="min-w-0 flex-1"
         />
-        <StudentAccountPanel initialNickname={initial.nickname} />
+        <StudentAccountPanel initialNickname={initial.nickname} roomCode={initial.roomCode} />
       </div>
       <ol className="profile-v3-step-rail" aria-label="ขั้นตอนรู้จักตัวเอง">
         {stepList.map((item, index) => (

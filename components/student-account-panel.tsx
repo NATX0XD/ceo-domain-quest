@@ -1,11 +1,19 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { CloseIcon } from '@/components/ui'
+import { ExitConfirmDialog } from '@/components/student-navigation'
 
 type Notice = { kind: 'success' | 'error'; text: string } | null
 
-export function StudentAccountPanel({ initialNickname }: { initialNickname: string }) {
+export function StudentAccountPanel({
+  initialNickname,
+  roomCode,
+}: {
+  initialNickname: string
+  /** รหัสห้องของนักเรียน — โชว์ในกล่องยืนยันออกจากระบบให้จดไว้ใช้กลับเข้ามา */
+  roomCode?: string | null
+}) {
   const [nickname, setNickname] = useState(initialNickname)
   const [newNickname, setNewNickname] = useState(initialNickname)
   const [currentPin, setCurrentPin] = useState('')
@@ -52,6 +60,48 @@ export function StudentAccountPanel({ initialNickname }: { initialNickname: stri
   }
   function closeSheet() {
     dialogRef.current?.close()
+  }
+
+  /*
+   * ออกจากระบบ — ปิดแผ่นบัญชีก่อน แล้วค่อยเปิดกล่องยืนยัน
+   * (แผ่นบัญชีเป็น <dialog> ชั้นบนสุดของเบราว์เซอร์ ถ้าไม่ปิดก่อน กล่องยืนยันจะถูกบังอยู่ข้างหลัง)
+   * ออกสำเร็จหรือคุกกี้หมดอายุไปแล้ว (401) ก็พาไปหน้าเข้าห้องเหมือนกัน · ใช้ location.assign
+   * เพื่อโหลดหน้าใหม่ทั้งหน้า ไม่ให้ cache ของ router ยังโชว์หน้าที่ล็อกอินอยู่
+   */
+  const [logoutOpen, setLogoutOpen] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [logoutError, setLogoutError] = useState<string | null>(null)
+  const stayLoggedIn = useCallback(() => {
+    if (!loggingOut) setLogoutOpen(false)
+  }, [loggingOut])
+  /*
+   * กล่องยืนยันต้องขึ้น top layer ผ่าน <dialog>.showModal() เหมือนแผ่นบัญชี
+   * เพราะปุ่มบัญชีอยู่ในแถบบนที่มี z-index ของตัวเอง — ถ้าวางเป็น div fixed ธรรมดา
+   * เมนูล่างกับปุ่มโดมลอยจะทับฉากหลังมืดแล้วยังกดได้
+   */
+  const logoutDialogRef = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    const el = logoutDialogRef.current
+    if (!el) return
+    if (logoutOpen && !el.open) el.showModal()
+    if (!logoutOpen && el.open) el.close()
+  }, [logoutOpen])
+  function askLogout() {
+    closeSheet()
+    setLogoutError(null)
+    setLogoutOpen(true)
+  }
+  async function logout() {
+    setLoggingOut(true)
+    setLogoutError(null)
+    try {
+      const response = await fetch('/api/student/logout', { method: 'POST' })
+      if (!response.ok && response.status !== 401) throw new Error(String(response.status))
+      window.location.assign('/join')
+    } catch {
+      setLoggingOut(false)
+      setLogoutError('ออกจากระบบไม่สำเร็จ เช็กเน็ตแล้วกดอีกครั้งนะ')
+    }
   }
 
   /*
@@ -171,8 +221,49 @@ export function StudentAccountPanel({ initialNickname }: { initialNickname: stri
             {notice.text}
           </p>
         ) : null}
+
+        {/* ปุ่มรอง: ขอบไม้ พื้นครีม ไม่แย่งสายตาจากปุ่มบันทึกสองปุ่มด้านบน */}
+        <button
+          type="button"
+          onClick={askLogout}
+          className="btn-base mt-4 w-full cursor-pointer rounded-xl border-2 border-[#6b2d12] bg-[#fffaf0] text-label font-bold text-[#6b2d12] shadow-[0_3px_0_#6b2d12] active:translate-y-px focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          ออกจากระบบ
+        </button>
       </div>
           </dialog>
+      <dialog
+        ref={logoutDialogRef}
+        aria-label="ยืนยันออกจากระบบ"
+        onCancel={(event) => {
+          event.preventDefault()
+          stayLoggedIn()
+        }}
+        className="m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden bg-transparent p-0 backdrop:bg-transparent"
+      >
+      <ExitConfirmDialog
+              open={logoutOpen}
+              onStay={stayLoggedIn}
+              onExit={() => void logout()}
+              busy={loggingOut}
+              kicker="บัญชีของฉัน"
+              title="ออกจากระบบไหม?"
+              imageAlt="โดมยกมือโบกถามก่อนออกจากระบบ"
+              stayLabel="ยกเลิก"
+              exitLabel={loggingOut ? 'กำลังออก…' : 'ออกจากระบบ'}
+              description={
+                <>
+                  <p>กลับมาเล่นต่อได้ด้วยรหัสห้อง ชื่อเล่น และ PIN เดิม</p>
+                  <p className="font-bold">
+                    รหัสห้อง <span className="tracking-[0.15em]">{roomCode ?? '—'}</span> · ชื่อเล่น {nickname}
+                  </p>
+                  {logoutError ? (
+                    <p role="alert" className="font-bold text-spark-700">{logoutError}</p>
+                  ) : null}
+                </>
+              }
+      />
+      </dialog>
     </>
   )
 }

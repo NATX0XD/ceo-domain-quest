@@ -44,11 +44,27 @@ export function ExitConfirmDialog({
   onStay,
   onExit,
   note,
+  kicker = 'พักด่านชั่วคราว',
+  title = 'ออกจากด่านนี้ไหม?',
+  description,
+  stayLabel = 'อยู่ต่อ',
+  exitLabel = 'ออกจากด่าน',
+  imageAlt = 'โดมทำหน้ากังวลและยกมือโบกให้หยุดก่อนออกจากด่าน',
+  busy = false,
 }: {
   open: boolean
   onStay: () => void
   onExit: () => void
-  note: ReactNode
+  note?: ReactNode
+  /** ข้อความเต็มใต้หัวข้อ — ส่งมาเมื่อไม่ใช่การออกจากด่าน (เช่น ออกจากระบบ) */
+  description?: ReactNode
+  kicker?: string
+  title?: string
+  stayLabel?: string
+  exitLabel?: string
+  imageAlt?: string
+  /** กำลังทำงาน — ล็อกปุ่มออกไว้กันกดซ้ำ */
+  busy?: boolean
 }) {
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const stayRef = useRef<HTMLButtonElement | null>(null)
@@ -97,23 +113,25 @@ export function ExitConfirmDialog({
       >
         <img
           src="/ui/kit2/dome-exit-confirm.webp"
-          alt="โดมทำหน้ากังวลและยกมือโบกให้หยุดก่อนออกจากด่าน"
+          alt={imageAlt}
           width={128}
           height={136}
           className="student-exit-dome"
           draggable={false}
         />
         <div className="student-exit-copy">
-          <p className="student-exit-kicker">พักด่านชั่วคราว</p>
-          <h2 id="student-exit-title">ออกจากด่านนี้ไหม?</h2>
-          <p id="student-exit-description">ความคืบหน้าในด่านนี้จะเป็นอย่างไรต่อไป: {note}</p>
+          <p className="student-exit-kicker">{kicker}</p>
+          <h2 id="student-exit-title">{title}</h2>
+          <div id="student-exit-description" className="student-exit-description">
+            {description ?? <p>ความคืบหน้าในด่านนี้จะเป็นอย่างไรต่อไป: {note}</p>}
+          </div>
         </div>
         <div className="student-exit-actions">
           <button ref={stayRef} type="button" onClick={onStay} className="student-exit-stay focus-ring">
-            อยู่ต่อ
+            {stayLabel}
           </button>
-          <button type="button" onClick={onExit} className="student-exit-leave focus-ring">
-            ออกจากด่าน
+          <button type="button" onClick={onExit} disabled={busy} className="student-exit-leave focus-ring">
+            {exitLabel}
           </button>
         </div>
       </div>

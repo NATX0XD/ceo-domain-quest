@@ -96,7 +96,9 @@
   text-transform: uppercase;
 }
 .student-exit-copy h2 { margin: 0; font-size: 1.25rem; font-weight: 900; line-height: 1.2; }
-.student-exit-copy p:last-child { margin: .5rem 0 0; font-size: .875rem; line-height: 1.5; }
+.student-exit-description > p { margin: .5rem 0 0; font-size: .875rem; line-height: 1.5; }
+.student-exit-description > p + p { margin-top: .35rem; }
+.student-exit-leave:disabled { opacity: .6; cursor: wait; }
 
 .student-exit-actions {
   grid-column: 1 / -1;
@@ -134,5 +136,5 @@
   .student-exit-dialog { grid-template-columns: 5.5rem minmax(0, 1fr); gap: .5rem .7rem; padding: .9rem; }
   .student-exit-dome { width: 5.5rem; }
   .student-exit-copy h2 { font-size: 1.1rem; }
-  .student-exit-copy p:last-child { font-size: .8rem; }
+  .student-exit-description > p { font-size: .8rem; }
 }
