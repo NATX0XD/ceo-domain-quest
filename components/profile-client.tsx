@@ -324,14 +324,13 @@ export function ProfileClient({
 
   return (
     <StudentShell
-      withBottomNav={false}
-      backHref="/home"
+      withBottomNav
       className="profile-world-shell profile-v3-world-shell flex h-full min-h-0 flex-col gap-3 pb-6"
       footer={
         <AppFooter>
           {flow.state.kind !== 'done' ? <FlowNote state={flow.state} className="mb-2" /> : null}
           {stepKey === 'card' ? (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
             {/* จบขั้นรู้จักตัวเองแล้วไปแผนที่เกาะ — ลิ้นชักล่างของแผนที่เป็นที่เลือกวิธีเรียนของแต่ละภารกิจ */}
             <Link
               href="/map"
@@ -343,7 +342,7 @@ export function ProfileClient({
             </Link>
             <Button
               variant="secondary"
-              size="md"
+              size="sm"
               fullWidth
               onClick={() => {
                 setQIndex(0)
@@ -362,9 +361,11 @@ export function ProfileClient({
                   onClick={() => setStep((n) => Math.max(0, n - 1))}
                   disabled={flow.busy}
                   leadingIcon={<ArrowLeftIcon width={20} height={20} />}
-                  className="min-w-[7.25rem] shrink-0 px-4"
+                  className="shrink-0 px-3"
+                  aria-label="ย้อน"
                 >
-                  ย้อน
+                  {/* จอแคบเหลือแค่ลูกศร ให้ปุ่มไปต่อมีที่พอสำหรับข้อความเต็ม (มุมขวาเป็นของปุ่มโดมลอย) */}
+                  <span className="max-[400px]:hidden">ย้อน</span>
                 </Button>
               ) : null}
               <Button

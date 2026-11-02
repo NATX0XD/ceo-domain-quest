@@ -640,6 +640,52 @@
   }
 }
 
+/* แถบเมนูล่างมีรอยไล่สีเว้นที่ให้แล้ว — ไม่ต้องเว้นท้ายซ้ำ (pb-6 เดิมของ shell) */
+.app-shell-main > .profile-v3-world-shell { padding-bottom: 0.25rem; }
+
+/* บัตรตัวตนต้องจบในจอเดียวพร้อมแถบเมนูล่าง — ย่อส่วนหัว/เหรียญเมื่อจอเตี้ย แทนการเลื่อน */
+@media (max-height: 900px) {
+  .profile-v3-card-header { min-height: 8.4rem; grid-template-columns: minmax(0, 1fr) 8rem; }
+  .profile-v3-card-portrait { width: 8.4rem; height: 8.6rem; }
+  .profile-v3-card-portrait > span,
+  .profile-v3-card-portrait img { width: 8.4rem !important; height: 8.4rem !important; }
+  .profile-v3-card-copy { padding: 0.7rem 0.35rem 0.6rem 0.85rem; }
+  .profile-v3-card-copy h1 { margin-top: 0.35rem; font-size: clamp(1.2rem, 5.4vw, 1.6rem); }
+  .profile-v3-level-stamp { margin-top: 0.45rem; }
+  .profile-v3-trait-hero { margin-top: 0.5rem; padding: 0.4rem 0.6rem; }
+  .profile-v3-trait-icon { width: 2.4rem; height: 2.4rem; }
+  .profile-v3-stat-grid { margin: 0.5rem 0.6rem; }
+  .profile-v3-medallion { padding: 0.3rem 0.2rem 0.4rem; }
+  .profile-v3-medallion-art { width: 2.1rem; height: 2.1rem; }
+  .profile-v3-focus-row { margin: 0 0.6rem 0.5rem; padding: 0.4rem 0.5rem 0; }
+  .profile-v3-focus-chips { margin-top: 0.3rem; gap: 0.25rem; }
+  .profile-v3-focus-chips span { min-height: 1.4rem; padding: 0.12rem 0.45rem; }
+  .profile-v3-encouragement { padding: 0.45rem 0.7rem 0.5rem; font-size: 0.72rem; }
+}
+
+@media (max-height: 760px) {
+  .app-shell-main > .profile-v3-world-shell { padding-top: 0.85rem; gap: 0.55rem; }
+  .profile-v3-quiz { gap: 0.55rem; }
+  .profile-v3-quiz h2 { font-size: 1.05rem; line-height: 1.28; }
+  .profile-v3-quiz .quiz-choice { min-height: 3.1rem; padding-block: 0.35rem !important; }
+  .profile-v3-quiz .quiz-choice .choice-card-marker { width: 2.1rem; height: 2.1rem; font-size: 0.9rem; }
+  .profile-v3-card-header { min-height: 7.2rem; grid-template-columns: minmax(0, 1fr) 6.8rem; }
+  .profile-v3-card-portrait { right: -0.5rem; width: 6.6rem; height: 6.8rem; }
+  .profile-v3-card-portrait > span,
+  .profile-v3-card-portrait img { width: 6.6rem !important; height: 6.6rem !important; }
+  .profile-v3-card-kicker { padding: 0.18rem 0.4rem; font-size: 0.6rem; }
+  .profile-v3-card-copy h1 { font-size: 1.12rem; }
+  .profile-v3-level-stamp { margin-top: 0.35rem; padding: 0.2rem 0.5rem; font-size: 0.68rem; }
+  .profile-v3-trait-hero { margin: 0.4rem 0.45rem 0; padding: 0.3rem 0.5rem; gap: 0.5rem; }
+  .profile-v3-trait-icon { width: 2rem; height: 2rem; border-radius: 0.75rem; }
+  .profile-v3-trait-name { font-size: 0.88rem; }
+  .profile-v3-stat-grid { gap: 0.3rem; margin: 0.4rem 0.45rem; }
+  .profile-v3-medallion-art { width: 1.8rem; height: 1.8rem; }
+  .profile-v3-medallion-detail { display: none; }
+  .profile-v3-focus-row { margin: 0 0.45rem 0.4rem; padding: 0.3rem 0.4rem 0; }
+  .profile-v3-encouragement { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .profile-v3-step-rail li.is-current > span:first-child,
   .profile-v3-choice-grid .game-choice-card[aria-pressed='true'] {

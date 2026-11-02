@@ -6,10 +6,11 @@ import { motion, useReducedMotion } from 'motion/react'
 import './map-hotspots.css'
 import { useRouter } from 'next/navigation'
 import { TestNudgeCard } from '@/components/test-nudge'
+import { DomeFab } from '@/components/dome-fab'
 import type { TestNudge } from '@/components/server/test-nudge'
 import { ModePopup } from '@/components/learn/mode-popup'
 import { postLearn, type LearnModeId } from '@/components/learn/learn-path-api'
-import { ArrowLeftIcon, CheckIcon, LockIcon, StarIcon, Toast, ToastViewport } from '@/components/ui'
+import { CheckIcon, LockIcon, StarIcon, Toast, ToastViewport } from '@/components/ui'
 
 type Mission = {
   id: string
@@ -148,9 +149,8 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
           <span className="map-wave map-wave-three" />
         </div>
 
-        <Link href="/home" aria-label="กลับหน้าหลัก" className="map-back-hotspot focus-ring">
-          <ArrowLeftIcon aria-hidden width={26} height={26} />
-        </Link>
+        {/* แผนที่เป็นแท็บหลัก ไม่มีปุ่มย้อนกลับ — ปุ่มโดมลอยวางทับปุ่มย้อนที่วาดติดมากับภาพ (มุมซ้ายบน ไม่ทับเกาะ) */}
+        <DomeFab from="/map" className="map-dome-fab" />
 
         {missions.slice(0, 4).map((mission, index) => {
           const previousPassed = index === 0 || Boolean(missions[index - 1]?.passed)

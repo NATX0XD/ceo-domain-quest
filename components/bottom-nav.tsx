@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { DomeFab, MAIN_TAB_PATHS } from '@/components/dome-fab'
 import './bottom-nav.css'
 
 type Tab = {
@@ -18,12 +19,18 @@ const TABS: Tab[] = [
   { href: '/profile', label: 'โปรไฟล์', icon: '/icons/3d/bust-in-silhouette.webp' },
 ]
 
-/** แถบเมนูแบบท่าเรือไม้ — ลิงก์และสถานะ active ยังคงชุดเดิมของฝั่งนักเรียน */
+/**
+ * แถบเมนูลอยแบบเกม — ขอบบนไล่สีกลืนกับฉากของหน้า (ไม่มีเส้นคั่น) แท็บที่อยู่ยกตัวขึ้นและเรือง
+ * หน้าแท็บหลัก (ยกเว้นแผนที่ ซึ่งวางปุ่มโดมไว้ในภาพแผนที่เอง) มีปุ่มโดมลอยอยู่มุมขวาเหนือแถบ
+ */
 export function BottomNav() {
   const pathname = usePathname() ?? ''
+  const tab = MAIN_TAB_PATHS.find((href) => pathname === href)
+  const withDome = Boolean(tab && tab !== '/map')
 
   return (
-    <nav aria-label="เมนูหลัก" className="game-bottom-nav">
+    <nav aria-label="เมนูหลัก" className={`game-bottom-nav${withDome ? ' game-bottom-nav--dome' : ''}`}>
+      {withDome && tab ? <DomeFab from={tab} className="game-bottom-nav__dome" /> : null}
       <ul className="game-bottom-nav__list">
         {TABS.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`)

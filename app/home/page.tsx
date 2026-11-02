@@ -7,7 +7,7 @@ import { SignInGate } from '@/components/student-shell'
 import { SessionClock } from '@/components/session-clock'
 import { BottomNav } from '@/components/bottom-nav'
 import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
-import { ChevronRightIcon, DomeAvatar, SpeechBubble, StarIcon } from '@/components/ui'
+import { ChevronRightIcon } from '@/components/ui'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
@@ -50,16 +50,6 @@ export default async function HomePage() {
   const stepNow = Math.min(stepTotal, (nextMission ? summary.missions.indexOf(nextMission) : summary.missions.length) + 1)
   const stepsLeft = Math.max(0, stepTotal - stepNow)
 
-  const domeLine = nextMission
-    ? `ต่อไป: ${nextMission.title}`
-    : standing.status === 'not-submitted'
-      ? 'ภารกิจย่อยครบแล้ว เหลือด่านบอส CEO'
-      : standing.status === 'pending-teacher'
-        ? 'ส่งใบเสนอแล้ว รอครูตรวจได้เลย'
-        : standing.status === 'keep-going'
-          ? `มีงานให้แก้อีก ${standing.missing.length} ด้าน`
-          : 'ครบทุกด่านแล้ว ไปรับใบประกาศกัน'
-
   const primary = nudge && !nudge.waiting
     ? { href: nudge.href, label: nudge.title }
     : nextMission
@@ -86,24 +76,38 @@ export default async function HomePage() {
       mainClassName="home-lobby-main"
       header={
         <AppHeader className="home-header" divider={false}>
-          <div className="home-header-row">
-            <div className="min-w-0">
+          <div className="home-hero">
+            <span className="home-hero-avatar" aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element -- ภาพร้านของผู้เล่นเป็นรูปประจำตัว */}
+              <img src={`/ui/home/shop-stage-${shopArtStage}.webp`} alt="" draggable={false} style={{ width: 62, height: 62 }} />
+            </span>
+            <div className="home-hero-sign">
               <p className="home-eyebrow">CEO DOMAIN QUEST</p>
               <p className="home-greeting">สวัสดี {nickname}</p>
             </div>
             <div className="home-header-tools">
               <SessionClock variant="pill" />
               <p className="home-star-pill">
-                <StarIcon width={19} height={19} aria-hidden />
-                {summary.totalStars}
+                {/* eslint-disable-next-line @next/next/no-img-element -- ป้ายดาว kit2 */}
+                <img src="/ui/kit2/badge-star.webp" alt="" aria-hidden="true" draggable={false} style={{ width: 26, height: 26 }} />
+                <span className="home-star-count">{summary.totalStars}</span>
                 <span className="sr-only">ดาวสะสมจากทั้งหมด {summary.maxStars} ดวง</span>
               </p>
             </div>
           </div>
-          <p className="home-header-progress">
-            <span>{`ขั้นที่ ${stepNow} จาก ${stepTotal}`}</span>
-            {stepsLeft > 0 ? ` · เหลืออีก ${stepsLeft} ขั้น` : ' · ครบทุกขั้นแล้ว'}
-          </p>
+          <div className="home-hero-progress">
+            <ol className="home-island-dots" aria-hidden="true">
+              {PATH_STAGES.map((label, index) => {
+                const done = index < cleared
+                const current = index === activePathStage && !done
+                return <li key={label} className={done ? 'is-done' : current ? 'is-current' : undefined} />
+              })}
+            </ol>
+            <p className="home-header-progress">
+              <span>{`ขั้นที่ ${stepNow} จาก ${stepTotal}`}</span>
+              {stepsLeft > 0 ? ` · เหลืออีก ${stepsLeft} ขั้น` : ' · ครบทุกขั้นแล้ว'}
+            </p>
+          </div>
         </AppHeader>
       }
       footer={
@@ -175,13 +179,6 @@ export default async function HomePage() {
         </section>
 
         {nudge?.waiting ? <TestNudgeCard nudge={nudge} className="home-nudge" /> : null}
-
-        <section className="home-dome-row" aria-label="คำแนะนำจากโดม">
-          <DomeAvatar mood={nextMission ? 'cheer' : 'celebrate'} size={64} decorative sparkle />
-          <SpeechBubble speaker="dome" tail="left" className="home-dome-bubble">
-            <span>{domeLine}</span>
-          </SpeechBubble>
-        </section>
       </div>
     </AppShell>
   )

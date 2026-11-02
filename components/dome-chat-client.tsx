@@ -69,6 +69,7 @@ export function DomeChatClient({
   greetingAction,
   currentMissionId,
   nextStep,
+  backHref = '/home',
 }: {
   greeting: string
   quickReplies: { id: string; label: string }[]
@@ -76,6 +77,8 @@ export function DomeChatClient({
   currentMissionId: string
   /** ขั้นถัดไปจริงของผู้เรียน (ตั้งร้าน → /profile → /map) — ปุ่ม "พร้อม" พาไปตรงนี้ทันที */
   nextStep: { href: string; label: string }
+  /** หน้าที่ปุ่มย้อนกลับพากลับไป — มาจากปุ่มโดมลอยของแท็บหลัก (ผ่าน whitelist แล้ว) */
+  backHref?: string
 }) {
   const [turns, setTurns] = useState<Turn[]>([
     { id: 0, who: 'dome', text: greeting, action: greetingAction, source: 'fallback' },
@@ -148,7 +151,7 @@ export function DomeChatClient({
     <AppShell
       className="media-shell media-dome-shell student-display"
       header={
-        <AppHeader className="flex items-center gap-2 py-1.5!" backHref="/home">
+        <AppHeader className="flex items-center gap-2 py-1.5!" backHref={backHref}>
           <DomeAvatar mood="greet" size={36} decorative />
           <h1 className="text-title-sm font-extrabold text-ink">เลขาโดม</h1>
         </AppHeader>

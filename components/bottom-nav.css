@@ -1,20 +1,81 @@
+/*
+ * ฟุตเตอร์ที่มีแถบเมนู — กลืนกับฉากแบบรอยต่อของหน้า landing (Fade):
+ * ฟุตเตอร์ยื่นขึ้นไปทับขอบล่างของ main เท่ากับ --bn-fade แล้วไล่สีจากโปร่งใสลงมาเป็นครีม
+ * จึงไม่มีเส้นคั่นหรือขอบแข็งระหว่างเนื้อหากับแถบเมนู (main เว้นที่ด้านล่างเท่ากันไว้ให้)
+ * !important เฉพาะพื้น/ขอบ เพราะกฎ student-world ใน globals มี specificity สูงมาก
+ */
+.app-shell:has(> .app-shell-footer > .game-bottom-nav) {
+  --bn-fade: 28px;
+}
+
+/* ทะเลสีเข้มของแผนที่ต้องการระยะไล่สีที่ยาวกว่า ไม่งั้นยังเห็นเป็นแถบตัด */
+.app-shell.map-shell-fit:has(> .app-shell-footer > .game-bottom-nav) {
+  --bn-fade: 44px;
+}
+
+.app-shell:has(> .app-shell-footer > .game-bottom-nav) > .app-shell-main {
+  padding-bottom: var(--bn-fade);
+}
+
+.app-shell-footer:has(> .game-bottom-nav) {
+  margin-top: calc(var(--bn-fade) * -1);
+  padding-top: var(--bn-fade);
+  border: 0 !important;
+  box-shadow: none !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(255 241 214 / 0) 0,
+      rgb(255 241 214 / .18) calc(var(--bn-fade) * .25),
+      rgb(255 241 214 / .5) calc(var(--bn-fade) * .5),
+      rgb(255 241 214 / .85) calc(var(--bn-fade) * .78),
+      #fff1d6 var(--bn-fade),
+      #fbe7c1 100%
+    ) !important;
+  backdrop-filter: none !important;
+}
+
+.app-shell-footer:has(> .game-bottom-nav) > .surface-veil {
+  border-color: transparent;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+/* แถบ CTA ที่อยู่เหนือเมนู เว้นมุมขวาไว้ให้ปุ่มโดมลอย — ปุ่มโดมจึงไม่ทับปุ่มหลักของหน้า */
+.app-shell-footer:has(> .game-bottom-nav--dome) > .surface-veil {
+  padding-right: 80px;
+}
+
 .game-bottom-nav {
   position: relative;
   z-index: 2;
-  border-top: 2px solid #6b2d12;
-  background: linear-gradient(180deg, #fff3d5 0%, #f0d7a6 100%);
-  box-shadow: 0 -6px 18px rgb(93 48 18 / .13), inset 0 1px 0 rgb(255 255 255 / .88);
+  padding: 0 10px calc(6px + var(--safe-bottom, 0px));
+}
+
+.game-bottom-nav__dome {
+  right: 14px;
+  bottom: calc(100% + 4px);
 }
 
 .game-bottom-nav__list {
+  position: relative;
   display: flex;
   align-items: flex-end;
-  gap: 3px;
-  width: min(100%, 480px);
-  min-height: 72px;
+  gap: 2px;
+  width: min(100%, 460px);
+  min-height: 64px;
   margin: 0 auto;
-  padding: 7px 8px calc(5px + var(--safe-bottom, 0px));
+  padding: 5px 6px 5px;
+  border-radius: 24px;
   list-style: none;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(255 255 255 / .7) 0%, transparent 60%),
+    linear-gradient(180deg, #fff6df 0%, #f6e0b3 100%);
+  box-shadow:
+    0 10px 22px rgb(93 48 18 / .16),
+    0 2px 0 rgb(176 116 52 / .28),
+    inset 0 1px 0 rgb(255 255 255 / .95),
+    inset 0 -3px 0 rgb(214 160 92 / .28);
 }
 
 .game-bottom-nav__item {
@@ -23,68 +84,71 @@
 }
 
 .game-bottom-nav__link {
+  position: relative;
   display: flex;
   min-width: 44px;
-  min-height: 60px;
+  min-height: 54px;
   align-items: center;
   justify-content: flex-end;
   flex-direction: column;
-  gap: 2px;
-  border: 2px solid transparent;
-  border-radius: 17px;
+  gap: 1px;
+  border-radius: 18px;
   padding: 3px 2px 4px;
-  color: #765b4d;
+  color: #7a5d4c;
   text-align: center;
   text-decoration: none;
-  transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
 }
 
 .game-bottom-nav__icon-wrap {
   display: grid;
-  width: 37px;
-  height: 37px;
+  width: 34px;
+  height: 34px;
   place-items: center;
-  border-radius: 12px;
-  transition: transform 180ms ease, filter 180ms ease;
+  transition: transform 200ms ease, filter 200ms ease;
 }
 
 .game-bottom-nav__icon {
   display: block;
-  width: 31px;
-  height: 31px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 1px rgb(90 46 20 / .19));
+  filter: drop-shadow(0 2px 1px rgb(90 46 20 / .2));
 }
 
 .game-bottom-nav__label {
   max-width: 100%;
   overflow: hidden;
-  font-size: .75rem;
+  font-size: .72rem;
   font-weight: 900;
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.game-bottom-nav__link:hover {
-  color: #5c3b2b;
-  background: rgb(255 249 231 / .72);
-}
-
+.game-bottom-nav__link:hover { color: #5c3b2b; }
+.game-bottom-nav__link:hover .game-bottom-nav__icon-wrap { transform: translateY(-2px); }
 .game-bottom-nav__link:active { transform: translateY(2px); }
 
+/* แท็บที่อยู่: ยกลอยขึ้นจากแถบ มีเหรียญเรืองแสงรองไอคอน */
 .game-bottom-nav__link.is-active {
-  min-height: 68px;
-  margin-top: -12px;
-  border-color: #fff3c7;
-  color: #56318d;
-  background: linear-gradient(180deg, #f5eaff 0%, #ded0ff 100%);
-  box-shadow: 0 5px 0 #6b2d12, 0 0 20px rgb(138 105 232 / .35), inset 0 2px 0 rgb(255 255 255 / .86);
+  min-height: 62px;
+  margin-top: -14px;
+  color: #4f2a8a;
+  background:
+    radial-gradient(90% 70% at 50% 18%, rgb(255 255 255 / .95) 0%, transparent 62%),
+    linear-gradient(180deg, #f7efff 0%, #dccbff 100%);
+  box-shadow:
+    0 4px 0 #7a55c9,
+    0 10px 18px rgb(97 53 161 / .28),
+    0 0 22px rgb(168 128 255 / .45),
+    inset 0 2px 0 rgb(255 255 255 / .9);
 }
 
 .game-bottom-nav__link.is-active .game-bottom-nav__icon-wrap {
-  transform: translateY(-2px) scale(1.12);
-  filter: drop-shadow(0 4px 3px rgb(97 53 161 / .28));
+  transform: translateY(-3px) scale(1.14);
+  filter: drop-shadow(0 4px 4px rgb(97 53 161 / .3));
 }
 
 .game-bottom-nav__link:focus-visible {
@@ -93,15 +157,19 @@
 }
 
 @media (max-width: 370px) {
-  .game-bottom-nav__list { padding-inline: 5px; }
-  .game-bottom-nav__link { min-height: 57px; }
-  .game-bottom-nav__link.is-active { min-height: 65px; }
-  .game-bottom-nav__icon-wrap { width: 34px; height: 34px; }
-  .game-bottom-nav__icon { width: 28px; height: 28px; }
-  .game-bottom-nav__label { font-size: .7rem; }
+  .game-bottom-nav { padding-inline: 6px; }
+  .game-bottom-nav__list { padding-inline: 4px; }
+  .game-bottom-nav__link { min-height: 52px; }
+  .game-bottom-nav__link.is-active { min-height: 58px; }
+  .game-bottom-nav__icon-wrap { width: 31px; height: 31px; }
+  .game-bottom-nav__icon { width: 27px; height: 27px; }
+  .game-bottom-nav__label { font-size: .68rem; }
+  .app-shell-footer:has(> .game-bottom-nav--dome) > .surface-veil { padding-right: 74px; }
+  .game-bottom-nav__dome { right: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .game-bottom-nav__link,
   .game-bottom-nav__icon-wrap { transition: none; }
+  .game-bottom-nav__link:hover .game-bottom-nav__icon-wrap { transform: none; }
 }

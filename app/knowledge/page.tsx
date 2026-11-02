@@ -7,13 +7,11 @@ import { BottomNav } from '@/components/bottom-nav'
 import {
   BookmarkIcon,
   ChevronRightIcon,
-  DomeAvatar,
   KnowledgeIcon,
   LightbulbIcon,
   PlayIcon,
   SceneDecor,
   Sheet,
-  SpeechBubble,
 } from '@/components/ui'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { missions } from '@/components/missions'
@@ -57,9 +55,6 @@ export default async function KnowledgePage() {
   const nextMission = summary.missions.find((m) => !m.passed) ?? null
   const primaryHref = nextMission ? `/mission/${nextMission.id}` : '/ceo'
   const primaryLabel = nextMission ? 'กลับไปภารกิจ' : 'ไปด่านบอส'
-  const nowLine = nextMission
-    ? 'เลือกหนังสือสักเล่ม แล้วโดมจะพาไปเก็บกุญแจคำตอบครับ'
-    : 'เปิดทบทวนได้เรื่อย ๆ ไม่เสียดาว แล้วค่อยไปด่านบอสเมื่อพร้อมครับ'
 
   return (
     <AppShell
@@ -80,12 +75,6 @@ export default async function KnowledgePage() {
       footer={
         <>
           <AppFooter divider={false} className="kr-footer">
-            <div className="kr-dome-tip">
-              <DomeAvatar mood="explain" size={44} decorative />
-              <SpeechBubble speaker="dome" tail="left" className="kr-speech">
-                <span>{nowLine}</span>
-              </SpeechBubble>
-            </div>
             <Link href={primaryHref} className="kr-primary-cta">
               {primaryLabel}
               <ChevronRightIcon width={22} height={22} aria-hidden />

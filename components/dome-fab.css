@@ -1,0 +1,81 @@
+/* ปุ่มโดมลอย: เหรียญกลมเงาวาว + ป้ายเล็ก "ถามโดม" เด้งเบา ๆ (ปิดเมื่อผู้ใช้ลดการเคลื่อนไหว) */
+.dome-fab {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  width: 58px;
+  height: 64px;
+  justify-items: center;
+  align-content: start;
+  border-radius: 999px;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dome-fab__badge {
+  position: relative;
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: end center;
+  overflow: hidden;
+  border: 3px solid #fff4cf;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 26%, rgb(255 255 255 / .9) 0 9%, transparent 24%),
+    radial-gradient(circle at 50% 62%, #c9a8ff 0%, #8a5fe0 62%, #5d35b3 100%);
+  box-shadow:
+    0 4px 0 #4a1f0a,
+    0 0 0 2px #6b2d12,
+    0 8px 18px rgb(74 31 10 / .32),
+    0 0 18px rgb(176 132 255 / .55),
+    inset 0 -6px 10px rgb(56 22 120 / .38);
+  animation: dome-fab-bob 2.8s ease-in-out infinite;
+}
+
+.dome-fab__badge::after {
+  position: absolute;
+  inset: 3px 9px auto;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(255 255 255 / .62), transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.dome-fab__art {
+  display: block;
+  max-width: none;
+  margin-bottom: -10px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 1px rgb(40 14 90 / .35));
+}
+
+.dome-fab__tag {
+  margin-top: -9px;
+  position: relative;
+  z-index: 1;
+  border: 2px solid #6b2d12;
+  border-radius: 999px;
+  padding: 0 7px;
+  color: #5a2412;
+  background: linear-gradient(180deg, #fff8df 0%, #ffd98a 100%);
+  box-shadow: 0 2px 0 #6b2d12;
+  font-size: .64rem;
+  font-weight: 900;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.dome-fab:hover .dome-fab__badge { filter: brightness(1.06) saturate(1.08); }
+.dome-fab:active .dome-fab__badge { transform: translateY(3px); box-shadow: 0 1px 0 #4a1f0a, 0 0 0 2px #6b2d12, 0 4px 10px rgb(74 31 10 / .3); animation: none; }
+.dome-fab:focus-visible { outline: 3px solid #7651d3; outline-offset: 2px; }
+
+@keyframes dome-fab-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dome-fab__badge { animation: none; }
+}

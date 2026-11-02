@@ -2,21 +2,26 @@
 
 Back buttons use explicit links or an explicit confirm flow. No student back control uses `history.back()` or `router.back()`.
 
+## Navigation model
+
+- **Main tabs** — `/home`, `/map`, `/knowledge`, `/rewards`, `/profile`: no back button. They show the bottom menu bar (`components/bottom-nav.tsx`) and a floating Dome button (`components/dome-fab.tsx`) that opens `/dome?from=<tab>`; the chat's back button returns to that tab (whitelisted, anything else falls back to `/home`). On `/map` the Dome button sits in the map art's top-left corner (over the painted back arrow) so it never covers islands, the pointer hand, or the boss card.
+- **Sub-pages** — everything else keeps the round wooden back button (`StudentBackButton`) and no menu bar, except `/result` and `/showcase`, which keep the menu bar by design.
+
 | Student page | Back target | Behavior |
 | --- | --- | --- |
-| `/home` | — | Root student lobby; no back button. |
-| `/map` | `/home` | Round wooden map hotspot. |
+| `/home` | — | Main tab; menu bar, no back button. |
+| `/map` | — | Main tab; menu bar, no back button (Dome button covers the painted arrow). |
 | `/mission/[id]` | `/map` | Opens the exit confirmation while the mission is active; completed missions use the existing map CTA. |
 | `/ceo` | `/map` | Opens the exit confirmation while the boss form is active; submitted status is a direct link. |
 | `/posttest` | `/map` | Waiting/result screens use an explicit link; the active quiz asks before leaving. |
 | `/pretest` | `/home` | Explicit game-frame link. |
 | `/reflect` | `/posttest` | Active reflection returns to the posttest step; completed reflection returns to `/result`. |
 | `/result` | `/home` | Shared header link. |
-| `/knowledge` | `/home` | Shared header link. |
-| `/rewards` | `/home` | Shared header link. |
-| `/profile` | `/home` | Shared student-shell link. `/check` returns here. |
+| `/knowledge` | — | Main tab; menu bar, no back button. |
+| `/rewards` | — | Main tab; menu bar, no back button. |
+| `/profile` | — | Main tab; menu bar, no back button. `/check` returns here. |
 | `/setup` | `/home` | Shared student-shell link; locked state keeps its existing home CTA. |
-| `/dome` | `/home` | Shared header link. |
+| `/dome` | `?from=` tab or `/home` | Shared header link; returns to the main tab whose Dome button opened it. |
 | `/check` | `/profile` | Shared student-shell link. |
 | `/my-site` | `/home` | Shared header link. |
 | `/showcase` | `/home` | Shared header link. |

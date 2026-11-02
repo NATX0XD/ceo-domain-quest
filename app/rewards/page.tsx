@@ -9,12 +9,10 @@ import {
   Card,
   CheckIcon,
   ChevronRightIcon,
-  DomeAvatar,
   InfoIcon,
   ProgressBar,
   SceneDecor,
   Sheet,
-  SpeechBubble,
   StarIcon,
   StatBadge,
 } from '@/components/ui'
@@ -39,17 +37,11 @@ export default async function RewardsPage() {
 
   const data = await lessonSummary(session.studentId)
   const perMissionMax = selfProfile.starBudget.perMissionMax
-  const nothingYet = data.totalStars === 0 && !data.bigMissionSubmitted
   const goalPercent =
     data.goalStars && data.goalStars > 0
       ? Math.min(Math.round((data.totalStars / data.goalStars) * 100), 100)
       : null
   const nextStar = data.missions.find((m) => m.stars < perMissionMax) ?? null
-  const nowLine = nextStar
-    ? `เหรียญถัดไปอยู่ที่ “${nextStar.title}” เก็บเพิ่มได้อีก ${perMissionMax - nextStar.stars} ดวง`
-    : data.bigMissionSubmitted
-      ? 'เหรียญภารกิจย่อยครบแล้ว เหลือรอครูยืนยันดาวด่านบอสครับ'
-      : `เหรียญภารกิจย่อยครบแล้ว ไปเก็บดาวเพิ่มที่ด่านบอสได้อีกสูงสุด ${data.bigMissionMaxStars} ดวง`
   const nextHref = nextStar ? `/mission/${nextStar.id}` : '/ceo'
 
   return (
@@ -71,12 +63,6 @@ export default async function RewardsPage() {
       footer={
         <>
           <AppFooter divider={false} className="rw-footer">
-            <div className="rw-dome-tip">
-              <DomeAvatar mood={nothingYet ? 'cheer' : 'celebrate'} size={44} decorative />
-              <SpeechBubble speaker="dome" tail="left" className="rw-speech">
-                <span>{nowLine}</span>
-              </SpeechBubble>
-            </div>
             <Link href={nextHref} className="rw-primary-cta">
               {nextStar ? 'ไปเก็บดาวต่อ' : 'ไปด่านบอส CEO'}
               <ChevronRightIcon width={22} height={22} aria-hidden />

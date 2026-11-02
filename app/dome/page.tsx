@@ -5,13 +5,15 @@ import { domeGreeting, domeNextStep, domeQuickReplies } from '@/components/serve
 import { loadSelfProfileDb, loadShopProfile } from '@/components/server/game-state'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
+import { mainTabReturnPath } from '@/components/dome-fab'
 
 export const metadata: Metadata = { title: 'คุยกับเลขาโดม — CEO Domain Quest' }
 
 export const dynamic = 'force-dynamic'
 
 /** หน้าแรกของนักเรียนคือหน้าคุยกับโดม ไม่ใช่แบบฟอร์ม (ตาม mockup หน้า 1) */
-export default async function DomePage() {
+export default async function DomePage({ searchParams }: { searchParams: Promise<{ from?: string | string[] }> }) {
+  const backHref = mainTabReturnPath((await searchParams).from)
   const session = await readStudentSession()
   if (!session) return <SignInGate />
 
@@ -30,6 +32,7 @@ export default async function DomePage() {
       quickReplies={domeQuickReplies()}
       currentMissionId={currentMissionId}
       nextStep={domeNextStep(profile?.shopName ?? null, selfProfile.route !== null)}
+      backHref={backHref}
     />
   )
 }
