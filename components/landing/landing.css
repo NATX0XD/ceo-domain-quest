@@ -56,14 +56,9 @@
   min-height: 54px; padding: 0 28px; border-radius: 1.15rem; border: 0; cursor: pointer; text-decoration: none;
   font-family: var(--font-display-thai), sans-serif; font-weight: 700; font-size: 20px; white-space: nowrap;
   color: #fff; text-shadow: 0 2px 0 rgba(120,40,0,.45);
-  --game-left: url('/ui/kit/buttons/orange-primary-left.webp');
   --game-fill: linear-gradient(180deg, var(--ld-orange-1), var(--ld-orange-2));
-  --game-right: url('/ui/kit/buttons/orange-primary-right.webp');
   background-color: var(--ld-orange-2);
-  background-image: var(--game-left), var(--game-fill), var(--game-right);
-  background-position: left center, center, right center;
-  background-repeat: no-repeat;
-  background-size: auto 100%, calc(100% - 3.8rem) 100%, auto 100%;
+  background-image: var(--game-fill);
   box-shadow: 0 6px 0 #b04508, 0 12px 20px rgba(160,60,0,.35);
   transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
   -webkit-tap-highlight-color: transparent; overflow: visible;
@@ -76,9 +71,7 @@
 .ld-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #b04508, 0 4px 10px rgba(160,60,0,.3), inset 0 2px 0 rgba(255,255,255,.5); }
 .ld-btn:focus-visible, .ld-step-btn:focus-visible { outline: 4px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 7px var(--ld-purple); }
 .ld-btn--ghost {
-  --game-left: url('/ui/kit/buttons/purple-left.webp');
   --game-fill: linear-gradient(180deg, #c766ff, #7319dc);
-  --game-right: url('/ui/kit/buttons/purple-right.webp');
   background-color: var(--ld-purple);
   text-shadow: 0 2px 0 rgba(40,10,100,.45);
   box-shadow: 0 6px 0 var(--ld-purple-d), 0 12px 20px rgba(60,30,140,.3), inset 0 2px 0 rgba(255,255,255,.5);

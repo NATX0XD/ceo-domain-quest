@@ -1195,11 +1195,9 @@ select {
 .game-button:disabled,
 .game-button:disabled:is(.game-button--orange, .game-button--primary, .game-button--green, .game-button--blue, .game-button--purple, .game-button--cream, .game-button--secondary, .game-button--red, .game-button--home) {
   --game-base: #969392;
-  --game-left: url('/ui/kit/buttons/grey-disabled-left.webp');
   --game-fill: linear-gradient(180deg, #d9d6d4 0%, #a7a3a0 100%);
   --game-edge: #77706c;
   background-color: transparent;
-  --game-right: url('/ui/kit/buttons/grey-disabled-right.webp');
   cursor: not-allowed;
   filter: none;
   opacity: .9;
@@ -1208,55 +1206,39 @@ select {
 }
 .game-button--orange,
 .game-button--primary {
-  --game-left: url('/ui/kit/buttons/orange-primary-left.webp');
   --game-fill: linear-gradient(180deg, #ffc51b 0%, #ff7411 100%);
-  --game-right: url('/ui/kit/buttons/orange-primary-right.webp');
 }
 .game-button--green {
   --game-base: #0aab47;
-  --game-left: url('/ui/kit/buttons/green-left.webp');
   --game-fill: linear-gradient(180deg, #43df55 0%, #0aab47 100%);
-  --game-right: url('/ui/kit/buttons/green-right.webp');
 }
 .game-button--blue {
   --game-base: #086ddd;
-  --game-left: url('/ui/kit/buttons/blue-left.webp');
   --game-fill: linear-gradient(180deg, #34aafc 0%, #086ddd 100%);
-  --game-right: url('/ui/kit/buttons/blue-right.webp');
 }
 .game-button--purple {
   --game-base: #7319dc;
-  --game-left: url('/ui/kit/buttons/purple-left.webp');
   --game-fill: linear-gradient(180deg, #c766ff 0%, #7319dc 100%);
-  --game-right: url('/ui/kit/buttons/purple-right.webp');
 }
 .game-button--cream,
 .game-button--secondary {
   --game-base: #ffdca8;
-  --game-left: url('/ui/kit/buttons/cream-back-left.webp');
   --game-fill: linear-gradient(180deg, #fffdf0 0%, #ffdca8 100%);
-  --game-right: url('/ui/kit/buttons/cream-back-right.webp');
   color: #5a2812;
   text-shadow: 0 1px 0 #fff;
   box-shadow: 0 5px 0 #6b2d12, 0 8px 14px rgb(74 31 10 / .12);
 }
 .game-button--red {
   --game-base: #d92e45;
-  --game-left: url('/ui/kit/buttons/red-cancel-left.webp');
   --game-fill: linear-gradient(180deg, #ff6572 0%, #d92e45 100%);
-  --game-right: url('/ui/kit/buttons/red-cancel-right.webp');
 }
 .game-button--grey {
   --game-base: #969392;
-  --game-left: url('/ui/kit/buttons/grey-disabled-left.webp');
   --game-fill: linear-gradient(180deg, #d2d0d0 0%, #969392 100%);
-  --game-right: url('/ui/kit/buttons/grey-disabled-right.webp');
 }
 .game-button--home {
   --game-base: #e8e0d4;
-  --game-left: url('/ui/kit/buttons/cream-home-left.webp');
   --game-fill: linear-gradient(180deg, #fffdf7 0%, #e8e0d4 100%);
-  --game-right: url('/ui/kit/buttons/cream-home-right.webp');
   color: #21456e;
   text-shadow: 0 1px 0 #fff;
   box-shadow: 0 5px 0 #6b2d12, 0 8px 14px rgb(74 31 10 / .12);
@@ -1286,15 +1268,15 @@ select {
   width: min(100%, 24rem);
   margin-inline: auto;
   min-height: 5.5rem;
-  padding: 1.1rem 1.6rem 1.2rem;
-  background: url('/ui/kit/signs/welcome-subtitle.webp') center / 100% 100% no-repeat;
+  padding: 1rem clamp(2.15rem, 7vw, 2.5rem) 1.05rem;
+  background: url('/ui/kit/signs/wood-blank.webp') center / 100% 100% no-repeat;
   color: #5a2812;
   filter: drop-shadow(0 6px 0 rgb(74 31 10 / .3));
   transform: rotate(-1deg);
 }
 .wood-sign__rope { position: absolute; top: -.6rem; width: 58%; height: .75rem; border-top: 3px solid #6b2d12; opacity: .72; }
-.wood-sign__title { margin: 0; color: inherit; font-family: var(--font-display), sans-serif; font-size: clamp(1.35rem, 5vw, 1.9rem); font-weight: 800; line-height: 1.25; text-shadow: 0 2px 0 rgb(255 241 214 / .8); }
-.wood-sign__detail { margin-top: .2rem; font-size: .9rem; font-weight: 700; opacity: .94; }
+.wood-sign__title { margin: 0; color: inherit; font-family: var(--font-display), sans-serif; font-size: clamp(1.25rem, 5vw, 1.8rem); font-weight: 800; line-height: 1.18; text-align: center; text-shadow: 0 2px 0 rgb(255 241 214 / .8); }
+.wood-sign__detail { max-width: 100%; margin-top: .25rem; font-size: clamp(.78rem, 3.2vw, .9rem); font-weight: 700; line-height: 1.35; text-align: center; opacity: .94; }
 .dome-board-frame {
   position: relative;
   isolation: isolate;
@@ -2227,10 +2209,7 @@ select {
 .student-world .btn-quest,
 .student-world .btn-base[class*='bg-brand-600'],
 .student-world .btn-base[class*='bg-brand-700'] {
-  background-image: url('/ui/kit/buttons/orange-primary-left.webp'), linear-gradient(180deg, #ffc51b 0%, #ff7411 100%), url('/ui/kit/buttons/orange-primary-right.webp');
-  background-position: left center, center, right center;
-  background-repeat: no-repeat;
-  background-size: auto 100%, calc(100% - 3.8rem) 100%, auto 100%;
+  background-image: linear-gradient(180deg, #ffc51b 0%, #ff7411 100%);
 }
 .student-world .btn-base[class*='bg-quest-600'],
 .student-world .btn-base[class*='bg-quest-700'],
@@ -2238,10 +2217,7 @@ select {
   border: 3px solid #fff1d6;
   border-radius: 1.15rem;
   background-color: #0aab47;
-  background-image: url('/ui/kit/buttons/green-left.webp'), linear-gradient(180deg, #43df55 0%, #0aab47 100%), url('/ui/kit/buttons/green-right.webp');
-  background-position: left center, center, right center;
-  background-repeat: no-repeat;
-  background-size: auto 100%, calc(100% - 3.8rem) 100%, auto 100%;
+  background-image: linear-gradient(180deg, #43df55 0%, #0aab47 100%);
   color: #fff;
   box-shadow: 0 7px 0 #176129, inset 0 3px 0 rgb(255 255 255 / .6);
   text-shadow: 0 2px 0 #176129;
@@ -2251,10 +2227,7 @@ select {
 .student-world .btn-base[class*='bg-brand-100'] {
   border: 2px solid #fff1d6;
   border-radius: 1rem;
-  background-image: url('/ui/kit/buttons/cream-back-left.webp'), linear-gradient(180deg, #fffdf0 0%, #ffdca8 100%), url('/ui/kit/buttons/cream-back-right.webp');
-  background-position: left center, center, right center;
-  background-repeat: no-repeat;
-  background-size: auto 100%, calc(100% - 3.8rem) 100%, auto 100%;
+  background-image: linear-gradient(180deg, #fffdf0 0%, #ffdca8 100%);
   color: #5a2812;
   box-shadow: 0 4px 0 #6b2d12;
 }
