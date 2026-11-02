@@ -4,6 +4,7 @@ import { Icon3d } from '../_ux/v2'
 
 import { useState } from 'react'
 import { Button, Card, Field, TextInput } from '../_ux/ui'
+import styles from './settings.module.css'
 
 type Props = { email: string; initialDisplayName: string }
 type Notice = { kind: 'success' | 'error'; text: string } | null
@@ -47,10 +48,12 @@ export function TeacherAccountPanel({ email, initialDisplayName }: Props) {
   const nameChanged = displayName.trim() !== initialDisplayName.trim()
   return (
     <div className="grid gap-4 lg:grid-cols-2" aria-labelledby="teacher-account-title">
-      <Card icon={<Icon3d name="bust-in-silhouette" size={22} />} tone="blue" title={<span id="teacher-account-title">บัญชี</span>}>
-        <dl className="mb-4 grid gap-3 text-[15px] sm:grid-cols-2">
-          <div><dt className="text-[14px] text-[var(--c-ink-3)]">อีเมล</dt><dd className="break-all font-medium text-[var(--c-ink)]">{email}</dd></div>
-        </dl>
+      <Card icon={<Icon3d name="bust-in-silhouette" size={22} />} tone="blue" title={<span id="teacher-account-title">ข้อมูลบัญชี</span>}>
+        <p className={styles.accountIntro}>ข้อมูลสำหรับระบุตัวตนครูและชื่อที่จะแสดงบนแผงควบคุม</p>
+        <div className={styles.accountEmail}>
+          <Icon3d name="speech-balloon" size={22} />
+          <span>{email}</span>
+        </div>
         <form className="grid gap-4" onSubmit={(event) => { event.preventDefault(); void submit({ displayName }, 'name') }}>
           <Field label="เปลี่ยนชื่อที่แสดง" htmlFor="acc-name" help="ชื่อนี้แสดงบนแผงครู">
             <TextInput id="acc-name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={80} required />
@@ -63,7 +66,8 @@ export function TeacherAccountPanel({ email, initialDisplayName }: Props) {
         </form>
       </Card>
 
-      <Card icon={<Icon3d name="locked" size={22} />} tone="rose" title="รหัสผ่าน">
+      <Card icon={<Icon3d name="locked" size={22} />} tone="rose" title="รักษาความปลอดภัย">
+        <p className={styles.accountIntro}>เปลี่ยนรหัสผ่านเป็นระยะเพื่อให้บัญชีครูของคุณปลอดภัย</p>
         <form className="grid gap-4" onSubmit={(event) => { event.preventDefault(); void submit({ currentPassword, newPassword, confirmPassword }, 'password') }}>
           <Field label="รหัสผ่านปัจจุบัน" htmlFor="acc-cur">
             <TextInput id="acc-cur" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required />

@@ -2,12 +2,15 @@ import type { Metadata } from 'next'
 import { UrlTabs } from '../_ux/url-tabs'
 import QRCode from 'qrcode'
 import { getTeacher } from '@/lib/db/repo'
+import { getServiceClient } from '@/lib/db/client'
+import { countStudentRowsByClassroom } from '@/lib/classroom-stats'
 import { TeacherRoomClient } from '@/components/teacher-room-client'
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
 import { PageBody, PageHead } from '../_ux/page-head'
 import { Icon3d } from '../_ux/v2'
 import { Card } from '../_ux/ui'
 import { TeacherAccountPanel } from './account-panel'
+import styles from './settings.module.css'
 
 export const metadata: Metadata = { title: 'ตั้งค่าห้อง — สำหรับครู' }
 export const dynamic = 'force-dynamic'
@@ -33,6 +36,11 @@ export default async function TeacherSettingsPage({
   if (!data) return <TeacherSignedOut title="ตั้งค่าห้อง" />
 
   const teacher = await getTeacher(data.teacherId)
+  const classroomIds = data.classrooms.map((classroom) => classroom.id)
+  const { data: studentRows } = classroomIds.length > 0
+    ? await getServiceClient().from('students').select('classroom_id').in('classroom_id', classroomIds)
+    : { data: [] as { classroom_id: string }[] }
+  const studentCounts = countStudentRowsByClassroom(studentRows ?? [])
 
   // QR ของลิงก์เข้าห้อง — สร้างเป็น SVG ฝั่งเซิร์ฟเวอร์ ไม่ต้องพึ่ง JS ฝั่งเบราว์เซอร์
   const joinPath = data.selectedRoomCode ? `/join?code=${data.selectedRoomCode}` : '/join'
@@ -49,49 +57,51 @@ export default async function TeacherSettingsPage({
         label="หมวดตั้งค่าห้อง"
         items={[
           { value: 'room', label: 'ห้องเรียน', content: (
-        <div className="grid items-start gap-4 lg:grid-cols-2">
-          <TeacherRoomClient roomCode={data.selectedRoomCode} joinPath={joinPath} classroomId={data.selectedId} />
-
-          {qrSvg ? (
-            <Card icon={<Icon3d name="door" size={22} />} tone="teal" title="สแกนเข้าห้อง" className="text-center">
-              {/* eslint-disable-next-line react/no-danger */}
-              <div
-                className="mx-auto w-full max-w-[12rem]"
-                role="img"
-                aria-label={`QR code ของลิงก์ ${joinUrl}`}
-                dangerouslySetInnerHTML={{ __html: qrSvg }}
-              />
-              <p className="mt-3 text-[14px] break-all text-[var(--c-ink-3)]">{joinUrl}</p>
-            </Card>
-          ) : null}
-        </div>
+        <TeacherRoomClient
+          selectedId={data.selectedId}
+          joinUrl={data.selectedRoomCode ? joinUrl : null}
+          qrSvg={qrSvg}
+          rooms={data.classrooms.map((classroom) => ({
+            id: classroom.id,
+            roomCode: classroom.room_code,
+            status: classroom.status,
+            createdAt: classroom.created_at,
+            studentCount: studentCounts[classroom.id] ?? 0,
+            isDemo: classroom.is_demo,
+          }))}
+        />
 
           ) },
           { value: 'account', label: 'บัญชี', content: (
-            <>{teacher ? <TeacherAccountPanel email={teacher.email} initialDisplayName={teacher.name ?? ''} /> : null}</>
+            <div className={styles.accountGrid}>
+              {teacher ? <TeacherAccountPanel email={teacher.email} initialDisplayName={teacher.name ?? ''} /> : null}
+            </div>
           ) },
           { value: 'export', label: 'ดาวน์โหลดข้อมูล', content: (
         <>{data.selectedId ? (
-          <Card
-            icon={<Icon3d name="package" size={22} />}
-            tone="amber"
-            title="ดาวน์โหลด CSV"
-            tip="ไฟล์ใช้ชื่อสมมติแทนชื่อจริงของนักเรียน (pseudonymize) นำไปวิเคราะห์ต่อได้เลย"
-          >
-            <ul className="grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
-              {EXPORTS.map((item) => (
-                <li key={item.type}>
-                  <a
-                    href={`/api/teacher/export?classroomId=${data.selectedId}&type=${item.type}&pseudonymize=1`}
-                    className="flex h-12 items-center gap-3 rounded-lg border border-[var(--c-line-strong)] bg-white px-3 text-[15px] font-semibold text-[var(--c-ink)] transition-colors hover:bg-[var(--c-sunken)] focus-visible:ring-2 focus-visible:ring-[var(--c-brand-ring)] focus-visible:outline-none"
-                  >
-                    <Icon3d name={item.icon} size={24} />
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </Card>
+          <div className={styles.exportCard}>
+            <Card
+              icon={<Icon3d name="package" size={22} />}
+              tone="amber"
+              title="ดาวน์โหลดข้อมูลห้องนี้"
+              tip="ไฟล์ใช้ชื่อสมมติแทนชื่อจริงของนักเรียน (pseudonymize) นำไปวิเคราะห์ต่อได้เลย"
+            >
+              <p className={styles.exportIntro}>เลือกชุดข้อมูลที่ต้องการเก็บไว้ใช้ต่อได้เลย ทุกไฟล์จะใช้รหัสแทนชื่อจริงของนักเรียน</p>
+              <ul className="grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
+                {EXPORTS.map((item) => (
+                  <li key={item.type}>
+                    <a
+                      href={`/api/teacher/export?classroomId=${data.selectedId}&type=${item.type}&pseudonymize=1`}
+                      className={`${styles.exportLink} flex h-12 items-center gap-3 rounded-lg border px-3 text-[15px] font-semibold text-[var(--c-ink)] transition-all focus-visible:ring-2 focus-visible:ring-[var(--c-brand-ring)] focus-visible:outline-none`}
+                    >
+                      <Icon3d name={item.icon} size={24} />
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </div>
         ) : null}</>
           ) },
         ]}
