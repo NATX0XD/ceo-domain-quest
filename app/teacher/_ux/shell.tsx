@@ -577,7 +577,7 @@ export function TeacherShell({
           <TeacherDeviceRecommendation />
 
           {/* เนื้อหา — ชั้นเดียวที่เลื่อนได้ */}
-          <main className="teacher-cms-main t3-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-busy={navigating || undefined}>
+          <main className="teacher-cms-main t3-scroll pb-24 min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-busy={navigating || undefined}>
             {createdBanner}
             {children}
           </main>
