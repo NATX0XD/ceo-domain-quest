@@ -84,17 +84,23 @@ function ReviewStepHeading({ number, title, icon, detail }: { number: string; ti
   )
 }
 
-/** ตัดคำสรุปให้เหลือประโยคเดียวและไม่ทวนคะแนนที่แสดงแยกอยู่แล้ว */
-export function trimFeedback(text: string | undefined | null, max = 90): string {
+/** สรุปของโดม: ไม่ทวนคะแนนที่แสดงแยกอยู่แล้ว · ภาษาไทยไม่มีจุดจบประโยค ห้ามตัดกลางคำ
+ *  จึงแสดงเต็ม และถ้ายาวมากค่อยตัดที่ช่องว่างสุดท้ายก่อนถึงขีดจำกัด */
+export function trimFeedback(text: string | undefined | null, max = 240): string {
   const t = stripFeedbackScorePrefix(text).replace(/\s+/g, ' ').trim()
   if (!t) return ''
-  const sentence = t.match(/[^.!?。]+[.!?。]?/)?.[0]?.trim() ?? t
+  // ไม่ตัดที่จุด — ข้อความมีนามสกุลเว็บอย่าง .com .in.th จะโดนตัดกลางคำ
+  const sentence = t
   let out = sentence
     .replace(/\s*(?:คะแนน|score)\s*(?:ระบบ|รวม|ที่ได้|AI เสนอ)?\s*\d+\s*\/\s*\d+/gi, '')
     .replace(/\s*\d+\s*\/\s*\d+\s*(?:คะแนน)?/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim()
-  if (out.length > max) out = out.slice(0, max - 1).trimEnd() + '…'
+  if (out.length > max) {
+    const cut = out.slice(0, max)
+    const space = cut.lastIndexOf(' ')
+    out = (space > max * 0.6 ? cut.slice(0, space) : cut).trimEnd() + '…'
+  }
   return out
 }
 
