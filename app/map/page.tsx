@@ -31,7 +31,7 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
     savedRoute === 'clip' ? 'watch' : savedRoute === 'card' ? 'read' : savedRoute === 'game' ? 'do' : null
 
   return (
-    <AppShell className="media-shell student-display student-world" mainLabel="แผนที่ภารกิจ" footer={<BottomNav />}>
+    <AppShell className="media-shell student-display student-world map-shell-fit" mainLabel="แผนที่ภารกิจ" footer={<BottomNav />} fit>
       <MapHotspots
         imageState={mapState}
         nudge={nudge}

@@ -138,6 +138,22 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
           draggable={false}
         />
 
+        <div className="map-ambient" aria-hidden="true">
+          <span className="map-cloud map-cloud-one" />
+          <span className="map-cloud map-cloud-two" />
+          <span className="map-bird map-bird-one" />
+          <span className="map-bird map-bird-two" />
+          <span className="map-wave map-wave-one" />
+          <span className="map-wave map-wave-two" />
+          <span className="map-wave map-wave-three" />
+          <span className="map-dome-guide">
+            {/* eslint-disable-next-line @next/next/no-img-element -- มาสคอตตกแต่งในฉากแผนที่ */}
+            <img src="/dome/mascot/dome-greet.webp" alt="" draggable={false} />
+            <i className="map-dome-blink map-dome-blink-left" />
+            <i className="map-dome-blink map-dome-blink-right" />
+          </span>
+        </div>
+
         <Link href="/home" aria-label="กลับหน้าหลัก" className="map-back-hotspot focus-ring">
           <ArrowLeftIcon aria-hidden width={26} height={26} />
         </Link>
@@ -147,7 +163,11 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
           const unlocked = mission.passed || previousPassed
           const label = `ภารกิจที่ ${index + 1} ${mission.title} ${statusOf(mission, unlocked)}`
           return (
-            <div key={mission.id} className="map-hotspot-layer">
+            <div
+              key={mission.id}
+              className={`map-hotspot-layer map-hotspot-layer-${index + 1}`}
+              style={{ '--map-island-delay': `${index * -0.8}s` } as CSSProperties}
+            >
               {unlocked ? (
                 <button
                   type="button"
@@ -168,6 +188,13 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
                 <span>{mission.stars}/{mission.maxStars}</span>
                 {mission.passed ? <CheckIcon aria-hidden width={15} height={15} strokeWidth={3} /> : null}
               </span>
+              {mission.passed ? (
+                <span className="map-complete-sparkles" aria-hidden="true">
+                  <img src="/icons/3d/sparkles.webp" alt="" draggable={false} />
+                  <img src="/icons/3d/sparkles.webp" alt="" draggable={false} />
+                  <img src="/icons/3d/sparkles.webp" alt="" draggable={false} />
+                </span>
+              ) : null}
               {index === doneIndex ? (
                 <span className="map-done-ring" style={ISLAND_HOTSPOTS[index]} aria-hidden="true">
                   <motion.span
@@ -182,7 +209,11 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
                 </span>
               ) : null}
               {index === nextIndex && drawerIndex === null ? (
-                <span className="map-next-ring" style={ISLAND_HOTSPOTS[index]} aria-hidden="true">
+                <span className="map-next-pointer" style={ISLAND_HOTSPOTS[index]} aria-hidden="true">
+                  <span className="map-next-pointer-art">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- asset มือชี้ที่สร้างสำหรับแผนที่ */}
+                    <img src="/ui/map/pointer-hand.webp" alt="" draggable={false} />
+                  </span>
                   <span className="map-next-tag">แตะเพื่อเริ่ม ภารกิจที่ {index + 1}</span>
                 </span>
               ) : null}
