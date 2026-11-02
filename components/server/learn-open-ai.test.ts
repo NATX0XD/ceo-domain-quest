@@ -60,7 +60,7 @@ describe('scoreOpenAnswers + AI ช่วยตรวจ', () => {
           {
             id: 'm1-wq1',
             concepts: [{ quote: 'ป้ายบอกบ้านบนอินเทอร์เน็ต', covered: true }, { quote: '', covered: false }],
-            feedback: 'ลองเล่าเพิ่มว่าช่วยให้คนจำง่ายขึ้นอย่างไรนะ',
+            feedback: 'เปรียบเป็นป้ายบอกบ้านได้ดีครับ ลองคิดต่อว่าลูกค้าได้ประโยชน์อะไรครับ',
           },
           {
             id: 'm1-wq2',
@@ -78,7 +78,9 @@ describe('scoreOpenAnswers + AI ช่วยตรวจ', () => {
     )
     const [q1, q2] = r.perQuestion
     expect(q1).toMatchObject({ source: 'typhoon', keywordScore: 0, aiScore: 70, score: 70 })
-    expect(q1!.feedback).toBe('ลองเล่าเพิ่มว่าช่วยให้คนจำง่ายขึ้นอย่างไรนะ')
+    expect(q1!.feedback).toBe('เปรียบเป็นป้ายบอกบ้านได้ดีครับ ลองคิดต่อว่าลูกค้าได้ประโยชน์อะไรครับ')
+    expect(q1!.feedbackSource).toBe('ai')
+    expect(q2).toMatchObject({ feedback: 'อธิบายได้ครบเลย', feedbackSource: 'ai' })
     expect(q1!.missing).toEqual(['บอกว่าช่วยให้คนจำง่ายหรือสะดวกกว่าหมายเลข IP'])
     expect(q2).toMatchObject({ source: 'typhoon', aiScore: 100, score: 100, missing: [] })
     expect(q2!.keywordScore).toBeLessThan(100)
@@ -120,11 +122,20 @@ describe('scoreOpenAnswers + AI ช่วยตรวจ', () => {
     }
   })
 
-  it('ข้อที่คำสำคัญเต็มแล้วหรือว่าง ไม่ส่งให้ AI และไม่กินโควตา', async () => {
-    const { checker, fetchImpl } = typhoonClient(typhoonPayload({ results: [] }))
+  it('ข้อว่างไม่ส่งให้ AI · ข้อที่คำสำคัญเต็มแล้วยังส่ง (ในคำขอเดียว) เพื่อให้โดมสรุปให้', async () => {
+    const empty = typhoonClient(typhoonPayload({ results: [] }))
+    await scoreOpenAnswers(path, 'watch', { 'm1-wq1': ' ', 'm1-wq2': '' }, { checker: empty.checker, studentId: 's2' })
+    expect(empty.fetchImpl).not.toHaveBeenCalled()
+
+    const { checker, fetchImpl } = typhoonClient(
+      typhoonPayload({
+        results: [{ id: 'm1-wq1', concepts: [{ quote: 'ชื่อเว็บร้าน', covered: true }, { quote: 'จำง่ายกว่าตัวเลข', covered: true }], feedback: 'อธิบายครบทั้งชื่อเว็บร้านและเรื่องจำง่ายเลยครับ เก่งมาก' }],
+      }),
+    )
     const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': KEYWORD_FULL, 'm1-wq2': ' ' }, { checker, studentId: 's2' })
-    expect(fetchImpl).not.toHaveBeenCalled()
-    expect(r.perQuestion[0]).toMatchObject({ score: 100, source: 'rule' })
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    expect(r.perQuestion[0]).toMatchObject({ score: 100, feedbackSource: 'ai', feedback: 'อธิบายครบทั้งชื่อเว็บร้านและเรื่องจำง่ายเลยครับ เก่งมาก' })
+    expect(r.perQuestion[1]).toMatchObject({ source: 'rule', feedbackSource: 'script' })
   })
 
   it('AI ตอบ true แต่ยกหลักฐานที่ไม่มีอยู่จริงในคำตอบ = ไม่นับ (กันโมเดลใจดีเกินและคำสั่งแทรก)', async () => {
@@ -149,5 +160,57 @@ describe('scoreOpenAnswers + AI ช่วยตรวจ', () => {
     expect(r.perQuestion[0]!.score).toBe(70)
     expect(r.perQuestion[0]!.feedback).not.toContain('ไม่ผ่าน')
     expect(r.perQuestion[0]!.feedback.length).toBeGreaterThan(0)
+  })
+})
+
+describe('โดมตอบกลับด้วยคำแนะนำจริงของ AI (มีทางสำรองเป็นข้อความเดิม)', () => {
+  const RETRY = 'ยังไม่ครบ ลองอีกนิดนะครับ ลองย้อนดูช่วงที่ลูกค้าพิมพ์ชื่อเว็บร้าน แล้วบอกว่าเป็นชื่อของอะไรและช่วยให้จำง่ายอย่างไร'
+  const partial = (feedback: string) =>
+    typhoonPayload({ results: [{ id: 'm1-wq1', concepts: [{ quote: 'ป้ายบอกบ้านบนอินเทอร์เน็ต', covered: true }, { quote: '', covered: false }], feedback }] })
+
+  it('AI ตอบได้ = feedback ของโดมมาจาก AI ติดป้าย ai', async () => {
+    const { checker } = typhoonClient(partial('เปรียบเป็นป้ายบอกบ้านเห็นภาพดีครับ แล้วถ้าไม่มีป้ายนี้ ลูกค้าต้องพิมพ์อะไรแทนครับ'))
+    const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': PARAPHRASE, 'm1-wq2': '' }, { checker })
+    expect(r.perQuestion[0]).toMatchObject({ feedbackSource: 'ai', score: 70 })
+    expect(r.perQuestion[0]!.feedback).toContain('ป้ายบอกบ้าน')
+  })
+
+  it('AI ช้าเกินงบ = ข้อความเดิม ไม่ค้างนักเรียน', async () => {
+    const fetchImpl = vi.fn(
+      (_url: string, init?: RequestInit) =>
+        new Promise<Response>((_, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))),
+    ) as unknown as typeof fetch
+    const checker = createAiClient({ env: { TYPHOON_API_KEY: 'k' }, fetchImpl, timeoutMs: 30 })
+    const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': PARAPHRASE, 'm1-wq2': '' }, { checker })
+    expect(r.perQuestion[0]).toMatchObject({ source: 'rule', feedbackSource: 'script', feedback: RETRY })
+  })
+
+  it('JSON เพี้ยน = ข้อความเดิม', async () => {
+    const { checker } = typhoonClient(typhoonPayload('{"results": [ ไม่จบ'))
+    const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': PARAPHRASE, 'm1-wq2': '' }, { checker })
+    expect(r.perQuestion[0]).toMatchObject({ feedbackSource: 'script', feedback: RETRY })
+  })
+
+  it('คำแนะนำที่เผยคำสำคัญของแนวคิดที่ยังขาด = เฉลยหลุด ใช้ข้อความเดิม', async () => {
+    const { checker } = typhoonClient(partial('ดีครับ ลองบอกเพิ่มว่ามันจำง่ายกว่าตัวเลข IP ครับ'))
+    const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': PARAPHRASE, 'm1-wq2': '' }, { checker })
+    expect(r.perQuestion[0]).toMatchObject({ source: 'typhoon', score: 70, feedbackSource: 'script' })
+    expect(r.perQuestion[0]!.feedback).not.toContain('จำง่าย')
+  })
+
+  it('คำแนะนำที่ลอกคำตอบตัวอย่างมาตรง ๆ = เฉลยหลุด', async () => {
+    const { checker } = typhoonClient(partial('ใกล้แล้วครับ คำตอบคือ ช่วยให้คนจำได้ง่ายกว่าตัวเลข นะครับ'))
+    const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': PARAPHRASE, 'm1-wq2': '' }, { checker })
+    expect(r.perQuestion[0]!.feedbackSource).toBe('script')
+  })
+
+  it('คำแนะนำมีข้อมูลส่วนตัวหรือคำไม่ปลอดภัย = ข้อความเดิม', async () => {
+    for (const fb of ['ส่งคำตอบมาที่ kru@school.ac.th นะครับ', 'เรื่องยาเสพติดอันตรายนะครับ']) {
+      resetAiQuota()
+      const { checker } = typhoonClient(partial(fb))
+      const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': PARAPHRASE, 'm1-wq2': '' }, { checker })
+      expect(r.perQuestion[0]!.feedbackSource).toBe('script')
+      expect(r.perQuestion[0]!.feedback).not.toBe(fb)
+    }
   })
 })

@@ -200,6 +200,8 @@ export interface LearnCheckItemInput {
   /** แนวคิดที่คำตอบควรมี เรียงตามไฟล์เฉลย */
   concepts: string[]
   answer: string
+  /** คำสำคัญของแนวคิดที่นักเรียนยังไม่ได้พูด — ห้ามโมเดลใช้ใน feedback (กันเฉลยหลุด) ส่งไปผู้ให้บริการเท่านั้น ไม่ออกเบราว์เซอร์ */
+  avoid?: string[]
 }
 
 export interface LearnCheckInput {

@@ -16,7 +16,14 @@ export interface WarmupResponse {
 export interface AnswerResponse {
   score: number
   passed: boolean
-  perQuestion: { id: string; score: number; feedback: string; missing: string[] }[]
+  perQuestion: {
+    id: string
+    score: number
+    feedback: string
+    missing: string[]
+    /** 'ai' = feedback คือคำตอบกลับจริงของโดม (AI) · อื่น ๆ = ข้อความเดิมจากไฟล์เฉลย */
+    feedbackSource?: 'ai' | 'script'
+  }[]
 }
 
 export interface DoResponse {

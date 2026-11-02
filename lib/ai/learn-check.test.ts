@@ -101,3 +101,15 @@ describe('กันคำสั่งแทรกในคำตอบ', () => {
     expect(safeLearnFeedback('ลองบอกความแตกต่างกับเลข IP เพิ่มนะ')).toBe('ลองบอกความแตกต่างกับเลข IP เพิ่มนะ')
   })
 })
+
+describe('safeLearnFeedback ทำความสะอาดคำตอบของโดม', () => {
+  it('ตัด markdown และลิงก์ เหลือข้อความล้วน', () => {
+    expect(safeLearnFeedback('**ดีมากครับ** ลองดู [คลิปนี้](https://x.example/a) อีกทีนะครับ')).toBe('ดีมากครับ ลองดู คลิปนี้ อีกทีนะครับ')
+    expect(safeLearnFeedback('`ดีครับ` ดูที่ www.example.com')).toBe('ดีครับ ดูที่')
+  })
+
+  it('มีข้อมูลส่วนตัว (อีเมล เบอร์โทร) = ทิ้ง', () => {
+    expect(safeLearnFeedback('ติดต่อครูที่ kru@school.ac.th ได้ครับ')).toBeNull()
+    expect(safeLearnFeedback('โทร 081-234-5678 ได้เลยครับ')).toBeNull()
+  })
+})

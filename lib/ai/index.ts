@@ -689,9 +689,11 @@ export function createAiClient(deps: AiClientDeps = {}): AiClient {
         (raw, provider) => {
           const parsed = parseLearnCheck(raw, input, provider)
           const fallback = guardMissionScopedText('', { missionId: input.missionId, role: input.role })
+          // feedback null = ถ้อยคำใช้ไม่ได้ ให้ฝั่งเส้นทางเรียนใช้ข้อความเดิมจากไฟล์เฉลย (ไม่แทนด้วยข้อความกันนอกเรื่อง)
           parsed.items = parsed.items.map((item) => {
-            const safe = guardMissionScopedText(item.feedback ?? '', { missionId: input.missionId, role: input.role, fallback })
-            return safe === fallback && item.feedback ? { ...item, covered: item.covered.map(() => false), feedback: safe } : { ...item, feedback: safe }
+            if (!item.feedback) return { ...item, feedback: null }
+            const safe = guardMissionScopedText(item.feedback, { missionId: input.missionId, role: input.role, fallback })
+            return safe === fallback ? { ...item, covered: item.covered.map(() => false), feedback: null } : { ...item, feedback: safe }
           })
           return parsed
         },

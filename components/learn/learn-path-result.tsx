@@ -25,6 +25,11 @@ export function weakest(result: AnswerResponse) {
   return [...result.perQuestion].sort((a, b) => a.score - b.score)[0]
 }
 
+/** คำตอบกลับจริงของโดม (AI) ของข้อนี้ — null = ไม่มี ให้ใช้ข้อความเดิม */
+export function aiReply(q: AnswerResponse['perQuestion'][number] | undefined): string | null {
+  return q?.feedbackSource === 'ai' && q.feedback ? q.feedback : null
+}
+
 /** หน้าสรุปคะแนนและ Feedback (screen 6) */
 export function ResultPanel({
   result,
@@ -99,7 +104,7 @@ export function ResultPanel({
             <LightbulbIcon width={26} height={26} aria-hidden className="lr-point-icon-svg" />
             <div>
               <p className="lr-point-title">สิ่งที่ควรเสริม{weakQ ? ` (ข้อ ${weakQ})` : ''}</p>
-              <p className="lr-point-text">{weak?.missing[0] ? `ลองเติมเรื่อง ${weak.missing[0]}` : improve}</p>
+              <p className="lr-point-text">{aiReply(weak) ?? (weak?.missing[0] ? `ลองเติมเรื่อง ${weak.missing[0]}` : improve)}</p>
             </div>
           </div>
         ) : null}
@@ -142,10 +147,21 @@ export function HelpPanel({
             ไม่เป็นไรครับ เรามาค่อย ๆ ไปทีละจุดกัน
           </Bubble>
         )}
-        <Bubble name="โดม" side="left" tone="dome">
-          จุดที่ยังขาดคือข้อ {wi + 1}
-          {weak?.missing[0] ? ` ลองเติมเรื่อง ${weak.missing[0]}` : ' ลองดูช่วงที่เกี่ยวข้องอีกครั้ง'}
-        </Bubble>
+        {aiReply(weak) ? (
+          <>
+            <Bubble name="โดม" side="left" tone="dome">
+              จุดที่ยังขาดคือข้อ {wi + 1} ครับ
+            </Bubble>
+            <Bubble name="โดม" side="left" tone="dome">
+              {aiReply(weak)}
+            </Bubble>
+          </>
+        ) : (
+          <Bubble name="โดม" side="left" tone="dome">
+            จุดที่ยังขาดคือข้อ {wi + 1}
+            {weak?.missing[0] ? ` ลองเติมเรื่อง ${weak.missing[0]}` : ' ลองดูช่วงที่เกี่ยวข้องอีกครั้ง'}
+          </Bubble>
+        )}
         {hintShown && wq?.hint ? (
           <Bubble name="โดม" side="left" tone="dome">
             <span className="flex items-start gap-2">

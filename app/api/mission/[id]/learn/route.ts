@@ -126,7 +126,13 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
           source: q.source,
           keywordScore: q.keywordScore,
           aiScore: q.aiScore,
+          feedbackSource: q.feedbackSource,
         })),
+        // โดมตอบกลับด้วยคำแนะนำจริงของ AI กี่ข้อ ที่เหลือใช้ข้อความเดิมจากไฟล์เฉลย
+        aiFeedback: {
+          used: result.perQuestion.filter((q) => q.feedbackSource === 'ai').length,
+          fallback: result.perQuestion.filter((q) => q.feedbackSource !== 'ai').length,
+        },
         answers,
       })
       if (result.passed) await logEvent(studentId, LEARN_EVENTS.done, { missionId, mode: body.mode, score: result.score })

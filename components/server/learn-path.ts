@@ -195,7 +195,11 @@ export interface QuestionScore {
   keywordScore: number
   /** คะแนนตามแนวคิดที่ AI ว่าครอบคลุม null = ไม่ได้ใช้ AI กับข้อนี้ */
   aiScore: number | null
+  /** 'ai' = feedback คือคำตอบกลับจริงของโมเดล (ผ่านตัวกรองแล้ว) · 'script' = ข้อความจากไฟล์เฉลยแบบเดิม */
+  feedbackSource: FeedbackSource
 }
+
+export type FeedbackSource = 'ai' | 'script'
 
 type Rubric = z.infer<typeof RubricSchema>
 
@@ -224,32 +228,90 @@ export function scoreOpenAnswer(rubric: Rubric, id: string, text: string): Quest
     source: 'rule',
     keywordScore: score,
     aiScore: null,
+    feedbackSource: 'script',
   }
+}
+
+/** คำสำคัญสั้นกว่านี้ (เช่น ip) ไม่นับเป็นเฉลยหลุด กันตัดคำแนะนำทิ้งเกินเหตุ */
+const GIVEAWAY_MIN_CHARS = 3
+/** ท่อนต่อเนื่องของคำตอบตัวอย่างที่ยาวเท่านี้ขึ้นไป = ลอกเฉลยมาให้ */
+const GIVEAWAY_MODEL_WINDOW = 14
+
+/**
+ * คำแนะนำของ AI เผยเฉลยหรือไม่ — มีคำสำคัญของแนวคิดที่ยังขาด ทั้งที่นักเรียนกับโจทย์ไม่ได้พูดคำนั้น
+ * หรือยกท่อนยาวของคำตอบตัวอย่างมาตรง ๆ = เฉลยหลุด ต้องใช้ข้อความจากไฟล์เฉลยแทน
+ */
+export function feedbackGivesAway(
+  rubric: Rubric,
+  feedback: string,
+  context: { answer: string; question: string; missing: number[] },
+): boolean {
+  const fb = normalizeAnswer(feedback)
+  const said = normalizeAnswer(`${context.answer} ${context.question}`)
+  const keywordLeak = context.missing.some((i) =>
+    (rubric.concepts[i]?.any ?? []).some((word) => {
+      const w = normalizeAnswer(word)
+      return w.length >= GIVEAWAY_MIN_CHARS && fb.includes(w) && !said.includes(w)
+    }),
+  )
+  if (keywordLeak) return true
+  const model = normalizeAnswer(rubric.modelAnswer)
+  for (let i = 0; i + GIVEAWAY_MODEL_WINDOW <= model.length; i++) {
+    const chunk = model.slice(i, i + GIVEAWAY_MODEL_WINDOW)
+    if (fb.includes(chunk) && !said.includes(chunk)) return true
+  }
+  return false
 }
 
 /**
  * รวมผลคำสำคัญกับผล AI ของข้อเดียว — **คะแนน = max(คำสำคัญ, AI)**
  * AI จึงช่วยได้แค่คำตอบที่ใช้คำของตัวเอง ไม่มีวันทำให้เข้มกว่าเดิม
- * คำแนะนำจาก AI ใช้เมื่อผลของ AI เป็นตัวที่ถูกเลือก และยังมีแนวคิดที่ขาด
+ *
+ * คำตอบกลับของโดม (feedback) ใช้ของ AI เมื่อ: AI ไม่ได้ให้คะแนนต่ำกว่าคำสำคัญ (คำแนะนำจะได้ตรงกับคะแนนจริง)
+ * ผ่านตัวกรองชั้น AI แล้ว และไม่เผยเฉลย — ไม่เข้าเงื่อนไขข้อใด = ข้อความจากไฟล์เฉลยแบบเดิมทุกตัวอักษร
  */
 export function mergeAiCheck(
   rubric: Rubric,
   keyword: QuestionScore,
   check: LearnCheckItemResult,
   provider: Exclude<AnswerSource, 'rule'>,
+  context: { answer: string; question: string } = { answer: '', question: '' },
 ): QuestionScore {
   const aiScore = clampScore(rubric.concepts.reduce((s, c, i) => s + (check.covered[i] ? c.points : 0), 0))
-  const base = { ...keyword, source: provider, aiScore }
-  if (aiScore <= keyword.keywordScore) return base
+  const base: QuestionScore = { ...keyword, source: provider, aiScore }
+  if (aiScore < keyword.keywordScore) return base
 
-  const missing = rubric.concepts.filter((_, i) => !check.covered[i]).map((c) => c.label)
-  const feedback =
-    missing.length > 0 && check.feedback
-      ? check.feedback
-      : aiScore > PASS_SCORE
-        ? rubric.feedbackPass
-        : rubric.feedbackRetry
-  return { ...base, score: aiScore, missing, feedback }
+  const aiWins = aiScore > keyword.keywordScore
+  const merged: QuestionScore = aiWins
+    ? {
+        ...base,
+        score: aiScore,
+        missing: rubric.concepts.filter((_, i) => !check.covered[i]).map((c) => c.label),
+        feedback: aiScore > PASS_SCORE ? rubric.feedbackPass : rubric.feedbackRetry,
+      }
+    : base
+  if (!check.feedback) return merged
+  // แนวคิดที่ยังขาดตามผลที่ใช้จริง — คำสำคัญของข้อเหล่านี้ห้ามโผล่ในคำแนะนำ
+  const answerNorm = normalizeAnswer(context.answer)
+  const missingIdx = rubric.concepts
+    .map((c, i) => ({ c, i }))
+    .filter(({ c, i }) => !check.covered[i] && !c.any.some((w) => normalizeAnswer(w).length > 0 && answerNorm.includes(normalizeAnswer(w))))
+    .map(({ i }) => i)
+  if (feedbackGivesAway(rubric, check.feedback, { ...context, missing: missingIdx })) return merged
+  return { ...merged, feedback: check.feedback, feedbackSource: 'ai' }
+}
+
+/** คำสำคัญของแนวคิดที่นักเรียนยังไม่ได้พูด บอกโมเดลว่าห้ามใช้ในคำแนะนำ (ตัวกรอง feedbackGivesAway ยังตรวจซ้ำเสมอ) */
+const AVOID_PER_CONCEPT = 6
+function avoidWords(rubric: Rubric, answer: string, question: string): string[] {
+  const said = normalizeAnswer(`${answer} ${question}`)
+  const out: string[] = []
+  for (const c of rubric.concepts) {
+    if (c.any.some((w) => normalizeAnswer(w).length > 0 && said.includes(normalizeAnswer(w)))) continue
+    const words = c.any.filter((w) => normalizeAnswer(w).length >= GIVEAWAY_MIN_CHARS && !said.includes(normalizeAnswer(w)))
+    for (const w of words.slice(0, AVOID_PER_CONCEPT)) if (!out.includes(w)) out.push(w)
+  }
+  return out
 }
 
 /** คำตอบสั้นกว่านี้ไม่ต้องส่งให้ AI (ไม่มีเนื้อหาให้ตีความ) */
@@ -277,15 +339,16 @@ export async function scoreOpenAnswers(
   })
   let perQuestion = questions.map((q, i) => scoreOpenAnswer(rubrics[i]!, q.id, answers[q.id] ?? ''))
 
-  // ส่งให้ AI เฉพาะข้อที่คำสำคัญยังให้ไม่เต็มและมีเนื้อหาจริง ข้อเต็มแล้ว AI เพิ่มอะไรไม่ได้
+  // ส่งทุกข้อที่มีเนื้อหาจริงในคำขอเดียว — ข้อที่คำสำคัญเต็มแล้วก็ส่ง เพื่อให้โดมตอบกลับด้วยคำสรุปจริงของ AI
   const items = questions
     .map((q, i) => ({ q, i, answer: (answers[q.id] ?? '').trim() }))
-    .filter(({ i, answer }) => perQuestion[i]!.keywordScore < 100 && answer.replace(/\s+/g, '').length >= AI_MIN_ANSWER_CHARS)
+    .filter(({ answer }) => answer.replace(/\s+/g, '').length >= AI_MIN_ANSWER_CHARS)
     .map(({ q, i, answer }) => ({
       id: q.id,
       question: q.prompt,
       concepts: rubrics[i]!.concepts.map((c) => c.label),
       answer,
+      avoid: avoidWords(rubrics[i]!, answer, q.prompt),
     }))
 
   if (options.checker && items.length > 0) {
@@ -296,7 +359,8 @@ export async function scoreOpenAnswers(
         const byId = new Map(check.items.map((item) => [item.id, item]))
         perQuestion = perQuestion.map((q, i) => {
           const item = byId.get(q.id)
-          return item ? mergeAiCheck(rubrics[i]!, q, item, provider) : q
+          const context = { answer: answers[q.id] ?? '', question: questions[i]!.prompt }
+          return item ? mergeAiCheck(rubrics[i]!, q, item, provider, context) : q
         })
       }
     } catch (err) {

@@ -55,10 +55,23 @@ function verifiedCovered(concepts: { quote: string; covered: boolean }[], answer
   })
 }
 
+/** ข้อมูลส่วนตัวที่ห้ามขึ้นจอ: อีเมล เบอร์โทร (เลข 9 หลักขึ้นไป) ลิงก์ที่เหลือหลังตัด markdown */
+const PII = /([\w.+-]+@[\w-]+\.[\w.]+|(?:\d[\s-]?){9,}|https?:\/\/|www\.)/i
+
+/** ตัด markdown และลิงก์ออก เหลือข้อความล้วนสำหรับบับเบิลแชต */
+export function stripMarkdown(text: string): string {
+  return text
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1') // [ข้อความ](ลิงก์) → ข้อความ
+    .replace(/https?:\/\/\S+|www\.\S+/gi, '') // ลิงก์เปล่า
+    .replace(/[*_`~#>|]+/g, '') // ตัวหนา/เอียง/โค้ด/หัวข้อ/อ้างอิง
+    .replace(/^\s*[-+]\s+/gm, '') // หัวข้อย่อย
+}
+
 export function safeLearnFeedback(text: string | undefined): string | null {
-  const clean = (text ?? '').replace(/\s+/g, ' ').trim()
+  const clean = stripMarkdown(text ?? '').replace(/\s+/g, ' ').trim()
   if (clean.length === 0 || clean.length > LEARN_FEEDBACK_MAX) return null
   if (VERDICT.test(clean)) return null
+  if (PII.test(clean)) return null
   return clean
 }
 

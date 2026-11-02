@@ -29,6 +29,7 @@ export function LearnQuestions({
   disabled,
   grading = false,
   shakeKey = 0,
+  domeNote = null,
 }: {
   mode: 'watch' | 'read'
   questions: LearnQuestion[]
@@ -40,6 +41,8 @@ export function LearnQuestions({
   disabled: boolean
   grading?: boolean
   shakeKey?: number
+  /** คำตอบกลับจริงของโดม (AI) สำหรับข้อที่ตอบเสริม null = ใช้ข้อความเดิม */
+  domeNote?: string | null
 }) {
   const baseId = useId()
   const reduce = useReducedMotion()
@@ -60,6 +63,10 @@ export function LearnQuestions({
         {!onlyId ? (
           <Bubble name="โดม" side="left" tone="dome">
             {intro}
+          </Bubble>
+        ) : domeNote ? (
+          <Bubble name="โดม" side="left" tone="dome">
+            {domeNote} เติมต่อจากคำตอบเดิมได้เลยครับ
           </Bubble>
         ) : (
           <Bubble name="โดม" side="left" tone="dome">

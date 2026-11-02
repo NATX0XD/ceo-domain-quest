@@ -39,7 +39,7 @@ import {
 import { ModePopup } from './mode-popup'
 import { LearnScenePanel } from './learn-path-scene'
 import { LearnQuestions } from './learn-path-questions'
-import { HelpPanel, ResultPanel, weakest } from './learn-path-result'
+import { HelpPanel, ResultPanel, aiReply, weakest } from './learn-path-result'
 import { CardSortGame } from './card-sort-game'
 import { LearnDoneScreen } from './learn-done'
 import { AppScreen, GlassCard, type MenuItem } from './app/app-screen'
@@ -1258,6 +1258,7 @@ export function LearnPathClient({
                 onChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
                 qIdx={qIdx}
                 onlyId={qPhase === 'supp' && answerResult ? (weakest(answerResult)?.id ?? null) : null}
+                domeNote={qPhase === 'supp' && answerResult ? aiReply(weakest(answerResult)) : null}
                 onReview={qPhase === 'ask' ? () => startReview(questions[qIdx]?.review) : undefined}
                 disabled={busy || done !== null}
                 grading={busy}
