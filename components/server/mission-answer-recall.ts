@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { readFile } from 'node:fs/promises'
 import type { Mission } from '../missions'
 import { assemblePlanOf } from './mission-check-mode'
 
@@ -19,7 +19,7 @@ import { assemblePlanOf } from './mission-check-mode'
  *
  * ⚠️ เรียกได้ **เฉพาะเมื่อ `mission_progress.passed_at` มีค่าแล้ว** ผู้เรียนคนนั้นตอบถูกไปแล้วจริง ๆ
  *    ผู้เรียกต้องเช็กเงื่อนไขนี้เอง ฟังก์ชันนี้ไม่ได้อ่านฐานข้อมูลและไม่รู้จักผู้เรียน
- * ⚠️ อ่านไฟล์เฉลยด้วย dynamic import ตอนเรียกจริง **ห้าม import ไว้บนหัวไฟล์**
+ * ⚠️ อ่านไฟล์เฉลยด้วย readFile ตอนเรียกจริง **ห้าม import ไว้บนหัวไฟล์**
  *    (รูปแบบเดียวกับ `app/api/mission/[id]/check/route.ts` — ถ้า import ตรง ๆ Turbopack
  *     จะลากทั้งไฟล์เฉลยเข้าบันเดิล แล้ว `npm run check:leaks` จะจับได้ทันที)
  * ⚠️ คืนค่าเป็น **ข้อความอ่านเล่น ๆ ของคำตอบเดียว** เช่น "ข้อ ก" ไม่ใช่เฉลยของภารกิจอื่น
@@ -33,6 +33,7 @@ interface AnswerEntry {
   checkId: string
   answerIndex: number
   gameKey?: unknown
+  takeaway: string | null
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -42,13 +43,12 @@ function asRecord(value: unknown): Record<string, unknown> {
 }
 
 async function loadEntries(): Promise<AnswerEntry[]> {
-  // เขียนเส้นทางตรง ๆ ไม่ประกอบจากตัวแปร ไม่งั้น Turbopack จะ trace ทั้งโปรเจกต์
-  const fileUrl = pathToFileURL(join(process.cwd(), 'content', 'missions-answers.json')).href
+  // อ่านไฟล์ตอนเรียกจริง (แบบเดียวกับ learn-path.ts) — dev server ที่เปิดค้างเห็นเนื้อหาที่แก้ทันที
+  // และไม่ลากไฟล์เฉลยเข้าบันเดิล · เขียนเส้นทางตรง ๆ ไม่ประกอบจากตัวแปร ไม่งั้น Turbopack จะ trace ทั้งโปรเจกต์
+  const filePath = join(process.cwd(), 'content', 'missions-answers.json')
   try {
-    const mod = (await import(/* turbopackIgnore: true */ fileUrl, {
-      with: { type: 'json' },
-    })) as { default: unknown }
-    const missions = asRecord(mod.default).missions
+    const data = JSON.parse(await readFile(filePath, 'utf8')) as unknown
+    const missions = asRecord(data).missions
     if (!Array.isArray(missions)) return []
     return missions.map((m) => {
       const row = asRecord(m)
@@ -57,6 +57,7 @@ async function loadEntries(): Promise<AnswerEntry[]> {
         checkId: typeof row.checkId === 'string' ? row.checkId : '',
         answerIndex: typeof row.answerIndex === 'number' ? row.answerIndex : -1,
         gameKey: row.gameKey,
+        takeaway: typeof row.takeaway === 'string' && row.takeaway.trim() ? row.takeaway.trim() : null,
       }
     })
   } catch {
@@ -95,4 +96,15 @@ export async function passedAnswerLabel(mission: Mission): Promise<string | null
 
   const marker = CHOICE_MARKERS[entry.answerIndex]
   return marker ? `ข้อ ${marker}` : null
+}
+
+/**
+ * ใจความสำคัญหนึ่งบรรทัดของภารกิจ (คีย์ `takeaway` ในไฟล์เฉลย) — ขึ้นบนจอผลว่า "ทำไมถึงถูก"
+ *
+ * ⚠️ กติกาเดียวกับ `passedAnswerLabel` — เรียกได้เฉพาะเมื่อผู้เรียนผ่านภารกิจนี้แล้ว
+ *    เพราะประโยคนี้บอกใจความของคำตอบที่ถูกตรง ๆ
+ */
+export async function passedTakeaway(mission: Mission): Promise<string | null> {
+  const entries = await loadEntries()
+  return entries.find((e) => e.id === mission.id && e.checkId === mission.check.id)?.takeaway ?? null
 }

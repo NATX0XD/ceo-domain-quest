@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element -- ไอคอน 3D/มาสคอตเป็นภาพนิ่งเล็ก ๆ */
 
 import { motion, useReducedMotion } from 'motion/react'
+import type { MissionResultRecap } from '@/components/mission-result-recap'
 
 /**
  * สถานะ "ผ่านด่านหลักแล้ว" ของจอภารกิจ — ดาวที่ได้ + สรุปสั้น แทนกล่องว่างใหญ่ที่มีแค่บับเบิลโดม
@@ -10,21 +11,17 @@ import { motion, useReducedMotion } from 'motion/react'
 export function MissionPassCard({
   missionNo,
   stars,
-  answerLabel,
-  explanation,
-  hasNext,
-  passedCount,
-  totalMissions,
+  recap,
+  takeaway,
   maxStars = 3,
   kicker,
 }: {
   missionNo: number
   stars: number
-  answerLabel: string | null
-  explanation: string | null
-  hasNext: boolean
-  passedCount: number
-  totalMissions: number
+  /** ผลจริงของภารกิจ — ตอบถูกไหม · ดาวมาจากไหน · ทำยังไงให้ได้เพิ่ม (components/mission-result-recap.ts) */
+  recap: MissionResultRecap
+  /** ใจความหนึ่งบรรทัดว่าทำไมถึงถูก (จากไฟล์เฉลย ส่งมาเฉพาะข้อที่ผ่านแล้ว) — null = ไม่ขึ้นบรรทัดนี้ */
+  takeaway: string | null
   maxStars?: number
   /** บรรทัดเล็กเหนือจำนวนดาว — ค่าเริ่มต้น "ภารกิจที่ N สำเร็จ" (จอที่หัวจอบอกแล้วส่งชื่อภารกิจมาแทน) */
   kicker?: string
@@ -73,25 +70,21 @@ export function MissionPassCard({
         <p className="font-display text-[1.6rem] font-extrabold leading-tight text-[#3a1a6e]">ได้ {shown} จาก {maxStars} ดาว!</p>
       </div>
       <ul className="flex w-full shrink-0 flex-col gap-1.5 text-left">
-        {answerLabel ? (
-          <li className="flex items-center gap-2 rounded-2xl bg-white/85 px-3 py-2 text-label font-bold text-[#12633a] shadow-soft-1">
-            <img src="/icons/3d/check-mark-button.webp" alt="" aria-hidden="true" style={{ width: 24, height: 24 }} />
-            คำตอบของเรา: {answerLabel}
-          </li>
-        ) : null}
-        <li className="flex items-center gap-2 rounded-2xl bg-white/85 px-3 py-2 text-label font-bold text-[#5a3d00] shadow-soft-1">
-          <img src="/icons/3d/trophy.webp" alt="" aria-hidden="true" style={{ width: 24, height: 24 }} />
-          ผ่านแล้ว {passedCount} จาก {totalMissions} เกาะ
+        <li className="flex items-start gap-2 rounded-2xl bg-white/85 px-3 py-2 shadow-soft-1">
+          <img src="/icons/3d/check-mark-button.webp" alt="" aria-hidden="true" className="mt-0.5 shrink-0" style={{ width: 24, height: 24 }} />
+          <div className="min-w-0">
+            <p className="text-label font-extrabold text-[#12633a]">{recap.verdict}</p>
+            {takeaway ? <p className="mt-0.5 text-note leading-snug text-pretty text-[#3a2a18]">{takeaway}</p> : null}
+          </div>
         </li>
-        {explanation ? (
-          <li className="rounded-2xl bg-white/85 px-3 py-2 text-label text-[#3a2a18] shadow-soft-1">
-            <span className="line-clamp-2">{explanation}</span>
-          </li>
-        ) : null}
+        <li className="flex items-start gap-2 rounded-2xl bg-white/85 px-3 py-2 shadow-soft-1">
+          <img src="/icons/3d/glowing-star.webp" alt="" aria-hidden="true" className="mt-0.5 shrink-0" style={{ width: 24, height: 24 }} />
+          <div className="min-w-0">
+            <p className="text-label font-bold leading-snug text-pretty text-[#5a3d00]">{recap.starHow}</p>
+            {recap.improve ? <p className="mt-0.5 text-note leading-snug text-pretty text-[#5b4a82]">{recap.improve}</p> : null}
+          </div>
+        </li>
       </ul>
-      <p className="shrink-0 text-label font-semibold text-[#5b4a82]">
-        {hasNext ? 'กลับแผนที่ แล้วแตะเกาะที่กระพริบเพื่อเล่นต่อ' : 'ผ่านครบทุกเกาะแล้ว ด่านบอสรออยู่บนแผนที่'}
-      </p>
     </section>
   )
 }

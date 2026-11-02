@@ -34,6 +34,7 @@ import {
 } from '@/components/ui'
 import type { ReactNode } from 'react'
 import { MissionPassCard } from '@/components/mission-pass-card'
+import { missionResultRecap, type StarSource } from '@/components/mission-result-recap'
 import { StudentBackButton, useExitConfirm } from '@/components/student-navigation'
 import { MissionRevisitDialog, useRevisitPrompt } from '@/components/mission-revisit'
 
@@ -102,7 +103,10 @@ export function MissionClient({
   confidence,
   helpRequested,
   nextStep: _nextStep,
-  passedAnswer = null,
+  passedAnswer: _passedAnswer = null,
+  takeaway = null,
+  starSource = 'check',
+  learnScore = null,
   stationSection = null,
   replayHref = null,
 }: {
@@ -144,6 +148,12 @@ export function MissionClient({
   nextStep: StudentNextStep
   /** ผ่านแล้วเราตอบอะไรไป เช่น "ข้อ ก" — null = อ่านไม่ได้ จอจะไม่พูดถึงเรื่องนี้ */
   passedAnswer?: string | null
+  /** ใจความหนึ่งบรรทัดว่าทำไมคำตอบถึงถูก — เซิร์ฟเวอร์ส่งมาเฉพาะข้อที่ผ่านแล้ว */
+  takeaway?: string | null
+  /** ดาวของภารกิจนี้มาจากข้อตรวจ (check) หรือคะแนนท้ายภารกิจ (exit-score ของ m2) */
+  starSource?: StarSource
+  /** คะแนนเส้นทางเรียนรอบที่ดีที่สุด 0–100 (null = ไม่มี) */
+  learnScore?: number | null
   /** ส่วนเสริมของภารกิจนั้น เช่น สำนักงานจดทะเบียนของ m3 (เรนเดอร์จากฝั่งเซิร์ฟเวอร์) */
   stationSection?: ReactNode
   /** เล่นภารกิจนี้ซ้ำได้ที่ไหน (เส้นทางเรียนของภารกิจ) — null = ไม่มีรอบเล่นซ้ำ */
@@ -202,22 +212,17 @@ export function MissionClient({
   const hasNextMission = progressRows.some((r) => r.id !== mission.id && !r.passed)
 
   /**
-   * ผ่านแล้วต้องบอกด้วยว่า "เราตอบอะไรไป" — เด็กเปิดย้อนมาดูจะได้ไม่ต้องเดา (flow-1.md ข้อ 3)
-   *
-   * ⚠️ เพิ่งตอบถูกในจอนี้ = อ่านจากสิ่งที่เพิ่งกดได้เลย
-   *    **เปิดย้อนกลับมาดูทีหลัง = ค่าที่กดไม่อยู่ในเครื่องแล้ว** ต้องใช้ `passedAnswer` ที่เซิร์ฟเวอร์ส่งมา
-   *    (ของเดิมใช้แต่ค่าในเครื่อง พอรีเฟรชบรรทัดนี้ก็หายไปเงียบ ๆ ซึ่งคือเคสที่ reviewer เจอ)
+   * จอผล — บอกผลจริง: ตอบท้ายภารกิจถูกไหม · ได้ดาวเพราะอะไร · ทำยังไงให้ได้เพิ่ม
+   * (เจ้าของติว่า "คำตอบของเรา: ข้อ ก" กับ "ผ่านแล้ว 2 จาก 4 เกาะ" ไม่มีความหมาย)
+   * ดาวอ่านจากฐานข้อมูลเท่านั้น ข้อความแค่อธิบายว่าดาวนั้นมาจากไหน
    */
-  const myAnswerLabel = !passed
-    ? null
-    : (assemble
-        ? assemble.slots
-            .map((sl) => assemble.pieces.find((pc) => pc.id === placed[sl.id])?.text)
-            .filter(Boolean)
-            .join(' ') || null
-        : choiceIndex !== null
-          ? `ข้อ ${CHOICE_MARKERS[choiceIndex] ?? choiceIndex + 1}`
-          : null) ?? passedAnswer
+  const recap = missionResultRecap({
+    stars: myStars,
+    wrong: wrongCount,
+    starSource,
+    learnScore,
+    canReplay: replayHref !== null,
+  })
 
   const resultLine = passed
     ? 'ผ่านภารกิจแล้ว'
@@ -562,11 +567,8 @@ export function MissionClient({
             missionNo={myIndex + 1}
             kicker={mission.title}
             stars={myStars}
-            answerLabel={myAnswerLabel}
-            explanation={check.kind === 'correct' ? check.explanation : null}
-            hasNext={hasNextMission}
-            passedCount={progressRows.filter((r) => r.passed || r.id === mission.id).length}
-            totalMissions={progressRows.length}
+            recap={recap}
+            takeaway={takeaway}
           />
         ) : assemble ? (
           <div className="flex h-full flex-col gap-2">
@@ -689,41 +691,73 @@ export function MissionClient({
         </div>
       )}
 
-      {/* ตัวช่วยกับเรื่องของภารกิจอยู่แถวเดียวกัน — ให้ตัวเลือกได้พื้นที่ครบทั้ง 4 ข้อบนจอ 360x740 */}
-      <div className="grid shrink-0 grid-cols-2 gap-2">
+      {/**
+        * ตัวช่วยกับเรื่องของภารกิจอยู่แถวเดียวกัน — ให้ตัวเลือกได้พื้นที่ครบทั้ง 4 ข้อบนจอ 360x740
+        * ⚠️ จอผล (ผ่านแล้ว) ไม่มีปุ่มตัวช่วย/คำใบ้ — จบภารกิจแล้วไม่มีอะไรให้ใบ้ (เจ้าของสั่ง)
+        *    เหลือ "สรุปเรื่องจากโดม" (เรื่องของภารกิจ + สิ่งที่ได้เรียน) กับ "เล่นใหม่" ถ้าภารกิจนี้เล่นซ้ำได้
+        */}
+      <div className={`grid shrink-0 gap-2 ${passed && !replayHref ? 'grid-cols-1' : 'grid-cols-2'}`}>
         <SheetChip
           tone="brand"
           icon={<DomeAvatar mood={passed ? 'celebrate' : 'cheer'} size={24} decorative />}
           onClick={() => setSheet('story')}
-          ariaLabel={`ฟังโดมเล่าเรื่องของภารกิจ ${domeLine}`}
+          ariaLabel={passed ? `สรุปเรื่องจากโดม ${mission.title}` : `ฟังโดมเล่าเรื่องของภารกิจ ${domeLine}`}
         >
-          โดมเล่าเรื่อง
+          {passed ? 'สรุปจากโดม' : 'โดมเล่าเรื่อง'}
         </SheetChip>
-        <SheetChip
-          tone="spark"
-          icon={<LightbulbIcon width={18} height={18} />}
-          onClick={() => setSheet('hints')}
-          ariaLabel={`ตัวช่วย เปิดเมนูคำใบ้และการช่วยเหลือ เปิดไปแล้ว ${hints.length} จาก ${hintsTotal} ใบ`}
-        >
-          ตัวช่วย
-        </SheetChip>
+        {passed ? (
+          replayHref ? (
+            <SheetChip
+              tone="quest"
+              icon={<RefreshIcon width={18} height={18} />}
+              onClick={() => router.push(replayHref)}
+              ariaLabel={`เล่นภารกิจที่ ${myIndex + 1} ใหม่อีกรอบ`}
+            >
+              เล่นใหม่
+            </SheetChip>
+          ) : null
+        ) : (
+          <SheetChip
+            tone="spark"
+            icon={<LightbulbIcon width={18} height={18} />}
+            onClick={() => setSheet('hints')}
+            ariaLabel={`ตัวช่วย เปิดเมนูคำใบ้และการช่วยเหลือ เปิดไปแล้ว ${hints.length} จาก ${hintsTotal} ใบ`}
+          >
+            ตัวช่วย
+          </SheetChip>
+        )}
       </div>
+      </StudentShell>
 
       {/* ───────── แผ่นเลื่อนขึ้น: ที่เก็บของที่ยาวเกินจอ ───────── */}
 
       <Sheet
         open={sheet === 'story'}
         onClose={closeSheet}
-        title={mission.title}
-        description={mission.objective}
+        title={passed ? 'สรุปเรื่องจากโดม' : mission.title}
+        description={passed ? mission.title : mission.objective}
       >
-        <DomeSays mood="cheer" speakerName="โดม" avatarSize={64}>
+        <DomeSays mood={passed ? 'celebrate' : 'cheer'} speakerName="โดม" avatarSize={64}>
           {storyText ?? mission.intro}
         </DomeSays>
         {storyPersonalized ? (
           <p className="mt-2 text-label text-pretty text-ink-muted">
             เรื่องนี้แต่งจากร้านของเราโดยเฉพาะ
           </p>
+        ) : null}
+        {/* จบภารกิจแล้ว = สรุปสิ่งที่ได้เรียน (ใจความจากไฟล์เนื้อหา ไม่ใช่เฉลยข้อตรวจ) */}
+        {passed ? (
+          <>
+            <p className="mt-4 text-label font-bold text-ink">สิ่งที่ได้เรียนในภารกิจนี้</p>
+            <ul className="mt-2 flex flex-col gap-2">
+              {mission.channels.clip.keyPoints.map((k) => (
+                <li key={k} className="flex gap-2 text-body text-ink">
+                  <CheckIcon width={20} height={20} aria-hidden className="mt-1 shrink-0 text-quest-600" />
+                  <span className="min-w-0 text-pretty">{k}</span>
+                </li>
+              ))}
+            </ul>
+          </>
         ) : null}
       </Sheet>
 
@@ -931,7 +965,6 @@ export function MissionClient({
           </div>
         ) : null}
       </Sheet>
-      </StudentShell>
       {exit.dialog}
       <MissionRevisitDialog
         open={revisit.open}

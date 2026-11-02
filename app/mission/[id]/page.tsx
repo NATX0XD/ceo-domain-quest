@@ -13,7 +13,7 @@ import { suggestChannel } from '@/components/server/channel-advice'
 import { missionStoryFor } from '@/components/server/mission-story'
 import { buildGameData } from '@/components/server/mission-game-data'
 import { buildStationSection } from '@/components/server/station-b-section'
-import { passedAnswerLabel } from '@/components/server/mission-answer-recall'
+import { passedAnswerLabel, passedTakeaway } from '@/components/server/mission-answer-recall'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
 import { studentNextStep } from '@/components/server/next-step'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
@@ -70,9 +70,10 @@ export default async function MissionPage({
    * ผู้เรียนเลือกวิธีเรียนจาก self-profile ก่อน แล้วเรียนตามวิธีที่เลือกจนครบเกณฑ์ · อ่านสถานะไม่ได้ = ปล่อยเข้าภารกิจเดิม ไม่ปิดทางเรียน
    */
   const learnPath = findLearnPath(mission.id)
+  /** สถานะเส้นทางเรียน — จอผลใช้คะแนนรอบที่ดีที่สุดบอกว่าดาวมาจากไหน (m2 ให้ดาวจากคะแนนท้ายภารกิจ) */
+  let learnState: LearnState | null = null
   if (learnPath) {
     const studentLearnPath = m2Variant ? personalizeM2LearnPath(learnPath, m2Variant) : learnPath
-    let learnState: LearnState | null = null
     try {
       learnState = await loadLearnState(session.studentId, mission.id)
     } catch (err) {
@@ -170,6 +171,8 @@ export default async function MissionPage({
    * ⚠️ ขอเฉพาะตอน `row.passed` เท่านั้น — ข้อที่ยังไม่ผ่านห้ามส่งอะไรที่เกี่ยวกับเฉลยลงไปเลย
    */
   const passedAnswer = row.passed ? await passedAnswerLabel(mission) : null
+  /** ใจความหนึ่งบรรทัดบนจอผล — ประโยคนี้บอกใจความของคำตอบ จึงส่งเฉพาะข้อที่ผ่านแล้ว */
+  const takeaway = row.passed ? await passedTakeaway(mission) : null
 
   // ⚠️ ส่งไปให้เบราว์เซอร์เฉพาะคำใบ้ที่ปลดล็อกแล้ว ใบที่เหลืออยู่ฝั่งเซิร์ฟเวอร์
   const revealedHints = mission.hints.slice(0, row.hintsUsed)
@@ -202,6 +205,9 @@ export default async function MissionPage({
       helpRequested={helpRequested}
       nextStep={nextStep}
       passedAnswer={passedAnswer}
+      takeaway={takeaway}
+      starSource={mission.id === 'm2' ? 'exit-score' : 'check'}
+      learnScore={learnState?.done?.score ?? null}
       stationSection={await buildStationSection(mission.id, session.studentId)}
       replayHref={learnPath ? `/mission/${encodeURIComponent(mission.id)}?replay=1` : null}
     />
