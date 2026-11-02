@@ -1,28 +1,49 @@
 'use client'
 
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BottomNav as BottomNavUI, type BottomNavItem } from '@/components/ui'
+import './bottom-nav.css'
 
-/**
- * แถบเมนูล่างของฝั่งนักเรียน — 5 แท็บตามภาพต้นแบบ
- *
- * ไฟล์นี้เหลือหน้าที่เดียวคือ "บอกว่าแอปนี้มีแท็บอะไรบ้าง" แล้วส่งต่อให้
- * `components/ui/bottom-nav.tsx` ซึ่งเป็นตัวเดียวที่รู้เรื่องหน้าตาและ a11y
- * ระบบจึงมี BottomNav ตัวจริงแค่ตัวเดียว ไม่ใช่สองตัวที่ต้องคอยแก้ให้ตรงกัน
- *
- * ต้องเป็น client component เพราะใช้ `usePathname()` หาแท็บปัจจุบันเท่านั้น
- * ⚠️ ห้าม import เนื้อหา/เฉลย (core/*, components/server/*, content/*.json) เข้ามาในไฟล์นี้เด็ดขาด
- *    ทุกอย่างในนี้เป็นแค่ลิงก์กับป้ายชื่อเมนู ไม่ใช่ข้อมูลของผู้เรียน
- */
-const TABS: BottomNavItem[] = [
-  { href: '/home', label: 'หน้าหลัก', icon: 'home' },
-  { href: '/map', label: 'ภารกิจ', icon: 'quest' },
-  { href: '/knowledge', label: 'ความรู้', icon: 'knowledge' },
-  { href: '/rewards', label: 'รางวัล', icon: 'reward' },
-  { href: '/profile', label: 'โปรไฟล์', icon: 'profile' },
+type Tab = {
+  href: string
+  label: string
+  icon: string
+}
+
+const TABS: Tab[] = [
+  { href: '/home', label: 'หน้าหลัก', icon: '/icons/3d/seedling.webp' },
+  { href: '/map', label: 'ภารกิจ', icon: '/icons/3d/chequered-flag.webp' },
+  { href: '/knowledge', label: 'ความรู้', icon: '/icons/3d/books.webp' },
+  { href: '/rewards', label: 'รางวัล', icon: '/icons/3d/trophy.webp' },
+  { href: '/profile', label: 'โปรไฟล์', icon: '/icons/3d/bust-in-silhouette.webp' },
 ]
 
+/** แถบเมนูแบบท่าเรือไม้ — ลิงก์และสถานะ active ยังคงชุดเดิมของฝั่งนักเรียน */
 export function BottomNav() {
   const pathname = usePathname() ?? ''
-  return <BottomNavUI items={TABS} activeHref={pathname} />
+
+  return (
+    <nav aria-label="เมนูหลัก" className="game-bottom-nav">
+      <ul className="game-bottom-nav__list">
+        {TABS.map((item) => {
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          return (
+            <li key={item.href} className="game-bottom-nav__item">
+              <Link
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                className={`game-bottom-nav__link${active ? ' is-active' : ''}`}
+              >
+                <span className="game-bottom-nav__icon-wrap" aria-hidden="true">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- icon เป็น asset 3D ขนาดเล็กใน public */}
+                  <img src={item.icon} alt="" className="game-bottom-nav__icon" draggable={false} />
+                </span>
+                <span className="game-bottom-nav__label">{item.label}</span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
+  )
 }
