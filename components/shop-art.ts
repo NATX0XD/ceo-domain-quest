@@ -105,7 +105,7 @@ export const STAGE_REVEAL: Record<ShopStageLevel, number> = {
 /* ── ภาพร้านหน้า /home แยกตามประเภท 5 ขั้น ────────────────────────────────────
    ไฟล์ `public/ui/home/shop/<ประเภท>-<ขั้น>.webp` (720×720 โปร่งใส)
    ประเภทไหนยังไม่มีไฟล์ → ใช้ภาพกลาง `public/ui/home/shop-stage-<ขั้น>.webp` แทน
-   (ฝั่งเซิร์ฟเวอร์เช็กไฟล์ด้วย `components/server/shop-art-file.ts`
+   (ฝั่งเซิร์ฟเวอร์ใช้ `components/server/shop-art-file.ts`
     ฝั่งเบราว์เซอร์สลับเองตอนโหลดไม่ขึ้นด้วย `components/shop-art-img.tsx`)          */
 
 export type ShopArtStage = 1 | 2 | 3 | 4 | 5
