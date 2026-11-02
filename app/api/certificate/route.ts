@@ -98,8 +98,9 @@ export async function GET() {
       studentId: student.id,
       nickname: student.nickname,
       shopName: profile?.business_name ?? '',
-      domainName: submission?.domain_name ?? profile?.domain_name ?? '',
-      tldSuffix: submission?.tld ?? '',
+      // ใบเสนอ CEO ก่อนเสมอ ว่าง = ใช้ชื่อจากหน้าตั้งค่าร้าน (ไม่เอานามสกุลของใบเสนอไปต่อท้ายชื่อเดิม)
+      domainName: submission?.domain_name?.trim() || profile?.domain_name || '',
+      tldSuffix: submission?.domain_name?.trim() ? (submission.tld ?? '') : '',
       goal: profile?.goal_stars ?? 0,
       missions,
       preScore: profile?.pre_test_score ?? 0,

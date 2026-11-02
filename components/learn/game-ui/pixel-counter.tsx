@@ -160,7 +160,8 @@ function useExitConfirm(onExit?: () => void) {
     if (onExit) return onExit()
     if (ref.current && !ref.current.open) ref.current.showModal()
   }
-  const dialog = (
+  // ผู้เรียกมีกล่องยืนยันออกของตัวเองแล้ว (onExit) → ไม่ต้องวาง <dialog> ซ้ำไว้ใน DOM
+  const dialog = onExit ? null : (
     <dialog ref={ref} className="px-dialog" aria-label="ออกจากภารกิจ">
       <div className="px-card px-dialog-card">
         <p className="px-dialog-text">ออกตอนนี้ได้นะ กลับมาเปิดภารกิจที่ 3 แล้วเริ่มกะใหม่ได้เสมอ</p>

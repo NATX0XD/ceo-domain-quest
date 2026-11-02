@@ -1443,7 +1443,8 @@ export function LearnPathClient({
         <AppScreen
           theme={theme}
           title={missionTitle}
-          onBack={step === 'done' ? undefined : exit.request}
+          // m3/m4 เต็มจอมีป้ายหัวเกม + ปุ่มย้อนกลับของตัวเองแล้ว ห้ามมีปุ่มซ้อนสองอัน
+          onBack={step === 'done' || fullBleed ? undefined : exit.request}
           score={score}
           stage={stage}
           stageCount={stageLabels.length}

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import type { MissionId } from '@/lib/db/repo'
-import { getProfile, logEvent, switchLearningRoute } from '@/lib/db/repo'
+import { logEvent } from '@/lib/db/repo'
 import { findMission } from '@/components/missions'
 import {
   scoreCardSort,
@@ -96,14 +95,16 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     if (body.action === 'choose') {
       if (!isAdaptiveLearnPath(path)) return errorResponse('single-mode', 'ภารกิจนี้มีโหมดลงมือทำเดียว ไม่ต้องเลือกวิธีเรียน', 400)
       const state = await loadLearnState(studentId, missionId)
+      /**
+       * วิธีเรียนในด่าน (ดู/อ่าน/ลงมือ) เป็นตัวเลือกเฉพาะภารกิจ — ห้ามเขียนทับ profiles.learning_route
+       * เพราะนั่นคือเส้นทางที่ผู้เรียนเลือกตอนตั้งค่าโปรไฟล์ และเป็นค่าที่ครูเห็นบนบอร์ด
+       * (เดิม "อ่าน" → 'card' ทับ "คลิป" ที่เลือกไว้ ครูเลยเห็นเส้นทางผิด) หลักฐานเก็บใน events แทน
+       */
       const route = MODE_TO_ROUTE[body.mode]
-      const before = await getProfile(studentId)
-      if (before?.learning_route !== route) {
-        await switchLearningRoute(studentId, route, { missionId: missionId as MissionId, chosenBy: 'student' })
-      }
       await logEvent(studentId, LEARN_EVENTS.choose, {
         missionId,
         mode: body.mode,
+        route,
         recommended: state.warmup?.recommended ?? null,
         followed: state.warmup ? state.warmup.recommended === body.mode : null,
       })

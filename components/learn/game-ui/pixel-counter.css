@@ -378,8 +378,9 @@
 .px-dome-kicker { justify-self: start; margin: 0; padding: 1px 8px; border-radius: 99px; background: #ffe27a; color: #4a2a00; font-size: 11.5px; font-weight: 900; }
 .px-dome-bubble { position: relative; z-index: 1; justify-self: stretch; margin: 0; padding: 8px 12px; border: 3px solid var(--ink); border-radius: 12px; background: #fff; box-shadow: 0 4px 0 var(--ink); color: #241a44; font-size: 15px; font-weight: 800; line-height: 1.45; }
 .px-dome-bubble.is-typing { color: #6b5a8f; font-style: italic; }
-.px-dome-row { position: relative; display: flex; flex: 0 0 auto; align-items: flex-end; justify-content: center; min-height: 120px; }
-.px-dome-big { width: min(40vw, 170px); height: auto; filter: drop-shadow(0 8px 8px rgba(20, 10, 40, 0.4)); image-rendering: auto !important; animation: px-bob 2.4s ease-in-out infinite; }
+/* โดมยืนที่โต๊ะ ~64% ของจอ ชิดขวาให้ป้ายคำใบ้ฝั่งซ้ายไม่ทับตัว · ฟองคำพูดอยู่ใน log เหนือหัว */
+.px-dome-row { position: relative; display: flex; flex: 0 0 auto; align-items: flex-end; justify-content: flex-end; min-height: 120px; }
+.px-dome-big { width: min(64vw, 260px); height: auto; filter: drop-shadow(0 8px 8px rgba(20, 10, 40, 0.4)); image-rendering: auto !important; animation: px-bob 2.4s ease-in-out infinite; }
 .px-hint-sign { position: absolute; bottom: 8px; left: 0; display: grid; justify-items: center; padding: 5px 9px; border: 3px solid #4a2a12; border-radius: 6px; background: #fff3d1; box-shadow: 0 4px 0 #4a2a12; color: #4a2a12; font-size: 12px; font-weight: 900; line-height: 1.2; transform: rotate(-4deg); }
 .px-hint-sign b { font-size: 22px; line-height: 1.05; }
 .px-dome-ask { display: grid; flex: 0 0 auto; gap: 6px; }
@@ -443,6 +444,7 @@
 .px-report-dome { display: grid; justify-items: center; }
 .px-report-dome .px-dome-bubble { order: -1; }
 .px-report-dome .px-dome-big { width: min(40vw, 160px); }
+@media (max-height: 700px) { .px-view--dome .px-dome-big { width: min(52vw, 200px); } }
 
 /* ---------- กล่องยืนยันออก ---------- */
 .px-dialog { max-width: min(92vw, 420px); padding: 0; border: 0; background: transparent; }

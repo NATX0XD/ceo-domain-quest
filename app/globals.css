@@ -2051,6 +2051,10 @@ select {
   width: 9rem;
   height: 9rem;
   background: url('/ui/kit/fx/leaves.webp') top right / 15rem auto no-repeat;
+  /* ภาพใบไม้ใหญ่กว่ากล่อง 9rem → ขอบซ้าย/ล่างตัดเป็นเส้นตรง (รอยต่อแนวตั้งที่ x≈268 บน /result)
+     จางขอบด้วย mask ให้ใบไม้กลืนไปกับพื้นการ์ดเป็นชั้นเดียว */
+  -webkit-mask-image: radial-gradient(circle at top right, #000 40%, transparent 72%);
+  mask-image: radial-gradient(circle at top right, #000 40%, transparent 72%);
   opacity: .18;
   pointer-events: none;
 }
@@ -2178,6 +2182,10 @@ select {
   width: 9rem;
   height: 9rem;
   background: url('/ui/kit/fx/leaves.webp') top right / 15rem auto no-repeat;
+  /* ภาพใบไม้ใหญ่กว่ากล่อง 9rem → ขอบซ้าย/ล่างตัดเป็นเส้นตรง (รอยต่อแนวตั้งที่ x≈268 บน /result)
+     จางขอบด้วย mask ให้ใบไม้กลืนไปกับพื้นการ์ดเป็นชั้นเดียว */
+  -webkit-mask-image: radial-gradient(circle at top right, #000 40%, transparent 72%);
+  mask-image: radial-gradient(circle at top right, #000 40%, transparent 72%);
   opacity: .18;
   pointer-events: none;
 }

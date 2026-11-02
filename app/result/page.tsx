@@ -31,7 +31,7 @@ import {
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
 import { posttestGate } from '@/components/server/posttest-gate'
 import { PRODUCT_NAME_EN } from '@/components/product'
-import { getProfile, getStudent } from '@/lib/db/repo'
+import { getProfile, getStudent, listSubmissions } from '@/lib/db/repo'
 
 export const metadata: Metadata = { title: 'เปิดตัวบริษัท — CEO Domain Quest' }
 
@@ -87,7 +87,7 @@ export default async function ResultPage() {
   const session = await readStudentSession()
   if (!session) return <SignInGate />
 
-  const [student, shop, self, data, standing, postGate, profileRow] = await Promise.all([
+  const [student, shop, self, data, standing, postGate, profileRow, submissions] = await Promise.all([
     getStudent(session.studentId),
     loadShopProfile(session.studentId),
     loadSelfProfileDb(session.studentId),
@@ -95,7 +95,16 @@ export default async function ResultPage() {
     certificateEligibility(session.studentId),
     posttestGate(session.studentId),
     getProfile(session.studentId),
+    listSubmissions(session.studentId).catch(() => []),
   ])
+  /**
+   * ชื่อเว็บบนใบประกาศยึดตาม "ใบเสนอ CEO" ที่ส่งจริงก่อน (มี emphasis_criterion) ไม่มีจึงใช้ชื่อจากหน้าตั้งค่าร้าน
+   * ให้ตรงกับ PDF จาก /api/certificate
+   */
+  const proposal = submissions.find((row) => row.emphasis_criterion !== null) ?? null
+  const certDomain = proposal?.domain_name?.trim()
+    ? `${proposal.domain_name.trim()}${(proposal.tld ?? '').trim()}`
+    : (shop?.domainName ?? '')
   // ลิงก์แบบทดสอบหลังเรียนโผล่เฉพาะตอนครูกดเปิดแล้วและยังไม่เคยทำ (ทำได้ครั้งเดียว)
   const showPosttest = postGate.open && (profileRow?.post_test_score ?? null) === null
 
@@ -267,8 +276,8 @@ export default async function ResultPage() {
                 <p className="mt-1 text-title font-extrabold text-balance text-ink">{nickname}</p>
                 <p className="mt-4 text-label text-ink-muted">เจ้าของร้าน</p>
                 <p className="text-body-lg font-bold text-balance text-ink">{shopName}</p>
-                {shop?.domainName ? (
-                  <p className="mt-1 text-body font-semibold break-all text-brand-700">{shop.domainName}</p>
+                {certDomain ? (
+                  <p className="mt-1 text-body font-semibold break-all text-brand-700">{certDomain}</p>
                 ) : null}
                 <p className="mt-4 border-t border-line pt-3 text-label text-ink-muted">
                   ปวช.1 · {PRODUCT_NAME_EN}

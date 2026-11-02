@@ -121,20 +121,25 @@ export default async function RewardsPage() {
           <div className="rw-empty-state"><p>ยังไม่มีเหรียญในหีบ</p><span>ครูยังไม่เปิดภารกิจของคาบนี้ เปิดเมื่อไรเหรียญจะมาอยู่ตรงนี้เอง</span></div>
         ) : (
           <ul className="rw-medal-grid">
-            {data.missions.map((mission, index) => (
+            {data.missions.map((mission, index) => {
+              // เหรียญทองต้องมีดาวจริง ผ่านแบบ 0 ดาว (ครูข้ามให้) แสดงสถานะกลาง ไม่ใช่ทอง
+              const earned = mission.passed && mission.stars > 0
+              const passedNoStars = mission.passed && mission.stars <= 0
+              return (
               <li key={mission.id}>
-                <div className={`rw-medal-card ${mission.passed ? 'is-earned' : 'is-locked'}`}>
+                <div className={`rw-medal-card ${earned ? 'is-earned' : passedNoStars ? 'is-passed' : 'is-locked'}`}>
                   <span className="rw-medal-number">0{index + 1}</span>
                   <div className="rw-medal-visual">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/ui/rewards/mission-medal.webp" alt={mission.passed ? `เหรียญภารกิจ ${mission.title} ที่ได้รับแล้ว` : `เหรียญภารกิจ ${mission.title} ที่ยังล็อกอยู่`} width={118} height={108} draggable={false} />
-                    {!mission.passed ? <span className="rw-lock-mark" aria-hidden="true">ล็อก</span> : null}
+                    <img src="/ui/rewards/mission-medal.webp" alt={earned ? `เหรียญภารกิจ ${mission.title} ที่ได้รับแล้ว` : passedNoStars ? `ภารกิจ ${mission.title} ผ่านแล้ว (ครูข้ามให้)` : `เหรียญภารกิจ ${mission.title} ที่ยังล็อกอยู่`} width={118} height={108} draggable={false} />
+                    {!mission.passed ? <span className="rw-lock-mark" aria-hidden="true">ล็อก</span> : passedNoStars ? <span className="rw-lock-mark is-pass">ผ่าน (ครูข้ามให้)</span> : null}
                   </div>
                   <p className="rw-medal-title">{mission.title}</p>
                   <p className="rw-medal-stars"><StarIcon width={14} height={14} aria-hidden />{mission.stars}/{perMissionMax}</p>
                 </div>
               </li>
-            ))}
+              )
+            })}
           </ul>
         )}
 

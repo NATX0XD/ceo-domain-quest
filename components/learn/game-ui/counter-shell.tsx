@@ -175,6 +175,8 @@ export function M3Stage({
         <main className="m3s-content">{children}</main>
         {dock ? <div className="m3s-dock">{dock}</div> : null}
       </div>
+      {/* ผู้เรียกส่ง onBack มา = ใช้กล่องยืนยันออกของผู้เรียก → ไม่วาง dialog ซ้ำ */}
+      {onBack ? null : (
       <dialog ref={dialog} className="m3s-dialog" onClose={() => setConfirm(false)} aria-label="ออกจากภารกิจ">
         <div className="m3s-panel m3s-dialog-panel">
           <DomeSay>ออกตอนนี้ได้นะครับ กลับมาเปิดภารกิจที่ 3 แล้วเริ่มกะใหม่ได้เสมอ</DomeSay>
@@ -188,6 +190,7 @@ export function M3Stage({
           </div>
         </div>
       </dialog>
+      )}
     </div>
   )
 }

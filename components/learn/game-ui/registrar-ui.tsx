@@ -158,7 +158,7 @@ export function BossShell({
   const [soundOn, toggleSound] = useM3Sound();
   const exit = useExitConfirm({
     href: "/map",
-    note: "ความคืบหน้าในด่านนี้ยังไม่ถูกบันทึก ถ้าออกตอนนี้ต้องเริ่มด่านใหม่",
+    note: "ขั้นที่ทำไว้ยังไม่ถูกบันทึก ถ้าออกตอนนี้ต้องเริ่มด่านใหม่ตั้งแต่ขั้นแรก",
   });
   return (
     <div className={cn("registrar-game-shell m4-stage", `m4-scene-${scene}`)}>
