@@ -152,4 +152,34 @@ describe('scoreCounter ด่าน 3 เคาน์เตอร์รับจ
     const r = checkCounterStep({ caseId: 'zzz', tags: {}, asked: [], stamp: 'approve', extension: null, attempt: 2 })
     expect(r.result).toMatchObject({ correct: false, explanation: '', wrongTags: [] })
   })
+
+  it('การ์ดเหตุผล (S14): ตรวจแยก ไม่เปลี่ยนคะแนน/เกณฑ์ผ่าน และข้อมูลสาธารณะไม่บอกใบที่ถูก', () => {
+    const data = publicCounterData()
+    for (const a of answers.cases) {
+      const c = data.cases.find((x) => x.id === a.caseId)!
+      expect(c.reasons?.map((r) => r.id)).toContain(a.reason)
+    }
+    expect(JSON.stringify(publicJson)).not.toMatch(/"reason"\s*:/)
+    const right = answers.cases.map((a) => ({ ...perfect(a), reason: a.reason }))
+    const wrong = answers.cases.map((a) => ({ ...perfect(a), reason: a.reason === 'r1' ? 'r2' : 'r1' }))
+    const r1 = scoreCounter({ decisions: right })
+    const r2 = scoreCounter({ decisions: wrong })
+    expect(r1.score).toBe(100)
+    expect(r2.score).toBe(100)
+    expect(r2.passed).toBe(true)
+    expect((r1.detail as CounterDetail).cases.every((c) => c.reasonCorrect === true)).toBe(true)
+    expect((r2.detail as CounterDetail).cases.every((c) => c.reasonCorrect === false)).toBe(true)
+    expect(checkCounterStep(right[0]).result.reasonCorrect).toBe(true)
+    expect(checkCounterStep(wrong[0]).result).toMatchObject({ correct: true, reasonCorrect: false })
+  })
+
+  it('ลูกค้าทุกคนมีภาพและคำลงท้ายตรงเพศ (ชาย ครับ / หญิง ค่ะ)', () => {
+    const male = new Set(['c2', 'c3', 'c5'])
+    for (const c of publicCounterData().cases) {
+      expect(c.portrait).toMatch(/^c[1-6]$/)
+      const text = [c.greeting, ...c.questions.map((q) => q.reply)].join(' ')
+      if (male.has(c.portrait!)) expect(text).not.toMatch(/ค่ะ|คะ/)
+      else expect(text).not.toMatch(/ครับ/)
+    }
+  })
 })

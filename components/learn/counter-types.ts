@@ -18,17 +18,27 @@ export interface CounterQuestion {
   id: string
   text: string
   reply: string
+  /** เอกสารที่ลูกค้ายื่นเมื่อถามข้อนี้ (ถาดเอกสาร S10) */
+  docs?: string[]
+  /** ประเภทผู้ขอที่รู้จากคำตอบข้อนี้ (ช่องบนการ์ดคำขอ G03) */
+  who?: string
 }
 
 export interface CounterCase {
   id: string
   name: string
+  /** id ภาพลูกค้าแบบพิกเซล (c1..c6 ใน /learn/pixel ตาม docs/design-ref/pixel/asset-manifest.md) ต้องตรงเพศ/บทของลูกค้า */
+  portrait?: string
+  /** คำลงท้ายของลูกค้า (ครับ / ค่ะ / ว่าง) ใช้กับบทพูดที่เกมสร้างเอง */
+  particle?: string
   business: string
   tone: CounterTone
   greeting: string
   domains: { name: string; role: string }[]
   questions: CounterQuestion[]
   extensionOptions: string[]
+  /** การ์ดเหตุผล 3 ใบ (S14) ไม่บอกว่าใบไหนถูก */
+  reasons?: { id: string; text: string }[]
 }
 
 export interface CounterData {
@@ -56,6 +66,8 @@ export interface CounterDecision {
   extension: string | null
   /** ครั้งที่ตัดสินลูกค้าคนนี้ 1 = ครั้งแรก 2 = ลองแก้อีกครั้ง (ไม่ใส่ = 1) */
   attempt?: 1 | 2
+  /** id การ์ดเหตุผลที่เลือก (S14) */
+  reason?: string | null
 }
 
 export interface CounterPayload {
@@ -69,6 +81,8 @@ export interface CounterCaseResult {
   stampCorrect: boolean
   askedKeyQuestion: boolean
   explanation: string
+  /** เลือกการ์ดเหตุผลตรง (ไม่มีข้อมูล = undefined) ไม่นับในคะแนนผ่าน */
+  reasonCorrect?: boolean
   /** คะแนนตราของลูกค้าคนนี้ 2 = ถูกครั้งแรก 1 = ถูกตอนลองแก้ 0 = ยังไม่ถูก */
   points: 0 | 1 | 2
 }
@@ -88,6 +102,8 @@ export interface CounterStepResult {
   tagsTotal: number
   /** ชื่อโดเมนที่ติดป้ายผิด */
   wrongTags: string[]
+  /** การ์ดเหตุผลตรงไหม */
+  reasonCorrect?: boolean
   /** มีเฉพาะตอนลองแก้ครั้งที่ 2 แล้วยังไม่ถูก */
   explanation: string
 }

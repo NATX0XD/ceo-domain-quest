@@ -881,3 +881,7 @@
 .m3s-floor-sign { left: 27%; right: 26%; }
 .m3s-floor-sign b { font-size: clamp(9px, 4.1cqw, 14px); white-space: nowrap; }
 .m3s-floor-sign span { font-size: clamp(8px, 3.6cqw, 12.5px); white-space: nowrap; }
+
+.m3s-avatar { overflow: hidden; }
+.m3s-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.m3s-avatar img + b { display: none; }

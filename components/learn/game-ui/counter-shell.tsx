@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/components/ui'
+import { GameHeader } from '@/components/learn/game-header'
 import './counter-flow.css'
 
 export const M3_ASSET = {
@@ -32,6 +33,24 @@ const NOTES: Record<Sfx, [number, number][]> = {
   bad: [[220, 0.14], [180, 0.16]],
   stamp: [[140, 0.12]],
   win: [[523, 0.08], [659, 0.08], [784, 0.08], [1046, 0.2]],
+}
+
+/** สถานะเสียงของภารกิจ 3 (จำใน localStorage 'm3-sound') ใช้ร่วมทุกจอ */
+export function useM3Sound(): [boolean, () => void] {
+  const [soundOn, setSoundOn] = useState(!muted)
+  useEffect(() => {
+    if (window.localStorage.getItem('m3-sound') === '0') {
+      muted = true
+      setSoundOn(false)
+    }
+  }, [])
+  const toggle = () => {
+    muted = soundOn
+    window.localStorage.setItem('m3-sound', soundOn ? '0' : '1')
+    setSoundOn(!soundOn)
+    if (!soundOn) sfx('tap')
+  }
+  return [soundOn, toggle]
 }
 
 export function sfx(kind: Sfx) {
@@ -82,17 +101,9 @@ export function M3Stage({
   label?: string
 }) {
   const router = useRouter()
-  const [soundOn, setSoundOn] = useState(true)
+  const [soundOn, toggleSound] = useM3Sound()
   const [confirm, setConfirm] = useState(false)
   const dialog = useRef<HTMLDialogElement | null>(null)
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem('m3-sound')
-    if (saved === '0') {
-      muted = true
-      setSoundOn(false)
-    }
-  }, [])
 
   useEffect(() => {
     const d = dialog.current
@@ -101,45 +112,17 @@ export function M3Stage({
     if (!confirm && d.open) d.close()
   }, [confirm])
 
-  function toggleSound() {
-    muted = soundOn
-    window.localStorage.setItem('m3-sound', soundOn ? '0' : '1')
-    setSoundOn(!soundOn)
-    if (!soundOn) sfx('tap')
-  }
-
   return (
     <div className={cn('m3s', `m3s--${bg}`, className)} aria-label={label}>
       <div className="m3s-stage">
-        <header className="m3s-header">
-          <button
-            type="button"
-            className="m3s-round"
-            aria-label="ย้อนกลับ"
-            onClick={() => (onBack ? onBack() : setConfirm(true))}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิต */}
-            <img src={M3_ASSET.back} alt="" draggable={false} />
-          </button>
-          <div className="m3s-sign-wrap">
-            <div className="m3s-sign">
-              <span className="m3s-leaf m3s-leaf--l" aria-hidden />
-              <span className="m3s-leaf m3s-leaf--r" aria-hidden />
-              <strong>{title}</strong>
-            </div>
-            {pill ? <span className="m3s-pill">{pill}</span> : null}
-          </div>
-          <button
-            type="button"
-            className={cn('m3s-round', !soundOn && 'is-muted')}
-            aria-label={soundOn ? 'ปิดเสียง' : 'เปิดเสียง'}
-            aria-pressed={soundOn}
-            onClick={toggleSound}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอนสถิต */}
-            <img src={M3_ASSET.sound} alt="" draggable={false} />
-          </button>
-        </header>
+        <GameHeader
+          title={title}
+          subtitle={typeof pill === 'string' ? pill : undefined}
+          onBack={() => (onBack ? onBack() : setConfirm(true))}
+          soundOn={soundOn}
+          onSound={toggleSound}
+        />
+        {pill && typeof pill !== 'string' ? <span className="m3s-pill">{pill}</span> : null}
         <main className="m3s-content">{children}</main>
         {dock ? <div className="m3s-dock">{dock}</div> : null}
       </div>

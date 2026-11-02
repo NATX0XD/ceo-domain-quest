@@ -12,6 +12,7 @@ import { cn } from '@/components/ui'
 import { useGameMotion } from './index'
 import type { CounterData } from '../counter-types'
 import { Building, Cta, DomeSay, FLOORS, M3Stage, M3_ASSET, Panel, sfx, useDragDrop } from './counter-shell'
+import { PxImg } from './pixel-counter'
 
 type Screen = 'start' | 'tutorial' | 'choose' | 'video' | 'chat' | 'sort'
 type PrepMode = 'video' | 'chat' | 'sort'
@@ -193,7 +194,8 @@ function Tutorial({ onDone, onExit }: { onDone: () => void; onExit?: () => void 
         <Panel className="m3s-tut-card">
           <div className="m3s-who">
             <span className="m3s-avatar" aria-hidden>
-              ส
+              <PxImg srcs={['/learn/pixel/c6-neutral.webp']} />
+              <b>ส</b>
             </span>
             <div>
               <b>ป้าส้ม · ร้านส้มตำ</b>

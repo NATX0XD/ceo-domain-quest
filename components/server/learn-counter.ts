@@ -48,12 +48,23 @@ const counterDataSchema = z.object({
       z.object({
         id: z.string(),
         name: z.string(),
+        portrait: z.string().optional(),
+        particle: z.string().optional(),
         business: z.string(),
         tone,
         greeting: z.string(),
         domains: z.array(z.object({ name: z.string(), role: z.string() })).min(1),
-        questions: z.array(z.object({ id: z.string(), text: z.string(), reply: z.string() })),
+        questions: z.array(
+          z.object({
+            id: z.string(),
+            text: z.string(),
+            reply: z.string(),
+            docs: z.array(z.string()).optional(),
+            who: z.string().optional(),
+          }),
+        ),
         extensionOptions: z.array(z.string()),
+        reasons: z.array(z.object({ id: z.string(), text: z.string() })).optional(),
       }),
     )
     .min(1),
@@ -66,6 +77,7 @@ const answersSchema = z.object({
       tags: z.record(z.string(), category),
       stamp,
       acceptedExtensions: z.array(z.string()),
+      reason: z.string().optional(),
       keyQuestions: z.array(z.string()),
       explanation: z.string(),
     }),
@@ -79,6 +91,7 @@ const decisionSchema = z.object({
   stamp,
   extension: z.string().max(40).nullable(),
   attempt: z.union([z.literal(1), z.literal(2)]).optional(),
+  reason: z.string().max(20).nullable().optional(),
 })
 
 const payloadSchema = z.object({ decisions: z.array(decisionSchema).max(20) })
@@ -94,7 +107,9 @@ function judge(ans: Answer, d: Decision | undefined) {
     !!d &&
     d.stamp === ans.stamp &&
     (!needsExt || (d.extension != null && ans.acceptedExtensions.includes(d.extension.trim())))
-  return { domains, wrongTags, stampCorrect }
+  // การ์ดเหตุผล (S14) ตรวจแยก ไม่นับในคะแนน/เกณฑ์ผ่าน
+  const reasonCorrect = ans.reason ? !!d && d.reason === ans.reason : undefined
+  return { domains, wrongTags, stampCorrect, reasonCorrect }
 }
 
 const DATA: CounterData = counterDataSchema.parse(publicJson)
@@ -130,7 +145,7 @@ export function scoreCounter(payload: unknown): { score: number; passed: boolean
 
   const cases: CounterCaseResult[] = ANSWERS.cases.map((ans) => {
     const d = byCase.get(ans.caseId)
-    const { domains, wrongTags, stampCorrect } = judge(ans, d)
+    const { domains, wrongTags, stampCorrect, reasonCorrect } = judge(ans, d)
     const tagsCorrect = domains.length - wrongTags.length
     const askedKeyQuestion = !!d && d.asked.some((q) => ans.keyQuestions.includes(q))
     const points: 0 | 1 | 2 = stampCorrect ? ((d?.attempt ?? 1) === 2 ? 1 : 2) : 0
@@ -153,6 +168,7 @@ export function scoreCounter(payload: unknown): { score: number; passed: boolean
       tagsTotal: domains.length,
       stampCorrect,
       askedKeyQuestion,
+      ...(reasonCorrect === undefined ? {} : { reasonCorrect }),
       points,
       // เคสที่ไม่ได้ตอบไม่ส่งคำอธิบาย กันส่งชุดว่างมาขอเฉลยทั้งกะ
       explanation: d ? ans.explanation : '',
@@ -188,7 +204,7 @@ export function checkCounterStep(payload: unknown): {
       log: { caseId: d.caseId, attempt, correct: false },
     }
   }
-  const { domains, wrongTags, stampCorrect } = judge(ans, d)
+  const { domains, wrongTags, stampCorrect, reasonCorrect } = judge(ans, d)
   const correct = stampCorrect && wrongTags.length === 0
   return {
     result: {
@@ -197,6 +213,7 @@ export function checkCounterStep(payload: unknown): {
       tagsCorrect: domains.length - wrongTags.length,
       tagsTotal: domains.length,
       wrongTags,
+      ...(reasonCorrect === undefined ? {} : { reasonCorrect }),
       explanation: !correct && attempt === 2 ? ans.explanation : '',
     },
     log: { caseId: d.caseId, attempt, correct },

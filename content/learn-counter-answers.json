@@ -3,34 +3,66 @@
   "cases": [
     {
       "caseId": "c1",
-      "tags": { "tonkla.co.th": "ccTLD ไทย", "tonkla.net": "gTLD ทั่วไป" },
+      "tags": {
+        "tonkla.co.th": "ccTLD ไทย",
+        "tonkla.net": "gTLD ทั่วไป"
+      },
       "stamp": "approve",
       "acceptedExtensions": [],
-      "keyQuestions": ["q1", "q2"],
+      "reason": "r2",
+      "keyQuestions": [
+        "q1",
+        "q2"
+      ],
       "explanation": "พี่ต้นจดทะเบียนบริษัทแล้วและมีหนังสือรับรองบริษัท จึงจด .co.th ได้ตามที่ขอ ส่วน .net อยู่หมวด gTLD ทั่วไปที่ใครก็จดได้"
     },
     {
       "caseId": "c2",
-      "tags": { "mindcase.go.th": "หมวดเฉพาะที่สงวน", "mindcase.shop": "gTLD ทั่วไป" },
+      "tags": {
+        "mindcase.go.th": "หมวดเฉพาะที่สงวน",
+        "mindcase.shop": "gTLD ทั่วไป"
+      },
       "stamp": "suggest",
-      "acceptedExtensions": [".shop", ".com", ".in.th"],
-      "keyQuestions": ["q3"],
+      "acceptedExtensions": [
+        ".shop",
+        ".com",
+        ".in.th"
+      ],
+      "reason": "r1",
+      "keyQuestions": [
+        "q3"
+      ],
       "explanation": ".go.th สงวนไว้ให้หน่วยงานราชการเท่านั้น น้องมายด์เป็นร้านค้าออนไลน์ส่วนตัว จึงควรเสนอ .shop หรือ .com ที่ใครก็จดได้ หรือ .in.th ที่ใช้บัตรประชาชนจดได้"
     },
     {
       "caseId": "c3",
-      "tags": { "ลุงชัย.ไทย": "ccTLD ไทย", "lungchai.in.th": "ccTLD ไทย" },
+      "tags": {
+        "ลุงชัย.ไทย": "ccTLD ไทย",
+        "lungchai.in.th": "ccTLD ไทย"
+      },
       "stamp": "first-step",
-      "acceptedExtensions": [".in.th"],
-      "keyQuestions": ["q4"],
+      "acceptedExtensions": [
+        ".in.th"
+      ],
+      "reason": "r3",
+      "keyQuestions": [
+        "q4"
+      ],
       "explanation": ".ไทย จดเดี่ยวไม่ได้ ต้องมีชื่อ .th ก่อน ลุงชัยเป็นบุคคลทั่วไปมีบัตรประชาชน จึงจด .in.th ก่อน แล้วค่อยจดพ่วง ลุงชัย.ไทย ซึ่งเป็นหมวดคู่กัน"
     },
     {
       "caseId": "c4",
-      "tags": { "sukjai.co.th": "ccTLD ไทย", "sukjai.shop": "gTLD ทั่วไป" },
+      "tags": {
+        "sukjai.co.th": "ccTLD ไทย",
+        "sukjai.shop": "gTLD ทั่วไป"
+      },
       "stamp": "approve",
       "acceptedExtensions": [],
-      "keyQuestions": ["q1", "q2"],
+      "reason": "r3",
+      "keyQuestions": [
+        "q1",
+        "q2"
+      ],
       "explanation": "บริษัทสุขใจจดทะเบียนเป็นนิติบุคคลและมีหนังสือรับรองบริษัท จึงจด .co.th ได้ตามที่ขอ ส่วน .shop อยู่ในหมวด gTLD ที่ใครก็จดได้"
     }
   ]
