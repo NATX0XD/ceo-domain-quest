@@ -122,6 +122,22 @@ function levelLabelOf(dimensionId: string, score: number): string {
  *    ตอนนี้ตัดสินด้วย `readTeacherConfirmedScores()` ที่ lib/db/submission-scores.ts ทางเดียว
  * ⚠️ ไม่ส่งดาวหรือคะแนนของคนอื่นออกไปทุกกรณี
  */
+/**
+ * ข้อความสรุปของ AI ขึ้นต้นด้วย "ได้ N ดาว จากคะแนนถ่วงน้ำหนัก X เต็ม Y" ที่ AI คำนวณเอง
+ * ซึ่งอาจต่างจากข้อเสนอจากกฎที่นักเรียนเห็นตอนส่ง (เช่น 13/15 กับ 12/15) จึงแทนตัวเลขช่วงนั้นด้วยของกฎ
+ * ให้ตัวเลขที่นักเรียนเห็นมาจากแหล่งเดียวกันเสมอ
+ */
+function alignSummaryNumbers(text: string, rule: Record<string, unknown> | null): string {
+  const total = rule?.weightedTotal
+  const max = rule?.weightedMax
+  const stars = rule?.stars
+  if (typeof total !== 'number' || typeof max !== 'number' || typeof stars !== 'number') return text
+  return text.replace(
+    /ได้\s*\d+\s*ดาว\s*จากคะแนนถ่วงน้ำหนัก\s*\d+(?:\.\d+)?\s*เต็ม\s*\d+(?:\.\d+)?/,
+    `ได้ ${stars} ดาว จากคะแนนถ่วงน้ำหนัก ${total} เต็ม ${max}`,
+  )
+}
+
 function studentFacingFeedback(submission: Submission) {
   const teacher = readTeacherConfirmedScores(submission)
 
@@ -152,9 +168,9 @@ function studentFacingFeedback(submission: Submission) {
       })),
       weightedTotal: null,
       weightedMax: null,
-      summary: typeof ai.feedback === 'string' ? ai.feedback : null,
+      summary: typeof ai.feedback === 'string' ? alignSummaryNumbers(ai.feedback, rule) : null,
       aiReady: true,
-      aiSummary: typeof ai.feedback === 'string' ? ai.feedback : null,
+      aiSummary: typeof ai.feedback === 'string' ? alignSummaryNumbers(ai.feedback, rule) : null,
       teacherConfirmed: false as const,
       aiStatus: 'ready' as const,
     }

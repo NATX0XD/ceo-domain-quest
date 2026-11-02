@@ -1176,7 +1176,7 @@ select {
   line-height: 1.25;
   white-space: nowrap;
   cursor: pointer;
-  background-color: #ff8a19;
+  background-color: var(--game-base, #ff8a19);
   background-image: var(--game-left), var(--game-fill), var(--game-right);
   background-position: left center, center, right center;
   background-repeat: no-repeat;
@@ -1191,6 +1191,7 @@ select {
 /* ปุ่มกดไม่ได้ใช้ชิ้นปุ่มเทาของทีมเสมอ ไม่ว่าเดิมเป็นสีไหน จะได้ไม่ออกน้ำตาลขุ่นจนดูเหมือนกดได้ */
 .game-button:disabled,
 .game-button:disabled:is(.game-button--orange, .game-button--primary, .game-button--green, .game-button--blue, .game-button--purple, .game-button--cream, .game-button--secondary, .game-button--red, .game-button--home) {
+  --game-base: #969392;
   --game-left: url('/ui/kit/buttons/grey-disabled-left.webp');
   --game-fill: url('/ui/kit/buttons/grey-disabled-mid.webp');
   background-color: transparent;
@@ -1209,22 +1210,26 @@ select {
   --game-right: url('/ui/kit/buttons/orange-primary-right.webp');
 }
 .game-button--green {
+  --game-base: #0aab47;
   --game-left: url('/ui/kit/buttons/green-left.webp');
   --game-fill: linear-gradient(180deg, #43df55 0%, #0aab47 100%);
   --game-right: url('/ui/kit/buttons/green-right.webp');
 }
 .game-button--blue {
+  --game-base: #086ddd;
   --game-left: url('/ui/kit/buttons/blue-left.webp');
   --game-fill: linear-gradient(180deg, #34aafc 0%, #086ddd 100%);
   --game-right: url('/ui/kit/buttons/blue-right.webp');
 }
 .game-button--purple {
+  --game-base: #7319dc;
   --game-left: url('/ui/kit/buttons/purple-left.webp');
   --game-fill: linear-gradient(180deg, #c766ff 0%, #7319dc 100%);
   --game-right: url('/ui/kit/buttons/purple-right.webp');
 }
 .game-button--cream,
 .game-button--secondary {
+  --game-base: #ffdca8;
   --game-left: url('/ui/kit/buttons/cream-back-left.webp');
   --game-fill: linear-gradient(180deg, #fffdf0 0%, #ffdca8 100%);
   --game-right: url('/ui/kit/buttons/cream-back-right.webp');
@@ -1233,16 +1238,19 @@ select {
   box-shadow: 0 5px 0 #6b2d12, 0 8px 14px rgb(74 31 10 / .12);
 }
 .game-button--red {
+  --game-base: #d92e45;
   --game-left: url('/ui/kit/buttons/red-cancel-left.webp');
   --game-fill: linear-gradient(180deg, #ff6572 0%, #d92e45 100%);
   --game-right: url('/ui/kit/buttons/red-cancel-right.webp');
 }
 .game-button--grey {
+  --game-base: #969392;
   --game-left: url('/ui/kit/buttons/grey-disabled-left.webp');
   --game-fill: linear-gradient(180deg, #d2d0d0 0%, #969392 100%);
   --game-right: url('/ui/kit/buttons/grey-disabled-right.webp');
 }
 .game-button--home {
+  --game-base: #e8e0d4;
   --game-left: url('/ui/kit/buttons/cream-home-left.webp');
   --game-fill: linear-gradient(180deg, #fffdf7 0%, #e8e0d4 100%);
   --game-right: url('/ui/kit/buttons/cream-home-right.webp');

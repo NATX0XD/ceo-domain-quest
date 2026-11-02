@@ -29,6 +29,14 @@ interface PosttestResult {
 /** ถามเซิร์ฟเวอร์ซ้ำทุกกี่มิลลิวินาทีระหว่างรอครูเปิด */
 const POLL_MS = 4000
 
+/** คำพูดหลังส่งแบบทดสอบ ต้องตรงกับคะแนนจริง คะแนนน้อยให้กำลังใจ ไม่ชมเกินจริง */
+function praiseFor(score: number, total: number): string {
+  const ratio = total > 0 ? score / total : 0
+  if (ratio >= 0.8) return 'ส่งแล้ว เก่งมาก เหลือทบทวนอีกนิดเดียว'
+  if (ratio >= 0.5) return 'ส่งแล้ว ทำได้ดีเลย ลองทบทวนข้อที่พลาดอีกนิดนะ'
+  return 'ส่งแล้ว ไม่เป็นไรนะ ลองทบทวนบทเรียนอีกรอบ เดี๋ยวก็เข้าใจมากขึ้น'
+}
+
 export function PosttestClient({
   open,
   questions,
@@ -89,7 +97,7 @@ export function PosttestClient({
       <GameScore
         title="หลังเรียน"
         backHref={null}
-        say="ส่งแล้ว เก่งมาก เหลือทบทวนอีกนิดเดียว"
+        say={praiseFor(result.score, result.total)}
         label="คะแนนหลังเรียน"
         score={result.score}
         total={result.total}

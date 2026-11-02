@@ -23,6 +23,8 @@ import { PASS_SCORE, findLearnPath, loadLearnState, type LearnState } from '@/co
 import { publicCounterData } from '@/components/server/learn-counter'
 import { publicRegistrarData } from '@/components/server/learn-registrar'
 import { requireShopProfile } from '@/components/server/shop-gate'
+import { loadShopProfile } from '@/components/server/game-state'
+import type { RegistrarCard } from '@/components/learn/registrar-types'
 import type { LearnModeId } from '@/components/learn/learn-path-api'
 
 export const dynamic = 'force-dynamic'
@@ -95,6 +97,7 @@ export default async function MissionPage({
           gameData={kind === 'game' ? buildGameData(studentMission, session.studentId) : null}
           counterData={kind === 'counter' ? publicCounterData() : null}
           registrarData={kind === 'registrar' ? publicRegistrarData() : null}
+          registrarCard={kind === 'registrar' ? await registrarCardFor(session.studentId) : null}
           recommendedMode={recommendedMode}
         />
       )
@@ -184,4 +187,19 @@ export default async function MissionPage({
       stationSection={await buildStationSection(mission.id, session.studentId)}
     />
   )
+}
+
+/** บัตรร้านของผู้เรียนสำหรับเกม m4 — ได้จากโปรไฟล์ร้านที่บันทึกไว้ (ไม่มี/อ่านไม่ได้ = null แล้วเกมใช้ร้านตัวอย่าง) */
+async function registrarCardFor(studentId: string): Promise<RegistrarCard | null> {
+  try {
+    const shop = await loadShopProfile(studentId)
+    if (!shop) return null
+    const slug = shop.domainName.toLowerCase().replace(/\.[a-z.]+$/, '').replace(/[^a-z0-9-]/g, '').slice(0, 40)
+    if (!slug || !shop.shopName) return null
+    const company = shop.isRegisteredCompany
+    return { shop: shop.shopName, slug, ownerType: company ? 'company' : 'individual', tld: company ? '.co.th' : '.in.th' }
+  } catch (err) {
+    console.error('[mission] registrarCard', err)
+    return null
+  }
 }

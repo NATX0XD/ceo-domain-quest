@@ -33,9 +33,18 @@ export function StudentShell({
   footer,
   className,
 }: StudentShellProps) {
+  /*
+   * ชั้น shell รับเฉพาะคลาสที่เป็น "ตัวระบุฉาก" (xxx-world-shell) ให้ CSS จับได้
+   * คลาสจัดวาง (gap/padding/h-full) ต้องอยู่ที่กล่องเนื้อหาข้างในเท่านั้น
+   * ไม่งั้นมันไปห่อ shell ด้วย แล้วเกิดแถบฟ้าบนจอ + ช่องว่างระหว่างเนื้อหากับปุ่ม
+   */
+  const shellClass = (className ?? '')
+    .split(/\s+/)
+    .filter((c) => c.endsWith('-world-shell'))
+    .join(' ')
   return (
     <AppShell
-      className={cn('student-world student-display', className)}
+      className={cn('student-world student-display', shellClass)}
       header={
         <>
           {/* S-11 แถบช่วงกิจกรรม + หน้าพัก "ดูจอหน้าห้อง" — อยู่ทุกหน้าของนักเรียน

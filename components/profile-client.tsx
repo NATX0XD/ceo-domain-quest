@@ -135,7 +135,7 @@ export function ProfileClient({
   const [goalId, setGoalId] = useState<string | null>(initial.goalId)
   const [goalNote, setGoalNote] = useState<string | null>(null)
   /** ขั้นของวิซาร์ด · ข้อที่กำลังตอบ · สถานะการกดปุ่ม (กดแล้วห้ามเงียบ) */
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(initial.finished ? 4 : 0)
   const [qIndex, setQIndex] = useState(0)
   const flow = useFlowFeedback()
 
@@ -273,6 +273,7 @@ export function ProfileClient({
         <AppFooter>
           {flow.state.kind !== 'done' ? <FlowNote state={flow.state} className="mb-2" /> : null}
           {stepKey === 'card' ? (
+            <div className="flex flex-col gap-2">
             <Link
               href="/mission/m1"
               onClick={() => void sendChoice({ finish: true })}
@@ -281,6 +282,18 @@ export function ProfileClient({
               {identity.startButtonLabel}
               <ChevronRightIcon width={22} height={22} aria-hidden />
             </Link>
+            <Button
+              variant="secondary"
+              size="lg"
+              fullWidth
+              onClick={() => {
+                setQIndex(0)
+                setStep(0)
+              }}
+            >
+              ทำแบบสอบถามใหม่
+            </Button>
+            </div>
           ) : (
             <div className="flex gap-2">
               {stepKey !== 'ask' ? (

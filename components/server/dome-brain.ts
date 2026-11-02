@@ -176,7 +176,10 @@ function scripted(reply: string, action: DomeAction | null, scope?: DomeScope): 
 export function domeRefusal(scope: DomeScope, missionId: string): DomeReply | null {
   const mission = normalizeMissionId(missionId)
   const num = mission.replace('m', '')
-  const back: DomeAction = { href: `/mission/${mission}`, label: `กลับไปภารกิจที่ ${num}` }
+  // m5 คือด่านบอส (ไม่มีหน้า /mission/m5) และนักเรียนที่ผ่านครบ 4 ภารกิจจะถูกส่งมาที่ m5 จึงพากลับไปหน้า CEO แทน
+  const back: DomeAction = mission === 'm5'
+    ? { href: '/ceo', label: 'กลับไปด่านบอส' }
+    : { href: `/mission/${mission}`, label: `กลับไปภารกิจที่ ${num}` }
   switch (scope) {
     case 'unsafe':
       return scripted('เรื่องนี้โดมช่วยไม่ได้นะครับ ถ้าไม่สบายใจหรืออยากคุยเรื่องส่วนตัว ลองบอกครูหรือผู้ใหญ่ที่ไว้ใจได้นะครับ ส่วนเรื่องชื่อเว็บ โดมยินดีช่วยเสมอ', back, scope)

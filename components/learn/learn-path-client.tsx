@@ -9,7 +9,7 @@ import {
   type CounterDecision,
   type CounterStepResult,
 } from '@/components/learn/counter-types'
-import type { RegistrarData, RegistrarStepPayload } from '@/components/learn/registrar-types'
+import type { RegistrarCard, RegistrarData, RegistrarStepPayload } from '@/components/learn/registrar-types'
 import { MissionGame, type GameData } from '@/components/mission-game'
 import { CounterGame } from '@/components/learn/counter-game'
 import { RegistrarGame } from '@/components/learn/registrar-game'
@@ -77,6 +77,7 @@ export interface LearnPathClientProps {
   gameData?: GameData | null
   counterData?: CounterData | null
   registrarData?: RegistrarData | null
+  registrarCard?: RegistrarCard | null
   recommendedMode?: LearnModeId | null
 }
 
@@ -90,6 +91,7 @@ export function LearnPathClient({
   gameData,
   counterData,
   registrarData,
+  registrarCard,
   recommendedMode = null,
 }: LearnPathClientProps) {
   const router = useRouter()
@@ -963,7 +965,7 @@ export function LearnPathClient({
                   level={undefined}
                 />
               ) : path.do.kind === 'registrar' && registrarData ? (
-                <RegistrarGame data={registrarData} onSubmit={submitDo} onStep={checkRegistrar} />
+                <RegistrarGame data={registrarData} card={registrarCard} onSubmit={submitDo} onStep={checkRegistrar} />
               ) : (
                 <Card tone="spark" padding="sm">
                   <p className="flex items-center gap-2 text-label font-bold text-ink">
