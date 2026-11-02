@@ -10,9 +10,10 @@ import type { LearnCheckResult } from '../../lib/ai/types'
 import { findLearnPath } from './learn-path'
 import { DOME_REPLY_FALLBACK, domeLearnReply } from './learn-reply'
 
-/** โดมตอบกลับรายข้อ — fetch ปลอมทั้งหมด ไม่ยิงเน็ตจริง · m1-wq2 = DNS (ค้นหา / IP / เซิร์ฟเวอร์) */
+/** โดมตอบกลับรายข้อ — fetch ปลอมทั้งหมด ไม่ยิงเน็ตจริง */
 const path = findLearnPath('m1')!
-const ANSWER = 'DNS ช่วยค้นหาเว็บที่เราพิมพ์ชื่อลงไป'
+const QUESTION_ID = 'm1-rq1'
+const ANSWER = 'คือการสื่อสาร'
 
 function typhoonClient(feedback: string) {
   const payload = {
@@ -22,10 +23,9 @@ function typhoonClient(feedback: string) {
           content: JSON.stringify({
             results: [
               {
-                id: 'm1-wq2',
+                id: QUESTION_ID,
                 concepts: [
-                  { quote: 'ช่วยค้นหาเว็บ', covered: true },
-                  { quote: '', covered: false },
+                  { quote: 'คือการสื่อสาร', covered: true },
                   { quote: '', covered: false },
                 ],
                 feedback,
@@ -46,46 +46,64 @@ beforeEach(() => {
 })
 
 describe('domeLearnReply', () => {
-  it('AI ตอบได้ = คำตอบกลับจริงของโดม source ai และไม่กินโควตาตรวจงาน', async () => {
-    const fb = 'บอกได้ดีว่า DNS ช่วยค้นหาเว็บครับ ลองคิดต่อว่าชื่อนั้นถูกแปลงไปเป็นอะไรนะครับ'
-    const { checker, fetchImpl } = typhoonClient(fb)
-    const r = await domeLearnReply(path, 'watch', 'm1-wq2', ANSWER, { checker })
-    expect(r).toMatchObject({ reply: fb, source: 'ai', provider: 'typhoon', fallbackReason: null })
+  it('AI ตอบรับและสะท้อนคำของนักเรียน โดยไม่ตัดสิน', async () => {
+    const { checker, fetchImpl } = typhoonClient('โดมรับฟังคำว่า "การสื่อสาร" ไว้แล้วครับ ไปข้อถัดไปกัน')
+    const r = await domeLearnReply(path, 'read', QUESTION_ID, ANSWER, { checker })
+    expect(r).toMatchObject({
+      reply: 'โดมรับฟังคำว่า "การสื่อสาร" ไว้แล้วครับ ไปข้อถัดไปกัน',
+      source: 'ai',
+      provider: 'typhoon',
+      fallbackReason: null,
+    })
     expect(fetchImpl).toHaveBeenCalledTimes(1)
     expect(aiCallsUsed('stu-1')).toBe(0)
   })
 
-  it('AI ช้าเกินงบ = คำติชมตามเกณฑ์ของข้อนั้น (timeout)', async () => {
+  it('AI ช้าเกินงบ = neutral echo ไม่ใช่ rubric feedback', async () => {
     const slow = { learnCheck: () => new Promise<LearnCheckResult>(() => {}) }
-    const r = await domeLearnReply(path, 'watch', 'm1-wq2', ANSWER, { checker: slow, budgetMs: 30 })
+    const r = await domeLearnReply(path, 'read', QUESTION_ID, ANSWER, { checker: slow, budgetMs: 30 })
     expect(r).toMatchObject({ source: 'fallback', fallbackReason: 'timeout' })
-    expect(r?.reply).not.toBe(DOME_REPLY_FALLBACK.watch)
-    expect(r?.reply).toMatch(/DNS/)
+    expect(r?.reply).toBe('โดมจดคำตอบ "คือการสื่อสาร" ไว้แล้วครับ ไปข้อถัดไปกัน')
+    expect(r?.reply).not.toContain('ถูกต้อง')
+    expect(r?.reply).not.toContain('ยังไม่ครบ')
   })
 
-  it('AI เผยวลีเฉลย = คำติชมตามเกณฑ์ (filtered)', async () => {
-    const { checker } = typhoonClient('DNS เป็นระบบช่วยค้นหาหมายเลข IP ที่สัมพันธ์กับชื่อโดเมนครับ')
-    const r = await domeLearnReply(path, 'watch', 'm1-wq2', ANSWER, { checker })
+  it.each([
+    ['คำตัดสิน', 'คำตอบถูกต้องแล้วครับ ไปข้อถัดไปกัน'],
+    ['คำใบ้', 'โดมรับฟังแล้วครับ ลองคิดต่อเรื่องชื่อเว็บไซต์นะครับ'],
+    ['วลี rubric', 'โดมรับฟังคำว่า ชื่อเว็บ ไว้แล้วครับ ไปข้อถัดไปกัน'],
+  ])('AI มี%s = fallback neutral echo', async (_label, feedback) => {
+    const { checker } = typhoonClient(feedback)
+    const r = await domeLearnReply(path, 'read', QUESTION_ID, ANSWER, { checker })
     expect(r).toMatchObject({ source: 'fallback', fallbackReason: 'filtered' })
-    expect(r?.reply).not.toBe(DOME_REPLY_FALLBACK.watch)
+    expect(r?.reply).toBe('โดมจดคำตอบ "คือการสื่อสาร" ไว้แล้วครับ ไปข้อถัดไปกัน')
   })
 
-  it('AI ชมว่าครบทั้งที่ยังขาด = ข้อความเดิม', async () => {
-    const { checker } = typhoonClient('ตอบครบถ้วนแล้วครับ เยี่ยมมาก')
-    const r = await domeLearnReply(path, 'watch', 'm1-wq2', ANSWER, { checker })
-    expect(r?.source).toBe('fallback')
-  })
-
-  it('AI พัง (HTTP 500) / ไม่มีคีย์ / คำตอบสั้นเกิน = ข้อความเดิม ไม่ throw', async () => {
+  it('AI พัง / ไม่มีคีย์ / คำตอบสั้นเกิน = neutral fallback ไม่ throw', async () => {
     const fetchImpl = vi.fn(async () => new Response('x', { status: 500 })) as unknown as typeof fetch
     const broken = createAiClient({ env: { TYPHOON_API_KEY: 'k' }, fetchImpl })
-    expect((await domeLearnReply(path, 'watch', 'm1-wq2', ANSWER, { checker: broken }))?.source).toBe('fallback')
+    expect((await domeLearnReply(path, 'read', QUESTION_ID, ANSWER, { checker: broken }))?.source).toBe('fallback')
+
     const noKey = createAiClient({ env: {} })
-    expect(await domeLearnReply(path, 'watch', 'm1-wq2', ANSWER, { checker: noKey })).toMatchObject({ source: 'fallback', fallbackReason: 'no-api-key' })
-    expect(await domeLearnReply(path, 'watch', 'm1-wq2', 'ok', { checker: noKey })).toMatchObject({ fallbackReason: 'too-short' })
+    expect(await domeLearnReply(path, 'read', QUESTION_ID, ANSWER, { checker: noKey })).toMatchObject({
+      source: 'fallback',
+      fallbackReason: 'no-api-key',
+      reply: 'โดมจดคำตอบ "คือการสื่อสาร" ไว้แล้วครับ ไปข้อถัดไปกัน',
+    })
+    expect(await domeLearnReply(path, 'read', QUESTION_ID, 'ok', { checker: noKey })).toMatchObject({
+      source: 'fallback',
+      fallbackReason: 'too-short',
+      reply: DOME_REPLY_FALLBACK.read,
+    })
+  })
+
+  it('คำตอบติดตัวกรอง = generic neutral line', async () => {
+    const noKey = createAiClient({ env: {} })
+    const r = await domeLearnReply(path, 'read', QUESTION_ID, 'พนัน', { checker: noKey })
+    expect(r).toMatchObject({ source: 'fallback', fallbackReason: 'no-api-key', reply: DOME_REPLY_FALLBACK.read })
   })
 
   it('ข้อที่ไม่มีในโหมดนี้ = null', async () => {
-    expect(await domeLearnReply(path, 'watch', 'nope', ANSWER, { checker: null })).toBeNull()
+    expect(await domeLearnReply(path, 'read', 'nope', ANSWER, { checker: null })).toBeNull()
   })
 })

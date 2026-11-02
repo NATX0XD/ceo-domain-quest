@@ -209,6 +209,8 @@ export interface LearnCheckInput {
   studentId?: string
   missionId?: string
   role?: import('./topic-lock').AiRoleId
+  /** ตอบรับทันทีหลังนักเรียนส่งคำตอบ โดยห้ามตัดสินหรือให้คำใบ้ */
+  replyOnly?: boolean
 }
 
 export interface LearnCheckItemResult {

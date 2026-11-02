@@ -1,25 +1,25 @@
+import { gateAiText } from '@/core/content-filter'
 import type { AiClient, AiProvider, FallbackReason } from '@/lib/ai/types'
 import {
   AI_MIN_ANSWER_CHARS,
   avoidWords,
   loadRubric,
-  mergeAiCheck,
-  scoreOpenAnswer,
   type LearnPath,
 } from './learn-path'
+import { sanitizeStudentAnswer } from '@/lib/ai/prompts'
 
 /**
  * โดมตอบกลับทันทีหลังผู้เรียนตอบแต่ละข้อในแชต "คุยกับโดม" (โหมดดู/อ่าน)
  *
- * - ใช้ลูกโซ่ AI ตัวเดียวกับ learnCheck (ล็อกหัวข้อ + sanitizer + ตัวกรองถ้อยคำ) แล้วกรองเฉลยหลุดซ้ำด้วย mergeAiCheck
+ * - ใช้ลูกโซ่ AI ตัวเดียวกับ learnCheck (ล็อกหัวข้อ + sanitizer + ตัวกรองถ้อยคำ)
  * - **ไม่ใช่การตรวจคะแนน** ผลนี้ไม่ถูกเก็บเป็นคะแนน การตรวจจริงยังอยู่ที่การส่งคำตอบรอบสุดท้าย
  * - ไม่ส่ง studentId เข้าชั้น AI = ไม่กินโควตาตรวจงาน โควตาของการตอบกลับคุมแยกที่ route
  * - พัง ช้าเกินงบ หรือถ้อยคำใช้ไม่ได้ = ข้อความเดิมแบบตายตัว ไม่มีวัน throw
  */
 
 export const DOME_REPLY_FALLBACK: Record<'watch' | 'read', string> = {
-  watch: 'โดมได้รับคำตอบแล้วครับ ไปคำถามต่อไปกันเลย',
-  read: 'ได้รับคำตอบแล้วครับ ไปข้อถัดไปกัน',
+  watch: 'โดมจดคำตอบไว้แล้วครับ ไปคำถามต่อไปกัน',
+  read: 'โดมจดคำตอบไว้แล้วครับ ไปข้อถัดไปกัน',
 }
 
 /** งบเวลาที่ผู้เรียนรอโดมพิมพ์ — สั้นกว่างบ 5 วินาทีของชั้น AI เล็กน้อย ให้ผลกลับถึงจอทันงบ */
@@ -37,6 +37,57 @@ export interface DomeReply {
   ms: number
 }
 
+const DOME_REPLY_BLOCKED_WORDS = [
+  'ถูก',
+  'ผิด',
+  'ครบ',
+  'ไม่ครบ',
+  'ยังไม่',
+  'ยังขาด',
+  'ขาด',
+  'ลองอีก',
+  'ลองคิด',
+  'ลองย้อน',
+  'ลองเติม',
+  'ลองเพิ่ม',
+  'เฉลย',
+  'คำตอบที่ถูก',
+  'ใช่เลย',
+  'เกือบ',
+  'ชวนคิด',
+  'คิดต่อ',
+  'ทบทวน',
+  'กลับไปอ่าน',
+  'แนวคิด',
+]
+
+function normalized(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, '')
+}
+
+function hasDomeReplyBlockedText(text: string, rubric: Awaited<ReturnType<typeof loadRubric>>): boolean {
+  const lower = text.toLowerCase()
+  if (DOME_REPLY_BLOCKED_WORDS.some((word) => lower.includes(word))) return true
+  if (!rubric) return false
+  const reply = normalized(text)
+  const rubricPhrases = rubric.concepts.flatMap((concept) => [concept.label, ...concept.any])
+  return rubricPhrases.some((phrase) => normalized(phrase).length >= 4 && reply.includes(normalized(phrase)))
+}
+
+/** สร้างข้อความสำรองที่สะท้อนคำของนักเรียนโดยไม่ประเมินคำตอบ */
+export function buildDomeReplyFallback(mode: 'watch' | 'read', answer: string): string {
+  const text = sanitizeStudentAnswer(answer)
+  if (text.replace(/\s+/g, '').length < AI_MIN_ANSWER_CHARS) return DOME_REPLY_FALLBACK[mode]
+  const excerpt = Array.from(text)
+    .slice(0, 40)
+    .join('')
+    .replace(/["“”]/g, '')
+    .trim()
+  if (!excerpt || hasDomeReplyBlockedText(excerpt, undefined)) return DOME_REPLY_FALLBACK[mode]
+  if (!gateAiText(excerpt).usable) return DOME_REPLY_FALLBACK[mode]
+  return `โดมจดคำตอบ "${excerpt}" ไว้แล้วครับ ไป${mode === 'watch' ? 'คำถามต่อไป' : 'ข้อถัดไป'}กัน`
+}
+
 export async function domeLearnReply(
   path: LearnPath,
   mode: 'watch' | 'read',
@@ -47,10 +98,8 @@ export async function domeLearnReply(
   const question = path[mode].questions.find((q) => q.id === questionId)
   if (!question) return null
   const startedAt = Date.now()
-  // ระบบเดิมสำรอง: มี rubric = ใช้คำติชมตามเกณฑ์ของข้อนั้น (ผ่าน/ลองเพิ่ม) แทนข้อความกลาง ๆ
-  let scripted: string | null = null
   const fallback = (reason: DomeReplyReason, provider: DomeReply['provider'] = 'rules'): DomeReply => ({
-    reply: scripted ?? DOME_REPLY_FALLBACK[mode],
+    reply: buildDomeReplyFallback(mode, answer),
     source: 'fallback',
     provider,
     fallbackReason: reason,
@@ -64,7 +113,6 @@ export async function domeLearnReply(
   try {
     const rubric = await loadRubric(path.missionId, questionId)
     if (!rubric) return fallback('error')
-    scripted = scoreOpenAnswer(rubric, questionId, text).feedback?.trim() || null
     const budget = options.budgetMs ?? DOME_REPLY_BUDGET_MS
     let timer: ReturnType<typeof setTimeout> | undefined
     const timeout = new Promise<'timeout'>((resolve) => {
@@ -83,6 +131,7 @@ export async function domeLearnReply(
         ],
         missionId: path.missionId,
         role: 'dome',
+        replyOnly: true,
       }),
       timeout,
     ]).finally(() => clearTimeout(timer))
@@ -90,11 +139,9 @@ export async function domeLearnReply(
     if (check.source !== 'ai' || check.provider === 'rules') return fallback(check.fallbackReason ?? 'request-failed')
     const item = check.items.find((i) => i.id === questionId)
     if (!item) return fallback('bad-response', check.provider)
-    // ตัวกรองชุดเดียวกับผลรอบสุดท้าย: เฉลยหลุด / น้ำเสียงขัดกับสิ่งที่ตอบมา = ข้อความเดิม
-    const keyword = scoreOpenAnswer(rubric, questionId, text)
-    const merged = mergeAiCheck(rubric, keyword, item, check.provider, { answer: text, question: question.prompt })
-    if (merged.feedbackSource !== 'ai') return fallback('filtered', check.provider)
-    return { reply: merged.feedback, source: 'ai', provider: check.provider, fallbackReason: null, ms: Date.now() - startedAt }
+    const reply = item.feedback?.trim() ?? ''
+    if (!reply || hasDomeReplyBlockedText(reply, rubric) || !gateAiText(reply).usable) return fallback('filtered', check.provider)
+    return { reply, source: 'ai', provider: check.provider, fallbackReason: null, ms: Date.now() - startedAt }
   } catch (err) {
     console.warn('[learn-reply] โดมตอบกลับด้วย AI ไม่สำเร็จ ใช้ข้อความเดิม', err instanceof Error ? err.message : err)
     return fallback('error')
