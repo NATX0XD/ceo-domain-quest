@@ -2213,3 +2213,4 @@ select {
 .student-world.intro-shell .app-shell-footer { border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; background: linear-gradient(180deg, rgb(255 241 214 / 0) 0%, rgb(255 241 214 / .5) 50%, rgb(255 241 214 / .78) 100%) !important; }
 .student-world.intro-shell .intro-world-scene { background: transparent !important; }
 .student-world.intro-shell .app-shell-footer > .surface-veil { background: transparent !important; border-color: transparent !important; backdrop-filter: none !important; }
+.student-world.intro-shell .intro-layer-dome { width: 30%; height: 27%; inset: auto 5% 0 auto; }
