@@ -2112,3 +2112,189 @@ select {
   color: #4a1f0a;
   box-shadow: 0 7px 0 #4a1f0a, inset 0 3px 0 rgb(255 255 255 / .82), inset 0 -4px 0 rgb(74 31 10 / .2);
 }
+
+/* --------------------------------------------------------------------------
+   Owner-art refinement for the remaining student pages
+   -------------------------------------------------------------------------- */
+.student-world .game-card,
+.student-world .cream-card,
+.student-world .result-stat-card,
+.student-world .result-status-card,
+.student-world .my-site-browser,
+.student-world .setup-locked-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 3px solid #6b2d12;
+  border-radius: 1.35rem;
+  background: #fff1d6;
+  color: #4b260f;
+  box-shadow: 0 6px 0 #6b2d12, 0 14px 24px rgb(74 31 10 / .14), inset 0 2px 0 rgb(255 255 255 / .78);
+}
+.student-world .game-card::after,
+.student-world .cream-card::after,
+.student-world .result-stat-card::after,
+.student-world .result-status-card::after,
+.student-world .my-site-browser::after,
+.student-world .setup-locked-card::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -2.8rem;
+  right: -2.7rem;
+  width: 9rem;
+  height: 9rem;
+  background: url('/ui/kit/fx/leaves.webp') top right / 15rem auto no-repeat;
+  opacity: .18;
+  pointer-events: none;
+}
+.student-world .game-card > *,
+.student-world .cream-card > *,
+.student-world .result-stat-card > *,
+.student-world .result-status-card > *,
+.student-world .my-site-browser > *,
+.student-world .setup-locked-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ChoiceCard is the shared answer/status primitive. Keep it parchment-like,
+   with the glossy yellow selected state from the owner button kit. */
+.student-world .game-choice-card {
+  border: 2px solid #a65d29;
+  border-radius: 1.05rem;
+  background: #fff8e7 !important;
+  box-shadow: 0 4px 0 #7a3b17, inset 0 2px 0 rgb(255 255 255 / .84);
+  color: #4b260f;
+}
+.student-world .game-choice-card:hover:not(:disabled) {
+  background: #fff1c7 !important;
+  transform: translateY(-1px);
+}
+.student-world .game-choice-card[aria-pressed='true'] {
+  border-color: #6b2d12;
+  background: linear-gradient(180deg, #ffe58a 0%, #ffc51b 100%) !important;
+  box-shadow: 0 5px 0 #4a1f0a, inset 0 2px 0 rgb(255 255 255 / .72);
+}
+.student-world .game-choice-card > span:first-child {
+  border: 2px solid rgb(107 45 18 / .18);
+  background: #f5dcae;
+  color: #6b2d12;
+}
+.student-world .game-choice-card[aria-pressed='true'] > span:first-child {
+  border-color: #6b2d12;
+  background: #8a4a21;
+  color: #fff1d6;
+}
+
+/* Links that act as the primary action should read like GameButton as well. */
+.student-world .btn-quest,
+.student-world .btn-base[class*='bg-brand-600'],
+.student-world .btn-base[class*='bg-brand-700'] {
+  background-image: url('/ui/kit/buttons/orange-primary-left.webp'), linear-gradient(180deg, #ffc51b 0%, #ff7411 100%), url('/ui/kit/buttons/orange-primary-right.webp');
+  background-position: left center, center, right center;
+  background-repeat: no-repeat;
+  background-size: auto 100%, calc(100% - 3.8rem) 100%, auto 100%;
+}
+.student-world .btn-base[class*='bg-quest-600'],
+.student-world .btn-base[class*='bg-quest-700'],
+.student-world .btn-confirm {
+  border: 3px solid #fff1d6;
+  border-radius: 1.15rem;
+  background-color: #0aab47;
+  background-image: url('/ui/kit/buttons/green-left.webp'), linear-gradient(180deg, #43df55 0%, #0aab47 100%), url('/ui/kit/buttons/green-right.webp');
+  background-position: left center, center, right center;
+  background-repeat: no-repeat;
+  background-size: auto 100%, calc(100% - 3.8rem) 100%, auto 100%;
+  color: #fff;
+  box-shadow: 0 7px 0 #176129, inset 0 3px 0 rgb(255 255 255 / .6);
+  text-shadow: 0 2px 0 #176129;
+}
+.student-world .btn-base[class*='bg-surface-raised'],
+.student-world .btn-base[class*='bg-surface-sunken'],
+.student-world .btn-base[class*='bg-brand-100'] {
+  border: 2px solid #fff1d6;
+  border-radius: 1rem;
+  background-image: url('/ui/kit/buttons/cream-back-left.webp'), linear-gradient(180deg, #fffdf0 0%, #ffdca8 100%), url('/ui/kit/buttons/cream-back-right.webp');
+  background-position: left center, center, right center;
+  background-repeat: no-repeat;
+  background-size: auto 100%, calc(100% - 3.8rem) 100%, auto 100%;
+  color: #5a2812;
+  box-shadow: 0 4px 0 #6b2d12;
+}
+
+/* Compact pages use the same wood-plaque heading rhythm as welcome. */
+.student-world .app-shell-header h1,
+.student-world .page-heading-sign,
+.student-game-screen .m1-intro-copy h2 {
+  text-shadow: 0 2px 0 #421a0a;
+}
+.knowledge-world .knowledge-search-trigger {
+  border: 3px solid #6b2d12;
+  border-radius: 1.15rem;
+  background: linear-gradient(180deg, #fff8e7 0%, #ffdca8 100%);
+  box-shadow: 0 5px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .72);
+  color: #5a2812;
+}
+.knowledge-world details {
+  border: 2px solid rgb(107 45 18 / .26);
+  border-radius: 1rem;
+  background: rgb(255 248 231 / .88);
+  box-shadow: 0 3px 0 rgb(107 45 18 / .16);
+}
+.knowledge-world details[open] { background: #fff1d6; }
+.knowledge-world .sheet-panel {
+  border: 3px solid #6b2d12;
+  background: #fff1d6;
+  box-shadow: 0 8px 0 #4a1f0a, inset 0 2px 0 rgb(255 255 255 / .8);
+}
+.my-site-world .my-site-browser .panel-hero {
+  border-block: 3px solid #6b2d12;
+  background: linear-gradient(145deg, #6c43bb 0%, #a36ef0 52%, #20a9f3 100%);
+  color: #fff;
+}
+.my-site-world .my-site-browser > div:last-child li {
+  border: 2px solid rgb(107 45 18 / .2);
+  background: #fff8e7;
+  box-shadow: 0 3px 0 rgb(107 45 18 / .15);
+}
+.profile-world-shell .game-card,
+.quiz-world-shell .game-card,
+.ceo-world-shell .game-card,
+.mission-world-shell .mission-question-card {
+  border-color: #6b2d12;
+  background: #fff1d6;
+}
+.mission-world-shell .mission-question-card { box-shadow: 0 5px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .72); }
+.student-game-screen .m1-intro-copy {
+  position: relative;
+  overflow: hidden;
+  border: 3px solid #6b2d12;
+  border-radius: 1.35rem;
+  background: #fff1d6;
+  color: #4b260f;
+  box-shadow: 0 6px 0 #6b2d12, 0 14px 24px rgb(74 31 10 / .14), inset 0 2px 0 rgb(255 255 255 / .78);
+}
+.student-game-screen .m1-intro-copy::after {
+  content: '';
+  position: absolute;
+  top: -2.5rem;
+  right: -2rem;
+  width: 9rem;
+  height: 9rem;
+  background: url('/ui/kit/fx/leaves.webp') top right / 15rem auto no-repeat;
+  opacity: .18;
+  pointer-events: none;
+}
+.student-game-screen .m1-intro-copy > * { position: relative; z-index: 1; }
+
+@media (max-width: 380px) {
+  .student-world .game-card,
+  .student-world .cream-card,
+  .student-world .result-stat-card,
+  .student-world .result-status-card,
+  .student-world .my-site-browser,
+  .student-world .setup-locked-card { border-radius: 1.15rem; }
+  .student-world .game-card::after,
+  .student-world .cream-card::after { opacity: .13; transform: scale(.82); transform-origin: top right; }
+}

@@ -41,7 +41,7 @@ export default async function MySitePage() {
   return (
     <AppShell
       // ยังไม่มีชื่อเว็บ = เนื้อหาสั้นมาก ถ้าไม่จัดกลางแนวตั้งจะเหลือพื้นที่ว่างครึ่งจอ
-      className="student-world student-display media-shell"
+      className="student-world student-display media-shell my-site-world"
       mainClassName={domain === null ? 'grid place-items-center' : undefined}
       header={
         <AppHeader>
@@ -93,7 +93,7 @@ export default async function MySitePage() {
       ) : (
         <>
           {/* หน้าจอเบราว์เซอร์จำลอง — แถบที่อยู่โชว์โดเมนที่เด็กคิดเอง */}
-          <div className="overflow-hidden rounded-2xl bg-surface-raised shadow-soft-2 ring-1 ring-line ring-inset">
+          <div className="my-site-browser game-card overflow-hidden rounded-2xl bg-surface-raised shadow-soft-2 ring-1 ring-line ring-inset">
             <div className="flex items-center gap-2 bg-surface-sunken px-3 py-2">
               <span aria-hidden className="size-2.5 rounded-full bg-danger-500" />
               {/* bg-warn-500 เดิมไม่ใช่โทเคนที่มีอยู่จริงในระบบ จุดนี้จึงไม่มีสีเลย */}

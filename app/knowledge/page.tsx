@@ -74,7 +74,7 @@ export default async function KnowledgePage() {
   return (
     <AppShell
       fit
-      className="student-world student-display media-shell"
+      className="student-world student-display media-shell knowledge-world"
       header={
         <AppHeader className="pb-2">
           <div className="flex items-center gap-3">
@@ -220,7 +220,7 @@ export default async function KnowledgePage() {
                 triggerIcon={<KnowledgeIcon width={20} height={20} aria-hidden className="shrink-0" />}
                 trigger="ค้นหาคำที่อยากทบทวน"
                 title="ค้นหาในคลังความรู้"
-                triggerClassName="gap-2"
+                triggerClassName="knowledge-search-trigger gap-2"
               >
                 <KnowledgeSearch entries={knowledgeEntries()} />
               </Sheet>

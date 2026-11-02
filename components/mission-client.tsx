@@ -439,7 +439,7 @@ export function MissionClient({
    */
   return (
     <StudentShell
-      className="flex h-full min-h-0 flex-col gap-2 pt-3! pb-2!"
+      className="mission-world-shell flex h-full min-h-0 flex-col gap-2 pt-3! pb-2!"
       footer={
         <AppFooter>
           {passed ? (
@@ -534,7 +534,7 @@ export function MissionClient({
         *    เพราะ instruction ของไฟล์เนื้อหาเขียนคำตอบไว้ตรง ๆ ("ให้ได้เป็น www.…")
         *    เอามาขึ้นหัวจอเมื่อไหร่คือเฉลยข้อตรวจทันที
         */}
-      <h1 className="shrink-0 rounded-2xl bg-surface-raised px-3 py-2 text-title-sm font-extrabold text-balance text-ink shadow-soft-1 ring-1 ring-line ring-inset">
+      <h1 className="mission-question-card shrink-0 rounded-2xl bg-surface-raised px-3 py-2 text-title-sm font-extrabold text-balance text-ink shadow-soft-1 ring-1 ring-line ring-inset">
         {assemble ? mission.channels.game.title : mission.check.question}
       </h1>
 

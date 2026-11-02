@@ -71,7 +71,7 @@ export function ChoiceCard({
       aria-pressed={selected}
       aria-label={spokenBase ? `${spokenBase}${STATE_SPOKEN[state]}` : undefined}
       className={cn(
-        'flex w-full min-h-14 cursor-pointer items-center gap-3 rounded-xl p-4 text-left',
+        'game-choice-card flex w-full min-h-14 cursor-pointer items-center gap-3 rounded-xl p-4 text-left',
         'ring-2 ring-inset shadow-soft-1',
         'transition-[background-color,box-shadow,transform] duration-200 ease-[var(--ease-soft)]',
         'focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus',

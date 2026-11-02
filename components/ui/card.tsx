@@ -54,7 +54,7 @@ export function Card({
   return (
     <Tag
       className={cn(
-        'rounded-2xl',
+        'game-card rounded-2xl',
         TONE_CLASS[tone],
         PADDING_CLASS[padding],
         elevated ? 'shadow-soft-3' : 'shadow-soft-2',

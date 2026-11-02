@@ -144,6 +144,7 @@ export default async function ResultPage() {
   return (
     <AppShell
       fit
+      className="student-world student-display media-shell result-world"
       header={
         <AppHeader className="pb-2">
           <div className="flex items-center gap-3">
@@ -198,14 +199,14 @@ export default async function ResultPage() {
         {/* ตัวเลขสองตัวที่ต้องอ่านได้จากไกล — ดาวที่เก็บได้ และด้านที่ครูยืนยัน
             ⚠️ ช่องขวาไม่โชว์ "0 จาก 4" ตอนครูยังไม่ตรวจ เลขศูนย์ตรงนั้นอ่านเป็น "ทำไม่ได้เลย" */}
         <div className="grid shrink-0 grid-cols-2 gap-2">
-          <div className="rounded-2xl bg-surface-raised p-3 text-center shadow-soft-1">
+          <div className="result-stat-card game-card rounded-2xl bg-surface-raised p-3 text-center shadow-soft-1">
             <p className="text-title font-black text-quest-700 tabular-nums">
               {data.totalStars}
               <span className="text-body-lg font-extrabold text-ink-muted"> / {data.maxStars}</span>
             </p>
             <p className="text-note font-bold text-ink-muted">ดาวที่เก็บได้</p>
           </div>
-          <div className="rounded-2xl bg-surface-raised p-3 text-center shadow-soft-1">
+          <div className="result-stat-card game-card rounded-2xl bg-surface-raised p-3 text-center shadow-soft-1">
             {standing.status === 'not-submitted' || standing.status === 'pending-teacher' ? (
               <>
                 <p className="text-title font-black text-ink-subtle">—</p>
@@ -227,7 +228,7 @@ export default async function ResultPage() {
 
         {/* การ์ดสถานะเกียรติบัตร — พระเอกของจอ กินพื้นที่ที่เหลือทั้งหมด */}
         <div
-          className={`flex min-h-0 flex-1 flex-col items-center justify-center rounded-3xl px-4 py-3 text-center shadow-soft-2 ${
+          className={`result-status-card game-card flex min-h-0 flex-1 flex-col items-center justify-center rounded-3xl px-4 py-3 text-center shadow-soft-2 ${
             earned ? 'bg-reward-100 ring-1 ring-reward-300 ring-inset' : 'bg-surface-raised'
           }`}
         >

@@ -4,7 +4,7 @@ import { businessTypes } from '@/core/content'
 import { SetupForm } from '@/components/setup-form'
 import { SignInGate } from '@/components/student-shell'
 import { AppFooter, AppShell } from '@/components/app-shell'
-import { Card, ChevronRightIcon, DomeAvatar, LockIcon } from '@/components/ui'
+import { CreamCard, ChevronRightIcon, DomeAvatar, LockIcon } from '@/components/ui'
 import { isShopProfileLocked, loadShopProfile } from '@/components/server/game-state'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 
@@ -30,6 +30,7 @@ export default async function SetupPage() {
   if (locked) {
     return (
       <AppShell
+        className="student-world student-display media-shell setup-locked-shell"
         mainClassName="grid place-items-center"
         footer={
           <AppFooter>
@@ -55,12 +56,12 @@ export default async function SetupPage() {
           เริ่มทำภารกิจไปแล้ว จึงแก้ข้อมูลร้านไม่ได้ ถ้าจำเป็นต้องแก้ให้ยกมือบอกครู
         </p>
 
-        <Card tone="brand" padding="md" className="w-full max-w-[24rem] text-left">
+        <CreamCard className="setup-locked-card w-full max-w-[24rem] p-5 text-left">
           <p className="text-label font-semibold text-ink-muted">ร้านของเรา</p>
           <p className="mt-1 text-title-sm font-extrabold text-balance text-brand-700">
             {profile?.shopName ?? 'ยังไม่มีข้อมูล'}
           </p>
-        </Card>
+        </CreamCard>
         </div>
       </AppShell>
     )

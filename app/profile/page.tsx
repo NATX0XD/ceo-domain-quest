@@ -178,7 +178,7 @@ export default async function ProfilePage() {
       <section className="mt-4">
         <form
           action={saveOwnGoal}
-          className="rounded-2xl bg-surface-raised p-4 ring-1 ring-line ring-inset"
+          className="game-card rounded-2xl bg-surface-raised p-4 ring-1 ring-line ring-inset"
         >
           <h2 className="text-label font-bold text-ink">เป้าหมายของฉันเอง</h2>
           <p className="mt-1 text-note text-ink-muted">
