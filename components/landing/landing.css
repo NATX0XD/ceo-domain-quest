@@ -713,7 +713,7 @@ body:has(.ld) { height: 100%; min-height: 100dvh; overflow: hidden; overscroll-b
 .ld-cw-chips button { flex: none; padding: 7px 12px; border-radius: 999px; border: 1.5px solid #cdb8f2; background: #f7f2ff; color: var(--ld-purple-d); font: 600 13px var(--font-noto-sans-thai), sans-serif; cursor: pointer; transition: transform .15s, background .15s; }
 .ld-cw-chips button:hover { background: #ece0ff; transform: translateY(-2px); }
 .ld-cw-input { display: flex; gap: 8px; align-items: center; padding: 4px 16px 14px; background: #fff; }
-.ld-cw-input input { flex: 1; min-width: 0; height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid #d9cbef; background: #faf7ff; color: var(--ld-ink); outline: 0; font: 500 14px var(--font-noto-sans-thai), sans-serif; }
+.ld-cw-input input { flex: 1; min-width: 0; height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid #d9cbef; background: #faf7ff; color: var(--ld-ink); outline: 0; font: 500 16px var(--font-noto-sans-thai), sans-serif; }
 .ld-cw-input input:focus { border-color: var(--ld-purple); box-shadow: 0 0 0 3px rgba(122,79,208,.18); }
 .ld-cw-input button { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; color: #fff; font-size: 17px; cursor: pointer; background: linear-gradient(160deg, #946cf0, #6a40c6); box-shadow: 0 4px 0 var(--ld-purple-d); transition: transform .15s; }
 .ld-cw-input button:hover { transform: translateY(-2px) rotate(-8deg); }

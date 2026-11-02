@@ -430,6 +430,11 @@
      เว้นระยะท้ายหน้า จะได้ไม่มีปุ่มไหนถูกแถบเมนูทับ */
   --bottom-nav-height: calc(4.5rem + var(--safe-bottom));
 
+  /* ความสูงพื้นที่ใช้งานจริง — ปกติ 100dvh; ตอนคีย์บอร์ดเปิด components/keyboard-inset.tsx
+     เขียนทับเป็นความสูง visualViewport (px) · --app-top = ระยะที่ iOS เลื่อน viewport ลง */
+  --app-h: 100dvh;
+  --app-top: 0px;
+
   /* ลำดับชั้น z — ประกาศไว้ที่เดียวกันหมดเพื่อไม่ให้ไล่เดา z-[9999] กันเอง */
   --z-sticky: 10;
   --z-nav: 20;
@@ -441,7 +446,36 @@
    html/body ถูกตรึงความสูงเท่าจอ และปิดการเลื่อนไว้ ส่วนที่เลื่อนได้จริงมีที่เดียว
    คือ .app-shell-main ข้างใน AppShell ทำแบบนี้แล้วแถบหัวกับปุ่มลงมือท้ายจอ
    จะไม่ขยับตามนิ้ว และไม่มีแถบเลื่อนซ้อนสองชั้นให้เด็กกดพลาด */
+/* คีย์บอร์ดเปิด: home indicator ถูกบังอยู่แล้ว ไม่ต้องเว้น safe-area ล่าง (ไม่งั้นเกิดช่องว่างเหนือคีย์บอร์ด) */
+html[data-keyboard='open'] {
+  --safe-bottom: 0px;
+  --bottom-nav-height: 4.5rem;
+}
+/* body ย้ายตามกรอบที่มองเห็นจริงบน iOS (คีย์บอร์ดไม่ย่อ layout viewport) — transform ทำให้ลูก fixed ผูกกับ body */
+html[data-keyboard='open'] body {
+  transform: translateY(var(--app-top));
+}
+/* คีย์บอร์ดเปิด: แถบเมนูล่างซ่อน เหลือแต่ปุ่มลงมือหลักของหน้า */
+/* ฉากหลังของหน้านักเรียนต้องไม่ย่อตาม body — ตรึงความสูงเท่า layout viewport ก่อนคีย์บอร์ดเปิด */
+html[data-keyboard='open'] .student-stage::before,
+html[data-keyboard='open'] .student-stage::after {
+  top: calc(-2rem - var(--app-top));
+  bottom: auto;
+  height: calc(var(--full-h) + 4rem);
+}
+/* ภาพฉากที่ผูกกับ main (cover) — ตรึงขนาดตามจอเต็ม ไม่ซูมซ้ำตอน main เตี้ยลง */
+html[data-keyboard='open'] .media-join-main,
+html[data-keyboard='open'] .media-landing-main,
+html[data-keyboard='open'] .media-dome-shell .app-shell-main {
+  background-size: auto var(--full-h);
+  background-position: center top;
+}
+/* คีย์บอร์ดเปิด: กรอบ/การ์ดของ /join คงขนาดเท่าตอนจอเต็ม ให้ main เลื่อนผ่านแทนที่จะบีบการ์ดจนฟอร์มล้นกรอบภาพ */
+html[data-keyboard='open'] .join-frame-stage { min-height: calc(var(--full-h) - 6.5rem); }
+html[data-keyboard='open'] .app-shell-footer:has(> .game-bottom-nav) { display: none; }
+
 html {
+  /* พื้นหลังต้องไม่เห็นเป็นขาวครีมถ้าเชลล์สั้นกว่าจอ — หน้านักเรียนใช้สีฉาก */
   /* กันหน้าเด้งตอนคีย์บอร์ดมือถือเด้งขึ้น */
   -webkit-text-size-adjust: 100%;
   /* ให้สีพื้นลามเต็มจอตอนดึงหน้าเกินขอบบน iOS */
@@ -458,7 +492,7 @@ body {
 
   /* 100dvh ไม่ใช่ 100vh — แถบที่อยู่ของเบราว์เซอร์มือถือยุบ/ขยายได้ 100vh จึงสูงเกินจอจริง
      แล้วเกิดแถบเลื่อนของทั้งหน้าซ้อนขึ้นมาอีกชั้น ส่วน dvh วัดความสูงที่มองเห็นจริงตอนนั้น */
-  height: 100dvh;
+  height: var(--app-h);
   overflow: hidden;
 
   /* กันหน้าทั้งใบเด้ง/ดึงรีเฟรชตอนเลื่อนเนื้อหาข้างในจนสุด */
@@ -591,7 +625,36 @@ input,
 textarea,
 select {
   font-size: max(1rem, var(--text-body));
+  /* ช่องที่โฟกัสแล้วเลื่อนเข้าจอ ต้องไม่ไปจอดใต้ footer/คีย์บอร์ด */
+  scroll-margin-block: 6rem;
 }
+
+/* ปุ่มพับคีย์บอร์ด — โผล่เฉพาะอุปกรณ์สัมผัสตอนคีย์บอร์ดเปิด (components/keyboard-inset.tsx) */
+.kb-fold-pill {
+  display: none;
+}
+@media (pointer: coarse) {
+  .kb-fold-pill {
+    position: fixed;
+    right: 0.75rem;
+    z-index: var(--z-toast);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 2.25rem;
+    padding: 0 0.85rem;
+    border: 2px solid #6b2d12;
+    border-radius: 999px;
+    background: #fff1d6;
+    color: #4a1f0a;
+    font-size: 0.875rem;
+    font-weight: 800;
+    box-shadow: 0 3px 0 #4a1f0a;
+  }
+}
+
+/* ตอนคีย์บอร์ดเปิดให้ main มีที่เหลือท้ายหน้า ช่องล่างสุดจะเลื่อนขึ้นพ้นขอบได้ */
+html[data-keyboard='open'] .app-shell-main { scroll-padding-bottom: 1rem; }
 
 /* สีไฮไลต์ตอนเลือกข้อความให้เข้าชุดกับแบรนด์ */
 ::selection {
@@ -685,12 +748,18 @@ select {
 @utility app-shell {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  max-height: 100dvh;
+  /* fixed + inset:0 = เต็ม "จอจริง" ตั้งแต่ขอบบน (ใต้ status bar) ถึงขอบล่าง (ใต้ home indicator)
+     ไม่พึ่ง 100dvh ซึ่งบน iOS home-screen (black-translucent) สั้นกว่าจอจริงและค้างสั้นหลังคีย์บอร์ดปิด
+     คีย์บอร์ดเปิด: body ถูกย่อ/เลื่อนเป็นกรอบ visualViewport (globals.css) เชลล์จึงเหลือเท่าพื้นที่เหนือคีย์บอร์ด
+     กว้างสูงสุดคุมด้วย max-width + margin-inline:auto (left/right:0) ให้อยู่กลางจอบนจอกว้าง */
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: auto;
+  max-height: none;
   overflow: hidden;
-  /* ต้องมี ไม่งั้นลูกที่เป็น position:absolute จะไปผูกกับ html แทน
-     แล้วหลุดออกนอกกรอบที่ตั้งใจให้ตัด ทำให้พื้นที่เลื่อนของเอกสารโตตามไปด้วย */
-  position: relative;
   width: 100%;
   margin-inline: auto;
   background-color: var(--color-surface);
@@ -773,7 +842,7 @@ select {
   /* วาล์วนิรภัย: กันกรณีจอเตี้ยมาก (คีย์บอร์ดเด้งขึ้นบนมือถือเครื่องเล็ก) แล้วแถบท้าย
      ที่มีปุ่มหลายปุ่มสูงเกินจอ จนล้นออกไปกดไม่ได้เลย จำกัดไว้ครึ่งจอแล้วให้เลื่อนในตัวเอง
      บนจอปกติเนื้อหาพอดีอยู่แล้ว จึงไม่มีแถบเลื่อนโผล่และไม่เปลี่ยนหน้าตาอะไร */
-  max-height: 55dvh;
+  max-height: calc(var(--app-h) * 0.55);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -948,14 +1017,16 @@ select {
   position: relative;
   isolation: isolate;
   width: 100%;
-  min-height: 100dvh;
+  min-height: var(--app-h);
   overflow: hidden;
   background: #fdf9f1;
 }
+/* ฉากหลังเป็นชั้น fixed เต็ม layout viewport — ไม่ย่อ/ไม่กระโดดตอนคีย์บอร์ดเปิด และไม่เปิดช่องให้เห็นสีครีมของ html */
+html:has(.student-stage) { background-color: #3f3350; }
 .student-stage::before,
 .student-stage::after {
   content: '';
-  position: absolute;
+  position: fixed;
   inset: -2rem;
   pointer-events: none;
 }
@@ -994,7 +1065,7 @@ select {
 .student-stage-prop--one { top: 7%; left: 4%; width: min(19vw, 260px); }
 .student-stage-prop--two { right: 4%; bottom: 10%; width: min(18vw, 250px); animation-delay: -2.4s; }
 .student-stage-prop--three { bottom: 4%; left: 16%; width: min(14vw, 190px); opacity: .5; animation-delay: -4.5s; }
-.student-stage > .app-shell { position: relative; z-index: 1; }
+.student-stage > .app-shell { z-index: 1; }
 @keyframes student-stage-float {
   0%, 100% { transform: translate3d(0, 0, 0) rotate(-1deg); }
   50% { transform: translate3d(0, -8px, 0) rotate(1deg); }
@@ -1002,7 +1073,7 @@ select {
 @media (min-width: 900px) {
   /* เต็มความสูงจอ ไม่มีกรอบ — ข้าง ๆ เป็นฉากเบลออย่างเดียว (แบบ iPad) */
   .student-stage { display: grid; justify-items: center; }
-  .student-stage > .app-shell { height: 100dvh; max-height: 100dvh; box-shadow: 0 0 48px rgb(20 20 50 / .35); }
+  .student-stage > .app-shell { box-shadow: 0 0 48px rgb(20 20 50 / .35); }
 }
 @media (max-width: 899px) {
   .student-stage-deco { display: none; }
@@ -1052,7 +1123,7 @@ select {
   filter: drop-shadow(0 8px 0 rgb(74 31 10 / .25));
 }
 .dome-board-frame__content { position: relative; z-index: 1; max-height: 24rem; overflow: auto; color: #4b260f; }
-.themed-page { min-height: 100dvh; background: linear-gradient(180deg, rgb(20 91 144 / .18), rgb(78 43 87 / .3)), url('/landing/sea-bg.webp') center / cover; }
+.themed-page { min-height: var(--app-h); background: linear-gradient(180deg, rgb(20 91 144 / .18), rgb(78 43 87 / .3)), url('/landing/sea-bg.webp') center / cover; }
 
 /* Student routes that do not have their own scene art still inherit the island.
    Existing mission/map/dome scenes remain more specific and keep their artwork. */
@@ -1804,7 +1875,7 @@ select {
 }
 .teacher-device-dialog {
   width: min(100%, 34rem);
-  max-height: calc(100dvh - 2rem);
+  max-height: calc(var(--app-h) - 2rem);
   overflow-y: auto;
   border: 3px solid #633218;
   border-radius: 1.6rem;

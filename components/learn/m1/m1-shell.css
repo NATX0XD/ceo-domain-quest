@@ -12,7 +12,6 @@
   inset: 0;
   z-index: 40;
   display: flex;
-  height: 100dvh;
   width: 100%;
   flex-direction: column;
   overflow: hidden;

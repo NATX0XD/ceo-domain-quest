@@ -50,7 +50,7 @@ export function AppScreen({
   return (
     <div
       className={cn(
-        'student-game-screen owner-art-screen fixed inset-0 z-40 flex h-dvh w-full flex-col overflow-hidden',
+        'student-game-screen owner-art-screen fixed inset-x-0 top-0 bottom-0 z-40 flex w-full flex-col overflow-hidden',
         theme.id === 'm2' && 'm2-shell',
       )}
       style={style}

@@ -5,6 +5,7 @@ import './kit2.css'
 import { PRODUCT_NAME_FULL } from '@/components/product'
 import { CloudCurtain } from '@/components/cloud-curtain/cloud-curtain'
 import { SwRegister } from '@/components/sw-register'
+import { KeyboardInset } from '@/components/keyboard-inset'
 
 const notoSansThai = Noto_Sans_Thai({
   subsets: ['thai', 'latin'],
@@ -39,9 +40,7 @@ export const viewport: Viewport = {
   // จำเป็นสำหรับ env(safe-area-inset-*) ใน globals.css — ถ้าไม่ใส่ iOS จะคืนค่า 0 เสมอ
   // และเนื้อหาจะไปอยู่ใต้จอบาก/แถบ home indicator
   viewportFit: 'cover',
-  // คีย์บอร์ดมือถือเด้งขึ้น = ย่อพื้นที่ของหน้าลงจริง ๆ ไม่ใช่เลื่อนหน้าไปทับ
-  // ผลคือ 100dvh ของ AppShell หดตาม main ที่เลื่อนได้จะเตี้ยลง
-  // แต่แถบ footer (ปุ่มส่ง) ยังอยู่เหนือคีย์บอร์ดและกดได้ ส่วนช่องพิมพ์ไม่ถูกบัง
+  // Android Chrome: คีย์บอร์ดย่อ layout viewport จริง (iOS ไม่รองรับ ใช้ components/keyboard-inset.tsx ชดเชยด้วย visualViewport)
   interactiveWidget: 'resizes-content',
 }
 
@@ -54,6 +53,7 @@ export default function RootLayout({
         {children}
         <CloudCurtain />
         <SwRegister />
+        <KeyboardInset />
       </body>
     </html>
   )

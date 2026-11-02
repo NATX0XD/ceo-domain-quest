@@ -92,7 +92,7 @@
 .teacher-auth-desc { margin: .25rem 0 0; color: var(--c-ink-3); font-size: .875rem; line-height: 1.6; }
 .teacher-auth-form { display: grid; gap: 1rem; margin-top: 1.5rem; }
 .teacher-auth-form label { display: grid; gap: .35rem; font-size: .875rem; font-weight: 500; color: var(--c-ink); }
-.teacher-auth-form input { width: 100%; height: 2.5rem; padding: 0 .75rem; border: 1px solid var(--c-line-strong); border-radius: var(--r-ctl); background: #fff; color: var(--c-ink); font: inherit; font-size: .9375rem; outline: none; }
+.teacher-auth-form input { width: 100%; height: 2.5rem; padding: 0 .75rem; border: 1px solid var(--c-line-strong); border-radius: var(--r-ctl); background: #fff; color: var(--c-ink); font: inherit; font-size: 1rem; outline: none; }
 .teacher-auth-form input:focus { border-color: var(--c-brand); box-shadow: 0 0 0 3px var(--c-brand-ring); }
 .teacher-auth-form input:disabled { background: var(--c-sunken); }
 .teacher-auth-submit { display: inline-flex; align-items: center; justify-content: center; height: 2.75rem; margin-top: .25rem; border: 0; border-radius: var(--r-ctl); background: var(--c-brand); color: #fff; font: inherit; font-size: .9375rem; font-weight: 600; cursor: pointer; text-decoration: none; }
@@ -959,7 +959,7 @@
 .teacher-cms .t3-top { background: #fff; border-bottom: 1px solid var(--c-line); box-shadow: 0 1px 6px rgb(30 35 70 / .05); }
 .teacher-cms .t3-search { display: flex; align-items: center; gap: .5rem; height: 2.5rem; padding: 0 .85rem; border-radius: 12px; background: var(--c-bg); border: 1px solid var(--c-line); color: var(--c-ink-3); }
 .teacher-cms .t3-search:focus-within { border-color: var(--c-brand); box-shadow: 0 0 0 3px var(--c-brand-ring); background: #fff; }
-.teacher-cms .t3-search input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; font: inherit; font-size: .9375rem; color: var(--c-ink); }
+.teacher-cms .t3-search input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; font: inherit; font-size: 1rem; color: var(--c-ink); }
 .teacher-cms .t3-chip-select { display: inline-flex; align-items: center; gap: .5rem; height: 2.5rem; padding: 0 .75rem; border-radius: 12px; background: var(--c-brand-soft); border: 1px solid transparent; color: var(--c-brand); font-weight: 600; font-size: .9375rem; }
 .teacher-cms .t3-chip-select:hover { border-color: var(--c-brand-ring); }
 
