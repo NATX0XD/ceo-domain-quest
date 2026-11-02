@@ -366,3 +366,12 @@
   50% { box-shadow: 0 5px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .75), 0 0 0 8px rgb(255 197 27 / 0); }
 }
 @media (prefers-reduced-motion: reduce) { .map-pretest-cta { animation: none; } }
+
+/* ขอบซ้าย/ขวา/ล่างของภาพแผนที่ไล่จางเข้าฉากทะเลด้านหลัง — ไม่เห็นเป็นรอยตัดเมื่อภาพแคบกว่าจอ */
+.map-artboard {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%), linear-gradient(180deg, #000 0, #000 94%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%), linear-gradient(180deg, #000 0, #000 94%, transparent 100%);
+  mask-composite: intersect;
+}
+.map-page { background: linear-gradient(180deg, #2fa7e6 0%, #39b3ec 55%, #5cc4ef 100%); }
