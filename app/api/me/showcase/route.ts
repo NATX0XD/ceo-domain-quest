@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getStudent, listClassroomShowcase, listShowcaseExtras } from '@/lib/db/repo'
 import { shopArtSrc } from '@/components/shop-art'
-import { showcaseSafeForPeers } from '@/components/server/showcase-safety'
+import { showcaseVisibleToPeers } from '@/components/server/showcase-safety'
 import { readStudentSession, unauthorized } from '../../_lib/session-cookie'
 
 /**
@@ -38,8 +38,9 @@ export async function GET() {
   /**
    * ผลงานที่ชื่อเว็บหรือเหตุผลติดตัวกรองคำ (เช่นคำหยาบซ่อนในชื่อเว็บ) ไม่ขึ้นให้เพื่อนเห็น
    * ครูยังเห็นที่ /teacher/showcase พร้อมป้าย "ไม่ขึ้นให้เพื่อนเห็น" · ไม่แตะคะแนนของใคร
+   * ครูตั้งเองได้ (submissions.peer_visible): อนุมัติชิ้นที่ติดตัวกรอง หรือซ่อนชิ้นไหนก็ได้ — บังคับที่นี่ฝั่งเดียว
    */
-  const safe = others.filter(showcaseSafeForPeers)
+  const safe = others.filter(showcaseVisibleToPeers)
   /**
    * แกลเลอรี: คนละ 1 การ์ด (ใบล่าสุด — SQL เรียง created_at จากเก่าไปใหม่) + ภาพร้านขั้นสุดท้าย
    * ใจ/จำนวนคำชมเป็นแค่ตัวนับบนการ์ด ไม่ใช้เรียงหรือจัดอันดับ ลำดับยังเป็นชื่อเล่นเหมือนเดิม

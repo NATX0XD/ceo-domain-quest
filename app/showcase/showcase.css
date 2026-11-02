@@ -345,3 +345,23 @@
   .scg-scene { height: clamp(110px, 20dvh, 160px); }
 }
 .scg-card .sc-sign strong { font-size: clamp(1rem, 4.8vw, 1.3rem); word-break: normal; }
+
+/* เหตุผลบนการ์ดเพื่อน: ปกติย่อ 2 บรรทัด · กด "อ่านเหตุผลทั้งหมด" = ซ่อนภาพร้านแล้วกางเต็มทุกข้อ (การ์ดยังพอดีจอ) */
+.scg-reasons { display: flex; flex: none; flex-direction: column; gap: 4px; }
+.scg-reasons-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.scg-reasons-label { color: #6b2d12; font-size: .82rem; font-weight: 900; }
+.scg-read {
+  min-height: 2rem;
+  padding: 0 12px;
+  border: 2px solid #8b4fe8;
+  border-radius: 999px;
+  background: #f3ecff;
+  color: #5a2bb0;
+  font-size: .82rem;
+  font-weight: 900;
+}
+.scg-reasons .sc-reasons { cursor: pointer; }
+.scg-card.is-reading .scg-scene { display: none; }
+.scg-card.is-reading .sc-sign { margin-top: 0; }
+.scg-card.is-reading .sc-reasons { max-height: 46dvh; overflow-y: auto; overscroll-behavior: contain; }
+.scg-card.is-reading .sc-reason-text { display: block; overflow: visible; -webkit-line-clamp: unset; }

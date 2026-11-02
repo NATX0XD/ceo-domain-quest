@@ -9,7 +9,7 @@ import { ShowcaseHeader } from '@/components/showcase-header'
 import { Card, CheckIcon, ChevronRightIcon, LightbulbIcon, SendIcon, Sheet, UsersIcon } from '@/components/ui'
 import { loadShopProfile } from '@/components/server/game-state'
 import { resolveShopArt } from '@/components/server/shop-art-file'
-import { showcaseSafeForPeers } from '@/components/server/showcase-safety'
+import { showcaseSafeForPeers, showcaseVisibleToPeers } from '@/components/server/showcase-safety'
 import { shopArtFallbackSrc } from '@/components/shop-art'
 import { ShopArtImg } from '@/components/shop-art-img'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
@@ -62,9 +62,17 @@ export default async function ShowcasePage() {
   // ใบล่าสุดคือแถวแรก (listSubmissions เรียง created_at DESC) — สำคัญเมื่อมีการแก้งานหลายฉบับ
   const myWork = mine.find((row) => row.emphasis_criterion !== null) ?? mine[0] ?? null
   const reasons = splitReasons(myWork?.reason_text ?? null)
+  /** ตรงกับที่ /api/me/showcase ตัดสิน — ครูอนุมัติแล้ว (peer_visible = true) โน้ตนี้หายไป */
+  const myWorkFields = myWork
+    ? { domainName: myWork.domain_name, tld: myWork.tld, reasonText: myWork.reason_text }
+    : null
   const hiddenFromPeers =
-    myWork !== null &&
-    !showcaseSafeForPeers({ domainName: myWork.domain_name, tld: myWork.tld, reasonText: myWork.reason_text })
+    myWorkFields !== null && !showcaseVisibleToPeers({ ...myWorkFields, peerVisible: myWork?.peer_visible ?? null })
+  const hiddenNote = !hiddenFromPeers
+    ? null
+    : myWorkFields && !showcaseSafeForPeers(myWorkFields)
+      ? 'ผลงานชิ้นนี้มีคำที่ไม่เหมาะ เพื่อนจึงไม่เห็นบนผนังผลงาน ครูเห็นอยู่คนเดียว'
+      : 'ครูยังไม่ให้ผลงานชิ้นนี้ขึ้นผนังผลงานเพื่อน ครูเห็นอยู่คนเดียว'
 
   const art = resolveShopArt(shop?.businessTypeId, 5)
 
@@ -165,9 +173,9 @@ export default async function ShowcasePage() {
                   ))}
                 </ol>
               ) : null}
-              {hiddenFromPeers ? (
+              {hiddenNote ? (
                 <p className="sc-hidden-note" role="note">
-                  ผลงานชิ้นนี้มีคำที่ไม่เหมาะ เพื่อนจึงไม่เห็นบนผนังผลงาน ครูเห็นอยู่คนเดียว
+                  {hiddenNote}
                 </p>
               ) : null}
             </>

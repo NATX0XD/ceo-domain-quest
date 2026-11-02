@@ -9,6 +9,7 @@ import { missions as missionList } from '@/components/missions'
 import { loadThaiFonts, type ThaiFontSet } from '@/lib/certificate/font'
 import { getProfile, getStudent, listMissionProgress, listSubmissions } from '@/lib/db/repo'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
+import { certificateDomain } from '@/components/server/showcase-safety'
 import { errorResponse, readStudentSession, unauthorized } from '../_lib/session-cookie'
 
 /**
@@ -45,7 +46,7 @@ function contentDisposition(fileName: string): string {
 }
 
 export async function GET(request: Request) {
-  // ?theme=domain = ธีมลายโดเมน (ค่าเริ่มต้นยังเป็นธีมเดิม) — ไม่ใช่ตัวระบุตัวตน studentId ยังมาจากคุกกี้เท่านั้น
+  // ค่าเริ่มต้น = ธีมลายโดเมน · ?theme=classic = แบบเดิม — ไม่ใช่ตัวระบุตัวตน studentId ยังมาจากคุกกี้เท่านั้น
   const theme = resolveCertTheme(new URL(request.url).searchParams.get('theme'))
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง')
@@ -126,7 +127,8 @@ export async function GET(request: Request) {
     {
       nickname: data.nickname,
       shopName: data.shopName,
-      domainFull: data.domainFull,
+      // ชื่อเว็บติดตัวกรองคำ = แสดงแค่ชื่อร้าน (ตรงกับพรีวิวหน้า /result)
+      domainFull: certificateDomain(data.domainFull),
       starsTotal: data.starsTotal,
       starsMax: data.starsMax,
       missionsPassed: missionList.filter((m) => passedIds.has(m.id)).length,

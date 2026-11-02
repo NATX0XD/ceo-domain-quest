@@ -576,13 +576,13 @@ isOneToOne: false
                   ]
                 },"submissions": {
                   Row: {
-                    "ai_scores": Json | null,"ai_scores_snapshot": Json | null,"confirmed_at": string | null,"confirmed_by": string | null,"created_at": string,"domain_name": string,"emphasis_changed_count": number,"emphasis_criterion": string | null,"format": string,"id": string,"needs_review": boolean,"pin_hide_name": boolean,"pinned_at": string | null,"pinned_by": string | null,"reason_text": string | null,"self_scores": Json | null,"student_id": string,"teacher_changed": boolean | null,"teacher_confirmed_scores": Json | null,"teacher_scores_before": Json | null,"tld": string,"updated_at": string
+                    "ai_scores": Json | null,"ai_scores_snapshot": Json | null,"confirmed_at": string | null,"confirmed_by": string | null,"created_at": string,"domain_name": string,"emphasis_changed_count": number,"emphasis_criterion": string | null,"format": string,"id": string,"needs_review": boolean,"peer_visible": boolean | null,"pin_hide_name": boolean,"pinned_at": string | null,"pinned_by": string | null,"reason_text": string | null,"self_scores": Json | null,"student_id": string,"teacher_changed": boolean | null,"teacher_confirmed_scores": Json | null,"teacher_scores_before": Json | null,"tld": string,"updated_at": string
                   }
                   Insert: {
-                    "ai_scores"?: Json | null,"ai_scores_snapshot"?: Json | null,"confirmed_at"?: string | null,"confirmed_by"?: string | null,"created_at"?: string,"domain_name": string,"emphasis_changed_count"?: number,"emphasis_criterion"?: string | null,"format"?: string,"id"?: string,"needs_review"?: boolean,"pin_hide_name"?: boolean,"pinned_at"?: string | null,"pinned_by"?: string | null,"reason_text"?: string | null,"self_scores"?: Json | null,"student_id": string,"teacher_changed"?: boolean | null,"teacher_confirmed_scores"?: Json | null,"teacher_scores_before"?: Json | null,"tld": string,"updated_at"?: string
+                    "ai_scores"?: Json | null,"ai_scores_snapshot"?: Json | null,"confirmed_at"?: string | null,"confirmed_by"?: string | null,"created_at"?: string,"domain_name": string,"emphasis_changed_count"?: number,"emphasis_criterion"?: string | null,"format"?: string,"id"?: string,"needs_review"?: boolean,"peer_visible"?: boolean | null,"pin_hide_name"?: boolean,"pinned_at"?: string | null,"pinned_by"?: string | null,"reason_text"?: string | null,"self_scores"?: Json | null,"student_id": string,"teacher_changed"?: boolean | null,"teacher_confirmed_scores"?: Json | null,"teacher_scores_before"?: Json | null,"tld": string,"updated_at"?: string
                   }
                   Update: {
-                    "ai_scores"?: Json | null,"ai_scores_snapshot"?: Json | null,"confirmed_at"?: string | null,"confirmed_by"?: string | null,"created_at"?: string,"domain_name"?: string,"emphasis_changed_count"?: number,"emphasis_criterion"?: string | null,"format"?: string,"id"?: string,"needs_review"?: boolean,"pin_hide_name"?: boolean,"pinned_at"?: string | null,"pinned_by"?: string | null,"reason_text"?: string | null,"self_scores"?: Json | null,"student_id"?: string,"teacher_changed"?: boolean | null,"teacher_confirmed_scores"?: Json | null,"teacher_scores_before"?: Json | null,"tld"?: string,"updated_at"?: string
+                    "ai_scores"?: Json | null,"ai_scores_snapshot"?: Json | null,"confirmed_at"?: string | null,"confirmed_by"?: string | null,"created_at"?: string,"domain_name"?: string,"emphasis_changed_count"?: number,"emphasis_criterion"?: string | null,"format"?: string,"id"?: string,"needs_review"?: boolean,"peer_visible"?: boolean | null,"pin_hide_name"?: boolean,"pinned_at"?: string | null,"pinned_by"?: string | null,"reason_text"?: string | null,"self_scores"?: Json | null,"student_id"?: string,"teacher_changed"?: boolean | null,"teacher_confirmed_scores"?: Json | null,"teacher_scores_before"?: Json | null,"tld"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -906,7 +906,7 @@ isOneToOne: false
                            },
 "classroom_showcase":
 { Args: { "p_classroom_id": string,"p_student_id": string }; Returns: {
-              "domain_name": string,"nickname": string,"reason_text": string,"tld": string
+              "domain_name": string,"nickname": string,"peer_visible": boolean | null,"reason_text": string,"tld": string
             }[]
                            },
 "classroom_showcase_extras":
@@ -1032,6 +1032,7 @@ isOneToOne: false
 "format": string,
 "id": string,
 "needs_review": boolean,
+"peer_visible": boolean | null,
 "pin_hide_name": boolean,
 "pinned_at": string | null,
 "pinned_by": string | null,
@@ -2167,6 +2168,39 @@ isOneToOne: false
 "format": string,
 "id": string,
 "needs_review": boolean,
+"peer_visible": boolean | null,
+"pin_hide_name": boolean,
+"pinned_at": string | null,
+"pinned_by": string | null,
+"reason_text": string | null,
+"self_scores": Json | null,
+"student_id": string,
+"teacher_changed": boolean | null,
+"teacher_confirmed_scores": Json | null,
+"teacher_scores_before": Json | null,
+"tld": string,
+"updated_at": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "submissions"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"teacher_set_peer_visible":
+{ Args: { "p_submission_id": string,"p_teacher_id": string,"p_visible": boolean | null }; Returns: {
+              "ai_scores": Json | null,
+"ai_scores_snapshot": Json | null,
+"confirmed_at": string | null,
+"confirmed_by": string | null,
+"created_at": string,
+"domain_name": string,
+"emphasis_changed_count": number,
+"emphasis_criterion": string | null,
+"format": string,
+"id": string,
+"needs_review": boolean,
+"peer_visible": boolean | null,
 "pin_hide_name": boolean,
 "pinned_at": string | null,
 "pinned_by": string | null,

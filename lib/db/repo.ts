@@ -1755,6 +1755,8 @@ export type ShowcaseItem = {
   domainName: string
   tld: string
   reasonText: string | null
+  /** ครูตั้งการแสดงให้เพื่อนเห็นเอง — null = ให้ตัวกรองคำตัดสิน */
+  peerVisible: boolean | null
 }
 
 /**
@@ -1781,6 +1783,8 @@ export async function listClassroomShowcase(
     domainName: row.domain_name,
     tld: row.tld,
     reasonText: row.reason_text,
+    // ฐานข้อมูลที่ยังไม่ได้ push migration จะไม่มีคอลัมน์นี้ = ตัวกรองตัดสินเหมือนเดิม
+    peerVisible: typeof row.peer_visible === 'boolean' ? row.peer_visible : null,
   }))
 }
 
@@ -3123,6 +3127,47 @@ export async function teacherPinSubmission(
 
   if (error) fail('teacherPinSubmission', error)
   return data[0] ?? null
+}
+
+/**
+ * ครูตั้งว่าเพื่อนเห็นผลงานชิ้นนี้บนผนังไหม — true = อนุมัติ · false = ซ่อน · null = กลับไปให้ตัวกรองตัดสิน
+ * null ที่คืน = ไม่ใช่ผลงานในห้องของครูคนนี้
+ */
+export async function teacherSetPeerVisible(
+  teacherId: string,
+  submissionId: string,
+  visible: boolean | null,
+): Promise<Submission | null> {
+  const { data, error } = await getServiceClient().rpc('teacher_set_peer_visible', {
+    p_teacher_id: teacherId,
+    p_submission_id: submissionId,
+    // RPC types ไม่รับ null ตรง ๆ แต่ SQL รับ (null = อัตโนมัติ)
+    p_visible: visible as boolean,
+  })
+  if (error) fail('teacherSetPeerVisible', error)
+  return data?.[0] ?? null
+}
+
+/** ผลงานใบเสนอ CEO ทุกใบของห้อง (ไม่สนว่าตรวจแล้วหรือยัง) — ใช้ให้ครูตั้งการแสดงบนผนังเพื่อน · null = ไม่ใช่ห้องของครู */
+export async function listClassroomCeoWorks(
+  teacherId: string,
+  classroomId: string,
+): Promise<Array<Submission & { nickname: string }> | null> {
+  const { data, error } = await getServiceClient()
+    .from('classrooms')
+    .select('id, students(nickname, submissions(*))')
+    .eq('id', classroomId)
+    .eq('teacher_id', teacherId)
+    .maybeSingle()
+
+  if (error) fail('listClassroomCeoWorks', error)
+  if (!data) return null
+
+  return data.students.flatMap((student) =>
+    student.submissions
+      .filter((s) => s.emphasis_criterion !== null)
+      .map((s) => ({ ...s, nickname: student.nickname })),
+  )
 }
 
 export interface PinnedShowcaseRow {

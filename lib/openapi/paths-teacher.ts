@@ -896,14 +896,16 @@ access token ของ Supabase **ไม่ถูกส่งกลับไป�
       security: TEACHER_ONLY,
       description: `
 - \`action: "pin"\` — \`submissionId\` · \`pinned\` · \`hideName\` (ปักได้โดยไม่ต้องเปิดชื่อเจ้าของ)
+- \`action: "peer-visible"\` — \`submissionId\` · \`visible\` (true อนุมัติให้เพื่อนเห็น · false ซ่อน · null ให้ตัวกรองคำตัดสิน)
 - \`action: "hide-feedback"\` — \`feedbackId\` · \`hidden\` · \`reason\` (**ซ่อน ไม่ลบ** ร่องรอยยังอยู่)
 `,
       requestBody: jsonBody(
         obj(
           {
-            action: str('คำสั่ง', { enum: ['pin', 'hide-feedback'] }),
-            submissionId: uuid('ใช้กับ `pin`', FAKE.submissionId),
+            action: str('คำสั่ง', { enum: ['pin', 'peer-visible', 'hide-feedback'] }),
+            submissionId: uuid('ใช้กับ `pin` และ `peer-visible`', FAKE.submissionId),
             pinned: bool('ปักหรือถอด'),
+            visible: nullable(bool('เพื่อนเห็นบนผนังไหม (null = ตัวกรองตัดสิน)')),
             hideName: bool('ปักโดยไม่โชว์ชื่อเจ้าของ'),
             feedbackId: uuid('ใช้กับ `hide-feedback`', FAKE.feedbackId),
             hidden: bool('ซ่อนหรือเอากลับมา'),
@@ -920,6 +922,7 @@ access token ของ Supabase **ไม่ถูกส่งกลับไป�
             ok: bool('สำเร็จ'),
             submissionId: uuid('ใช้กับ `pin`', FAKE.submissionId),
             pinnedAt: nullable(str('เวลาที่ปัก')),
+            peerVisible: nullable(bool('ค่าที่ครูตั้งไว้ (peer-visible)')),
             feedbackId: uuid('ใช้กับ `hide-feedback`', FAKE.feedbackId),
             hiddenAt: nullable(str('เวลาที่ซ่อน')),
           }),

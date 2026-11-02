@@ -72,6 +72,8 @@ export function ShowcaseBoard() {
   const [index, setIndex] = useState(0)
   const [busy, setBusy] = useState<string | null>(null)
   const [likeError, setLikeError] = useState<string | null>(null)
+  /** การ์ดที่กางเหตุผลอ่านเต็มอยู่ (ชื่อเล่น) — ปัดไปการ์ดอื่นแล้วหุบเอง */
+  const [reading, setReading] = useState<string | null>(null)
   const track = useRef<HTMLUListElement>(null)
 
   useEffect(() => {
@@ -190,6 +192,9 @@ export function ShowcaseBoard() {
         {items.map((item, i) => {
           const reasons = splitReasons(item.reasonText)
           const likes = item.likes ?? 0
+          const isReading = reading === item.nickname && i === current
+          const toggleReading = () => setReading(isReading ? null : item.nickname)
+          const reasonsId = `scg-reasons-${i}`
           return (
             <li
               key={item.nickname}
@@ -197,7 +202,7 @@ export function ShowcaseBoard() {
               aria-roledescription="การ์ด"
               aria-label={`${i + 1} จาก ${total}: ${item.nickname}`}
             >
-              <article className="sc-card scg-card">
+              <article className={`sc-card scg-card${isReading ? ' is-reading' : ''}`}>
                 <div className="sc-card-head">
                   <p className="sc-kicker">
                     {item.shopName ? `${item.shopName} · ` : ''}
@@ -229,14 +234,29 @@ export function ShowcaseBoard() {
                   </strong>
                 </div>
                 {reasons.length > 0 ? (
-                  <ol className="sc-reasons" aria-label="เหตุผลที่ตั้งชื่อนี้">
-                    {reasons.map((reason, n) => (
-                      <li key={`${n}-${reason}`}>
-                        <span className="sc-reason-no" aria-hidden="true">{n + 1}</span>
-                        <span className="sc-reason-text">{reason}</span>
-                      </li>
-                    ))}
-                  </ol>
+                  <div className="scg-reasons">
+                    <div className="scg-reasons-head">
+                      <span className="scg-reasons-label">เหตุผล {reasons.length} ข้อ</span>
+                      <button
+                        type="button"
+                        className="scg-read focus-ring"
+                        aria-expanded={isReading}
+                        aria-controls={reasonsId}
+                        onClick={toggleReading}
+                      >
+                        {isReading ? 'ย่อกลับ' : 'อ่านเหตุผลทั้งหมด'}
+                      </button>
+                    </div>
+                    {/* แตะรายการก็กาง/หุบได้ — ปุ่มด้านบนคือทางหลักสำหรับคีย์บอร์ดและโปรแกรมอ่านจอ */}
+                    <ol id={reasonsId} className="sc-reasons" aria-label="เหตุผลที่ตั้งชื่อนี้" onClick={toggleReading}>
+                      {reasons.map((reason, n) => (
+                        <li key={`${n}-${reason}`}>
+                          <span className="sc-reason-no" aria-hidden="true">{n + 1}</span>
+                          <span className="sc-reason-text">{reason}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
                 ) : null}
                 <div className="scg-actions">
                   <button

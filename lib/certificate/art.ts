@@ -21,12 +21,12 @@ export const CERT_ART = {
 export type CertArtKey = keyof typeof CERT_ART
 
 /**
- * ธีมเกียรติบัตร — `classic` = ดีไซน์ปัจจุบัน (ค่าเริ่มต้น) · `domain` = ลายเกี่ยวกับโดเมน/DNS
- * เจ้าของยังไม่เลือก จึงสลับดูได้ด้วย ?theme=domain ทั้งหน้า /result และ /api/certificate
+ * ธีมเกียรติบัตร — `domain` = ลายเกี่ยวกับโดเมน/DNS (ค่าเริ่มต้น มติเจ้าของ 2 พ.ย. 2569) · `classic` = ดีไซน์เดิม
+ * ดูแบบเดิมได้ด้วย ?theme=classic ทั้งหน้า /result และ /api/certificate
  */
 export const CERT_THEMES = ['classic', 'domain'] as const
 export type CertTheme = (typeof CERT_THEMES)[number]
-export const CERT_THEME: CertTheme = 'classic'
+export const CERT_THEME: CertTheme = 'domain'
 
 export function resolveCertTheme(value: unknown): CertTheme {
   const v = Array.isArray(value) ? value[0] : value

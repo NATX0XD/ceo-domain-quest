@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { listPendingReview, listTeacherShowcaseLikes } from '@/lib/db/repo'
+import { listClassroomCeoWorks, listPendingReview, listTeacherShowcaseLikes } from '@/lib/db/repo'
 import { TeacherShowcaseClient } from '@/components/teacher-showcase-client'
 import { TeacherFlagsClient } from '@/components/teacher-flags-client'
-import { showcaseSafeForPeers } from '@/components/server/showcase-safety'
+import { TeacherPeerVisibilityClient, type PeerVisibilityRow } from '@/components/teacher-peer-visibility-client'
+import { showcaseSafeForPeers, showcaseVisibleToPeers } from '@/components/server/showcase-safety'
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
 import { PageBody, PageHead } from '../_ux/page-head'
 import { Icon3d, InfoTip } from '../_ux/v2'
@@ -23,12 +24,28 @@ export default async function TeacherShowcasePage({
   const data = await loadTeacherPage(await searchParams)
   if (!data) return <TeacherSignedOut title="ผลงานและจอหน้าห้อง" />
 
-  const [pending, likes] = data.selectedId
+  const [pending, likes, works] = data.selectedId
     ? await Promise.all([
         listPendingReview(data.teacherId, data.selectedId).then((rows) => rows ?? []),
         listTeacherShowcaseLikes(data.teacherId, data.selectedId),
+        listClassroomCeoWorks(data.teacherId, data.selectedId).then((rows) => rows ?? []),
       ])
-    : [[], []]
+    : [[], [], []]
+  /** ผนังผลงานเพื่อนแสดงใบเสนอล่าสุดของแต่ละคน — ครูตั้งการแสดงที่ใบนั้น */
+  const latestWork = new Map<string, (typeof works)[number]>()
+  for (const row of works) {
+    const prev = latestWork.get(row.nickname)
+    if (!prev || row.created_at > prev.created_at) latestWork.set(row.nickname, row)
+  }
+  const peerRows: PeerVisibilityRow[] = [...latestWork.values()]
+    .sort((a, b) => a.nickname.localeCompare(b.nickname, 'th'))
+    .map((row) => ({
+      submissionId: row.id,
+      nickname: row.nickname,
+      domain: `${row.domain_name}${row.tld}`,
+      flagged: !showcaseSafeForPeers({ domainName: row.domain_name, tld: row.tld, reasonText: row.reason_text }),
+      override: row.peer_visible ?? null,
+    }))
   // ใจที่เพื่อนกดให้บนแกลเลอรี /showcase — ครูเห็นตัวเลข นักเรียนไม่เห็นการจัดอันดับ
   const liked = likes.filter((row) => row.likes > 0).sort((a, b) => a.nickname.localeCompare(b.nickname, 'th'))
 
@@ -55,6 +72,8 @@ export default async function TeacherShowcasePage({
       <div className="t2-stack">
         <TeacherFlagsClient classroomId={data.selectedId} />
 
+        {data.selectedId ? <TeacherPeerVisibilityClient rows={peerRows} /> : null}
+
         <TeacherShowcaseClient
           classroomId={data.selectedId}
           candidates={pending
@@ -64,10 +83,11 @@ export default async function TeacherShowcasePage({
               nickname: row.nickname,
               domain: `${row.domain_name}${row.tld}`,
               // ติดตัวกรองคำ = เพื่อนไม่เห็นบนผนังผลงาน ครูยังเห็นและปักหมุดเองได้ถ้าจะใช้สอน
-              hiddenFromPeers: !showcaseSafeForPeers({
+              hiddenFromPeers: !showcaseVisibleToPeers({
                 domainName: row.domain_name,
                 tld: row.tld,
                 reasonText: row.reason_text,
+                peerVisible: row.peer_visible ?? null,
               }),
             }))}
         />

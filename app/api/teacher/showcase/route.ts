@@ -7,6 +7,7 @@ import {
   listStudentsWithoutFeedback,
   teacherHideFeedback,
   teacherPinSubmission,
+  teacherSetPeerVisible,
 } from '@/lib/db/repo'
 import { errorResponse, readJsonBody, readTeacherSession, unauthorized } from '../../_lib/session-cookie'
 
@@ -27,6 +28,12 @@ const ActionSchema = z.discriminatedUnion('action', [
     pinned: z.boolean(),
     /** ปักหมุดแบบไม่แสดงชื่อเจ้าของ */
     hideName: z.boolean().optional(),
+  }),
+  z.object({
+    /** เพื่อนเห็นผลงานชิ้นนี้บนผนังไหม — true อนุมัติ · false ซ่อน · null ให้ตัวกรองคำตัดสิน */
+    action: z.literal('peer-visible'),
+    submissionId: z.string().uuid(),
+    visible: z.boolean().nullable(),
   }),
   z.object({
     action: z.literal('hide-feedback'),
@@ -61,7 +68,7 @@ export async function POST(request: Request) {
 
   const parsed = ActionSchema.safeParse(await readJsonBody(request))
   if (!parsed.success) {
-    return errorResponse('bad-request', 'action ต้องเป็น pin หรือ hide-feedback')
+    return errorResponse('bad-request', 'action ต้องเป็น pin, peer-visible หรือ hide-feedback')
   }
 
   const body = parsed.data
@@ -75,6 +82,12 @@ export async function POST(request: Request) {
     )
     if (!row) return errorResponse('not-found', 'ไม่พบผลงานชิ้นนี้ในห้องของคุณ', 404)
     return NextResponse.json({ ok: true, submissionId: row.id, pinnedAt: row.pinned_at })
+  }
+
+  if (body.action === 'peer-visible') {
+    const row = await teacherSetPeerVisible(session.teacherId, body.submissionId, body.visible)
+    if (!row) return errorResponse('not-found', 'ไม่พบผลงานชิ้นนี้ในห้องของคุณ', 404)
+    return NextResponse.json({ ok: true, submissionId: row.id, peerVisible: row.peer_visible })
   }
 
   const row = await teacherHideFeedback(

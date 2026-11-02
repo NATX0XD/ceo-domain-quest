@@ -23,7 +23,8 @@ import { ResultGradePoll } from '@/components/result-grade-poll'
 import { CertificatePreview } from '@/components/certificate-preview'
 import { TeacherNote } from '@/components/teacher-note'
 import { gameCertificateContent } from '@/lib/certificate/game'
-import { certArtPresence, resolveCertTheme } from '@/lib/certificate/art'
+import { CERT_THEME, certArtPresence, resolveCertTheme } from '@/lib/certificate/art'
+import { certificateDomain } from '@/components/server/showcase-safety'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { loadShopProfile, loadSelfProfileDb } from '@/components/server/game-state'
@@ -93,7 +94,7 @@ export default async function ResultPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  // ?theme=domain = ลองดูเกียรติบัตรธีมโดเมน (ค่าเริ่มต้นยังเป็นธีมเดิม รอเจ้าของเลือก)
+  // ค่าเริ่มต้น = ธีมโดเมน · ?theme=classic = แบบเดิม
   const certTheme = resolveCertTheme((await searchParams).theme)
   const session = await readStudentSession()
   if (!session) return <SignInGate />
@@ -147,7 +148,8 @@ export default async function ResultPage({
     ? gameCertificateContent({
         nickname,
         shopName: shop?.shopName ?? '',
-        domainFull: certDomain,
+        // ชื่อเว็บติดตัวกรองคำ = ใบประกาศแสดงแค่ชื่อร้าน (ตรงกับ PDF)
+        domainFull: certificateDomain(certDomain),
         starsTotal: data.totalStars,
         starsMax: data.maxStars,
         missionsPassed: data.missions.filter((m) => m.passed).length,
@@ -157,7 +159,7 @@ export default async function ResultPage({
       })
     : null
   const certArt = certContent ? certArtPresence(certTheme) : null
-  const certHref = certTheme === 'classic' ? '/api/certificate' : `/api/certificate?theme=${certTheme}`
+  const certHref = certTheme === CERT_THEME ? '/api/certificate' : `/api/certificate?theme=${certTheme}`
   const grading = score?.grading === true
   const revise = standing.status === 'keep-going'
 
