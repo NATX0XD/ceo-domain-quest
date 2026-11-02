@@ -1,5 +1,5 @@
 import rubric from '@/content/rubric.json'
-import { listPendingReview, listSubmissions, type Submission } from '@/lib/db/repo'
+import { listGradeJobsBySubmissions, listPendingReview, listSubmissions, type Submission } from '@/lib/db/repo'
 import { TeacherConfirmScore, type RubricDimensionView } from '@/components/teacher-confirm-client'
 import Link from 'next/link'
 import { InfoIcon, AlertIcon } from '@/components/ui'
@@ -7,6 +7,8 @@ import { Fact, Icon3d, InfoTip } from './v2'
 import { Avatar, EmptyState, StatusBadge } from './ui'
 import { sourceLabel, type AiSourceInfo } from '@/components/server/ai'
 import { MAX_REVISION_ROUNDS } from '@/components/server/revision'
+import { classifyAiWait } from '@/lib/ai/stale-grading'
+import { RegradeButton } from './regrade-button'
 import { isTeacherConfirmed } from '@/lib/db/submission-scores'
 
 /**
@@ -167,6 +169,7 @@ export async function ReviewList({
   })
 
   const active = pending.find((r) => r.id === selectedId) ?? pending[0]!
+  const activeJobs = await listGradeJobsBySubmissions([active.id]).catch(() => [])
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
@@ -208,12 +211,15 @@ export async function ReviewList({
         const versionNo = indexFromNewest >= 0 ? versions.length - indexFromNewest : 1
         const older = indexFromNewest >= 0 ? versions.slice(indexFromNewest + 1) : []
         const initial = Array.from((row.nickname ?? '?').trim())[0] ?? '?'
+        const aiWait = classifyAiWait(ai?.gradingStatus, Boolean(ai?.aiProposed), activeJobs)
         const aiTotal =
           ai?.aiProposed?.weightedTotal !== undefined
             ? `${ai.aiProposed.weightedTotal}/${ai.aiProposed.weightedMax ?? ai.maxScore ?? '-'}`
-            : ai?.gradingStatus === 'pending-ai'
+            : aiWait === 'pending'
               ? 'กำลังตรวจ…'
-              : 'ไม่ได้เรียก AI'
+              : aiWait === 'stale'
+                ? 'AI ยังไม่ได้ตรวจ'
+                : 'ไม่ได้เรียก AI'
         return (
           <li key={row.id} className="t3-card p-4 sm:p-6">
             <div className="flex flex-wrap items-center gap-3">
@@ -289,9 +295,15 @@ export async function ReviewList({
                 </dl>
                 {ai.feedback ? <p className="mt-2 text-label text-ink-muted">{ai.feedback}</p> : null}
                 {/* flow-1 ข้อ 17: ครูไม่ต้องรอ AI ก่อนยืนยัน */}
-                {ai.gradingStatus === 'pending-ai' && !ai.aiProposed ? (
+                {aiWait === 'pending' ? (
                   <p className="mt-2 flex flex-wrap items-center gap-2">
                     <StatusBadge status="inprogress">AI กำลังอ่าน · ยืนยันได้เลยไม่ต้องรอ</StatusBadge>
+                  </p>
+                ) : null}
+                {aiWait === 'stale' ? (
+                  <p className="mt-2 flex flex-wrap items-center gap-2">
+                    <StatusBadge status="atrisk">AI ยังไม่ได้ตรวจ · ยืนยันด้วยคะแนนระบบได้เลย</StatusBadge>
+                    <RegradeButton submissionId={row.id} />
                   </p>
                 ) : null}
                 <p className="mt-2 flex items-center gap-1 text-note font-bold text-ink-muted">

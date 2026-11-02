@@ -857,6 +857,35 @@ access token ของ Supabase **ไม่ถูกส่งกลับไป�
     }),
   },
 
+  '/api/teacher/regrade': {
+    post: op({
+      id: 'regradeSubmission',
+      summary: 'ให้ AI ตรวจใบงานที่ค้าง "กำลังตรวจ" ใหม่',
+      tags: [TEACHER],
+      security: TEACHER_ONLY,
+      description: `
+ใช้เมื่องานไม่เคยเข้าคิว AI หรือคิวล้ม · ตรวจว่านักเรียนอยู่ในห้องของครูก่อนเสมอ (ไม่ใช่เจ้าของ = \`404\`)
+สร้างข้อมูลตรวจจากใบงานที่เก็บไว้ ฝากเข้าคิวแล้วเริ่มตรวจ 1 งาน · ไม่แตะคะแนนกฎและคะแนนที่ครูยืนยัน
+AI ปิดทั้งห้อง = \`409\`
+`,
+      requestBody: jsonBody(
+        obj({ submissionId: uuid('ใบงานในห้องของตัวเอง', FAKE.submissionId) }, { required: ['submissionId'] }),
+        { submissionId: FAKE.submissionId },
+      ),
+      responses: {
+        ...ok('เข้าคิวแล้ว', obj({ ok: bool('สำเร็จ'), queued: bool('เข้าคิวแล้ว'), jobId: str('รหัสงาน') })),
+        ...failures(
+          [400, ['bad-request']],
+          [401, ['unauthorized']],
+          [404, ['not-found']],
+          [409, ['ai-disabled']],
+          [422, ['unsupported']],
+          [503, ['queue-failed']],
+        ),
+      },
+    }),
+  },
+
   '/api/teacher/request-revision': {
     post: op({
       id: 'requestRevision',

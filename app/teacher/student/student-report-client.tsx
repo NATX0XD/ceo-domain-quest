@@ -8,7 +8,7 @@ import { Icon3d, type Icon3dName } from '../_ux/v2'
 import {
   Avatar, Button, Card, EmptyState, Field, Ring, Skeleton, StatTile, StatusBadge, TextInput, missionColor,
 } from '../_ux/ui'
-import { LearnResultsPanel } from '../report/learn-results-panel'
+import { MissionLearnCards } from './mission-learn-cards'
 
 /**
  * T-10 รายงานรายคน — ครูใช้ให้คะแนนจริงหลังคาบ
@@ -276,6 +276,7 @@ export function StudentReportClient({
     return m ? Number(m[1]) : null
   }
   const passedCount = report ? report.missions.filter((m) => m.passedAt).length : 0
+  const clearedCount = Math.min(5, current?.cleared ?? passedCount)
 
   return (
     <div className="grid gap-5">
@@ -364,31 +365,36 @@ export function StudentReportClient({
 
       {report ? (
         <>
-          <section className="t3-hero t3-hero--soft px-5 py-5 sm:px-7" data-tone="purple">
-            <div className="relative z-[1] flex flex-wrap items-center gap-5">
-              <Ring value={Math.round(((roster.find((r) => r.studentId === report.student.id)?.cleared ?? passedCount) / 5) * 100)} size={84} stroke={8} color="var(--d-passed)" label="ความคืบหน้ารวม">
-                <Avatar name={report.student.nickname} size={56} />
-              </Ring>
-              <div className="min-w-[14rem] flex-1">
-                <h2 className="m-0 text-[24px] leading-8 font-extrabold text-[var(--c-ink)]">{report.student.nickname}</h2>
-                <p className="mt-1 flex flex-wrap items-center gap-2 text-[14px] text-[var(--c-ink-2)]">
-                  <span className="inline-flex items-center gap-1.5"><Icon3d name="package" size={18} />{str(profile?.business_name) ?? 'ยังไม่ตั้งชื่อร้าน'}</span>
-                  {str(profile?.domain_name) ? <span className="rounded-full bg-white px-2.5 py-0.5 text-[13px] font-semibold text-[var(--c-brand)] shadow-[var(--sh-1)]">{str(profile?.domain_name)}</span> : null}
-                  <StatusBadge status={passedCount === 0 ? 'notstarted' : 'inprogress'}>
-                    ผ่านแล้ว {passedCount}/{report.missions.length || 0} ด่าน
+          {/* สรุปนักเรียน — ติดบนสุดของคอลัมน์ขวาเมื่อเลื่อน (จอใหญ่) */}
+          <header className="bg-[var(--c-bg)] pb-3 lg:sticky lg:top-0 lg:z-10 lg:after:pointer-events-none lg:after:absolute lg:after:inset-x-0 lg:after:top-full lg:after:h-3 lg:after:bg-gradient-to-b lg:after:from-[var(--c-bg)] lg:after:to-transparent lg:after:content-[''] print:static">
+            <div className="t3-card flex flex-wrap items-center gap-x-4 gap-y-3 p-3.5 sm:px-5">
+              <Avatar name={report.student.nickname} size={48} />
+              <div className="min-w-[13rem] flex-1">
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                  <h2 className="m-0 text-[20px] leading-7 font-extrabold text-[var(--c-ink)]">{report.student.nickname}</h2>
+                  <StatusBadge status={clearedCount === 0 ? 'notstarted' : clearedCount >= 5 ? 'passed' : 'inprogress'}>
+                    ผ่านแล้ว {clearedCount}/5 ด่าน
                   </StatusBadge>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--c-sunken)] px-2.5 py-0.5 text-[13px] leading-5 font-semibold text-[var(--c-ink-2)] tabular-nums">
+                    <Icon3d name="star" size={14} />{report.stars?.earned ?? 0} ดาว
+                  </span>
+                  {current?.pendingReview ? <StatusBadge status="atrisk">รอตรวจ</StatusBadge> : null}
+                </div>
+                <p className="m-0 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] text-[var(--c-ink-2)]">
+                  <span className="inline-flex items-center gap-1.5"><Icon3d name="package" size={16} />{str(profile?.business_name) ?? 'ยังไม่ตั้งชื่อร้าน'}</span>
+                  {str(profile?.domain_name) ? <span className="rounded-full bg-[var(--c-brand-soft)] px-2.5 text-[13px] font-semibold text-[var(--c-brand)]">{str(profile?.domain_name)}</span> : null}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 print:hidden">
-                <Button kind="primary" onClick={() => window.print()}>
-                  <Icon3d name="printer" size={20} />
+                <Button kind="primary" size="sm" onClick={() => window.print()}>
+                  <Icon3d name="printer" size={18} />
                   พิมพ์ / บันทึกเป็น PDF
                 </Button>
-                <Button onClick={() => void load()}>โหลดใหม่</Button>
-                <Button kind="danger" onClick={() => setConfirmRemove(true)}>ลบออกจากห้อง</Button>
+                <Button size="sm" onClick={() => void load()}>โหลดใหม่</Button>
+                <Button size="sm" kind="danger" onClick={() => setConfirmRemove(true)}>ลบออกจากห้อง</Button>
               </div>
             </div>
-          </section>
+          </header>
 
           <section aria-label="ชื่อบนเกียรติบัตร">
             <Card
@@ -661,7 +667,7 @@ export function StudentReportClient({
             </details>
           ) : null}
 
-          <LearnResultsPanel classroomId={classroomId} studentId={report.student.id} />
+          <MissionLearnCards classroomId={classroomId} studentId={report.student.id} />
         </>
       ) : !error && roster.length > 0 ? (
         <div role="status" aria-busy="true" className="grid gap-3">

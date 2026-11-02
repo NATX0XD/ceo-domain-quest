@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { VOICE_SUBMISSION_ENABLED } from '@/lib/voice-feature'
 import { CeoClient } from '@/components/ceo-client'
 import { SignInGate } from '@/components/student-shell'
 import { bigMission, rubricForClient } from '@/components/server/lesson-content'
@@ -77,6 +78,7 @@ export default async function CeoPage() {
    */
   const enabledSubmitModes = bigMission.submitModes.filter((mode) => {
     const key = mode.id === 'bm-mode-write' ? 'write' : mode.id === 'bm-mode-voice' ? 'voice' : 'design'
+    if (key === 'voice' && !VOICE_SUBMISSION_ENABLED) return false
     return settings.submitModes[key]
   })
   const primaryModeId = enabledSubmitModes[0]?.id ?? ''

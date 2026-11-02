@@ -1,3 +1,4 @@
+import { VOICE_SUBMISSION_ENABLED } from '@/lib/voice-feature'
 import { NextResponse } from 'next/server'
 import { MAX_VOICE_BYTES, VOICE_MIME_TYPES, logEvent, uploadVoice } from '@/lib/db/repo'
 import { errorResponse, readStudentSession, unauthorized } from '../../_lib/session-cookie'
@@ -13,6 +14,9 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
+  if (!VOICE_SUBMISSION_ENABLED) {
+    return NextResponse.json({ error: 'not-found', message: 'การส่งงานด้วยเสียงปิดอยู่' }, { status: 404 })
+  }
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง ใส่รหัสห้องกับ PIN ที่หน้า /join ก่อน')
 

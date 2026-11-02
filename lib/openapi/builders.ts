@@ -260,6 +260,9 @@ export function fileResponse(
  *    จึงลืมไม่ได้ และไม่มีทางมีรหัสที่เอกสารอธิบายไม่ได้
  */
 const CODE_MEANING: Record<string, string> = {
+  'ai-disabled': 'ครูปิด AI ทั้งห้อง จึงไม่เข้าคิวตรวจ',
+  unsupported: 'ใบงานชิ้นนี้ไม่ใช่ประเภทที่ AI ตรวจได้',
+  'queue-failed': 'ฝากงานเข้าคิว AI ไม่สำเร็จ',
   unauthorized: 'ไม่มีคุกกี้ หรือคุกกี้หมดอายุ/ผิดบทบาท',
   'bad-request': 'รูปแบบ body หรือ query ไม่ผ่าน zod',
   'bad-pin': 'รหัส 4 หลักไม่ใช่ตัวเลข 4 ตัวพอดี',

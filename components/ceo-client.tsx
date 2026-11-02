@@ -1,5 +1,6 @@
 'use client'
 
+import { VOICE_SUBMISSION_ENABLED } from '@/lib/voice-feature'
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { PageHeading, SignInGate, StudentShell } from '@/components/student-shell'
@@ -541,7 +542,9 @@ export function CeoClient({
       summary: () => string
     }
     const out: Step[] = [
-      { key: 'speak', kind: 'speak', label: 'ซ้อมพูด', summary: () => '' },
+      ...(VOICE_SUBMISSION_ENABLED
+        ? [{ key: 'speak', kind: 'speak' as const, label: 'ซ้อมพูด', summary: () => '' }]
+        : []),
       { key: 'mode', kind: 'mode', label: 'วิธีส่งงาน', summary: () => '' },
     ]
     for (const field of fields) {
@@ -932,7 +935,7 @@ export function CeoClient({
               </p>
             </div>
 
-            {stepMeta?.kind === 'speak' ? (
+            {VOICE_SUBMISSION_ENABLED && stepMeta?.kind === 'speak' ? (
               <section className="ceo-panel">
                 <h2 className="ceo-panel-title">{objective}</h2>
                 <p className="ceo-note">พูดให้ได้ 1–2 นาที พูดช้า ๆ ชัด ๆ แล้วจะจำได้เองว่าจะพูดอะไรต่อ</p>

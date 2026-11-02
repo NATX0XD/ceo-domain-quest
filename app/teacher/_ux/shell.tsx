@@ -546,7 +546,7 @@ function SideLink({ item, active, mini }: { item: NavItem; active: boolean; mini
     <Link
       href={item.href}
       aria-current={active ? 'page' : undefined}
-      title={item.label}
+      title={mini ? item.label : undefined}
       className={`t3-nav-link focus-ring ${mini ? 'justify-center px-0' : ''}`}
     >
       <span className="t3-nav-ico relative">

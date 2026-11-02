@@ -1,7 +1,7 @@
 import { after, NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { Json } from '@/lib/db/types'
-import { listSubmissions, logEvent, saveSubmission, type Submission } from '@/lib/db/repo'
+import { listSubmissions, logEvent, saveSubmission, updateSubmissionAiScores, type Submission } from '@/lib/db/repo'
 import {
   readTeacherConfirmedScores,
   type TeacherConfirmedScores,
@@ -402,6 +402,19 @@ export async function POST(request: Request) {
         .then((result) => result.jobId)
         .catch(() => null)
     : null
+
+  // เข้าคิวไม่สำเร็จ → ห้ามปล่อยค้าง 'pending-ai' ตลอดไป (ครูจะเห็นปุ่มให้ AI ตรวจใหม่)
+  if (settings.aiGrading && queued === null) {
+    await updateSubmissionAiScores(
+      session.studentId,
+      submission.id,
+      {
+        ...(submission.ai_scores as Record<string, unknown>),
+        gradingStatus: 'ai-failed',
+        aiError: 'เข้าคิว AI ไม่สำเร็จ',
+      } as unknown as NonNullable<Json>,
+    ).catch(() => null)
+  }
 
   /**
    * Start the first queued job after the submission response is sent.  A single

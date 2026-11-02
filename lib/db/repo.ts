@@ -2102,6 +2102,37 @@ export async function failGradeJob(
   return data[0] ?? null
 }
 
+/** งานตรวจ AI ของใบงานหลายใบ (ใหม่สุดก่อน) — ใช้ดูว่าใบที่ค้าง "กำลังตรวจ" มีงานในคิวจริงไหม */
+export async function listGradeJobsBySubmissions(submissionIds: string[]): Promise<GradeJob[]> {
+  if (submissionIds.length === 0) return []
+  const { data, error } = await getServiceClient()
+    .from('grade_jobs')
+    .select()
+    .in('submission_id', submissionIds)
+    .order('created_at', { ascending: false })
+  if (error) fail('listGradeJobsBySubmissions', error)
+  return data
+}
+
+/** อ่านใบงานเดียวโดยตรวจว่านักเรียนอยู่ในห้องของครูคนนี้ — null = ไม่พบ/ไม่ใช่ห้องของครู */
+export async function getSubmissionForTeacher(
+  teacherId: string,
+  submissionId: string,
+): Promise<Submission | null> {
+  const client = getServiceClient()
+  const { data: sub, error } = await client.from('submissions').select().eq('id', submissionId).maybeSingle()
+  if (error) fail('getSubmissionForTeacher', error)
+  if (!sub) return null
+  const { data: student, error: sErr } = await client
+    .from('students')
+    .select('classroom_id')
+    .eq('id', sub.student_id)
+    .maybeSingle()
+  if (sErr) fail('getSubmissionForTeacher.student', sErr)
+  if (!student) return null
+  return (await getOwnedClassroom(teacherId, student.classroom_id)) ? sub : null
+}
+
 export async function listGradeJobs(
   studentId: string,
   status?: GradeJobStatus,
