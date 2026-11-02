@@ -1,9 +1,15 @@
 import type { Metadata } from 'next'
-import { DomeAvatar } from '@/components/ui'
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
 import { PageBody, PageHead } from '../_ux/page-head'
 import { DemoModeBanner } from '../demo-mode'
-import { InfoTip, Kpi, KpiGrid } from '../_ux/v2'
+import { Icon3d } from '../_ux/v2'
+import { Card, StatTile } from '../_ux/ui'
+
+const OPTIONS = [
+  { label: 'ซ้อมก่อนขึ้นเวที', value: 'ปลอดภัย', icon: 'rocket', hint: 'กดได้ทุกปุ่ม ไม่กระทบห้องจริง' },
+  { label: 'สาธิตให้กรรมการ', value: 'ข้อมูลครบ', icon: 'trophy', hint: 'ทุกหน้ามีของให้ดู' },
+  { label: 'เสร็จแล้วล้าง', value: 'กลับเดิม', icon: 'counterclockwise-arrows-button', hint: 'เหมือนตอนซ้อมเป๊ะ' },
+] as const
 
 export const metadata: Metadata = { title: 'โหมดสาธิต — สำหรับครู' }
 export const dynamic = 'force-dynamic'
@@ -24,7 +30,7 @@ export default async function TeacherDemoPage({
     <PageBody>
       <PageHead title="โหมดสาธิต" subtitle="ห้องหุ่นสำหรับซ้อมและขึ้นเวที" />
 
-      <div className="t2-stack">
+      <div className="grid gap-6">
         <DemoModeBanner
           classroomId={data.selectedId}
           roomCode={data.selectedRoomCode}
@@ -33,26 +39,19 @@ export default async function TeacherDemoPage({
         />
 
         {!data.selectedIsDemo ? (
-          <section className="t2-card flex flex-wrap items-center gap-4">
-            <DomeAvatar mood="greet" size={64} decorative />
-            <div className="min-w-0 flex-1">
-              <h2 className="flex items-center gap-1 text-title-sm font-extrabold text-ink">
-                ห้อง {data.selectedRoomCode ?? '—'} ไม่ใช่ห้องสาธิต
-                <InfoTip
-                  label="เรื่องห้องสาธิต"
-                  text="ปุ่มล้างกลับค่าเริ่มต้นมีเฉพาะห้องที่ติดป้ายห้องสาธิตตั้งแต่สร้าง ห้องเรียนจริงกดล้างไม่ได้เพราะฐานข้อมูลปฏิเสธคำสั่งเอง ต้องการห้องสาธิต ให้ผู้ดูแลรัน npm run seed:demo หนึ่งครั้ง จะได้ห้อง QUEST9 พร้อมนักเรียนหุ่น 20 คน"
-                />
-              </h2>
-              <p className="mt-1 text-label font-semibold text-ink-muted">ห้องจริงกดล้างไม่ได้</p>
-            </div>
-          </section>
+          <Card
+            title={`ห้อง ${data.selectedRoomCode ?? '—'} ไม่ใช่ห้องสาธิต`}
+            tip="ปุ่มล้างกลับค่าเริ่มต้นมีเฉพาะห้องที่ติดป้ายห้องสาธิตตั้งแต่สร้าง ห้องเรียนจริงกดล้างไม่ได้เพราะฐานข้อมูลปฏิเสธคำสั่งเอง ต้องการห้องสาธิต ให้ผู้ดูแลรัน npm run seed:demo หนึ่งครั้ง จะได้ห้อง QUEST9 พร้อมนักเรียนหุ่น 20 คน"
+          >
+            <p className="text-[15px] text-[var(--c-ink-2)]">ห้องจริงกดล้างไม่ได้ เลือกห้องสาธิตจากตัวสลับห้องด้านบน</p>
+          </Card>
         ) : null}
 
-        <KpiGrid cols={3}>
-          <Kpi label="ซ้อมก่อนขึ้นเวที" value="ปลอดภัย" tone="mint" icon="rocket" hint="กดได้ทุกปุ่ม ไม่กระทบห้องจริง" />
-          <Kpi label="สาธิตให้กรรมการ" value="ข้อมูลครบ" tone="yellow" icon="trophy" hint="ทุกหน้ามีของให้ดู" />
-          <Kpi label="เสร็จแล้วล้าง" value="กลับเดิม" tone="lilac" icon="counterclockwise-arrows-button" hint="เหมือนตอนซ้อมเป๊ะ" />
-        </KpiGrid>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {OPTIONS.map((o) => (
+            <StatTile key={o.label} label={o.label} value={o.value} hint={o.hint} icon={<Icon3d name={o.icon} size={28} />} />
+          ))}
+        </div>
       </div>
     </PageBody>
   )

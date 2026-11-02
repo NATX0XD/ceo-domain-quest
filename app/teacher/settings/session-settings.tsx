@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { DangerButton } from '../_ux/dialog'
 import { Icon3d, InfoTip, type Icon3dName } from '../_ux/v2'
+import { Card, Skeleton, Toggle } from '../_ux/ui'
 
 /**
  * ตั้งค่าคาบของห้องนี้ — สวิตช์ที่ครูกดนาน ๆ ครั้ง (UX-6 แยกออกจากหน้าคุมคาบสด)
@@ -87,15 +88,20 @@ export function SessionSettings({ classroomId }: { classroomId: string | null })
 
   if (!session) {
     return (
-      <section className="t2-card">
-        <p className="text-label font-bold text-ink-muted">กำลังอ่านสถานะคาบ…</p>
-      </section>
+      <Card title="สวิตช์ของคาบ">
+        <div role="status" aria-busy="true" className="grid gap-3">
+          <Skeleton className="h-6 w-1/2" />
+          <Skeleton className="h-6 w-2/3" />
+          <span className="sr-only">กำลังอ่านสถานะคาบ</span>
+        </div>
+      </Card>
     )
   }
 
   const tiles: {
     key: string
     label: string
+    help: string
     icon: Icon3dName
     on: boolean
     run: () => void
@@ -103,6 +109,7 @@ export function SessionSettings({ classroomId }: { classroomId: string | null })
     {
       key: 'focus',
       label: 'จอหน้าห้อง',
+      help: 'ให้ทุกคนดูจอหน้าห้องแทนการทำงานของตัวเอง',
       icon: 'television',
       on: session.focus_screen,
       run: () =>
@@ -114,6 +121,7 @@ export function SessionSettings({ classroomId }: { classroomId: string | null })
     {
       key: 'survey',
       label: 'แบบสอบถาม',
+      help: 'เปิดให้ตอบแบบสอบถามความพึงพอใจ',
       icon: 'sparkles',
       on: session.survey_enabled,
       run: () =>
@@ -125,98 +133,79 @@ export function SessionSettings({ classroomId }: { classroomId: string | null })
     {
       key: 'pre',
       label: 'ทดสอบก่อนเรียน',
+      help: 'เปิดช่วงทำแบบทดสอบก่อนเรียน',
       icon: 'memo',
       on: session.pretest_enabled,
       run: () =>
         send(
-          {
-            action: 'test-window',
-            sessionId: session.id,
-            which: 'pre',
-            enabled: !session.pretest_enabled,
-          },
+          { action: 'test-window', sessionId: session.id, which: 'pre', enabled: !session.pretest_enabled },
           session.pretest_enabled ? 'ปิดแบบทดสอบก่อนเรียนแล้ว' : 'เปิดแบบทดสอบก่อนเรียนแล้ว',
         ),
     },
     {
       key: 'post',
       label: 'ทดสอบหลังเรียน',
+      help: 'เปิดช่วงทำแบบทดสอบหลังเรียน',
       icon: 'trophy',
       on: session.posttest_enabled,
       run: () =>
         send(
-          {
-            action: 'test-window',
-            sessionId: session.id,
-            which: 'post',
-            enabled: !session.posttest_enabled,
-          },
+          { action: 'test-window', sessionId: session.id, which: 'post', enabled: !session.posttest_enabled },
           session.posttest_enabled ? 'ปิดแบบทดสอบหลังเรียนแล้ว' : 'เปิดแบบทดสอบหลังเรียนแล้ว',
         ),
     },
   ]
 
   return (
-    <section className="t2-card">
-      <h2 className="t2-card-title">
-        <Icon3d name="gear" size={32} />
-        สวิตช์ของคาบ
-        <InfoTip label="เรื่องสวิตช์" text="กดแล้วเครื่องนักเรียนทุกเครื่องเปลี่ยนตามภายใน 3 วินาที" />
-      </h2>
-
-      <div className="grid gap-2 lg:grid-cols-2">
+    <Card title="สวิตช์ของคาบ" tip="กดแล้วเครื่องนักเรียนทุกเครื่องเปลี่ยนตามภายใน 3 วินาที">
+      <div className="divide-y divide-[var(--c-line)]">
         {tiles.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            disabled={busy}
-            aria-pressed={t.on}
-            onClick={t.run}
-            className="t2-toggle focus-ring"
-          >
-            <Icon3d name={t.icon} size={32} />
-            <span className="min-w-0 flex-1 text-left">{t.label}</span>
-            <span className="t2-chip" data-tone={t.on ? 'green' : undefined}>
-              {t.on ? 'เปิด' : 'ปิด'}
+          <div key={t.key} className="flex items-center gap-3 py-3 first:pt-0">
+            <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-lg bg-[var(--c-sunken)]">
+              <Icon3d name={t.icon} size={28} />
             </span>
-          </button>
+            <div className="min-w-0 flex-1">
+              <Toggle label={t.label} description={t.help} checked={t.on} disabled={busy} onChange={() => t.run()} />
+            </div>
+          </div>
         ))}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3 rounded-[20px] bg-[#f6f2e8] p-3">
-        <Icon3d name="door" size={32} />
-        <p className="flex min-w-0 flex-1 items-center gap-1 text-label font-extrabold text-ink">
-          ปิดคาบ
-          <InfoTip
-            label="เรื่องการปิดคาบ"
-            text="ปิดแล้วย้อนไม่ได้ เปิดคาบใหม่ของห้องเดิมได้ แต่เวลาและช่วงจะเริ่มนับใหม่"
-          />
-        </p>
-        <div className="w-full max-w-xs">
-          <DangerButton
-            label="ปิดคาบ"
-            confirmLabel="กดอีกครั้งเพื่อปิดจริง"
-            confirming={confirmClose}
-            disabled={busy || session.ended_at !== null}
-            onArm={() => setConfirmClose(true)}
-            onConfirm={async () => {
-              await send({ action: 'close', sessionId: session.id }, 'ปิดคาบแล้ว')
-              setConfirmClose(false)
-            }}
-          />
+      <div className="mt-2 rounded-lg border border-[var(--s-danger)] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-[15px] font-semibold text-[var(--s-danger-ink)]">
+              ปิดคาบ
+              <InfoTip label="เรื่องการปิดคาบ" text="ปิดแล้วย้อนไม่ได้ เปิดคาบใหม่ของห้องเดิมได้ แต่เวลาและช่วงจะเริ่มนับใหม่" />
+            </p>
+            <p className="text-[14px] text-[var(--c-ink-3)]">ย้อนไม่ได้ ต้องกดยืนยันสองครั้ง</p>
+          </div>
+          <div className="w-full max-w-xs">
+            <DangerButton
+              label="ปิดคาบ"
+              confirmLabel="กดอีกครั้งเพื่อปิดจริง"
+              confirming={confirmClose}
+              disabled={busy || session.ended_at !== null}
+              onArm={() => setConfirmClose(true)}
+              onConfirm={async () => {
+                await send({ action: 'close', sessionId: session.id }, 'ปิดคาบแล้ว')
+                setConfirmClose(false)
+              }}
+            />
+          </div>
         </div>
       </div>
 
       {notice ? (
-        <p role="status" className="t2-note mt-3" data-tone="quest">
+        <p role="status" className="mt-3 rounded-lg px-3 py-2 text-[14px] font-medium" style={{ background: 'var(--s-success-soft)', color: 'var(--s-success-ink)' }}>
           {notice}
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="t2-note mt-3" data-tone="danger">
+        <p role="alert" className="mt-3 rounded-lg px-3 py-2 text-[14px] font-medium" style={{ background: 'var(--s-danger-soft)', color: 'var(--s-danger-ink)' }}>
           {error}
         </p>
       ) : null}
-    </section>
+    </Card>
   )
 }

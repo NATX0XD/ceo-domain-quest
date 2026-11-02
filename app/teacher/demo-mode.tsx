@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Icon3d, InfoTip } from './_ux/v2'
+import { Button } from './_ux/ui'
 
 /**
  * E-16 โหมดสาธิต — ป้ายบอกว่านี่ไม่ใช่ข้อมูลเด็กจริง + ปุ่มล้างกลับค่าเริ่มต้น
@@ -78,14 +79,16 @@ export function DemoModeBanner({ classroomId, roomCode, isDemo, showReset = fals
     <section
       role="region"
       aria-label="โหมดสาธิต"
-      className="t2-note shrink-0"
-      data-tone="danger"
-      style={{ alignItems: 'flex-start', borderRadius: 24, padding: '0.875rem 1.125rem' }}
+      className="mb-4 flex shrink-0 items-start gap-3 rounded-xl border px-4 py-3"
+      style={{ background: 'var(--s-warn-soft)', borderColor: 'var(--s-warn)' }}
     >
-      <Icon3d name="performing-arts" size={40} />
+      <span aria-hidden className="mt-0.5 shrink-0"><Icon3d name="performing-arts" size={28} /></span>
       <div className="min-w-0 flex-1">
-        <p className="text-label font-extrabold text-ink">โหมดสาธิต · ห้อง {roomCode ?? '-'}</p>
-        <p className="mt-0.5 text-label font-bold text-pretty text-ink">
+        <p className="text-[15px] font-semibold text-[var(--s-warn-ink)]">
+          <span className="mr-2 rounded-md bg-[var(--s-warn)] px-1.5 py-0.5 text-[12px] font-bold tracking-wide text-white">DEMO</span>
+          โหมดสาธิต · ห้อง {roomCode ?? '-'}
+        </p>
+        <p className="mt-0.5 text-[14px] text-pretty text-[var(--s-warn-ink)]">
           ข้อมูลเป็น<strong>นักเรียนหุ่น</strong> ·{' '}
           <strong>ห้ามนำตัวเลขจากห้องนี้ไปอ้างเป็นผลการทดลอง</strong>
         </p>
@@ -93,8 +96,8 @@ export function DemoModeBanner({ classroomId, roomCode, isDemo, showReset = fals
         {showReset ? (
           <div className="mt-3">
             {confirming ? (
-              <div className="rounded-[18px] bg-white p-3">
-                <p className="flex flex-wrap items-center gap-2 text-label font-extrabold text-ink">
+              <div className="rounded-lg border border-[var(--c-line)] bg-white p-3">
+                <p className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-[var(--c-ink)]">
                   ล้างห้อง {roomCode} กลับค่าเริ่มต้นใช่ไหม
                   <InfoTip
                     label="เรื่องการล้างห้อง"
@@ -106,44 +109,36 @@ export function DemoModeBanner({ classroomId, roomCode, isDemo, showReset = fals
                     type="button"
                     onClick={reset}
                     disabled={busy}
-                    className="t2-btn focus-ring"
-                    data-kind="dangerfill"
+                    className="inline-flex h-9 items-center rounded-lg bg-[var(--s-danger)] px-3 text-[14px] font-semibold text-white focus-visible:ring-2 focus-visible:ring-[var(--c-brand-ring)] focus-visible:outline-none disabled:opacity-50"
                   >
                     {busy ? 'กำลังล้าง…' : 'ใช่ ล้างเลย'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirming(false)}
-                    disabled={busy}
-                    className="t2-btn focus-ring"
-                  >
+                  <Button size="sm" onClick={() => setConfirming(false)} disabled={busy}>
                     ไม่ล้าง
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
-              <button
-                type="button"
+              <Button
+                kind="danger"
+                size="sm"
                 onClick={() => {
                   setConfirming(true)
                   setDone(null)
                   setError(null)
                 }}
-                className="t2-btn focus-ring"
-                data-kind="danger"
-                style={{ whiteSpace: 'normal', paddingBlock: '0.5rem', textAlign: 'center' }}
               >
                 ล้างห้องสาธิตกลับค่าเริ่มต้น
-              </button>
+              </Button>
             )}
 
             {done ? (
-              <p role="status" className="mt-2 text-label font-bold text-ink">
+              <p role="status" className="mt-2 text-[14px] font-medium text-[var(--c-ink)]">
                 {done}
               </p>
             ) : null}
             {error ? (
-              <p role="alert" className="mt-2 text-label font-bold text-danger-700">
+              <p role="alert" className="mt-2 text-[14px] font-medium text-[var(--s-danger-ink)]">
                 {error}
               </p>
             ) : null}

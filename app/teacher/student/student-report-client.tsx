@@ -1,9 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { AlertIcon, EmptyState, UsersIcon } from '../../../components/ui'
+import Link from 'next/link'
+import { AlertIcon } from '../../../components/ui'
 import { Dialog } from '../_ux/dialog'
-import { Bar, Bars, Chip, Fact, Icon3d, InfoTip, Kpi, KpiGrid } from '../_ux/v2'
+import { Icon3d, type Icon3dName } from '../_ux/v2'
+import {
+  Button, Card, DataTable, EmptyState, Field, Skeleton, StatTile, StatusBadge, TextInput, missionColor,
+} from '../_ux/ui'
 import { LearnResultsPanel } from '../report/learn-results-panel'
 
 /**
@@ -252,11 +256,13 @@ export function StudentReportClient({
 
   if (!classroomId) {
     return (
-      <EmptyState
-        title="ยังไม่มีห้องเรียน"
-        description="เปิดห้องที่แผงครูก่อน แล้วกลับมาที่หน้านี้"
-        illustration={<UsersIcon width={48} height={48} className="text-brand-400" />}
-      />
+      <Card>
+        <EmptyState
+          icon={<Icon3d name="school" size={28} />}
+          title="ยังไม่มีห้องเรียน"
+          body="เปิดห้องที่หน้าตั้งค่าห้องก่อน แล้วกลับมาที่หน้านี้"
+        />
+      </Card>
     )
   }
 
@@ -267,18 +273,24 @@ export function StudentReportClient({
 
   const initial = (name: string) => Array.from(name.trim())[0] ?? '?'
   const current = roster.find((r) => r.studentId === selected) ?? null
+  const pendingCount = roster.filter((r) => r.pendingReview).length
+  const missionNo = (id: string): number | null => {
+    if (id === 'boss') return 6
+    const m = /^(?:m|obj-)([1-4])$/.exec(id)
+    return m ? Number(m[1]) : null
+  }
+  const passedCount = report ? report.missions.filter((m) => m.passedAt).length : 0
 
   return (
-    <div className="t2-stack">
+    <div className="grid gap-6">
       {/* เลือกคน — อยู่บนสุดเพราะครูใช้ไล่ทีละคนตอนให้คะแนน (รายชื่อยาวจึงใช้ช่องเลือกแทนปุ่มเรียงเต็มจอ) */}
       <nav aria-label="เลือกนักเรียน" className="flex flex-wrap items-center gap-3 print:hidden">
         <label className="flex items-center gap-2">
-          <Icon3d name="graduation-cap" size={32} />
-          <span className="text-label font-extrabold text-ink">นักเรียน</span>
+          <span className="text-[14px] font-medium text-[var(--c-ink)]">นักเรียน</span>
           <select
             value={selected ?? ''}
             onChange={(e) => setSelected(e.target.value || null)}
-            className="h-11 min-w-48 rounded-full bg-white px-4 text-label font-extrabold text-ink ring-2 ring-line-contrast focus-ring"
+            className="h-10 min-w-48 rounded-lg border border-[var(--c-line-strong)] bg-white px-3 text-[15px] text-[var(--c-ink)] outline-none focus:border-[var(--c-brand)] focus:ring-2 focus:ring-[var(--c-brand-ring)]"
           >
             {roster.map((s) => (
               <option key={s.studentId} value={s.studentId}>
@@ -288,240 +300,237 @@ export function StudentReportClient({
             ))}
           </select>
         </label>
-        <Chip tone="sky">{roster.length} คน</Chip>
-        {current?.pendingReview ? <Chip tone="lilac">รอตรวจ</Chip> : null}
+        <span className="text-[14px] text-[var(--c-ink-3)]">{roster.length} คน</span>
+        {pendingCount > 0 ? <StatusBadge status="inprogress">รอตรวจ {pendingCount} คน</StatusBadge> : null}
       </nav>
 
       {roster.length === 0 ? (
-        <p className="t2-empty">ยังไม่มีนักเรียนในห้องนี้</p>
+        <Card>
+          <EmptyState
+            icon={<Icon3d name="graduation-cap" size={28} />}
+            title="ยังไม่มีนักเรียนในห้องนี้"
+            body="แชร์รหัสห้องหรือ QR ให้นักเรียนเข้าห้อง แล้วรายงานรายคนจะขึ้นที่นี่"
+            action={<Link href="/teacher/settings" className="inline-flex h-10 items-center rounded-lg bg-[var(--c-brand)] px-4 text-[15px] font-semibold text-white hover:bg-[var(--c-brand-hover)]">ไปหน้าตั้งค่าห้อง</Link>}
+          />
+        </Card>
       ) : null}
 
       {error ? (
-        <p role="alert" className="t2-note" data-tone="danger">
-          <AlertIcon width={22} height={22} className="shrink-0" />
+        <p role="alert" className="flex items-start gap-2 rounded-lg px-3 py-2 text-[14px] font-medium" style={{ background: 'var(--s-danger-soft)', color: 'var(--s-danger-ink)' }}>
+          <AlertIcon width={20} height={20} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </p>
       ) : null}
 
       {report ? (
         <>
-          <section className="t2-card flex flex-wrap items-center gap-4" style={{ background: 'var(--t2-lilac)', borderColor: 'transparent' }}>
-            <span className="t2-avatar" data-level="green" style={{ width: '3.5rem', height: '3.5rem', fontSize: '1.5rem', background: '#fff' }} aria-hidden>
-              {initial(report.student.nickname)}
-            </span>
-            <div className="min-w-[14rem] flex-1">
-              <h2 className="text-title font-extrabold text-ink">{report.student.nickname}</h2>
-              <p className="mt-1 flex flex-wrap items-center gap-2">
-                <Chip>{str(profile?.business_name) ?? 'ยังไม่ตั้งชื่อร้าน'}</Chip>
-                {str(profile?.domain_name) ? <Chip tone="sky">{str(profile?.domain_name)}</Chip> : null}
-              </p>
+          <Card>
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="grid size-14 shrink-0 place-items-center rounded-full bg-[var(--c-brand-soft)] text-[24px] font-semibold text-[var(--c-brand)]" aria-hidden>
+                {initial(report.student.nickname)}
+              </span>
+              <div className="min-w-[14rem] flex-1">
+                <h2 className="text-[20px] leading-7 font-bold text-[var(--c-ink)]">{report.student.nickname}</h2>
+                <p className="mt-1 flex flex-wrap items-center gap-2 text-[14px] text-[var(--c-ink-3)]">
+                  <span>{str(profile?.business_name) ?? 'ยังไม่ตั้งชื่อร้าน'}</span>
+                  {str(profile?.domain_name) ? <span className="rounded-md bg-[var(--c-sunken)] px-2 py-0.5 text-[13px] text-[var(--c-ink-2)]">{str(profile?.domain_name)}</span> : null}
+                  <StatusBadge status={passedCount === 0 ? 'notstarted' : 'inprogress'}>
+                    ผ่านแล้ว {passedCount}/{report.missions.length || 0} ด่าน
+                  </StatusBadge>
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 print:hidden">
+                <Button kind="primary" onClick={() => window.print()}>
+                  <Icon3d name="printer" size={20} />
+                  พิมพ์ / บันทึกเป็น PDF
+                </Button>
+                <Button onClick={() => void load()}>โหลดใหม่</Button>
+                <Button kind="danger" onClick={() => setConfirmRemove(true)}>ลบออกจากห้อง</Button>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2 print:hidden">
-              <button type="button" onClick={() => window.print()} className="t2-btn focus-ring" data-kind="primary">
-                <Icon3d name="printer" size={24} />
-                พิมพ์ / บันทึกเป็น PDF
-              </button>
-              <button type="button" onClick={() => void load()} className="t2-btn focus-ring">
-                โหลดใหม่
-              </button>
-              <button type="button" onClick={() => setConfirmRemove(true)} className="t2-btn focus-ring" data-kind="danger">
-                ลบออกจากห้อง
-              </button>
-            </div>
-          </section>
+          </Card>
 
-          <section className="t2-card flex flex-wrap items-start justify-between gap-3" aria-label="ชื่อบนเกียรติบัตร">
-            <div className="min-w-[15rem] flex-1">
-              <p className="text-note font-extrabold uppercase tracking-[0.12em] text-brand-700">เกียรติบัตร</p>
-              <h2 className="mt-1 text-body-lg font-black text-ink">ชื่อบนเกียรติบัตร</h2>
-              <p className="mt-1 text-label font-bold text-ink">
+          <section aria-label="ชื่อบนเกียรติบัตร">
+            <Card
+              title="ชื่อบนเกียรติบัตร"
+              action={
+                <Button size="sm" onClick={() => { setCertificateNameOpen((open) => !open); setCertificateNameNotice(null) }}>
+                  แก้ชื่อบนเกียรติบัตร
+                </Button>
+              }
+            >
+              <p className="text-[15px] font-medium text-[var(--c-ink)]">
                 {str(profile?.certificate_display_name) ?? 'ยังไม่ได้ตั้งชื่อจริง'}
               </p>
-              <p className="mt-1 text-note text-ink-muted">
+              <p className="mt-1 text-[14px] text-[var(--c-ink-3)]">
                 {str(profile?.certificate_display_name) ? 'นักเรียนตั้งไว้แล้ว ครูแก้หรือล้างเพื่อให้ตั้งใหม่ได้' : 'นักเรียนจะถูกขอชื่อจริงเมื่อได้เกียรติบัตร'}
               </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => { setCertificateNameOpen((open) => !open); setCertificateNameNotice(null) }}
-              className="t2-btn focus-ring"
-            >
-              แก้ชื่อบนเกียรติบัตร
-            </button>
-            {certificateNameOpen ? (
-              <div className="w-full rounded-2xl bg-[#fffdf8] p-3 ring-1 ring-line ring-inset">
-                <label htmlFor="teacher-certificate-name" className="text-label font-extrabold text-ink">ชื่อใหม่ หรือเว้นว่างเพื่อล้าง</label>
-                <input
-                  id="teacher-certificate-name"
-                  value={certificateNameDraft}
-                  onChange={(event) => setCertificateNameDraft(event.target.value)}
-                  maxLength={60}
-                  className="mt-1 min-h-11 w-full rounded-xl bg-white px-3 text-label font-bold text-ink ring-1 ring-line outline-none focus:ring-2 focus:ring-brand-500"
-                />
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <button type="button" onClick={() => void saveCertificateName()} disabled={certificateNameBusy} className="t2-btn" data-kind="primary">
-                    {certificateNameBusy ? 'กำลังบันทึก…' : 'บันทึกชื่อ'}
-                  </button>
-                  <button type="button" onClick={() => { setCertificateNameDraft(''); void saveCertificateName('') }} disabled={certificateNameBusy || !str(profile?.certificate_display_name)} className="t2-btn" data-kind="danger">
-                    ล้างชื่อให้นักเรียนตั้งใหม่
-                  </button>
+              {certificateNameOpen ? (
+                <div className="mt-4 grid gap-3 rounded-lg bg-[var(--c-sunken)] p-3">
+                  <Field label="ชื่อใหม่ หรือเว้นว่างเพื่อล้าง" htmlFor="teacher-certificate-name">
+                    <TextInput
+                      id="teacher-certificate-name"
+                      value={certificateNameDraft}
+                      onChange={(event) => setCertificateNameDraft(event.target.value)}
+                      maxLength={60}
+                    />
+                  </Field>
+                  <div className="flex flex-wrap gap-2">
+                    <Button kind="primary" onClick={() => void saveCertificateName()} disabled={certificateNameBusy}>
+                      {certificateNameBusy ? 'กำลังบันทึก…' : 'บันทึกชื่อ'}
+                    </Button>
+                    <Button
+                      kind="danger"
+                      onClick={() => { setCertificateNameDraft(''); void saveCertificateName('') }}
+                      disabled={certificateNameBusy || !str(profile?.certificate_display_name)}
+                    >
+                      ล้างชื่อให้นักเรียนตั้งใหม่
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-            {certificateNameNotice ? <p role="status" className="w-full text-note font-bold text-brand-700">{certificateNameNotice}</p> : null}
+              ) : null}
+              {certificateNameNotice ? <p role="status" className="mt-3 text-[14px] font-medium text-[var(--c-brand)]">{certificateNameNotice}</p> : null}
+            </Card>
           </section>
 
-          <KpiGrid>
-            <Kpi label="ดาวที่ได้" value={`${report.stars?.earned ?? 0} ดวง`} tone="yellow" icon="star" />
-            <Kpi
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatTile label="ดาวที่ได้" value={`${report.stars?.earned ?? 0} ดวง`} icon={<Icon3d name="star" size={28} />} />
+            <StatTile
               label="เป้าหมายที่ตั้งเอง"
               value={report.stars?.goalStars == null ? '—' : `${report.stars.goalStars} ดวง`}
-              tone="lilac"
-              icon="bullseye"
+              icon={<Icon3d name="bullseye" size={28} />}
               hint={report.stars?.goalStars == null ? 'ยังไม่ตั้งเป้า' : undefined}
             />
-            <Kpi
+            <StatTile
               label="ก่อนเรียน"
-              value={report.tests.pre === null ? '—' : `${report.tests.pre}`}
-              tone="peach"
-              icon="memo"
+              value={report.tests.pre === null ? '—' : report.tests.pre}
+              icon={<Icon3d name="memo" size={28} />}
               hint={report.tests.pre === null ? 'ยังไม่ทำ' : undefined}
             />
-            <Kpi
+            <StatTile
               label="หลังเรียน"
-              value={report.tests.post === null ? '—' : `${report.tests.post}`}
-              tone="mint"
-              icon="chart-increasing"
+              value={report.tests.post === null ? '—' : report.tests.post}
+              icon={<Icon3d name="chart-increasing" size={28} />}
+              badge={
+                report.tests.pre !== null && report.tests.post !== null ? (
+                  <StatusBadge status={report.tests.post >= report.tests.pre ? 'passed' : 'failed'}>
+                    {report.tests.post >= report.tests.pre ? '+' : ''}{(report.tests.post - report.tests.pre).toFixed(report.tests.post % 1 || report.tests.pre % 1 ? 1 : 0)} จากก่อนเรียน
+                  </StatusBadge>
+                ) : undefined
+              }
               hint={report.tests.post === null ? 'ยังไม่ทำ' : undefined}
             />
-          </KpiGrid>
+          </div>
 
           {/* ── จุดประสงค์ที่ผ่าน */}
-          <section className="t2-card">
-            <h2 className="t2-card-title">
-              <Icon3d name="rocket" size={32} />
-              ภารกิจและจุดประสงค์
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-label">
-                <thead>
-                  <tr className="text-ink-muted">
-                    <th scope="col" className="py-1">จุดประสงค์</th>
-                    <th scope="col" className="py-1">ช่องทาง</th>
-                    <th scope="col" className="py-1">ลอง</th>
-                    <th scope="col" className="py-1">คำใบ้</th>
-                    <th scope="col" className="py-1">ดาว</th>
-                    <th scope="col" className="hidden py-1 lg:table-cell">เวลา</th>
-                    <th scope="col" className="py-1">ผล</th>
-                  </tr>
-                </thead>
-                <tbody className="text-ink">
-                  {report.missions.map((m) => {
-                    const skipped = report.skips.find((sk) => sk.missionId === m.missionId)
+          <Card title="ภารกิจและจุดประสงค์" flush>
+            <DataTable
+              caption="ภารกิจและจุดประสงค์"
+              rows={report.missions}
+              rowKey={(m) => m.missionId}
+              empty={<EmptyState title="ยังไม่ได้เริ่มภารกิจ" body="เมื่อนักเรียนเริ่มเล่น ผลของแต่ละด่านจะขึ้นที่นี่" />}
+              columns={[
+                {
+                  key: 'obj',
+                  header: 'จุดประสงค์',
+                  cell: (m) => {
+                    const n = missionNo(m.missionId)
                     return (
-                      <tr key={m.missionId} className="border-t border-line align-top">
-                        <th scope="row" className="py-2 pr-2 font-extrabold">
-                          {MISSION_OBJECTIVE[m.missionId] ?? m.missionId}
-                        </th>
-                        <td className="py-2">{routeName(m.channelUsed)}</td>
-                        <td className="py-2">{m.attempts}</td>
-                        <td className="py-2">{m.hintsUsed}</td>
-                        <td className="py-2 font-extrabold">{m.stars ?? 0}</td>
-                        <td className="hidden py-2 lg:table-cell">{timeText(m.secondsSpent)}</td>
-                        <td className="py-2">
-                          {m.passedAt ? (
-                            <Chip tone="green">ผ่าน</Chip>
-                          ) : skipped ? (
-                            <Chip tone="orange">ข้าม</Chip>
-                          ) : m.missionId === 'boss' ? (
-                            /**
-                             * ด่านบอส**ไม่เคยมี passed_at โดยดีไซน์** (ดู board/route.ts)
-                             * สรุปว่า "ยังไม่ผ่าน" จึงผิด — ดูที่คะแนนที่ครูยืนยันแทน (UAT-7 ข้อ ค-5)
-                             */
-                            <Chip title="ด่านบอสไม่มีสถานะผ่าน ดูที่คะแนนของครู">ดูคะแนนครู</Chip>
-                          ) : (
-                            <Chip>ยังไม่ผ่าน</Chip>
-                          )}
-                        </td>
-                      </tr>
+                      <span className="inline-flex items-center gap-2 font-medium">
+                        <span aria-hidden className="size-2.5 shrink-0 rounded-[2px]" style={{ background: n ? missionColor(n) : 'var(--d-notstarted)' }} />
+                        {MISSION_OBJECTIVE[m.missionId] ?? m.missionId}
+                      </span>
                     )
-                  })}
-                  {report.missions.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-2 text-ink-muted">ยังไม่ได้เริ่มภารกิจ</td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-
+                  },
+                },
+                { key: 'route', header: 'ช่องทาง', cell: (m) => routeName(m.channelUsed) },
+                { key: 'att', header: 'ลอง', numeric: true, cell: (m) => m.attempts },
+                { key: 'hint', header: 'คำใบ้', numeric: true, cell: (m) => m.hintsUsed },
+                { key: 'star', header: 'ดาว', numeric: true, cell: (m) => <span className="font-semibold">{m.stars ?? 0}</span> },
+                { key: 'time', header: 'เวลา', className: 'hidden lg:table-cell', cell: (m) => timeText(m.secondsSpent) },
+                {
+                  key: 'res',
+                  header: 'ผล',
+                  cell: (m) => {
+                    const skipped = report.skips.find((sk) => sk.missionId === m.missionId)
+                    if (m.passedAt) return <StatusBadge status="passed" />
+                    if (skipped) return <StatusBadge status="atrisk">ข้าม</StatusBadge>
+                    /**
+                     * ด่านบอส**ไม่เคยมี passed_at โดยดีไซน์** (ดู board/route.ts)
+                     * สรุปว่า "ยังไม่ผ่าน" จึงผิด — ดูที่คะแนนที่ครูยืนยันแทน (UAT-7 ข้อ ค-5)
+                     */
+                    if (m.missionId === 'boss') {
+                      return <span title="ด่านบอสไม่มีสถานะผ่าน ดูที่คะแนนของครู"><StatusBadge status="inprogress">ดูคะแนนครู</StatusBadge></span>
+                    }
+                    return <StatusBadge status="notstarted">ยังไม่ผ่าน</StatusBadge>
+                  },
+                },
+              ]}
+            />
             {report.skips.length > 0 ? (
-              <p className="mt-2 text-note font-bold text-ink-muted">
+              <p className="border-t border-[var(--c-line)] px-4 py-3 text-[14px] text-[var(--c-ink-3)] sm:px-5">
                 ข้ามภารกิจ {report.skips.length} ครั้ง:{' '}
                 {report.skips.map((sk) => `${sk.missionId}${sk.reason ? ` (${sk.reason})` : ''}`).join(' · ')}
               </p>
             ) : null}
-          </section>
+          </Card>
 
           {/* ── ร่องรอยการปรับเหมาะ: ระบบเสนออะไร เด็กเลือกอะไร */}
-          <section className="t2-card">
-            <h2 className="t2-card-title">
-              <Icon3d name="brain" size={32} />
-              ร่องรอยการปรับเหมาะ
-              <InfoTip label="เรื่องการปรับเหมาะ" text="ระบบเสนออะไร ผู้เรียนเลือกอะไร เปลี่ยนกี่ครั้ง ใครเป็นคนสั่ง" />
-            </h2>
-            <dl className="t2-facts" data-cols="3">
-              <Fact label="ระบบเสนอช่องทาง" icon="light-bulb" tone="mint" value={routeName(suggested)} />
-              <Fact
-                label="ผู้เรียนใช้จริง"
-                icon="rocket"
-                tone="sky"
-                value={`${routeName(chosen)}${chosenBy ? ` (${chosenBy === 'student' ? 'เลือกเอง' : 'ตามระบบ'})` : ''}`}
-              />
-              <Fact label="เปลี่ยนช่องทาง" icon="counterclockwise-arrows-button" tone="peach" value={`${report.routeChanges.count} ครั้ง`} />
-              {/*
-                "ระบบเสนอระดับไหน เทียบกับที่ใช้จริง" คือหลักฐานการปรับเหมาะที่สไลด์อ้างถึง
-                API ส่ง level_suggested มาตั้งแต่ต้น แต่จอเคยโชว์แค่ระดับที่ใช้จริง เทียบไม่ได้เลย
-              */}
-              <Fact
-                label="ตัวช่วยระดับ (เสนอ → ใช้)"
-                icon="gear"
-                tone="lilac"
-                value={`${num(profile?.level_suggested) ?? '-'} → ${num(profile?.scaffold_level) ?? '-'}`}
-              />
-              <Fact
-                label="ใครปรับตัวช่วย"
-                icon="handshake"
-                tone="yellow"
-                value={
-                  str(profile?.hints_toggled_by) === 'student'
-                    ? 'ผู้เรียนกดเอง'
-                    : str(profile?.hints_toggled_by) === 'teacher'
-                      ? 'ครูปรับให้'
-                      : str(profile?.hints_toggled_by) === 'system'
-                        ? 'ระบบปรับให้'
-                        : '-'
-                }
-              />
-              <Fact label="ยกระดับเป้าเอง" icon="chart-increasing" tone="mint" value={`${num(profile?.goal_raised_count) ?? 0} ครั้ง`} />
+          <Card title="ร่องรอยการปรับเหมาะ" tip="ระบบเสนออะไร ผู้เรียนเลือกอะไร เปลี่ยนกี่ครั้ง ใครเป็นคนสั่ง">
+            <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { label: 'ระบบเสนอช่องทาง', icon: 'light-bulb', value: routeName(suggested) },
+                {
+                  label: 'ผู้เรียนใช้จริง',
+                  icon: 'rocket',
+                  value: `${routeName(chosen)}${chosenBy ? ` (${chosenBy === 'student' ? 'เลือกเอง' : 'ตามระบบ'})` : ''}`,
+                },
+                { label: 'เปลี่ยนช่องทาง', icon: 'counterclockwise-arrows-button', value: `${report.routeChanges.count} ครั้ง` },
+                /*
+                  "ระบบเสนอระดับไหน เทียบกับที่ใช้จริง" คือหลักฐานการปรับเหมาะที่สไลด์อ้างถึง
+                  API ส่ง level_suggested มาตั้งแต่ต้น แต่จอเคยโชว์แค่ระดับที่ใช้จริง เทียบไม่ได้เลย
+                */
+                { label: 'ตัวช่วยระดับ (เสนอ → ใช้)', icon: 'gear', value: `${num(profile?.level_suggested) ?? '-'} → ${num(profile?.scaffold_level) ?? '-'}` },
+                {
+                  label: 'ใครปรับตัวช่วย',
+                  icon: 'handshake',
+                  value:
+                    str(profile?.hints_toggled_by) === 'student'
+                      ? 'ผู้เรียนกดเอง'
+                      : str(profile?.hints_toggled_by) === 'teacher'
+                        ? 'ครูปรับให้'
+                        : str(profile?.hints_toggled_by) === 'system'
+                          ? 'ระบบปรับให้'
+                          : '-',
+                },
+                { label: 'ยกระดับเป้าเอง', icon: 'chart-increasing', value: `${num(profile?.goal_raised_count) ?? 0} ครั้ง` },
+              ].map((f) => (
+                <div key={f.label} className="flex items-start gap-3">
+                  <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-lg bg-[var(--c-sunken)]">
+                    <Icon3d name={f.icon as Icon3dName} size={24} />
+                  </span>
+                  <div className="min-w-0">
+                    <dt className="text-[14px] text-[var(--c-ink-3)]">{f.label}</dt>
+                    <dd className="text-[15px] font-semibold text-[var(--c-ink)]">{f.value}</dd>
+                  </div>
+                </div>
+              ))}
             </dl>
 
             {suggested && chosen && suggested !== chosen ? (
-              <p className="t2-note mt-3" data-tone="sky">
-                <span>
-                  เลือกต่างจากที่ระบบเสนอ — เสนอ {routeName(suggested)} แต่เลือก {routeName(chosen)} เอง
-                </span>
+              <p className="mt-4 rounded-lg px-3 py-2 text-[14px] font-medium" style={{ background: 'var(--s-info-soft)', color: 'var(--s-info-ink)' }}>
+                เลือกต่างจากที่ระบบเสนอ — เสนอ {routeName(suggested)} แต่เลือก {routeName(chosen)} เอง
               </p>
             ) : null}
 
             {report.routeChanges.items.length > 0 ? (
-              <details className="mt-3">
-                <summary className="flex min-h-11 cursor-pointer items-center text-label font-extrabold text-brand-700">
+              <details className="mt-4">
+                <summary className="flex min-h-11 cursor-pointer items-center text-[15px] font-semibold text-[var(--c-brand)]">
                   ประวัติเปลี่ยนช่องทาง {report.routeChanges.items.length} ครั้ง
                 </summary>
                 <ul className="flex flex-col gap-1">
                   {report.routeChanges.items.map((c, i) => (
-                    <li key={`${c.changedAt}-${i}`} className="text-note font-semibold text-ink-muted">
+                    <li key={`${c.changedAt}-${i}`} className="text-[14px] text-[var(--c-ink-3)]">
                       {c.missionId ? `${c.missionId} · ` : ''}
                       {routeName(c.from)} → {routeName(c.to)}
                       {c.changedBy ? ` · ${c.changedBy === 'student' ? 'ผู้เรียนเปลี่ยนเอง' : 'ระบบปรับให้'}` : ''}
@@ -536,25 +545,20 @@ export function StudentReportClient({
               เป็นข้อความของเด็ก ขึ้นเต็มไม่ตัดคำ และเป็นคนละอย่างกับระดับเป้า 1-3 ที่กดเลือก
             */}
             {str(profile?.own_goal_text) ? (
-              <div className="mt-3 rounded-[18px] bg-[#f6f2e8] p-3">
-                <p className="text-note font-bold text-ink-muted">เป้าหมายที่เขียนเอง</p>
-                <blockquote className="mt-1 text-label text-pretty text-ink">
+              <div className="mt-4 rounded-lg bg-[var(--c-sunken)] p-3">
+                <p className="text-[14px] text-[var(--c-ink-3)]">เป้าหมายที่เขียนเอง</p>
+                <blockquote className="mt-1 text-[15px] text-pretty text-[var(--c-ink)]">
                   “{str(profile?.own_goal_text)}”
                 </blockquote>
               </div>
             ) : null}
-          </section>
+          </Card>
 
           {/* ── ความมั่นใจ · เพื่อน */}
-          <div className="t2-grid">
-            <section className="t2-card">
-              <h2 className="t2-card-title">
-                <Icon3d name="bullseye" size={32} />
-                ความมั่นใจ
-                <InfoTip label="เรื่องความมั่นใจ" text="ระดับความมั่นใจที่ผู้เรียนให้ตัวเองในแต่ละจุดประสงค์ จาก 1 ถึง 3" />
-              </h2>
+          <div className="grid items-start gap-4 lg:grid-cols-2">
+            <Card title="ความมั่นใจ" tip="ระดับความมั่นใจที่ผู้เรียนให้ตัวเองในแต่ละจุดประสงค์ จาก 1 ถึง 3">
               {report.confidence && Object.keys(report.confidence).length > 0 ? (
-                <Bars>
+                <ul className="grid list-none gap-3 p-0">
                   {/**
                    * บางแถวมีทั้งคีย์เก่า (m1..m4) และคีย์จริง (obj-1..obj-4) ปนกัน
                    * รวมให้เหลือชื่อละบรรทัดเดียว ไม่งั้นครูเห็น 8 บรรทัดซ้ำเรื่องเดียวกัน (UAT-7 ค-4)
@@ -566,48 +570,57 @@ export function StudentReportClient({
                         level,
                       ]),
                     ).entries(),
-                  ].map(([name, level], i) => (
-                    <Bar
-                      key={name}
-                      color={(['blue', 'purple', 'coral', 'green', 'gold', 'red'] as const)[i % 6] ?? 'purple'}
-                      value={(Number(level) / 3) * 100}
-                      display={`${level}/3`}
-                      label={<span className="truncate">{name}</span>}
-                    />
+                  ].map(([name, level]) => (
+                    <li key={name}>
+                      <div className="flex items-baseline justify-between gap-3 text-[14px]">
+                        <span className="min-w-0 truncate text-[var(--c-ink-2)]">{name}</span>
+                        <span className="shrink-0 font-semibold tabular-nums text-[var(--c-ink)]">{level}/3</span>
+                      </div>
+                      <div className="mt-1 h-2 rounded-full bg-[var(--c-sunken)]" role="img" aria-label={`${name} มั่นใจ ${level} จาก 3`}>
+                        <div className="h-full rounded-full bg-[var(--c-brand)]" style={{ width: `${Math.min(100, (Number(level) / 3) * 100)}%` }} />
+                      </div>
+                    </li>
                   ))}
-                </Bars>
+                </ul>
               ) : (
-                <p className="t2-empty">ยังไม่มีข้อมูล</p>
+                <EmptyState title="ยังไม่มีข้อมูล" body="ผู้เรียนยังไม่ได้ให้ระดับความมั่นใจ" />
               )}
-            </section>
+            </Card>
 
-            <section className="t2-card">
-              <h2 className="t2-card-title">
-                <Icon3d name="handshake" size={32} />
-                เพื่อนและการช่วย
-              </h2>
-              <dl className="t2-facts">
-                <Fact label="ช่วยเพื่อน" icon="handshake" tone="mint" value={`${report.buddy.helpedOthers} ครั้ง`} />
-                <Fact label="ขอเพื่อนช่วย" icon="speech-balloon" tone="sky" value={`${report.buddy.askedForHelp} ครั้ง`} />
-                <Fact label="ชมเพื่อน" icon="party-popper" tone="yellow" value={`${report.peerFeedback.given} ครั้ง`} />
-                <Fact label="ได้รับคำชม" icon="sparkles" tone="peach" value={`${report.peerFeedback.received} ครั้ง`} />
+            <Card title="เพื่อนและการช่วย">
+              <dl className="grid gap-4 sm:grid-cols-2">
+                {[
+                  { label: 'ช่วยเพื่อน', icon: 'handshake', value: report.buddy.helpedOthers },
+                  { label: 'ขอเพื่อนช่วย', icon: 'speech-balloon', value: report.buddy.askedForHelp },
+                  { label: 'ชมเพื่อน', icon: 'party-popper', value: report.peerFeedback.given },
+                  { label: 'ได้รับคำชม', icon: 'sparkles', value: report.peerFeedback.received },
+                ].map((f) => (
+                  <div key={f.label} className="flex items-center gap-3">
+                    <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-lg bg-[var(--c-sunken)]">
+                      <Icon3d name={f.icon as Icon3dName} size={24} />
+                    </span>
+                    <div>
+                      <dt className="text-[14px] text-[var(--c-ink-3)]">{f.label}</dt>
+                      <dd className="text-[15px] font-semibold text-[var(--c-ink)] tabular-nums">{f.value} ครั้ง</dd>
+                    </div>
+                  </div>
+                ))}
               </dl>
-            </section>
+            </Card>
           </div>
 
           {report.reflections.length > 0 ? (
-            <details className="t2-more">
-              <summary className="focus-ring">
-                <Icon3d name="memo" size={32} />
+            <details className="rounded-xl border border-[var(--c-line)] bg-white shadow-[var(--sh-1)]">
+              <summary className="flex min-h-14 cursor-pointer items-center gap-2 px-4 text-[16px] font-semibold text-[var(--c-ink)] sm:px-5">
                 ที่ผู้เรียนเขียนเอง
-                <Chip tone="lilac">{report.reflections.length} ข้อ</Chip>
+                <span className="rounded-md bg-[var(--c-sunken)] px-1.5 text-[13px] font-medium tabular-nums text-[var(--c-ink-2)]">{report.reflections.length} ข้อ</span>
               </summary>
-              <div className="t2-more__body">
+              <div className="px-4 pb-4 sm:px-5 sm:pb-5">
                 <ul className="flex flex-col gap-2">
                   {report.reflections.map((r, i) => (
-                    <li key={`${r.questionId}-${i}`} className="rounded-[18px] bg-[#f6f2e8] p-3">
-                      <p className="text-note font-bold text-ink-muted">{REFLECT_LABEL[r.questionId] ?? r.questionId}</p>
-                      <p className="mt-0.5 text-body whitespace-pre-line text-ink">{r.answer}</p>
+                    <li key={`${r.questionId}-${i}`} className="rounded-lg bg-[var(--c-sunken)] p-3">
+                      <p className="text-[14px] text-[var(--c-ink-3)]">{REFLECT_LABEL[r.questionId] ?? r.questionId}</p>
+                      <p className="mt-0.5 text-[15px] whitespace-pre-line text-[var(--c-ink)]">{r.answer}</p>
                     </li>
                   ))}
                 </ul>
@@ -617,8 +630,12 @@ export function StudentReportClient({
 
           <LearnResultsPanel classroomId={classroomId} studentId={report.student.id} />
         </>
-      ) : !error ? (
-        <p className="t2-empty">เลือกนักเรียนเพื่อดูรายงาน</p>
+      ) : !error && roster.length > 0 ? (
+        <div role="status" aria-busy="true" className="grid gap-3">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-40 w-full" />
+          <span className="sr-only">กำลังโหลดรายงาน</span>
+        </div>
       ) : null}
 
       <Dialog
@@ -628,10 +645,13 @@ export function StudentReportClient({
         description="งาน ดาว และคะแนนของคนนี้จะหายทั้งหมด กู้คืนไม่ได้ ใช้กับชื่อที่สมัครผิดหรือสมัครซ้ำ"
       >
         <div className="flex flex-wrap justify-end gap-2">
-          <button type="button" onClick={() => setConfirmRemove(false)} className="t2-btn focus-ring">
-            ยกเลิก
-          </button>
-          <button type="button" disabled={removing} onClick={() => void remove()} className="t2-btn focus-ring" data-kind="dangerfill">
+          <Button onClick={() => setConfirmRemove(false)}>ยกเลิก</Button>
+          <button
+            type="button"
+            disabled={removing}
+            onClick={() => void remove()}
+            className="inline-flex h-10 items-center rounded-lg bg-[var(--s-danger)] px-4 text-[15px] font-semibold text-white focus-visible:ring-2 focus-visible:ring-[var(--c-brand-ring)] focus-visible:outline-none disabled:opacity-50"
+          >
             {removing ? 'กำลังลบ' : 'ลบถาวร'}
           </button>
         </div>

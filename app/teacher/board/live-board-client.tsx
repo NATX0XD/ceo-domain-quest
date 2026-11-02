@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { AlertIcon, EmptyState, UsersIcon, cn } from '../../../components/ui'
+import { AlertIcon, cn } from '../../../components/ui'
 import { Dialog } from '../_ux/dialog'
-import { Chip, Fact, Icon3d, Kpi, KpiGrid } from '../_ux/v2'
+import { Fact, Icon3d, InfoTip } from '../_ux/v2'
+import { Card, EmptyState as UiEmpty, Skeleton, StatTile, StatusBadge, type PassStatus } from '../_ux/ui'
 import { PlanRequests } from './plan-requests'
 
 /**
@@ -182,17 +183,19 @@ export function LiveBoardClient({
 
   if (!classroomId) {
     return (
-      <EmptyState
-        title="ยังไม่มีห้องเรียน"
-        description="กดเปิดห้องที่แผงครูก่อน แล้วกลับมาที่หน้านี้"
-        illustration={<UsersIcon width={48} height={48} className="text-brand-400" />}
-      />
+      <Card>
+        <UiEmpty
+          icon={<Icon3d name="school" size={28} />}
+          title="ยังไม่มีห้องเรียน"
+          body="เปิดห้องที่หน้าตั้งค่าห้องก่อน แล้วกลับมาที่หน้านี้"
+        />
+      </Card>
     )
   }
 
   if (error) {
     return (
-      <p role="alert" className="flex items-start gap-2 rounded-2xl bg-danger-100 p-4 text-body font-semibold text-danger-700">
+      <p role="alert" className="flex items-start gap-2 rounded-xl px-4 py-3 text-[15px] font-medium" style={{ background: 'var(--s-danger-soft)', color: 'var(--s-danger-ink)' }}>
         <AlertIcon width={22} height={22} className="mt-0.5 shrink-0" />
         <span>{error}</span>
       </p>
@@ -200,7 +203,13 @@ export function LiveBoardClient({
   }
 
   if (!data) {
-    return <p className="text-body text-ink-muted">กำลังโหลดแผงห้องเรียน…</p>
+    return (
+      <div role="status" aria-busy="true" className="grid gap-3">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <span className="sr-only">กำลังโหลดแผงห้องเรียน</span>
+      </div>
+    )
   }
 
   // เรียงคนที่ต้องเข้าไปหาก่อนเสมอ แดง → ส้ม → เหลือง → เขียว แล้วค่อยเรียงตามคนที่นิ่งนานกว่า
@@ -220,29 +229,27 @@ export function LiveBoardClient({
         ธงการรู้ตัวมาเป็นคู่เสมอ: "มั่นใจสูงแต่ยังไม่ถูก = ควรคุย" กับ "มั่นใจต่ำแต่ทำถูก = ควรชม"
         API ส่งมาทั้งคู่ตั้งแต่ต้น แต่จอเคยโชว์แค่ฝั่งควรคุย ครูเลยเห็นแต่ด้านลบ
       */}
-      <KpiGrid cols={6}>
-        <Kpi label="อยู่ในห้อง" value={data.students} tone="sky" icon="busts-in-silhouette" />
-        <Kpi label="กดขอครู" value={data.needsHelp} tone="peach" icon="warning" />
-        <Kpi label="ติดธงเตือน" value={data.flagged} tone="yellow" icon="bell" />
-        <Kpi
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <StatTile label="อยู่ในห้อง" value={data.students} icon={<Icon3d name="busts-in-silhouette" size={28} />} />
+        <StatTile label="กดขอครู" value={data.needsHelp} icon={<Icon3d name="warning" size={28} />} />
+        <StatTile label="ติดธงเตือน" value={data.flagged} icon={<Icon3d name="bell" size={28} />} />
+        <StatTile
           label="ควรคุย"
           value={data.shouldTalk}
-          tone="lilac"
-          icon="speech-balloon"
-          tip="มั่นใจสูงแต่ยังตอบไม่ถูก ควรเดินไปคุย (ความมั่นใจ)"
+          icon={<Icon3d name="speech-balloon" size={28} />}
+          hint={<InfoTip label="เรื่องควรคุย" text="มั่นใจสูงแต่ยังตอบไม่ถูก ควรเดินไปคุย (ความมั่นใจ)" />}
         />
-        <Kpi
+        <StatTile
           label="ควรชม"
           value={data.shouldPraise}
-          tone="mint"
-          icon="party-popper"
-          tip="มั่นใจต่ำแต่ทำถูก ควรชมให้กำลังใจ"
+          icon={<Icon3d name="party-popper" size={28} />}
+          hint={<InfoTip label="เรื่องควรชม" text="มั่นใจต่ำแต่ทำถูก ควรชมให้กำลังใจ" />}
         />
-        <Kpi label="งานรอตรวจ" value={data.pendingReview} tone="rose" icon="memo" />
-      </KpiGrid>
+        <StatTile label="งานรอตรวจ" value={data.pendingReview} icon={<Icon3d name="memo" size={28} />} />
+      </div>
 
-      <p className="flex flex-wrap items-center gap-2 text-note font-bold text-ink-muted" aria-live="polite">
-        <Chip>อัปเดตทุก 3 วิ{updatedAt ? ` · ${updatedAt}` : ''}</Chip>
+      <p className="text-[14px] text-[var(--c-ink-3)]" aria-live="polite">
+        อัปเดตทุก 3 วิ{updatedAt ? ` · ${updatedAt}` : ''}
       </p>
 
       {/*
@@ -250,12 +257,12 @@ export function LiveBoardClient({
         พับไว้เพราะครูไม่ได้อ่านทุกครั้ง แต่เปิดดูได้ทันทีตอนกำลังจะเดินไปคุยกับเด็ก
       */}
       {data.coachRules && data.coachRules.length > 0 ? (
-        <details className="t2-more">
-          <summary className="focus-ring">
-            <Icon3d name="light-bulb" size={32} />
+        <details className="rounded-xl border border-[var(--c-line)] bg-white shadow-[var(--sh-1)]">
+          <summary className="flex min-h-12 cursor-pointer items-center gap-2 px-4 text-[15px] font-semibold text-[var(--c-ink)]">
+            <Icon3d name="light-bulb" size={24} />
             กติกาการโค้ช {data.coachRules.length} ข้อ
           </summary>
-          <div className="t2-more__body">
+          <div className="px-4 pb-4">
             <ul className="flex flex-col gap-2">
               {data.coachRules.map((rule) => (
                 <li key={rule.id} className="text-label text-pretty text-ink">
@@ -271,7 +278,7 @@ export function LiveBoardClient({
       <PlanRequests classroomId={classroomId} />
 
       {rows.length > 0 ? (
-        <ul className="t2-students" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17rem), 1fr))' }}>
+        <ul className="grid list-none gap-3 p-0" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17rem), 1fr))' }}>
           {rows.map((row) => {
             const level = levelOf(row)
             const style = LEVEL_STYLE[level]
@@ -281,31 +288,30 @@ export function LiveBoardClient({
                   type="button"
                   onClick={() => setOpenId(row.studentId)}
                   aria-haspopup="dialog"
-                  className="t2-student focus-ring"
-                  data-level={level}
-                  style={{ alignItems: 'flex-start', minHeight: '5rem', padding: '0.625rem 0.75rem 0.625rem 0.625rem' }}
+                  className="flex min-h-20 w-full items-start gap-3 rounded-xl border border-[var(--c-line)] bg-white p-3 text-left shadow-[var(--sh-1)] transition-colors hover:bg-[#faf9f6] focus-visible:ring-2 focus-visible:ring-[var(--c-brand-ring)] focus-visible:outline-none"
+                  style={{ borderLeft: `4px solid var(--d-${LEVEL_STATUS[level]})` }}
                 >
-                  <span className="t2-avatar" data-level={level} aria-hidden>
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--c-sunken)] text-[15px] font-semibold text-[var(--c-ink-2)]" aria-hidden>
                     {initial(row.nickname)}
                   </span>
-                  <span className="t2-student__body" style={{ gap: '0.35rem' }}>
-                    <span className="t2-student__name">{row.nickname}</span>
-                    <span className="truncate text-note font-bold text-ink-muted">
+                  <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <span className="truncate text-[15px] font-semibold text-[var(--c-ink)]">{row.nickname}</span>
+                    <span className="truncate text-[14px] text-[var(--c-ink-3)]">
                       {row.currentMission ? row.currentMission.title : 'ยังไม่เริ่มภารกิจ'}
                     </span>
                     <span className="flex flex-wrap items-center gap-1.5">
-                      <Chip tone={LEVEL_CHIP[level]}>{style.name}</Chip>
-                      {row.askedForHelp ? <Chip tone="red">กดขอครู</Chip> : null}
-                      {row.pendingReview ? <Chip tone="lilac">งานรอตรวจ</Chip> : null}
+                      <StatusBadge status={LEVEL_STATUS[level]}>{style.name}</StatusBadge>
+                      {row.askedForHelp ? <StatusBadge status="failed">กดขอครู</StatusBadge> : null}
+                      {row.pendingReview ? <StatusBadge status="inprogress">งานรอตรวจ</StatusBadge> : null}
                       {row.calibration.map((c) => (
-                        <Chip key={c.objectiveId} tone={c.flag === 'ควรคุย' ? 'orange' : 'green'}>
+                        <StatusBadge key={c.objectiveId} status={c.flag === 'ควรคุย' ? 'atrisk' : 'passed'}>
                           {c.flag}
-                        </Chip>
+                        </StatusBadge>
                       ))}
-                      {row.skippedMissions.length > 0 ? <Chip>ข้าม {row.skippedMissions.length}</Chip> : null}
+                      {row.skippedMissions.length > 0 ? <StatusBadge status="notstarted">ข้าม {row.skippedMissions.length}</StatusBadge> : null}
                     </span>
                   </span>
-                  <span className="t2-stars">
+                  <span className="inline-flex shrink-0 items-center gap-1 text-[14px] font-semibold tabular-nums text-[var(--c-ink-2)]">
                     <Icon3d name="star" size={20} />
                     {row.earnedStars ?? 0}
                   </span>
@@ -315,11 +321,13 @@ export function LiveBoardClient({
           })}
         </ul>
       ) : (
-        <div className="t2-card t2-empty">
-          <Icon3d name="school" size={56} />
-          <p>ยังไม่มีใครเข้าห้อง</p>
-          <p className="text-label font-semibold text-ink-muted">ให้นักเรียนสแกน QR จากจอหน้าห้อง</p>
-        </div>
+        <Card>
+          <UiEmpty
+            icon={<Icon3d name="school" size={28} />}
+            title="ยังไม่มีใครเข้าห้อง"
+            body="ให้นักเรียนสแกน QR จากจอหน้าห้อง"
+          />
+        </Card>
       )}
 
       <Dialog
@@ -334,7 +342,12 @@ export function LiveBoardClient({
   )
 }
 
-const LEVEL_CHIP = { red: 'red', orange: 'orange', yellow: 'yellow', green: 'green' } as const
+const LEVEL_STATUS: Record<'red' | 'orange' | 'yellow' | 'green', PassStatus> = {
+  red: 'failed',
+  orange: 'atrisk',
+  yellow: 'inprogress',
+  green: 'passed',
+}
 
 /** รายละเอียดของคนที่ครูกดเลือก — เปิดในหน้าต่างซ้อน ปิดแล้วกลับมาที่ตำแหน่งเดิม */
 function StudentDetail({ row }: { row: BoardRow }) {
@@ -342,9 +355,9 @@ function StudentDetail({ row }: { row: BoardRow }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Chip tone={LEVEL_CHIP[level]}>{LEVEL_STYLE[level].name}</Chip>
-        <Chip tone="sky">{row.learningRoute ? (ROUTE_LABEL[row.learningRoute] ?? row.learningRoute) : 'ยังไม่เลือกช่องทาง'}</Chip>
-        <Chip>{idleText(row.idleSeconds)}</Chip>
+        <StatusBadge status={LEVEL_STATUS[level]}>{LEVEL_STYLE[level].name}</StatusBadge>
+        <StatusBadge status="notstarted">{row.learningRoute ? (ROUTE_LABEL[row.learningRoute] ?? row.learningRoute) : 'ยังไม่เลือกช่องทาง'}</StatusBadge>
+        <StatusBadge status="notstarted">{idleText(row.idleSeconds)}</StatusBadge>
       </div>
 
       <dl className="t2-facts" data-cols="3">
@@ -368,8 +381,8 @@ function StudentDetail({ row }: { row: BoardRow }) {
       </dl>
 
       {row.askedForHelp ? (
-        <p className="t2-note" data-tone="danger">
-          <Icon3d name="warning" size={28} />
+        <p className="flex items-center gap-2 rounded-lg px-3 py-2 text-[14px] font-medium" style={{ background: 'var(--s-danger-soft)', color: 'var(--s-danger-ink)' }}>
+          <Icon3d name="warning" size={24} />
           <span>
             กดขอครูช่วย{row.helpMissionId ? ` · ภารกิจ ${row.helpMissionId}` : ''} · ดูคนนี้ก่อน
           </span>
@@ -377,7 +390,7 @@ function StudentDetail({ row }: { row: BoardRow }) {
       ) : null}
 
       {row.flag.flagged && row.flag.label ? (
-        <p className="t2-note" data-tone="spark">
+        <p className="rounded-lg px-3 py-2 text-[14px] font-medium" style={{ background: 'var(--s-warn-soft)', color: 'var(--s-warn-ink)' }}>
           ธงเตือน: {row.flag.label}
           {row.flag.reasonName ? ` · ${row.flag.reasonName}` : ''}
         </p>
@@ -387,13 +400,13 @@ function StudentDetail({ row }: { row: BoardRow }) {
       {row.coachCard ? <CoachBlock card={row.coachCard} /> : null}
 
       {row.calibration.length > 0 ? (
-        <details className="rounded-[20px] bg-[#f6f2e8] p-3">
+        <details className="rounded-lg bg-[var(--c-sunken)] p-3">
           <summary className="flex min-h-11 cursor-pointer items-center text-label font-extrabold text-ink">
             ธงจากความมั่นใจ {row.calibration.length} ข้อ
           </summary>
           <ul className="mt-2 flex flex-col gap-2">
             {row.calibration.map((c) => (
-              <li key={c.objectiveId} className="rounded-[16px] bg-white p-3">
+              <li key={c.objectiveId} className="rounded-lg bg-white p-3">
                 <p className="text-label font-extrabold text-ink">
                   {c.flag} · {c.missionTitle}
                 </p>
@@ -410,14 +423,15 @@ function StudentDetail({ row }: { row: BoardRow }) {
       <div className="grid gap-2 sm:grid-cols-2 print:hidden">
         <Link
           href={`/teacher/student?studentId=${row.studentId}`}
-          className="t2-btn focus-ring"
-          data-kind="primary"
-          data-block="true"
+          className="inline-flex h-10 items-center justify-center rounded-lg border border-[var(--c-brand)] bg-[var(--c-brand)] px-4 text-[15px] font-semibold text-white hover:bg-[var(--c-brand-hover)]"
         >
           รายงานรายคน
         </Link>
         {row.pendingReview ? (
-          <Link href="/teacher/review" className="t2-btn focus-ring" data-block="true">
+          <Link
+            href="/teacher/review"
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-[var(--c-line-strong)] bg-white px-4 text-[15px] font-semibold text-[var(--c-ink)] hover:bg-[var(--c-sunken)]"
+          >
             ไปตรวจงาน
           </Link>
         ) : null}
@@ -429,7 +443,7 @@ function StudentDetail({ row }: { row: BoardRow }) {
 /** การ์ดโค้ช — คำถามล้วน ไม่มีเฉลย ตามกติกา "ครูถามก่อนบอก" */
 function CoachBlock({ card, compact = false }: { card: CoachCard; compact?: boolean }) {
   return (
-    <div className={cn('rounded-[20px] bg-[#f6f2e8] p-3', compact ? 'mt-2' : '')}>
+    <div className={cn('rounded-lg bg-[var(--c-sunken)] p-3', compact ? 'mt-2' : '')}>
       <p className="flex items-start gap-2 text-label font-extrabold text-ink">
         <Icon3d name="light-bulb" size={28} />
         <span>ลองถามว่า: {card.question}</span>

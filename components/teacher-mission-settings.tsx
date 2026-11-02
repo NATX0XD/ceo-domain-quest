@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { Button, Card, EmptyState, Tabs, Toggle, missionColor } from '@/app/teacher/_ux/ui'
 
 type MissionId = 'm1' | 'm2' | 'm3' | 'm4' | 'ceo'
 type Bag = Record<string, unknown>
@@ -105,31 +106,94 @@ export function TeacherMissionSettings({ classroomId, initial }: { classroomId: 
   }
 
   if (!classroomId || !values || !current) {
-    return <section className="t2-card"><p className="t2-empty">เลือกห้องเรียนก่อนจึงจะตั้งค่าด่านได้</p></section>
+    return (
+      <Card>
+        <EmptyState title="ยังไม่ได้เลือกห้องเรียน" body="เลือกห้องเรียนก่อนจึงจะตั้งค่าด่านได้" />
+      </Card>
+    )
   }
 
+  const activeNo = IDS.indexOf(active) + 1
+  const bad = Boolean(notice && notice.includes('ไม่สำเร็จ'))
+
   return (
-    <section className="t2-mission-settings" aria-label="ตั้งค่าด่าน">
-      <div className="t2-mission-settings__tabs" role="tablist" aria-label="เลือกด่าน">
-        {IDS.map((id, index) => <button key={id} type="button" role="tab" aria-selected={active === id} className="t2-mission-tab" data-active={active === id} onClick={() => { setActive(id); setNotice(null) }}>ด่าน {index < 4 ? index + 1 : 'CEO'}</button>)}
-      </div>
-      <div className="t2-card t2-mission-settings__panel">
-        <div className="t2-mission-settings__head">
-          <div><p className="t2-kicker">ตั้งค่ารายห้อง</p><h2 className="t2-title">{current.label}</h2><p className="t2-sub">{current.help} ค่าเริ่มต้นถูกเลือกให้เหมาะกับเนื้อหาปัจจุบัน</p></div>
-          <div className="t2-mission-settings__actions"><button type="button" className="t2-btn" onClick={reset}>คืนค่าเริ่มต้น</button><button type="button" className="t2-btn" data-kind="primary" onClick={() => void save()} disabled={saving}>{saving ? 'กำลังบันทึก…' : 'บันทึกด่านนี้'}</button></div>
-        </div>
-        <div className="t2-mission-fields">
+    <section className="grid gap-4" aria-label="ตั้งค่าด่าน">
+      <Tabs
+        label="เลือกด่าน"
+        value={active}
+        onChange={(id) => { setActive(id); setNotice(null) }}
+        options={IDS.map((id, index) => ({
+          value: id,
+          label: (
+            <span className="inline-flex items-center gap-2">
+              <span aria-hidden className="size-2.5 rounded-[2px]" style={{ background: missionColor(index + 1) }} />
+              ด่าน {index < 4 ? index + 1 : 'CEO'}
+            </span>
+          ),
+        }))}
+      />
+      <Card
+        title={
+          <span className="inline-flex items-center gap-2">
+            <span aria-hidden className="size-3 rounded-[3px]" style={{ background: missionColor(activeNo) }} />
+            {current.label}
+          </span>
+        }
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" onClick={reset}>คืนค่าเริ่มต้น</Button>
+            <Button size="sm" kind="primary" onClick={() => void save()} disabled={saving}>
+              {saving ? 'กำลังบันทึก…' : 'บันทึกด่านนี้'}
+            </Button>
+          </div>
+        }
+      >
+        <p className="mb-4 text-[14px] text-[var(--c-ink-3)]">{current.help} ค่าเริ่มต้นถูกเลือกให้เหมาะกับเนื้อหาปัจจุบัน</p>
+        <div className="divide-y divide-[var(--c-line)]">
           {fields.map((field) => {
             const value = getValue(current.settings, field.key)
             const isToggle = field.min === undefined
-            return <label className="t2-mission-field" key={field.key}>
-              <span><strong>{field.label}</strong><small>{field.help}</small></span>
-              {isToggle ? <button type="button" role="switch" aria-checked={value === true} className="t2-toggle" data-on={value === true} onClick={() => update(field.key, value !== true)}><span /></button> : <span className="t2-stepper"><button type="button" aria-label={`ลด ${field.label}`} onClick={() => update(field.key, Math.max(field.min!, Number(value ?? field.min) - 1))}>−</button><input aria-label={field.label} type="number" min={field.min} max={field.max} value={value === null ? '' : Number(value)} onChange={(event) => update(field.key, event.target.value === '' ? null : Number(event.target.value))} />{field.suffix ? <em>{field.suffix}</em> : null}<button type="button" aria-label={`เพิ่ม ${field.label}`} onClick={() => update(field.key, Math.min(field.max!, Number(value ?? field.min) + 1))}>+</button></span>}
-            </label>
+            if (isToggle) {
+              return (
+                <div key={field.key} className="py-3 first:pt-0 last:pb-0">
+                  <Toggle label={field.label} description={field.help} checked={value === true} onChange={(v) => update(field.key, v)} />
+                </div>
+              )
+            }
+            return (
+              <div key={field.key} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="min-w-0">
+                  <p className="text-[15px] font-medium text-[var(--c-ink)]">{field.label}</p>
+                  <p className="text-[14px] text-[var(--c-ink-3)]">{field.help}</p>
+                </div>
+                <span className="inline-flex items-center gap-2">
+                  <Button size="sm" aria-label={`ลด ${field.label}`} onClick={() => update(field.key, Math.max(field.min!, Number(value ?? field.min) - 1))}>−</Button>
+                  <input
+                    aria-label={field.label}
+                    type="number"
+                    min={field.min}
+                    max={field.max}
+                    value={value === null ? '' : Number(value)}
+                    onChange={(event) => update(field.key, event.target.value === '' ? null : Number(event.target.value))}
+                    className="h-9 w-20 rounded-lg border border-[var(--c-line-strong)] bg-white px-2 text-center text-[15px] tabular-nums outline-none focus:border-[var(--c-brand)] focus:ring-2 focus:ring-[var(--c-brand-ring)]"
+                  />
+                  <Button size="sm" aria-label={`เพิ่ม ${field.label}`} onClick={() => update(field.key, Math.min(field.max!, Number(value ?? field.min) + 1))}>+</Button>
+                  {field.suffix ? <span className="w-14 text-[14px] text-[var(--c-ink-3)]">{field.suffix}</span> : null}
+                </span>
+              </div>
+            )
           })}
         </div>
-        {notice ? <p className="t2-note" data-tone={notice.includes('ไม่สำเร็จ') ? 'danger' : 'mint'} role="status">{notice}</p> : null}
-      </div>
+        {notice ? (
+          <p
+            role="status"
+            className="mt-4 rounded-lg px-3 py-2 text-[14px] font-medium"
+            style={{ background: bad ? 'var(--s-danger-soft)' : 'var(--s-success-soft)', color: bad ? 'var(--s-danger-ink)' : 'var(--s-success-ink)' }}
+          >
+            {notice}
+          </p>
+        ) : null}
+      </Card>
     </section>
   )
 }

@@ -4,7 +4,8 @@ import { getTeacher } from '@/lib/db/repo'
 import { TeacherRoomClient } from '@/components/teacher-room-client'
 import { loadTeacherPage, TeacherSignedOut, type SearchParams } from '../_lib/teacher-page'
 import { PageBody, PageHead } from '../_ux/page-head'
-import { Icon3d, InfoTip } from '../_ux/v2'
+import { Icon3d } from '../_ux/v2'
+import { Card } from '../_ux/ui'
 import { TeacherAccountPanel } from './account-panel'
 
 export const metadata: Metadata = { title: 'ตั้งค่าห้อง — สำหรับครู' }
@@ -41,19 +42,16 @@ export default async function TeacherSettingsPage({
 
   return (
     <PageBody>
-      <PageHead title="ตั้งค่าห้อง" subtitle="รหัสห้อง · สวิตช์ของคาบ · ข้อมูล" />
+      <PageHead title="ตั้งค่าห้อง" subtitle="บัญชี รหัสห้อง และการดาวน์โหลดข้อมูล" />
 
-      <div className="t2-stack">
+      <div className="grid gap-6">
         {teacher ? <TeacherAccountPanel email={teacher.email} initialDisplayName={teacher.name ?? ''} /> : null}
-        <div className="t2-grid-2" style={{ alignItems: 'stretch' }}>
+
+        <div className="grid items-start gap-4 lg:grid-cols-2">
           <TeacherRoomClient roomCode={data.selectedRoomCode} joinPath={joinPath} />
 
           {qrSvg ? (
-            <section className="t2-card text-center">
-              <h2 className="t2-card-title" style={{ justifyContent: 'center' }}>
-                <Icon3d name="magnifying-glass-tilted-left" size={32} />
-                สแกนเข้าห้อง
-              </h2>
+            <Card title="สแกนเข้าห้อง" className="text-center">
               {/* eslint-disable-next-line react/no-danger */}
               <div
                 className="mx-auto w-full max-w-[12rem]"
@@ -61,37 +59,30 @@ export default async function TeacherSettingsPage({
                 aria-label={`QR code ของลิงก์ ${joinUrl}`}
                 dangerouslySetInnerHTML={{ __html: qrSvg }}
               />
-              <p className="mt-2 text-note font-bold break-all text-ink-muted">{joinUrl}</p>
-            </section>
+              <p className="mt-3 text-[14px] break-all text-[var(--c-ink-3)]">{joinUrl}</p>
+            </Card>
           ) : null}
         </div>
 
         {data.selectedId ? (
-          <section className="t2-card">
-            <h2 className="t2-card-title">
-              <Icon3d name="package" size={32} />
-              ดาวน์โหลด CSV
-              <InfoTip
-                label="เรื่องไฟล์ CSV"
-                text="ไฟล์ใช้ชื่อสมมติแทนชื่อจริงของนักเรียน (pseudonymize) นำไปวิเคราะห์ต่อได้เลย"
-              />
-            </h2>
-            <ul className="t2-grid" style={{ listStyle: 'none', padding: 0, margin: 0, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 13rem), 1fr))' }}>
+          <Card
+            title="ดาวน์โหลด CSV"
+            tip="ไฟล์ใช้ชื่อสมมติแทนชื่อจริงของนักเรียน (pseudonymize) นำไปวิเคราะห์ต่อได้เลย"
+          >
+            <ul className="grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
               {EXPORTS.map((item) => (
                 <li key={item.type}>
                   <a
                     href={`/api/teacher/export?classroomId=${data.selectedId}&type=${item.type}&pseudonymize=1`}
-                    className="t2-btn focus-ring"
-                    data-block="true"
-                    style={{ justifyContent: 'flex-start' }}
+                    className="flex h-12 items-center gap-3 rounded-lg border border-[var(--c-line-strong)] bg-white px-3 text-[15px] font-semibold text-[var(--c-ink)] transition-colors hover:bg-[var(--c-sunken)] focus-visible:ring-2 focus-visible:ring-[var(--c-brand-ring)] focus-visible:outline-none"
                   >
-                    <Icon3d name={item.icon} size={26} />
+                    <Icon3d name={item.icon} size={24} />
                     {item.label}
                   </a>
                 </li>
               ))}
             </ul>
-          </section>
+          </Card>
         ) : null}
       </div>
     </PageBody>
