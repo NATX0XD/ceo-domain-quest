@@ -6,6 +6,7 @@ import { ConveyorDrill, type DrillItem } from './game-ui/conveyor-drill'
 import { CounterFinalSelf, CounterOnboarding } from './game-ui/counter-prep'
 import { Cta, DomeSay, M3Stage, Panel, sfx } from './game-ui/counter-shell'
 import { PixelReport, PixelShift, coachKey } from './game-ui/pixel-counter'
+import type { ProgressStore, ShiftProgress } from './game-ui/shift-progress'
 import {
   COUNTER_LEVELS,
   type CounterCase,
@@ -101,6 +102,13 @@ export function CounterGame({
   const [stats, setStats] = useState({ handbook: 0, dome: 0 })
   const [selfCard, setSelfCard] = useState<{ extension: string; reason: string } | null>(null)
   const [rounds, setRounds] = useState(0)
+  // ความคืบหน้าต่อกะ (key ของ PixelShift) อยู่ที่นี่ — PixelShift ถูก remount กลางกะ (เช่น Fast Refresh)
+  // ต้องกลับมาที่ลูกค้าคนเดิม ไม่ใช่คนที่ 1 · กะใหม่ใช้ key ใหม่จึงเริ่มจากศูนย์เอง
+  const progressMap = useRef(new Map<string, ShiftProgress>())
+  const progressFor = (key: string): ProgressStore => ({
+    get: () => progressMap.current.get(key),
+    set: (p) => void progressMap.current.set(key, p),
+  })
   const bump = (k: 'handbook' | 'dome') => setStats((x) => ({ ...x, [k]: x[k] + 1 }))
 
   const [shiftCases, setShiftCases] = useState(data.cases)
@@ -142,6 +150,7 @@ export function CounterGame({
       return r && !(r.stampCorrect && r.tagsCorrect === r.tagsTotal)
     })
     setPracticeCases(missed.slice(0, 2))
+    progressMap.current.delete('practice')
     const weak = pickWeak(detail?.groups)
     setDrillItems(buildDrill(data, weak.length > 0 ? weak : data.categories.map((c) => c.id)))
     setStage('drill')
@@ -241,6 +250,9 @@ export function CounterGame({
         onCheck={onCheck}
         onExit={onExit}
         onComplete={async () => setStage('ready')}
+        progress={progressFor('practice')}
+        tutorial={coach}
+        onTutorialDone={coachDone}
       />
     )
   }
@@ -259,6 +271,7 @@ export function CounterGame({
       tutorial={coach && run === 0}
       onTutorialDone={coachDone}
       onRestart={reshuffle}
+      progress={progressFor(`run-${run}`)}
     />
   )
 }

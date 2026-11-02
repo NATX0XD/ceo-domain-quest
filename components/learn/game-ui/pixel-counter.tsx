@@ -10,6 +10,8 @@
  */
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { TUT_ORDER, TUT_STEPS, nextTut, skipTut, startTut, type Tut } from './coach-steps'
+import { restartCurrentCustomer, restoreProgress, type ProgressStore } from './shift-progress'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
 import { cn } from '@/components/ui'
@@ -245,23 +247,15 @@ const CUSTOMER_SECONDS = 180
 const EXTRA_SECONDS = 60
 const EXTRA_COST = 1
 
-/* ---------- บทแนะนำครั้งแรก (โค้ชมาร์กบนลูกค้าคนแรก) ---------- */
-type Tut = 'call' | 'card' | 'ask' | 'book' | 'book-back' | 'dome' | 'dome-back' | 'stamp'
-const TUT_ORDER: Tut[] = ['call', 'card', 'ask', 'book', 'book-back', 'dome', 'dome-back', 'stamp']
+/* ---------- บทแนะนำครั้งแรก (โค้ชมาร์กบนลูกค้าคนแรก 5 ขั้น) ---------- */
 const TUT: Record<Tut, { target: string; text: string; skippable?: boolean }> = {
-  call: { target: '[data-tut="go"]', text: 'ลูกค้าคนแรกมาแล้ว กด เรียกคิว ให้ลูกค้าเดินมาที่เคาน์เตอร์' },
-  card: { target: '.px-tagbox', text: 'อ่านใบคำขอ ดูนามสกุลท้ายชื่อโดเมน แล้วเลือกชั้นให้ทุกชื่อ จากนั้นกด สัมภาษณ์ลูกค้า' },
-  ask: { target: '.px-askpanel', text: 'ถามให้รู้ว่าลูกค้าเป็นใคร มีเอกสารอะไร กดคำถามหรือพิมพ์ถามเองก็ได้ ถามได้ 3 ข้อ' },
-  book: { target: '[data-tut="book"]', text: 'ไม่แน่ใจกฎ กด ‹ คู่มือ เพื่อหันซ้ายไปเปิดคู่มือ (ปัดจอไปทางขวาก็ได้)', skippable: true },
-  'book-back': { target: '.px-manual', text: 'นี่คือคู่มือ ดูว่านามสกุลอยู่ชั้นไหน ใครจดได้ แล้วกด หันกลับเคาน์เตอร์', skippable: true },
-  dome: { target: '[data-tut="dome"]', text: 'ติดตรงไหน กด ถามโดม › เพื่อหันขวา ขอคำใบ้หรือพิมพ์ถามโดมได้', skippable: true },
-  'dome-back': { target: '.px-dome-ask', text: 'โดมใบ้ได้ 2 ครั้งต่อลูกค้า พิมพ์ถามเพิ่มได้ แล้วกด หันกลับเคาน์เตอร์', skippable: true },
-  stamp: { target: '[data-tut="go"]', text: 'พร้อมแล้วไปประทับตรา เลือกตรา เลือกเหตุผล แล้วกด ประทับตรา' },
+  call: { target: '[data-tut="go"]', text: 'ลูกค้าคนแรกมาแล้ว กด เรียกคิว' },
+  card: { target: '.px-tagbox', text: 'ดูนามสกุลท้ายชื่อโดเมน เลือกชั้นให้ทุกชื่อ แล้วกด สัมภาษณ์ลูกค้า' },
+  ask: { target: '.px-askpanel', text: 'ถามว่าลูกค้าเป็นใคร มีเอกสารอะไร (ถามได้ 3 ข้อ)' },
+  tools: { target: '.px-tools', text: 'ไม่แน่ใจ กด ‹ คู่มือ ดูกฎ หรือ ถามโดม › ขอคำใบ้ (ปัดจอซ้าย/ขวาก็ได้)', skippable: true },
+  stamp: { target: '[data-tut="go"]', text: 'ไปประทับตรา เลือกตรา เลือกเหตุผล แล้วกด ประทับตรา' },
 }
-/** เลขขั้นที่แสดง: หันไป-หันกลับ (คู่มือ/โดม) นับเป็นขั้นเดียวกัน ข้ามแล้วเลขยังเดินทีละ 1 */
-const TUT_STEP: Record<Tut, number> = { call: 1, card: 2, ask: 3, book: 4, 'book-back': 4, dome: 5, 'dome-back': 5, stamp: 6 }
-const TUT_STEPS = 6
-const TUT_STAMP_DESK = 'เลือกตรา 1 อัน (ถ้าต้องเสนอนามสกุลให้เลือกด้วย) เลือกเหตุผล แล้วกด ประทับตรา'
+const TUT_STAMP_DESK = 'เลือกตรา 1 อัน (ต้องเสนอนามสกุลก็เลือกด้วย) เลือกเหตุผล แล้วกด ประทับตรา'
 
 export function coachKey(studentId?: string | null) {
   return `m3-coach-v1:${studentId ?? 'guest'}`
@@ -290,11 +284,14 @@ export function PixelShift({
   tutorial = false,
   onTutorialDone,
   onRestart,
+  progress,
 }: {
   data: CounterData
   cases: ViewCase[]
   practice?: boolean
-  /** แสดงบทแนะนำบนลูกค้าคนแรก (ครั้งแรกของนักเรียน) */
+  /** ที่เก็บความคืบหน้าของกะนี้ (ผู้เรียกถือไว้) — PixelShift ถูก remount กลางกะแล้วกลับมาที่ลูกค้าคนเดิม */
+  progress?: ProgressStore
+  /** แสดงบทแนะนำบนลูกค้าคนแรก (ครั้งแรกของนักเรียน ไม่ว่ากะจริงหรือโหมดซ้อม) */
   tutorial?: boolean
   onTutorialDone?: () => void
   /** หมดเวลาแล้วเลือก "เริ่มกะใหม่" — ผู้เรียกจับลูกค้าชุดใหม่แล้วเปิดกะใหม่ */
@@ -310,7 +307,9 @@ export function PixelShift({
   const exit = useExitConfirm(onExit)
   const [soundOn, toggleSound] = useM3Sound()
   const clock = useShiftClock()
-  const [caseIndex, setCaseIndex] = useState(0)
+  // อ่านความคืบหน้าเดิมครั้งเดียวตอน mount (ไม่มี = เริ่มลูกค้าคนแรก)
+  const [initial] = useState(() => restoreProgress(progress?.get(), cases.length))
+  const [caseIndex, setCaseIndex] = useState(initial.caseIndex)
   const [page, setPage] = useState<Page>('queue')
   const step = STEP_OF[page]
   const [asked, setAsked] = useState<string[]>([])
@@ -321,21 +320,21 @@ export function PixelShift({
   const [stamp, setStamp] = useState<CounterStampId | null>(null)
   const [extension, setExtension] = useState<string | null>(null)
   const [reason, setReason] = useState<string | null>(null)
-  const [decisions, setDecisions] = useState<CounterDecision[]>([])
-  const [attempt, setAttempt] = useState<1 | 2>(1)
+  const [decisions, setDecisions] = useState<CounterDecision[]>(initial.decisions)
+  const [attempt, setAttempt] = useState<1 | 2>(initial.attempt)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [reasonOk, setReasonOk] = useState<boolean | undefined>(undefined)
   const [custLine, setCustLine] = useState<string | null>(null)
-  const [points, setPoints] = useState(0)
-  const [wrongHint, setWrongHint] = useState<string[]>([])
+  const [points, setPoints] = useState(initial.points)
+  const [wrongHint, setWrongHint] = useState<string[]>(initial.wrongHint)
   const [hintsLeft, setHintsLeft] = useState(hintsTotal)
   const [domeLog, setDomeLog] = useState<DomeLine[]>([])
   const [domeTyped, setDomeTyped] = useState('')
   const [domeBusy, setDomeBusy] = useState(false)
   const [timeUp, setTimeUp] = useState(false)
   const [restarting, setRestarting] = useState(false)
-  const [penalty, setPenalty] = useState(0)
-  const [tut, setTut] = useState<Tut | null>(tutorial && !practice ? 'call' : null)
+  const [penalty, setPenalty] = useState(initial.penalty)
+  const [tut, setTut] = useState<Tut | null>(() => startTut(tutorial, initial.caseIndex))
   const [look, setLook] = useState<Look>('counter')
   const [turnDir, setTurnDir] = useState<'l' | 'r' | null>(null)
   const [hbLeft, setHbLeft] = useState(hbSeconds)
@@ -351,6 +350,13 @@ export function PixelShift({
   const domeRef = useRef<HTMLDivElement | null>(null)
   const swipe = useRef<{ x: number; y: number; id: number; active: boolean } | null>(null)
   const swallowClick = useRef(false)
+
+  // เขียนความคืบหน้ากลับไปที่ผู้เรียกทุกครั้งที่เปลี่ยน (ตอบผิด = caseIndex เดิม attempt 2)
+  const store = useRef(progress)
+  store.current = progress
+  useEffect(() => {
+    store.current?.set({ caseIndex, decisions, points, penalty, attempt, wrongHint })
+  }, [caseIndex, decisions, points, penalty, attempt, wrongHint])
 
   const current = cases[caseIndex]
   const total = cases.length
@@ -726,10 +732,12 @@ export function PixelShift({
     try {
       if (onRestart) await onRestart()
       else {
-        setCaseIndex(0)
-        setDecisions([])
-        setPoints(0)
+        // ไม่มีกะใหม่ให้ (โหมดซ้อม): เริ่มลูกค้าคนนี้ใหม่ ไม่ย้อนกลับไปคนที่ 1
+        const again = restartCurrentCustomer({ caseIndex, decisions, points, penalty, attempt, wrongHint })
         resetCase()
+        setAttempt(again.attempt)
+        setWrongHint(again.wrongHint)
+        setRestarting(false)
       }
     } catch {
       setError('เริ่มกะใหม่ยังไม่สำเร็จ ลองกดอีกครั้ง')
@@ -746,26 +754,16 @@ export function PixelShift({
   }
   useEffect(() => {
     if (!tut) return
-    if (caseIndex > 0) return endTut()
-    const next = (t: Tut) => setTut(t)
-    if (tut === 'call' && page !== 'queue') next('card')
-    else if (tut === 'card' && page === 'interview') next('ask')
-    else if (tut === 'card' && page === 'stamp') next('book')
-    else if (tut === 'ask' && asked.length > 0) next('book')
-    else if (tut === 'book' && look === 'book') next('book-back')
-    else if (tut === 'book-back' && look === 'counter') next('dome')
-    else if (tut === 'dome' && look === 'dome') next('dome-back')
-    else if (tut === 'dome-back' && look === 'counter') next('stamp')
-    else if (tut === 'stamp' && feedback) endTut()
+    const n = nextTut(tut, { caseIndex, page, asked: asked.length, hasFeedback: !!feedback })
+    if (n === null) endTut()
+    else if (n !== tut) setTut(n)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- เลื่อนตามสถานะเกมเท่านั้น
-  }, [tut, page, asked.length, look, feedback, caseIndex])
+  }, [tut, page, asked.length, feedback, caseIndex])
 
   function skipTutStep() {
     if (!tut) return
-    const i = TUT_ORDER.indexOf(tut)
-    // ข้ามขั้นหันซ้าย/ขวา: ถ้าหันไปแล้วให้หันกลับด้วย
     if (look !== 'counter') turn('counter')
-    const after = tut === 'book' || tut === 'book-back' ? 'dome' : tut === 'dome' || tut === 'dome-back' ? 'stamp' : TUT_ORDER[i + 1]
+    const after = skipTut(tut)
     if (after) setTut(after)
     else endTut()
   }
@@ -1514,7 +1512,7 @@ export function PixelShift({
           <PxImg srcs={PX_ASSET.dome('thinking')} className="px-timeup-dome" />
           <h2>หมดเวลาแล้ว</h2>
           <p>
-            {current.name} รอนานแล้ว จะเล่นต่ออีก {EXTRA_SECONDS} วินาที (หัก {EXTRA_COST} เหรียญ) หรือเริ่มกะใหม่กับลูกค้าชุดใหม่
+            {current.name} รอนานแล้ว จะเล่นต่ออีก {EXTRA_SECONDS} วินาที (หัก {EXTRA_COST} เหรียญ) หรือ{onRestart ? 'เริ่มกะใหม่กับลูกค้าชุดใหม่' : 'เริ่มลูกค้าคนนี้ใหม่'}
           </p>
           {penalty > 0 ? <p className="px-muted">กะนี้ต่อเวลาไปแล้ว {penalty} ครั้ง</p> : null}
           {error && timeUp ? (
@@ -1527,7 +1525,7 @@ export function PixelShift({
               เล่นต่อ +{EXTRA_SECONDS} วิ (−{EXTRA_COST} เหรียญ)
             </PxBtn>
             <PxBtn tone="cream" onClick={() => void restartShift()} busy={restarting}>
-              เริ่มกะใหม่ (สุ่มลูกค้าใหม่)
+              {onRestart ? 'เริ่มกะใหม่ (สุ่มลูกค้าใหม่)' : 'เริ่มลูกค้าคนนี้ใหม่'}
             </PxBtn>
           </div>
         </div>
@@ -1537,7 +1535,7 @@ export function PixelShift({
           key={tut}
           target={tut === 'stamp' && page === 'stamp' ? '.px-stamps' : TUT[tut].target}
           text={tut === 'stamp' && page === 'stamp' ? TUT_STAMP_DESK : TUT[tut].text}
-          step={TUT_STEP[tut]}
+          step={TUT_ORDER.indexOf(tut) + 1}
           total={TUT_STEPS}
           onNext={TUT[tut].skippable ? skipTutStep : undefined}
           onSkip={endTut}
