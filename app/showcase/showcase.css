@@ -1,5 +1,4 @@
-/* /showcase — ผลงานของฉัน: ป้ายไม้ GameHeader · ฉากทะเล · การ์ดครีม kit2 (ภาพร้าน + ป้ายชื่อเว็บ + เหตุผล)
- * จบในจอเดียวที่ 390x844 และ 360x740 — ภาพร้านยืด/หดตามที่เหลือ ของยาวอยู่ในแผ่นเลื่อนขึ้น */
+/* /showcase: การ์ดผลงานแบบเกม + carousel ที่จบใน viewport เดียว */
 
 .sc-shell .app-shell-header {
   padding: 0 0 6px !important;
@@ -7,6 +6,7 @@
   box-shadow: none !important;
   background: linear-gradient(180deg, #8fd9f5 0%, rgb(143 217 245 / .85) 70%, rgb(143 217 245 / 0) 100%) !important;
 }
+
 .sc-game-header { padding-top: max(10px, env(safe-area-inset-top)); }
 
 .sc-shell .sc-main {
@@ -19,25 +19,60 @@
   display: flex;
   height: 100%;
   min-height: 0;
-  flex-direction: column;
-  gap: 10px;
   width: 100%;
   max-width: 30rem;
   margin: 0 auto;
-  padding: 6px 14px 10px;
+  flex-direction: column;
+  gap: 7px;
+  padding: 5px 12px 8px;
 }
 
-/* ── การ์ดผลงานของฉัน ── */
-.sc-card {
+.sc-carousel {
+  position: relative;
   display: flex;
   min-height: 0;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
+}
+
+.scg-track {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  list-style: none;
+  touch-action: pan-x;
+}
+
+.scg-track::-webkit-scrollbar { display: none; }
+
+.scg-slide {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  flex: 0 0 100%;
+  padding: 1px 2px 4px;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+.sc-card {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  gap: 6px;
   overflow: hidden;
-  padding: 10px 12px 12px;
+  padding: 9px 10px 10px;
   border: 3px solid #6b2d12;
-  border-radius: 22px;
+  border-radius: 20px;
   background: linear-gradient(180deg, #fbe7c0 0%, #fff4dc 30%, #fff8ea 100%);
   box-shadow: 0 4px 0 rgb(107 45 18 / .3), 0 12px 24px rgb(50 34 12 / .18);
   color: #4a1f0a;
@@ -45,9 +80,11 @@
 
 .sc-card-head {
   display: flex;
+  min-height: 2.25rem;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 7px;
+  flex: 0 0 auto;
 }
 
 .sc-kicker {
@@ -55,59 +92,66 @@
   margin: 0;
   overflow: hidden;
   color: #7a3f14;
-  font-size: .82rem;
+  font-size: .8rem;
   font-weight: 900;
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* ปุ่มเปิด "เพื่อนชมเรา" — ป้ายครีมขอบน้ำตาล + เลขกลมแดง */
-.sc-card-head .sc-inbox {
+.sc-inbox {
+  display: inline-flex;
+  min-height: 2.15rem;
   flex: none;
-  min-height: 2.5rem;
-  gap: 6px;
-  padding: 0 6px 0 10px;
+  align-items: center;
+  gap: 4px;
+  padding: 0 5px 0 7px;
   border: 2px solid #c98238;
+  border-radius: 999px;
   background: #fff1d6;
   color: #6b2d12;
-  font-size: .85rem;
+  font-size: .73rem;
   font-weight: 900;
+  white-space: nowrap;
   box-shadow: 0 2px 0 rgb(107 45 18 / .25);
 }
-.sc-card-head .sc-inbox:hover { background: #ffe6b8; }
-.sc-card-head .sc-inbox > span { display: inline-flex; align-items: center; gap: 6px; }
+
+.sc-inbox:hover { background: #ffe6b8; }
+.sc-inbox img { flex: none; object-fit: contain; }
+
 .sc-badge {
   display: inline-grid;
-  min-width: 1.6rem;
-  height: 1.6rem;
+  min-width: 1.35rem;
+  height: 1.35rem;
   place-items: center;
-  padding: 0 6px;
+  padding: 0 4px;
   border: 2px solid #fff;
   border-radius: 999px;
   background: #9b8d7d;
   color: #fff;
-  font-size: .85rem;
+  font-size: .75rem;
   font-weight: 900;
   line-height: 1;
 }
+
 .sc-badge.is-new { background: #e23d3d; box-shadow: 0 0 0 2px rgb(226 61 61 / .25); }
 
-/* ── ฉากร้าน ── */
 .sc-scene {
   position: relative;
   display: grid;
-  min-height: 72px;
-  flex: 1 1 auto;
+  min-height: 86px;
+  height: clamp(96px, 21dvh, 158px);
+  flex: 0 0 auto;
   place-items: center;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 15px;
   background:
     radial-gradient(circle at 50% 25%, rgb(255 255 255 / .72) 0 7%, transparent 8%),
     linear-gradient(180deg, #8bd8ec 0%, #c6f1e6 69%, #8fcf75 70%, #63aa5f 100%);
   box-shadow: inset 0 -8px 0 rgb(67 121 77 / .15), inset 0 1px 0 rgb(255 255 255 / .85);
 }
-.sc-scene .sc-art {
+
+.sc-art {
   position: absolute;
   inset: 4px 0 0;
   z-index: 1;
@@ -118,6 +162,7 @@
   object-position: center bottom;
   filter: drop-shadow(0 8px 6px rgb(94 55 24 / .22));
 }
+
 .sc-cloud {
   position: absolute;
   z-index: 0;
@@ -127,6 +172,7 @@
   background: rgb(255 255 255 / .65);
   pointer-events: none;
 }
+
 .sc-cloud::before,
 .sc-cloud::after { position: absolute; border-radius: 50%; background: inherit; content: ''; }
 .sc-cloud::before { width: 28px; height: 28px; left: 12px; bottom: 4px; }
@@ -134,84 +180,115 @@
 .sc-cloud-one { top: 14%; left: 6%; transform: scale(.74); }
 .sc-cloud-two { top: 22%; right: 4%; transform: scale(.58); opacity: .75; }
 
-/* ── ป้ายไม้ชื่อเว็บ ── */
 .sc-sign {
   position: relative;
+  z-index: 2;
   display: flex;
-  flex: none;
+  min-height: 48px;
+  width: min(94%, 330px);
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 1px;
-  margin: -18px auto 0;
-  z-index: 2;
-  width: min(94%, 330px);
-  padding: 5px 24px 6px;
+  margin: -17px auto 0;
+  padding: 5px 22px 6px;
   border: 3px solid #6b2d12;
   border-radius: 12px 12px 18px 18px;
   background: linear-gradient(180deg, #b9682a 0%, #8f421d 100%);
   box-shadow: 0 4px 0 #4f2312, inset 0 2px 0 rgb(255 221 155 / .45);
   text-align: center;
 }
+
 .sc-sign::before,
 .sc-sign::after {
   position: absolute;
   top: 50%;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #ffd879;
   content: '';
   transform: translateY(-50%);
 }
-.sc-sign::before { left: 9px; }
-.sc-sign::after { right: 9px; }
-.sc-sign-type { color: #ffd98a; font-size: .7rem; font-weight: 800; line-height: 1.1; }
+
+.sc-sign::before { left: 8px; }
+.sc-sign::after { right: 8px; }
+.sc-sign-type { color: #ffd98a; font-size: .66rem; font-weight: 800; line-height: 1.1; }
+
 .sc-sign strong {
   max-width: 100%;
   color: #fff6dc;
   font-family: var(--font-display), var(--font-noto-sans-thai), sans-serif;
-  font-size: clamp(1.1rem, 5.6vw, 1.45rem);
+  font-size: clamp(1rem, 5vw, 1.35rem);
   font-weight: 900;
   line-height: 1.2;
-  overflow-wrap: anywhere;
-  word-break: break-all;
+  overflow-wrap: normal;
+  word-break: normal;
   text-shadow: 0 2px 0 #5a2208;
 }
 
-/* ── เหตุผล 3 ข้อ ── */
-.sc-reasons {
+.sc-reasons,
+.scg-reasons {
   display: flex;
-  flex: none;
+  min-height: 0;
+  flex: 0 0 auto;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
+
+.scg-reasons-head {
+  display: flex;
+  min-height: 1.85rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+}
+
+.scg-reasons-label { color: #6b2d12; font-size: .77rem; font-weight: 900; }
+
+.scg-read {
+  min-height: 1.85rem;
+  padding: 0 10px;
+  border: 2px solid #8b4fe8;
+  border-radius: 999px;
+  background: #f3ecff;
+  color: #5a2bb0;
+  font-size: .74rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .sc-reasons li {
   display: flex;
+  min-height: 31px;
   align-items: flex-start;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 12px;
+  gap: 7px;
+  padding: 4px 8px;
+  border-radius: 10px;
   background: #fff;
   box-shadow: inset 0 0 0 1.5px #f0d7ac;
   color: #4a1f0a;
-  font-size: .9rem;
-  line-height: 1.35;
+  font-size: .8rem;
+  line-height: 1.32;
 }
+
 .sc-reason-no {
   display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
   flex: none;
-  width: 1.5rem;
-  height: 1.5rem;
   place-items: center;
   border-radius: 50%;
   background: #8b4fe8;
   color: #fff;
-  font-size: .78rem;
+  font-size: .7rem;
   font-weight: 900;
 }
+
 .sc-reason-text {
   display: -webkit-box;
   min-width: 0;
@@ -222,111 +299,109 @@
   text-wrap: pretty;
 }
 
+.scg-reasons:not(.is-expanded) .sc-reasons li:nth-child(n + 2) { display: none; }
+.scg-card.is-reading .sc-scene { display: none; }
+.scg-card.is-reading .sc-sign { margin-top: 0; }
+.scg-card.is-reading .scg-reasons .sc-reason-text { display: block; overflow: visible; -webkit-line-clamp: unset; }
+.scg-card.is-reading .scg-reasons .sc-reasons { max-height: 38dvh; overflow-y: auto; overscroll-behavior: contain; }
+
 .sc-hidden-note {
   margin: 0;
-  padding: 6px 10px;
-  border-radius: 10px;
+  padding: 5px 8px;
+  border-radius: 9px;
   background: #fde7e7;
   color: #8a1f1f;
-  font-size: .8rem;
+  font-size: .73rem;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
-.sc-empty { display: flex; flex: none; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
-.sc-empty h2 { margin: 0; color: #4a1f0a; font-size: 1.05rem; font-weight: 900; }
-.sc-empty p { margin: 0; color: #6b3a1a; font-size: .88rem; line-height: 1.4; }
+.sc-empty { display: flex; flex: 1 1 auto; flex-direction: column; align-items: center; justify-content: center; gap: 5px; text-align: center; }
+.sc-empty h2 { margin: 0; color: #4a1f0a; font-size: 1rem; font-weight: 900; }
+.sc-empty p { margin: 0; color: #6b3a1a; font-size: .8rem; line-height: 1.35; }
+.sc-empty .game-button { min-height: 2.55rem; }
 
-/* ── ปุ่ม kit2 ── */
-.sc-actions {
-  display: grid;
-  flex: none;
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-.sc-actions .sc-action--hidden { display: none !important; }
-.sc-actions .sc-action { width: 100%; padding-inline: 10px; font-size: 1rem; }
-.sc-actions .sc-action > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.sc-cta { flex: none; width: 100%; }
+.scg-actions { display: grid; min-height: 2.7rem; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: auto; }
 
-@media (max-height: 760px) {
-  .sc-page { gap: 8px; padding-top: 4px; }
-  .sc-reasons li { padding: 4px 8px; font-size: .84rem; }
-  .sc-reason-text { -webkit-line-clamp: 1; }
-}
-
-/* ── แกลเลอรีผลงานเพื่อน (แผ่น #sheet-peers) — ปัดซ้าย/ขวา ── */
-.scg { display: flex; flex-direction: column; gap: 8px; }
-.scg-track {
-  display: flex;
-  margin: 0;
-  padding: 0;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  list-style: none;
-}
-.scg-track::-webkit-scrollbar { display: none; }
-.scg-slide {
-  flex: 0 0 100%;
-  min-width: 0;
-  padding: 2px 3px 8px;
-  scroll-snap-align: center;
-  scroll-snap-stop: always;
-}
-.scg-card { flex: none; height: auto; }
-.scg-scene { flex: none; height: clamp(120px, 24dvh, 200px); }
-.scg-praises {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: 4px;
-  min-height: 2rem;
-  padding: 0 10px;
-  border: 2px solid #c98238;
-  border-radius: 999px;
-  background: #fff1d6;
-  color: #6b2d12;
-  font-size: .85rem;
-  font-weight: 900;
-}
-.scg-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .scg-like {
   display: inline-flex;
-  min-height: 2.75rem;
+  min-height: 2.7rem;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
   border: 3px solid #6b2d12;
   border-radius: 999px;
   background: #fff8ea;
   color: #6b2d12;
-  font-size: .95rem;
+  font-size: .9rem;
   font-weight: 900;
   box-shadow: 0 3px 0 #6b2d12;
   transition: transform .12s ease;
 }
+
 .scg-like:active { transform: translateY(2px); box-shadow: 0 1px 0 #6b2d12; }
 .scg-like.is-on { background: #ffe1e1; }
 .scg-like:disabled { opacity: .7; }
+.scg-heart { color: #6b2d12; font-size: 1.35rem; line-height: 1; }
+.scg-heart.is-filled { color: #e23d3d; }
+
 .scg-like-count {
   display: inline-grid;
-  min-width: 1.5rem;
-  height: 1.5rem;
+  min-width: 1.35rem;
+  height: 1.35rem;
   place-items: center;
-  padding: 0 5px;
+  padding: 0 4px;
   border-radius: 999px;
   background: #6b2d12;
   color: #fff;
-  font-size: .8rem;
+  font-size: .73rem;
 }
-.scg-praise { width: 100%; padding-inline: 8px; font-size: .95rem; }
-.scg-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+.scg-praise { width: 100%; min-height: 2.7rem; padding-inline: 7px; font-size: .86rem; }
+
+.scg-praises {
+  display: inline-flex;
+  min-height: 1.95rem;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  padding: 0 8px;
+  border: 2px solid #c98238;
+  border-radius: 999px;
+  background: #fff1d6;
+  color: #6b2d12;
+  font-size: .77rem;
+  font-weight: 900;
+}
+
+.scg-praises img { object-fit: contain; }
+
+.scg-loading {
+  min-height: 14px;
+  padding-inline: 5px;
+  color: #6b2d12;
+  font-size: .7rem;
+}
+
+.scg-error {
+  display: flex;
+  min-height: 18px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 0;
+  color: #8a1f1f;
+  font-size: .72rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.scg-nav { display: flex; min-height: 2.55rem; align-items: center; justify-content: space-between; gap: 8px; flex: 0 0 auto; }
+
 .scg-arrow {
   display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.55rem;
+  height: 2.55rem;
   flex: none;
   place-items: center;
   border: 3px solid #6b2d12;
@@ -335,34 +410,114 @@
   color: #6b2d12;
   box-shadow: 0 3px 0 #6b2d12;
 }
-.scg-arrow:disabled { opacity: .35; box-shadow: none; }
-.scg-dots { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 3px; }
-.scg-dot-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
-.scg-dot { width: 8px; height: 8px; border-radius: 999px; background: rgb(107 45 18 / .25); }
-.scg-dot.is-on { width: 18px; background: #8b4fe8; }
-.scg-count { color: #6b2d12; font-size: .85rem; font-weight: 900; }
-.scg-error { margin: 0; color: #8a1f1f; font-size: .85rem; font-weight: 700; text-align: center; }
-@media (max-height: 760px) {
-  .scg-scene { height: clamp(110px, 20dvh, 160px); }
-}
-.scg-card .sc-sign strong { font-size: clamp(1rem, 4.8vw, 1.3rem); word-break: normal; }
 
-/* เหตุผลบนการ์ดเพื่อน: ปกติย่อ 2 บรรทัด · กด "อ่านเหตุผลทั้งหมด" = ซ่อนภาพร้านแล้วกางเต็มทุกข้อ (การ์ดยังพอดีจอ) */
-.scg-reasons { display: flex; flex: none; flex-direction: column; gap: 4px; }
-.scg-reasons-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.scg-reasons-label { color: #6b2d12; font-size: .82rem; font-weight: 900; }
-.scg-read {
-  min-height: 2rem;
-  padding: 0 12px;
-  border: 2px solid #8b4fe8;
+.scg-arrow:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #6b2d12; }
+.scg-arrow:disabled { opacity: .35; box-shadow: none; }
+.scg-arrow .is-prev { transform: scaleX(-1); }
+
+.scg-dots { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 2px; }
+.scg-dot-row { display: flex; max-width: 220px; flex-wrap: wrap; justify-content: center; gap: 5px; }
+
+.scg-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
   border-radius: 999px;
-  background: #f3ecff;
-  color: #5a2bb0;
-  font-size: .82rem;
-  font-weight: 900;
+  background: rgb(107 45 18 / .25);
 }
-.scg-reasons .sc-reasons { cursor: pointer; }
-.scg-card.is-reading .scg-scene { display: none; }
-.scg-card.is-reading .sc-sign { margin-top: 0; }
-.scg-card.is-reading .sc-reasons { max-height: 46dvh; overflow-y: auto; overscroll-behavior: contain; }
-.scg-card.is-reading .sc-reason-text { display: block; overflow: visible; -webkit-line-clamp: unset; }
+
+.scg-dot.is-on { width: 19px; background: #8b4fe8; }
+.scg-count { color: #6b2d12; font-size: .75rem; font-weight: 900; }
+.sc-cta { width: 100%; flex: 0 0 auto; }
+
+/* popup centered: ใช้ native dialog เพื่อให้อยู่ top layer และไม่โดน app shell ตัด */
+.sc-dialog {
+  width: min(calc(100% - 24px), 420px);
+  max-width: 420px;
+  max-height: min(86dvh, 640px);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 3px solid #6b2d12;
+  border-radius: 22px;
+  background: #fff4dc;
+  color: #4a1f0a;
+  box-shadow: 0 10px 0 rgb(74 31 10 / .2), 0 24px 54px rgb(50 34 12 / .3);
+}
+
+.sc-dialog::backdrop { background: rgb(30 21 12 / .58); backdrop-filter: blur(2px); }
+.sc-dialog-panel { max-height: min(86dvh, 640px); overflow-y: auto; padding: 17px 16px 16px; overscroll-behavior: contain; }
+.sc-dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.sc-dialog-head h2 { min-width: 0; margin: 0; color: #5a2412; font-size: 1.1rem; font-weight: 900; line-height: 1.25; text-wrap: balance; }
+
+.sc-dialog-close {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  place-items: center;
+  border: 2px solid #6b2d12;
+  border-radius: 999px;
+  background: #fff8ea;
+  color: #6b2d12;
+}
+
+.sc-dialog-intro { margin: 8px 0 12px; color: #6b3a1a; font-size: .78rem; font-weight: 800; }
+.sc-dialog form { display: flex; flex-direction: column; gap: 6px; }
+.sc-dialog label { margin-top: 4px; color: #5a2412; font-size: .86rem; font-weight: 900; }
+
+.sc-dialog textarea {
+  width: 100%;
+  min-height: 58px;
+  resize: vertical;
+  padding: 9px 10px;
+  border: 2px solid #d39a5d;
+  border-radius: 10px;
+  outline: none;
+  background: #fffdf5;
+  color: #4a1f0a;
+  font: inherit;
+  font-size: .88rem;
+  line-height: 1.4;
+}
+
+.sc-dialog textarea::placeholder { color: #7a6a5b; opacity: 1; }
+.sc-dialog textarea:focus { border-color: #7047b8; box-shadow: 0 0 0 3px rgb(112 71 184 / .2); }
+.sc-dialog-submit { width: 100%; margin-top: 8px; }
+.sc-dialog-submit:disabled { filter: grayscale(.8); opacity: .62; }
+
+.sc-dialog-status { margin: 4px 0 0; padding: 8px 10px; border-radius: 9px; font-size: .78rem; font-weight: 800; line-height: 1.35; }
+.sc-dialog-status.is-error { background: #fde7e7; color: #8a1f1f; }
+.sc-dialog-status.is-success { background: #e5f5e7; color: #17652b; }
+
+.sc-inbox-list { display: flex; max-height: min(62dvh, 440px); flex-direction: column; gap: 8px; margin: 14px 0 0; padding: 0; overflow-y: auto; list-style: none; }
+.sc-feedback-item { display: flex; flex-direction: column; gap: 7px; padding: 10px; border-left: 4px solid #6cac70; border-radius: 9px; background: #fffdf5; }
+.sc-feedback-item p { display: flex; align-items: flex-start; gap: 7px; margin: 0; color: #4a1f0a; font-size: .84rem; line-height: 1.4; }
+.sc-feedback-item p + p { padding-top: 7px; border-top: 1px solid #f0d7ac; }
+.sc-feedback-item svg { flex: none; color: #397f48; }
+.sc-feedback-item p + p svg { color: #b26b18; }
+.sc-inbox-empty { display: flex; min-height: 140px; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #6b3a1a; }
+.sc-inbox-empty p { margin: 0; font-size: .9rem; font-weight: 800; }
+
+@media (max-height: 760px) {
+  .sc-page { gap: 5px; padding-top: 3px; padding-bottom: 5px; }
+  .sc-card { gap: 5px; padding: 7px 9px 8px; }
+  .sc-card-head { min-height: 2rem; }
+  .sc-scene { height: clamp(82px, 17dvh, 118px); }
+  .sc-sign { min-height: 43px; margin-top: -15px; padding-block: 4px 5px; }
+  .sc-reasons li { min-height: 27px; padding-block: 3px; font-size: .75rem; }
+  .sc-reason-no { width: 1.2rem; height: 1.2rem; font-size: .65rem; }
+  .scg-reasons-head { min-height: 1.65rem; }
+  .scg-read { min-height: 1.65rem; font-size: .68rem; }
+  .scg-actions { min-height: 2.45rem; }
+  .scg-like, .scg-praise { min-height: 2.45rem; }
+  .scg-nav { min-height: 2.35rem; }
+  .scg-arrow { width: 2.35rem; height: 2.35rem; }
+  .sc-cta.game-button--lg { --gb-h: 3.05rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scg-track { scroll-behavior: auto; }
+  .scg-like, .scg-arrow { transition: none; }
+}
