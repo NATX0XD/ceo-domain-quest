@@ -531,7 +531,11 @@
   background: #1d1628;
   border-top: 1px solid rgb(255 255 255 / .08);
   overflow: hidden;
+  transition: height .28s ease, padding .28s ease, border-width .28s ease;
 }
+/* gold-dot question: collapse the empty bar (clip above stays put, only what's below moves up) */
+.m2g-caption.is-hidden { height: 0; padding-block: 0; border-top-width: 0; }
+@media (prefers-reduced-motion: reduce) { .m2g-caption { transition: none; } }
 .m2g-sub {
   margin: 0;
   width: 100%;
@@ -661,7 +665,7 @@
 
 /* ── exit check (45) ─────────────────────────────────────────────────── */
 .m2g-exit .m2g-body { gap: 18px; padding-top: 18px; }
-.m2g-exit .m2g-note { margin-top: 2px; }
+.m2g-exit .m2g-note { align-self: center; margin-top: 2px; padding: 3px 12px; border: 2px solid #3f1f7a; border-radius: 999px; background: #fff6e4; color: #2a1650; font-size: .82rem; font-weight: 800; text-shadow: none; }
 .m2g-exit-q { display: flex; align-items: flex-start; gap: 6px; }
 .m2g-root .m2g-exit-dome { width: 104px; height: auto; flex: none; animation: m2g-bob 2.6s ease-in-out infinite; }
 .m2g-exit-bubble { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border: 2.5px solid #5a3a1e; border-radius: 18px; background: #fff; font-weight: 700; font-size: .95rem; line-height: 1.45; animation: m2g-pop .3s ease-out; }

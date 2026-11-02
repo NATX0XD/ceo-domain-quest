@@ -176,7 +176,7 @@ export function ClipPlayer({
         ) : null}
       </div>
       {/* caption bar under the frame: fixed height, hidden while a gold-dot question is up */}
-      <div className="m2g-caption" aria-live="polite">
+      <div className={cn("m2g-caption", stopNo !== null && "is-hidden")} aria-live="polite">
         {stopNo === null ? (
           <p className="m2g-sub" key={index}>
             <b>{shot.who}:</b> {shot.line}

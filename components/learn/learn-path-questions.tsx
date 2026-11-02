@@ -56,9 +56,12 @@ export function LearnQuestions({
       ? 'ดูเรื่องของมีนจบแล้วนะครับ ลองตอบตามความเข้าใจของตัวเอง 2 ข้อ ไม่ต้องตอบเหมือนในคลิปก็ได้ครับ'
       : 'มาเริ่มข้อแรกกันเลยครับ ตอบสั้น ๆ ตามที่เข้าใจได้เลย'
   const shown = onlyId ? questions.filter((q) => q.id === onlyId) : questions.slice(0, qIdx + 1)
+  // ตอบเสริม = นับข้อที่กำลังแสดงจริง (qIdx ตอนนั้นชี้ท้ายชุดแล้ว)
+  const onlyIdx = onlyId ? questions.findIndex((q) => q.id === onlyId) : -1
+  const shownNo = onlyIdx >= 0 ? onlyIdx + 1 : Math.min(qIdx + 1, questions.length)
 
   return (
-    <ChatFrame title="คุยกับโดม" subtitle={`คำถาม ${Math.min(qIdx + 1, questions.length)} จาก ${questions.length} · ตอบด้วยคำของตัวเอง`}>
+    <ChatFrame title="คุยกับโดม" subtitle={onlyIdx >= 0 ? `ตอบเสริมข้อ ${shownNo} จาก ${questions.length} · ตอบด้วยคำของตัวเอง` : `คำถาม ${shownNo} จาก ${questions.length} · ตอบด้วยคำของตัวเอง`}>
       <ol className="flex flex-1 flex-col gap-2.5 px-3 py-4">
         {!onlyId ? (
           <Bubble name="โดม" side="left" tone="dome">

@@ -146,7 +146,16 @@ function simResult(input: z.infer<typeof SimSchema>): Extract<M2StepResult, { ki
   if (input.stage === 4 && Object.values(input.placements ?? {}).some((v) => v === 'www' || v === '.com' || v === 'com')) {
     return { kind: 'sim', correct: false, wrong, reason: 'ชิ้นนี้เป็นตัวหลอก: www คือโฮสต์ที่ไม่ใช่ชิ้นของโจทย์ และ .com ไม่ใช่ช่องของ .co.th' }
   }
-  return { kind: 'sim', correct: false, wrong, reason: 'ลองจัดใหม่โดยดูป้ายกำกับและลูกศรอ่านจากขวาไปซ้ายนะ' }
+  return { kind: 'sim', correct: false, wrong, reason: SIM_RETRY[input.stage] ?? SIM_RETRY[1] }
+}
+
+/** คำแนะนำเมื่อจัดผิดครั้งแรก แยกตามด่าน (ไม่บอกคำตอบ) */
+const SIM_RETRY: Record<number, string> = {
+  0: 'ลองดูป้ายกำกับใต้ช่องอีกครั้ง แล้ววางชิ้นที่ตรงกับป้ายนะ',
+  1: 'ลองจัดใหม่โดยดูป้ายกำกับและลูกศรอ่านจากขวาไปซ้ายนะ',
+  2: 'ลองนึกว่าชิ้นไหนบอกกลุ่มใหญ่ ชิ้นไหนเป็นชื่อหลัก และชิ้นไหนเป็นบริการย่อย แล้วติดป้ายใหม่นะ',
+  3: 'คอมพิวเตอร์เริ่มอ่านจากชิ้นที่บอกกลุ่มใหญ่ก่อน ลองเรียงลำดับการอ่านใหม่นะ',
+  4: 'ชื่อนี้มีนามสกุล 2 ชิ้น ลองดูว่าชิ้นไหนเป็นชื่อร้าน ชิ้นไหนเป็นบริการย่อย แล้ววางใหม่นะ',
 }
 
 async function exitResult(studentId: string, input: z.infer<typeof ExitSchema>): Promise<Extract<M2StepResult, { kind: 'exit' }>> {
