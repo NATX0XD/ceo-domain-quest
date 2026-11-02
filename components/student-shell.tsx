@@ -81,7 +81,7 @@ export function PageHeading({
         {/* ป้ายบอกตำแหน่งในคาบเป็นชิป ไม่ใช่ข้อความลอย — สายตาจับได้ก่อนหัวข้อ
             และแยกออกจากคำอธิบายใต้หัวข้อชัดเจน */}
         {eyebrow ? <p className="eyebrow-chip mb-1.5">{eyebrow}</p> : null}
-        <h1 className="text-display font-extrabold text-balance text-ink">{title}</h1>
+        <h1 className="page-heading-sign text-display font-extrabold text-balance text-ink">{title}</h1>
         {/* ขีดสั้นใต้หัวข้อ ทำหน้าที่เป็นเส้นแบ่งแทนกรอบ ไม่กินที่และไม่เพิ่มเส้นรบกวน */}
         <span aria-hidden="true" className="mt-2 block h-1.5 w-14 rounded-full bg-brand-400" />
         {description ? (
