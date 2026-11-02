@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { readFileSync } from 'node:fs'
 import { z } from 'zod'
 import learnPathsJson from '@/content/learn-paths.json' with { type: 'json' }
 import { getServiceClient } from '@/lib/db/client'
@@ -135,11 +135,9 @@ const AnswersSchema = z.object({
 })
 
 async function loadAnswers(missionId: string) {
-  const fileUrl = pathToFileURL(join(process.cwd(), 'content', 'learn-paths-answers.json')).href
-  const mod = (await import(/* turbopackIgnore: true */ fileUrl, { with: { type: 'json' } })) as {
-    default: unknown
-  }
-  const parsed = AnswersSchema.parse(mod.default)
+  const filePath = join(process.cwd(), 'content', 'learn-paths-answers.json')
+  // Read on demand so a long-lived dev server sees answer-content edits without a restart.
+  const parsed = AnswersSchema.parse(JSON.parse(readFileSync(filePath, 'utf8')) as unknown)
   const found = parsed.paths.find((p) => p.missionId === missionId)
   if (!found) throw new Error(`learn-paths-answers: ไม่มีเฉลยของ ${missionId}`)
   return found

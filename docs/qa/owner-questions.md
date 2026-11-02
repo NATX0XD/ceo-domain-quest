@@ -33,8 +33,12 @@
    - หลักฐาน: `content/learn-paths.json`, `public/videos/m1-watch.mp4`, `public/ui/m1/watch-poster.webp`
 
 7. **m2 storyboard เป็น reference ของลำดับ interaction ไม่ใช่ชุด answer ใหม่**
-   - เลือก: คง server contract/AI grading และ content m2 เดิม, ใช้โครง mode-driven เดิมเป็นฐาน; ไม่ฝัง storyboard เป็นภาพกดแทน HTML input
-   - หลักฐาน: `docs/ui-media/m2-modes/`, `components/learn/learn-path-client.tsx`, `app/api/mission/[id]/learn/route.ts`
+   - เลือก: ทำ flow แยกสามโหมดตาม storyboard แต่คง server contract/AI grading และ content m2 เดิม; ไม่ฝัง storyboard เป็นภาพกดแทน HTML input
+   - หลักฐาน: `docs/ui-media/m2-modes/`, `components/learn/m2-flow.tsx`, `components/server/m2-flow.ts`, `app/api/mission/[id]/learn/route.ts`
+
+10. **m2 Visual ยังไม่มีคลิปที่ใช้ได้ใน repo**
+   - เลือก: ใช้ timeline placeholder สั้นจากภาพฉาก m2 ที่มีอยู่ใน `public/learn/m2/watch-s*.webp` จนกว่าจะมีคลิปจริง โดยยังคง stop-question และช่วง rewatch ให้ทดสอบได้
+   - หลักฐาน: `components/learn/m2-flow.tsx`, `public/learn/m2/`
 
 8. **Landing hero มีโลโก้แนวนอนคนละ composition กับ welcome sign 101**
    - เลือก: เปลี่ยน `/` เป็น welcome logo 101 ตาม owner pick แต่คงโลโก้แนวนอนเดิมของ `/landing` เพื่อไม่บีบ layout desktop ที่จัด art เป็น split hero อยู่แล้ว

@@ -18,6 +18,7 @@ import {
 import { ai } from '@/components/server/ai'
 import { checkCounterStep, scoreCounter } from '@/components/server/learn-counter'
 import { checkRegistrarStep, scoreRegistrar } from '@/components/server/learn-registrar'
+import { handleM2Step } from '@/components/server/m2-flow'
 import { hasShopProfile } from '@/components/server/shop-gate'
 import {
   errorResponse,
@@ -47,6 +48,7 @@ const RequestSchema = z.discriminatedUnion('action', [
       .refine((o) => Object.keys(o).length <= 10, 'ส่งคำตอบได้ไม่เกิน 10 ข้อ'),
   }),
   z.object({ action: z.literal('do'), payload: z.unknown() }),
+  z.object({ action: z.literal('m2'), payload: z.unknown() }),
   /** ตรวจทีละจังหวะระหว่างเล่น (ลูกค้าทีละคนของด่าน 3 · เหตุการณ์/คำอธิบายบอสของด่าน 4) */
   z.object({ action: z.literal('step'), payload: z.unknown() }),
 ])
@@ -69,6 +71,11 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const missionId = mission.id
 
   try {
+    if (body.action === 'm2') {
+      if (missionId !== 'm2') return errorResponse('bad-request', 'เส้นทาง m2 ใช้ได้เฉพาะภารกิจที่ 2', 400)
+      return NextResponse.json(await handleM2Step(studentId, body.payload))
+    }
+
     if (body.action === 'warmup') {
       if (!isAdaptiveLearnPath(path)) return errorResponse('single-mode', 'ภารกิจนี้เข้าเกมโดยตรง ไม่มีช่วงเช็กพื้นฐาน', 400)
       const result = await scoreWarmup(path, body.answers)

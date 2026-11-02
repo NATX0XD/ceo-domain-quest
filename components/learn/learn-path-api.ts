@@ -30,6 +30,7 @@ export type LearnBody =
   | { action: 'choose'; mode: LearnModeId }
   | { action: 'answer'; mode: 'watch' | 'read'; answers: Record<string, string> }
   | { action: 'do'; payload: unknown }
+  | { action: 'm2'; payload: unknown }
   | { action: 'step'; payload: unknown }
 
 export type LearnPost<T> = { ok: true; data: T } | { ok: false; message: string }

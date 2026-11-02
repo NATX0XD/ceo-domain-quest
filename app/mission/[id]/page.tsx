@@ -18,6 +18,7 @@ import { certificateEligibility } from '@/components/server/certificate-eligibil
 import { studentNextStep } from '@/components/server/next-step'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { LearnPathClient } from '@/components/learn/learn-path-client'
+import { M2Flow } from '@/components/learn/m2-flow'
 import { PASS_SCORE, findLearnPath, loadLearnState, type LearnState } from '@/components/server/learn-path'
 import { publicCounterData } from '@/components/server/learn-counter'
 import { publicRegistrarData } from '@/components/server/learn-registrar'
@@ -72,6 +73,16 @@ export default async function MissionPage({
       console.error('[mission] loadLearnState', err)
     }
     if (learnState && !learnState.done) {
+      if (mission.id === 'm2') {
+        return (
+          <M2Flow
+            missionTitle={mission.title}
+            path={studentLearnPath}
+            state={learnState}
+            recommendedMode={recommendedMode}
+          />
+        )
+      }
       const kind = studentLearnPath.do.kind
       return (
         <LearnPathClient
