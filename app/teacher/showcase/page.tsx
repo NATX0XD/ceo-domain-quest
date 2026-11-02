@@ -69,7 +69,7 @@ export default async function TeacherShowcasePage({
         <TeacherFlagsClient classroomId={data.selectedId} />
 
         {data.selectedId ? <TeacherPeerVisibilityClient rows={peerRows} /> : null}
-        <section className="t2-note" data-tone="sky"><span><strong>การมองเห็นของเพื่อน</strong> ใช้ปุ่ม peer_visible เพื่อเลือกผลงานที่ปลอดภัยและเหมาะกับการแลกเปลี่ยนเรียนรู้</span><InfoTip label="เรื่องการมองเห็น" text="ผลงานที่ไม่ผ่านตัวกรองจะถูกซ่อนจากเพื่อนโดยอัตโนมัติ ครูตรวจและยืนยันได้จากหน้านี้" /></section>
+        <section className="t2-note" data-tone="sky"><span><strong>การมองเห็นของเพื่อน</strong> เปิด/ปิด "แสดงให้เพื่อนเห็น" ที่ผลงานแต่ละชิ้น เพื่อเลือกว่าชิ้นไหนขึ้นผนังผลงานให้เพื่อนในห้องดู</span><InfoTip label="เรื่องการมองเห็น" text="ผลงานที่ไม่ผ่านตัวกรองจะถูกซ่อนจากเพื่อนโดยอัตโนมัติ ครูตรวจและยืนยันได้จากหน้านี้" /></section>
             </>
           ) },
           { value: 'screen', label: 'ขึ้นจอหน้าห้อง', content: (
