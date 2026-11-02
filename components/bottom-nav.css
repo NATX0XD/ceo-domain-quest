@@ -22,8 +22,11 @@
  * ให้ปุ่มโดมทั้งปุ่มอยู่ในฟุตเตอร์ (ฟุตเตอร์มี overflow-y:auto จะตัดของที่ล้นขึ้นไป)
  * main เว้นที่ด้านล่างเท่ากัน ปุ่มโดมจึงไม่ทับเนื้อหาของหน้า
  */
-.app-shell:has(> .app-shell-footer > .game-bottom-nav--dome):not(:has(> .app-shell-footer > .surface-veil)) {
-  --bn-lift: 46px;
+/* เจ้าของยืนยัน: ปุ่มโดมลอยทับเนื้อหาได้ ไม่ต้องเว้นที่ — ไม่ยกฟุตเตอร์ แต่ให้ฟุตเตอร์ไม่ตัดปุ่มที่ล้นขึ้นไป */
+.app-shell:has(> .app-shell-footer > .game-bottom-nav--dome):not(:has(> .app-shell-footer > .surface-veil)) > .app-shell-footer {
+  overflow: visible !important;
+  position: relative;
+  z-index: 30;
 }
 
 .app-shell-footer:has(> .game-bottom-nav) {
