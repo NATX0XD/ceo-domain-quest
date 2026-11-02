@@ -4,6 +4,7 @@ import './globals.css'
 import './kit2.css'
 import { PRODUCT_NAME_FULL } from '@/components/product'
 import { CloudCurtain } from '@/components/cloud-curtain/cloud-curtain'
+import { SwRegister } from '@/components/sw-register'
 
 const notoSansThai = Noto_Sans_Thai({
   subsets: ['thai', 'latin'],
@@ -24,6 +25,8 @@ export const metadata: Metadata = {
   title: PRODUCT_NAME_FULL,
   description:
     'สื่อการสอนแบบเกม วิชา 21910-2002 อินเทอร์เน็ตในงานธุรกิจดิจิทัล — ตั้งชื่อโดเมนให้ร้านของตัวเอง',
+  // black-translucent: พื้นหน้าจอลามไปใต้แถบสถานะตอนเปิดจากไอคอนบนโฮมสกรีน (header เว้น safe-area-inset-top เอง)
+  appleWebApp: { capable: true, title: 'Domain Quest', statusBarStyle: 'black-translucent' },
 }
 
 export const viewport: Viewport = {
@@ -50,6 +53,7 @@ export default function RootLayout({
       <body className="font-sans">
         {children}
         <CloudCurtain />
+        <SwRegister />
       </body>
     </html>
   )

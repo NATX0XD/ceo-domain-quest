@@ -101,6 +101,7 @@ export async function decideGate(input: {
   if (isLandingPath(pathname)) return { type: 'next' }
   if (isTeacherPage(pathname) || isTeacherApi(pathname)) return { type: 'next' }
   if (pathname === '/api/health') return { type: 'next' }
+  if (pathname === '/manifest.webmanifest') return { type: 'next' }
 
   if (await hasValidPreviewCookie(input.cookie, env.previewKey)) return { type: 'next' }
 
