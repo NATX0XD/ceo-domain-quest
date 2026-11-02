@@ -282,8 +282,9 @@ export function TeacherShell({
       className={`flex min-w-0 flex-1 items-center gap-3 focus-ring ${isMini ? 'justify-center' : ''}`}
       aria-label="CEO Domain Quest แผงครู"
     >
-      <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white shadow-[0_6px_16px_rgb(10_5_40/0.3)]">
-        <Icon3d name="rocket" size={30} />
+      <span aria-hidden className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-[0_6px_16px_rgb(10_5_40/0.3)]">
+        {/* โลโก้แผงครู = น้องโดม ชุดเดียวกับไอคอนแอป */}
+        <img src="/icons/icon-192.png" alt="" width={44} height={44} className="size-full object-cover" />
       </span>
       {isMini ? null : (
         <span className="min-w-0 leading-tight">

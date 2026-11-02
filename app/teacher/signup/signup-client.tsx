@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { Icon3d } from '../_ux/v2'
 
 function strength(password: string): { label: string; score: number } {
   let score = 0
@@ -51,7 +50,7 @@ export default function SignupClient({ openLabel }: { openLabel: string }) {
       <section className="teacher-auth-card" aria-labelledby="teacher-signup-title">
         <div className="teacher-auth-brand">
           <span aria-hidden className="teacher-auth-mark">
-            <Icon3d name="rocket" size={30} />
+            <img src="/icons/icon-192.png" alt="" width={44} height={44} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} />
           </span>
           <div>
             <h1 id="teacher-signup-title" className="teacher-auth-title">{succeeded ? 'สมัครสำเร็จ' : 'สมัครบัญชีครู'}</h1>
