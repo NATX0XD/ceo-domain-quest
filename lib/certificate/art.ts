@@ -47,10 +47,10 @@ export function certArtPresence(): Record<CertArtKey, boolean> {
 
 /** ความกว้างสูงสุด (px) ต่อชิ้น — พอคมบน A4 แต่ไม่ให้ PDF บวม */
 const MAX_WIDTH: Record<CertArtKey, number> = {
-  bg: 2400,
+  bg: 2000,
   ribbon: 1400,
-  seal: 600,
-  dome: 700,
+  seal: 480,
+  dome: 560,
   starFull: 128,
   starEmpty: 128,
 }
@@ -74,7 +74,7 @@ async function loadOne(key: CertArtKey): Promise<CertImage | null> {
     const opaque = key === 'bg'
     const pipeline = sharp(await readFile(file)).resize({ width: MAX_WIDTH[key], withoutEnlargement: true })
     const { data, info } = opaque
-      ? await pipeline.flatten({ background: '#fbf1dc' }).jpeg({ quality: 84 }).toBuffer({ resolveWithObject: true })
+      ? await pipeline.flatten({ background: '#fbf1dc' }).jpeg({ quality: 80 }).toBuffer({ resolveWithObject: true })
       : await pipeline.png({ compressionLevel: 9 }).toBuffer({ resolveWithObject: true })
     const image: CertImage = {
       data: data.toString('base64'),

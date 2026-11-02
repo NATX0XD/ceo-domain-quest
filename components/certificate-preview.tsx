@@ -32,8 +32,8 @@ export function CertificatePreview({
           {art.ribbon ? <img src={`${ART_BASE}/cert-ribbon.webp`} alt="" /> : null}
           <span>{content.title}</span>
         </div>
-        <p className="cert-line cert-product" style={at(57, 16)}>{content.product}</p>
-        <p className="cert-line cert-muted" style={at(67, 13)}>{content.presentTo}</p>
+        <p className="cert-line cert-product" style={at(59, 16)}>{content.product}</p>
+        <p className="cert-line cert-muted" style={at(68, 13)}>{content.presentTo}</p>
         <p className="cert-line cert-name" style={at(86, 40)}>{content.nickname}</p>
         <p className="cert-line cert-strong" style={at(100, 15)}>{content.shopLine}</p>
         <p className="cert-line" style={at(109, 13)}>{content.achievement}</p>

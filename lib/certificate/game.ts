@@ -166,7 +166,13 @@ function drawRibbon(doc: jsPDF, art: CertArt, title: string) {
   const x = CX - w / 2
   const y = 16
   if (art.ribbon) {
-    image(doc, art.ribbon, x - 10, y - 4, w + 20, h + 8)
+    // ป้ายไม้ว่างตรงกลาง (ภาพกว้าง:สูง ≈ 3:1) — วางให้สูง 50 มม. แล้วเขียนชื่อสีน้ำตาลเข้มลงบนป้าย
+    image(doc, art.ribbon, CX - 90, 10, 180, 50)
+    doc.setFont(THAI_FONT_NAME, 'bold')
+    doc.setFontSize(30)
+    color(doc, BROWN)
+    doc.text(title, CX, 38.5, { align: 'center' })
+    return
   } else {
     fill(doc, RIBBON_DARK)
     poly(doc, [[x - 12, y + 8], [x + 8, y + 8], [x + 8, y + h + 4], [x - 12, y + h + 4], [x - 4, y + 18 + 4]], 'F')
@@ -283,8 +289,8 @@ export function renderGameCertificatePdf(
   drawRibbon(doc, art, c.title)
 
   const textW = 170
-  centered(doc, c.product, 57, 16, textW, true, GOLD_DARK)
-  centered(doc, c.presentTo, 67, 13, textW, false, MUTED)
+  centered(doc, c.product, 59, 16, textW, true, GOLD_DARK)
+  centered(doc, c.presentTo, 68, 13, textW, false, MUTED)
   centered(doc, c.nickname, 86, 40, textW, true, BROWN)
   // เส้นใต้ชื่อ
   stroke(doc, GOLD)
