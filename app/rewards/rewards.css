@@ -4,10 +4,15 @@
   --rw-cream: #fff1d6;
   background: #f4d69d;
 }
-.rewards-world .app-shell-header,
 .rewards-world .app-shell-footer { background: linear-gradient(180deg, #fff7df 0%, #f6dfb1 100%); border-color: rgb(107 45 18 / .22); }
-.rw-header { padding: 9px 15px 8px; }
-.rw-header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* หัวหน้า = ป้ายไม้ (+ชิปดาวลอยขวา) บนฉากฟ้า ไม่มีแถบพื้นครีม */
+.rewards-world { background: radial-gradient(circle at 87% 0%, rgb(255 238 168 / .86), transparent 29%), linear-gradient(180deg, #74cbd9 0%, #bde9cf 24%, #f9e1b3 100%); }
+.rewards-world > .app-shell-header,
+.rewards-world > .app-shell-header > .surface-veil { border: 0 !important; background: transparent !important; box-shadow: none !important; backdrop-filter: none !important; }
+.rw-header { padding: 8px 15px 0; }
+.rw-header-row { position: relative; display: flex; align-items: center; justify-content: center; }
+.rw-header-row h1 { margin: 0; white-space: nowrap; }
+.rw-header-row .rw-star-pill { position: absolute; top: 50%; right: 0; transform: translateY(-50%); }
 .rw-title-lockup { min-width: 0; }
 .rw-eyebrow,
 .rw-section-kicker { display: block; color: #a05a26; font-size: .69rem; font-weight: 900; letter-spacing: .12em; line-height: 1.2; text-transform: uppercase; }
@@ -15,7 +20,7 @@
 .rw-star-pill { display: inline-flex; min-height: 31px; align-items: center; gap: 4px; border: 2px solid #d49a43; border-radius: 999px; padding: 4px 10px 4px 8px; color: #80501b; background: #ffe7a9; box-shadow: inset 0 1px 0 rgb(255 255 255 / .8), 0 2px 0 rgb(107 45 18 / .12); font-size: .88rem; font-weight: 900; }
 .rw-star-pill svg { color: #e4a817; filter: drop-shadow(0 1px 0 #fff); }
 .rw-header-hint { margin: 5px 0 0; color: #805b42; font-size: .78rem; font-weight: 700; line-height: 1.35; }
-.rewards-world .app-shell-main { background: radial-gradient(circle at 87% 0%, rgb(255 238 168 / .86), transparent 29%), linear-gradient(180deg, #74cbd9 0%, #bde9cf 24%, #f9e1b3 100%); }
+.rewards-world .app-shell-main { background: transparent; }
 .rw-main { position: relative; isolation: isolate; display: flex; height: 100%; min-height: 0; flex-direction: column; gap: 7px; overflow: hidden; padding: 10px 14px 8px; }
 
 .rw-star-meter { position: relative; isolation: isolate; overflow: hidden; flex: 0 0 auto; border: 3px solid var(--rw-brown); border-radius: 21px; padding: 10px 12px 9px; background: linear-gradient(145deg, #fff9e7 0%, #ffefbd 58%, #f8c75c 100%); box-shadow: 0 6px 0 var(--rw-brown), 0 12px 18px rgb(83 48 18 / .12), inset 0 2px 0 rgb(255 255 255 / .85); }
@@ -38,8 +43,10 @@
 .rw-meter-progress > div:last-child > div { background: linear-gradient(90deg, #e7a51b 0%, #ffce32 55%, #f28518 100%); box-shadow: inset 0 2px 0 rgb(255 255 255 / .55); }
 .rw-meter-note { margin: 6px 0 0; color: #805b2a; font-size: .75rem; font-weight: 800; line-height: 1.3; }
 
-.rw-medal-heading { display: flex; flex: 0 0 auto; align-items: end; justify-content: space-between; gap: 8px; padding: 0 2px; }
-.rw-medal-count { border-radius: 999px; padding: 4px 8px; color: #6d4b1f; background: rgb(255 240 189 / .8); font-size: .7rem; font-weight: 900; white-space: nowrap; }
+/* แถบหัวข้อเหรียญ: แผ่นครีมขอบน้ำตาลบาง อ่านออกบนฉากฟ้า */
+.rw-medal-heading { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 8px; border: 2px solid var(--rw-brown); border-radius: 14px; padding: 4px 6px 4px 12px; background: linear-gradient(180deg, #fffaf0 0%, #fbe7c1 100%); box-shadow: 0 3px 0 var(--rw-brown), inset 0 1px 0 rgb(255 255 255 / .9); }
+.rw-medal-heading h2 { margin: 0; font-size: .95rem; }
+.rw-medal-count { border: 2px solid #c98a3a; border-radius: 999px; padding: 2px 9px; color: #5a3410; background: #ffe7a9; font-size: .75rem; font-weight: 900; white-space: nowrap; }
 .rw-medal-grid { display: grid; min-height: 0; flex: 1 1 auto; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
 .rw-medal-card { position: relative; display: flex; min-height: 0; height: 100%; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; border: 3px solid var(--rw-brown); border-radius: 18px; padding: 6px 7px 7px; background: linear-gradient(155deg, #fff9e8 0%, #f2e6ff 100%); box-shadow: 0 5px 0 var(--rw-brown), 0 10px 15px rgb(83 48 18 / .1), inset 0 2px 0 rgb(255 255 255 / .8); }
 .rw-medal-card.is-earned { background: linear-gradient(155deg, #fff6cf 0%, #e6f2d3 100%); }

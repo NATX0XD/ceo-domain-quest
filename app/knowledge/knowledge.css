@@ -6,13 +6,26 @@
   background: #f4d69d;
 }
 
-.knowledge-world .app-shell-header,
 .knowledge-world .app-shell-footer {
   background: linear-gradient(180deg, #fff7df 0%, #f6dfb1 100%);
   border-color: rgb(107 45 18 / .22);
 }
 
-.kr-header { padding: 9px 15px 8px; }
+/* หัวหน้า = ป้ายไม้อย่างเดียว ลอยบนฉากฟ้า (ไม่มีแถบพื้นครีม) */
+.knowledge-world {
+  background:
+    radial-gradient(circle at 13% 0%, rgb(255 243 189 / .9), transparent 30%),
+    linear-gradient(180deg, #73c9db 0%, #b9ead1 23%, #fae5b6 100%);
+}
+.knowledge-world > .app-shell-header,
+.knowledge-world > .app-shell-header > .surface-veil {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+.kr-header { display: flex; justify-content: center; padding: 8px 15px 0; }
+.kr-header h1 { margin: 0; white-space: nowrap; }
 .kr-header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .kr-title-lockup { min-width: 0; }
 .kr-eyebrow,
@@ -51,11 +64,7 @@
 }
 .kr-header-hint { margin: 5px 0 0; color: #805b42; font-size: .78rem; font-weight: 700; line-height: 1.35; }
 
-.knowledge-world .app-shell-main {
-  background:
-    radial-gradient(circle at 13% 0%, rgb(255 243 189 / .9), transparent 30%),
-    linear-gradient(180deg, #73c9db 0%, #b9ead1 23%, #fae5b6 100%);
-}
+.knowledge-world .app-shell-main { background: transparent; }
 .kr-main {
   position: relative;
   isolation: isolate;

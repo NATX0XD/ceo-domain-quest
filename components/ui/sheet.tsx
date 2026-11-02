@@ -76,10 +76,10 @@ export function Sheet({
 
       <div id={id} className="sheet-panel" role="group" aria-label={title}>
         <span aria-hidden="true" className="sheet-grip" />
-        <div className="flex shrink-0 items-start justify-between gap-3">
-          <h2 className="text-title-sm font-extrabold text-balance text-ink">{title}</h2>
-          <a href="#" className="tap-target -mt-1 rounded-full text-ink-muted hover:bg-surface-sunken">
-            <CloseIcon width={22} height={22} aria-hidden />
+        <div className="sheet-head flex shrink-0 items-start justify-between gap-3">
+          <h2 className="sheet-head__title text-title-sm font-extrabold text-balance text-ink">{title}</h2>
+          <a href="#" className="sheet-head__close tap-target -mt-1 rounded-full text-ink-muted hover:bg-surface-sunken">
+            <CloseIcon width={20} height={20} strokeWidth={3} aria-hidden />
             <span className="sr-only">ปิด{title}</span>
           </a>
         </div>

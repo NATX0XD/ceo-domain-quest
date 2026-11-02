@@ -332,3 +332,45 @@
   filter: drop-shadow(0 3px 2px rgb(74 31 10 / .25));
 }
 .join-title-plaque.join-title-plaque h1 { text-shadow: 0 1px 0 rgb(255 246 222 / .9); }
+
+/* ── Dome chat header: one row — back · (mini Dome + sign) centred ─────────── */
+.dome-chat-header .student-header-layout { align-items: center; }
+.dome-chat-header__row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: .3rem;
+  /* balance the 48px back button on the left so the sign sits at true centre */
+  padding-right: 3.35rem;
+}
+.dome-chat-header__row > img.dome-chat-header__avatar { width: 32px !important; height: 32px !important; flex: none; }
+.student-stage > .app-shell .app-shell-header h1.dome-chat-header__sign,
+.dome-chat-header__sign { flex: 0 1 auto; margin: 0; white-space: nowrap; }
+
+/* ── Sheet head: high-contrast title + round kit2 close (clear of frame art) ─ */
+.sheet-panel.sheet-panel > .sheet-head { align-items: center; padding-top: .35rem; }
+.sheet-head__title.sheet-head__title {
+  color: #3d1a08;
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1.3;
+  text-shadow: 0 1px 0 rgb(255 248 231 / .9);
+}
+.sheet-head__close.sheet-head__close {
+  display: inline-grid;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0;
+  place-items: center;
+  border: 3px solid #6b2d12;
+  border-radius: 999px;
+  color: #5a2412;
+  background: linear-gradient(180deg, #fffdf0 0%, #ffd99a 100%);
+  box-shadow: 0 3px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .9);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.sheet-head__close.sheet-head__close:hover { background: linear-gradient(180deg, #fffdf0 0%, #ffc56b 100%); }
+.sheet-head__close.sheet-head__close:active { transform: translateY(2px); box-shadow: 0 1px 0 #6b2d12, inset 0 2px 0 rgb(255 255 255 / .9); }
+.sheet-head__close.sheet-head__close:focus-visible { outline: 3px solid #6c43bb; outline-offset: 2px; }

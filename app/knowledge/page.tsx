@@ -62,14 +62,8 @@ export default async function KnowledgePage() {
       className="student-world student-display media-shell knowledge-world"
       header={
         <AppHeader className="kr-header" divider={false}>
-          <div className="kr-header-row">
-            <div className="kr-title-lockup">
-              <span className="kr-eyebrow">ห้องสมุดสมบัติ</span>
-              <h1>คลังความรู้</h1>
-            </div>
-            <span className="kr-no-loss">ไม่เสียดาว</span>
-          </div>
-          <p className="kr-header-hint">แตะหนังสือที่อยากเปิดอ่าน แล้วเลือกการ์ดความรู้ข้างใน</p>
+          {/* หัวหน้าแท็บหลักมีแค่ป้ายไม้ชื่อหน้า — ไม่มีคำโปรย/คำอธิบาย/แถบพื้นครีม */}
+          <h1>คลังความรู้</h1>
         </AppHeader>
       }
       footer={
@@ -93,14 +87,7 @@ export default async function KnowledgePage() {
           </div>
         ) : (
           <>
-            <div className="kr-board-heading">
-              <div>
-                <span className="kr-board-kicker">เลือกเล่มที่จะเปิด</span>
-                <h2>เรื่องที่อยากรู้วันนี้</h2>
-              </div>
-              <span className="kr-book-count">{missions.length} เล่ม</span>
-            </div>
-
+            <h2 className="sr-only">เลือกเล่มที่จะเปิด ({missions.length} เล่ม)</h2>
             <ul className="kr-book-grid">
               {missions.map((mission, index) => {
                 const art = MISSION_ART[mission.id] ?? MISSION_ART.m1!

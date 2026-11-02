@@ -50,14 +50,11 @@ export default async function RewardsPage() {
       className="student-world student-display media-shell rewards-world"
       header={
         <AppHeader className="rw-header" divider={false}>
+          {/* หัวหน้าแท็บหลักมีแค่ป้ายไม้ชื่อหน้า + ชิปดาวข้างป้าย */}
           <div className="rw-header-row">
-            <div className="rw-title-lockup">
-              <span className="rw-eyebrow">ห้องเก็บรางวัล</span>
-              <h1>ห้องถ้วยรางวัล</h1>
-            </div>
+            <h1>ห้องถ้วยรางวัล</h1>
             <span className="rw-star-pill"><StarIcon width={17} height={17} aria-hidden />{data.totalStars}</span>
           </div>
-          <p className="rw-header-hint">ทุกดาวเป็นร่องรอยว่าคุณผ่านด่านไหนมาแล้ว</p>
         </AppHeader>
       }
       footer={
@@ -93,10 +90,7 @@ export default async function RewardsPage() {
         </section>
 
         <div className="rw-medal-heading">
-          <div>
-            <span className="rw-section-kicker">ของสะสม</span>
-            <h2>เหรียญประจำภารกิจ</h2>
-          </div>
+          <h2>เหรียญประจำภารกิจ</h2>
           <span className="rw-medal-count">{data.missions.filter((mission) => mission.passed).length}/{data.missions.length} ผ่านแล้ว</span>
         </div>
 

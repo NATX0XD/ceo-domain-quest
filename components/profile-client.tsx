@@ -330,19 +330,19 @@ export function ProfileClient({
         <AppFooter>
           {flow.state.kind !== 'done' ? <FlowNote state={flow.state} className="mb-2" /> : null}
           {stepKey === 'card' ? (
-            <div className="flex flex-col gap-1.5">
+            <div className="mx-auto flex w-full max-w-[20rem] flex-col gap-2">
             {/* จบขั้นรู้จักตัวเองแล้วไปแผนที่เกาะ — ลิ้นชักล่างของแผนที่เป็นที่เลือกวิธีเรียนของแต่ละภารกิจ */}
             <Link
               href="/map"
               onClick={() => void sendChoice({ finish: true })}
-              className="btn-quest bg-quest-600 text-ink-onbrand hover:bg-quest-700"
+              className="btn-base min-h-12 rounded-lg px-5 text-body game-button game-button--orange game-button--md w-full"
             >
               {identity.startButtonLabel}
               <ChevronRightIcon width={22} height={22} aria-hidden />
             </Link>
             <Button
               variant="secondary"
-              size="sm"
+              size="md"
               fullWidth
               onClick={() => {
                 setQIndex(0)
