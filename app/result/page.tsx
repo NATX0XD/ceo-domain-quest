@@ -146,7 +146,7 @@ export default async function ResultPage() {
       fit
       className="student-world student-display media-shell result-world"
       header={
-        <AppHeader className="pb-2">
+        <AppHeader className="pb-2" backHref="/home">
           <div className="flex items-center gap-3">
             <h1 className="min-w-0 flex-1 truncate text-title-sm font-extrabold text-ink">
               เปิดตัวบริษัทของ {nickname}

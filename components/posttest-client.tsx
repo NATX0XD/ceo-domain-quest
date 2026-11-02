@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { GameQuiz } from '@/components/game-quiz'
 import { GameScore, GameWaiting } from '@/components/game-result'
+import { useExitConfirm } from '@/components/student-navigation'
 
 /**
  * แบบทดสอบหลังเรียน 10 ข้อ — **หน้าจอไม่รู้เฉลย**
@@ -51,6 +52,10 @@ export function PosttestClient({
 }) {
   const router = useRouter()
   const [result, setResult] = useState<PosttestResult | null>(initialResult)
+  const exit = useExitConfirm({
+    href: '/map',
+    note: 'แบบทดสอบจะบันทึกคำตอบเมื่อกดส่งเท่านั้น คำตอบที่เลือกไว้แต่ยังไม่ส่งจะหายไปเมื่อออกจากด่าน',
+  })
 
   // ครูยังไม่เปิด: รีเฟรชข้อมูลจากเซิร์ฟเวอร์เป็นระยะ พอเปิดแล้วโจทย์ขึ้นเอง ไม่ต้องกดอะไร
   useEffect(() => {
@@ -96,7 +101,7 @@ export function PosttestClient({
     return (
       <GameScore
         title="หลังเรียน"
-        backHref={null}
+        backHref="/home"
         say={praiseFor(result.score, result.total)}
         label="คะแนนหลังเรียน"
         score={result.score}
@@ -120,12 +125,16 @@ export function PosttestClient({
   }
 
   return (
-    <GameQuiz
-      title="หลังเรียน"
-      backHref={null}
-      questions={questions}
-      say="ใกล้จบแล้ว ตอบเท่าที่รู้นะ"
-      onSubmit={submit}
-    />
+    <>
+      <GameQuiz
+        title="หลังเรียน"
+        backHref={null}
+        questions={questions}
+        say="ใกล้จบแล้ว ตอบเท่าที่รู้นะ"
+        onSubmit={submit}
+        onBack={exit.request}
+      />
+      {exit.dialog}
+    </>
   )
 }

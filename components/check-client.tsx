@@ -106,6 +106,7 @@ export function CheckClient({
   if (result) {
     return (
       <StudentShell
+        backHref="/profile"
         className="flex h-full min-h-0 flex-col gap-3"
         footer={
           <AppFooter>
@@ -157,6 +158,7 @@ export function CheckClient({
 
   return (
     <StudentShell
+      backHref="/profile"
       className="quiz-world-shell flex h-full min-h-0 flex-col gap-2.5"
       footer={
         <AppFooter>

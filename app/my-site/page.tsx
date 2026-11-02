@@ -44,7 +44,7 @@ export default async function MySitePage() {
       className="student-world student-display media-shell my-site-world"
       mainClassName={domain === null ? 'grid place-items-center' : undefined}
       header={
-        <AppHeader>
+        <AppHeader backHref="/home">
           <p className="eyebrow-chip">
             <StarIcon width={14} height={14} aria-hidden />
             รางวัลของฉัน

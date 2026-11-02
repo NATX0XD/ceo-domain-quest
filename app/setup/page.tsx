@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { businessTypes } from '@/core/content'
 import { SetupForm } from '@/components/setup-form'
 import { SignInGate } from '@/components/student-shell'
-import { AppFooter, AppShell } from '@/components/app-shell'
+import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
 import { CreamCard, ChevronRightIcon, DomeAvatar, LockIcon } from '@/components/ui'
 import { isShopProfileLocked, loadShopProfile } from '@/components/server/game-state'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
@@ -32,6 +32,7 @@ export default async function SetupPage() {
       <AppShell
         className="student-world student-display media-shell setup-locked-shell"
         mainClassName="grid place-items-center"
+        header={<AppHeader backHref="/home"><h1>ตั้งค่าร้านของเรา</h1></AppHeader>}
         footer={
           <AppFooter>
             <Link

@@ -1,7 +1,7 @@
-import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { StudentShell } from '@/components/student-shell'
-import { ArrowLeftIcon, DomeSays, type DomeMood, cn } from '@/components/ui'
+import { DomeSays, type DomeMood, cn } from '@/components/ui'
+import { StudentBackButton } from '@/components/student-navigation'
 
 /**
  * โครงเกมของหน้าแบบทดสอบก่อน/หลังเรียนและทบทวนตัวเอง
@@ -17,6 +17,7 @@ export function GameFrame({
   footer,
   children,
   className,
+  onBack,
 }: {
   title: string
   backHref?: string | null
@@ -28,17 +29,15 @@ export function GameFrame({
   footer?: ReactNode
   children: ReactNode
   className?: string
+  onBack?: () => void
 }) {
   return (
     <StudentShell
       className={cn('gf-shell flex h-full min-h-0 flex-col gap-3', className)}
       header={
         <div className="gf-sign">
-          {backHref ? (
-            <Link href={backHref} aria-label="กลับ" className="gf-back focus-ring">
-              <ArrowLeftIcon aria-hidden width={24} height={24} />
-            </Link>
-          ) : null}
+          {backHref ? <StudentBackButton href={backHref} label="กลับ" className="gf-back" /> : null}
+          {!backHref && onBack ? <StudentBackButton onClick={onBack} label="กลับ" className="gf-back" /> : null}
           <h1>{title}</h1>
           {count ? (
             <span className="gf-count" aria-label={`ข้อ ${count}`}>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { PageHeading, SignInGate, StudentShell } from '@/components/student-shell'
 import { AppFooter } from '@/components/app-shell'
+import { useExitConfirm } from '@/components/student-navigation'
 import { GradeStatusCard } from '@/components/grade-status-client'
 import { Sheet, SheetChip } from '@/components/sheet-client'
 import {
@@ -175,6 +176,10 @@ export function CeoClient({
   /** ครูสั่งให้แก้ไว้แล้วตั้งแต่ตอนเรนเดอร์ฝั่งเซิร์ฟเวอร์ (null = ไม่ได้ถูกสั่งแก้) */
   initialRevision?: CeoRevision | null
 }) {
+  const exit = useExitConfirm({
+    href: '/map',
+    note: 'ไฟล์เสียงที่อัปโหลดและงานที่ส่งแล้วจะยังอยู่ ส่วนข้อความในฟอร์มที่ยังไม่กดส่งจะหายไปเมื่อออกจากด่าน',
+  })
   const [submitted, setSubmitted] = useState(alreadySubmitted)
   const [submission, setSubmission] = useState<CeoSubmission | null>(null)
   const [checked, setChecked] = useState<Record<string, boolean>>({})
@@ -536,7 +541,7 @@ export function CeoClient({
   // ระหว่างถามเซิร์ฟเวอร์ว่าส่งไปแล้วหรือยัง แสดงโครงหน้าไว้ก่อน กันหน้ากระพริบจากฟอร์มเปล่าไปเป็นหน้า "ส่งแล้ว"
   if (loadingStatus) {
     return (
-      <StudentShell>
+      <StudentShell backHref="/map">
         <PageHeading eyebrow="ขั้นที่ 4 · ด่านบอส CEO" title={title} />
         <div role="status" aria-live="polite" className="mt-6 flex flex-col gap-3">
           <span className="sr-only">กำลังเปิดใบเสนอ</span>
@@ -552,6 +557,7 @@ export function CeoClient({
     return (
       <StudentShell
         className="ceo-world-shell"
+        backHref="/map"
         /**
          * หลังส่งแล้ว "สิ่งที่ต้องทำต่อ" มีได้สองอย่าง ปุ่มในแถบท้ายจึงเปลี่ยนตามสถานะ
          * ครูส่งกลับมาให้แก้ = แก้แล้วส่งใหม่ · ไม่ได้ส่งกลับ = ไปขั้นต่อไป (ทบทวนตัวเอง)
@@ -874,8 +880,10 @@ export function CeoClient({
   }
 
   return (
-    <StudentShell
+    <>
+      <StudentShell
       className="ceo-world-shell flex h-full min-h-0 flex-col gap-2.5"
+      onBack={exit.request}
       footer={
         <AppFooter>
           <div className="flex gap-2">
@@ -1256,7 +1264,9 @@ export function CeoClient({
           </>
         ) : null}
       </Sheet>
-    </StudentShell>
+      </StudentShell>
+      {exit.dialog}
+    </>
   )
 }
 

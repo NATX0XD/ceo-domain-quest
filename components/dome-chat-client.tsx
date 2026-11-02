@@ -148,7 +148,7 @@ export function DomeChatClient({
     <AppShell
       className="media-shell media-dome-shell student-display"
       header={
-        <AppHeader className="flex items-center gap-2 py-1.5!">
+        <AppHeader className="flex items-center gap-2 py-1.5!" backHref="/home">
           <DomeAvatar mood="greet" size={36} decorative />
           <h1 className="text-title-sm font-extrabold text-ink">เลขาโดม</h1>
         </AppHeader>

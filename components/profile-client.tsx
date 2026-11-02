@@ -314,6 +314,7 @@ export function ProfileClient({
   return (
     <StudentShell
       withBottomNav={false}
+      backHref="/home"
       className="profile-world-shell flex h-full min-h-0 flex-col gap-3 pb-6"
       footer={
         <AppFooter>

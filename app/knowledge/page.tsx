@@ -72,7 +72,7 @@ export default async function KnowledgePage() {
       fit
       className="student-world student-display media-shell knowledge-world"
       header={
-        <AppHeader className="pb-2">
+        <AppHeader className="pb-2" backHref="/home">
           <div className="flex items-center gap-3">
             <h1 className="min-w-0 flex-1 truncate text-title-sm font-extrabold text-ink">คลังความรู้</h1>
             <span className="shrink-0 rounded-full bg-spark-100 px-3 py-1 text-note font-bold text-spark-700">

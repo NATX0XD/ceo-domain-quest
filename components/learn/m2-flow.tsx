@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertIcon, DomeAvatar, HomeIcon, LightbulbIcon, cn } from '@/components/ui'
 import { AppScreen, GlassCard, type MenuItem } from '@/components/learn/app/app-screen'
+import { useExitConfirm } from '@/components/student-navigation'
 import { ChatReader } from '@/components/learn/app/chat-reader'
 import { GameButton, Stars } from '@/components/learn/game-ui'
 import { ModePopup } from '@/components/learn/mode-popup'
@@ -256,13 +257,10 @@ export function M2Flow({ missionTitle, path, state, recommendedMode = null }: { 
   const menu: MenuItem[] = [
     { key: 'home', label: 'กลับหน้าหลัก', hint: 'ความคืบหน้าจะถูกบันทึกไว้', icon: <HomeIcon width={22} height={22} />, onSelect: () => router.push('/home') },
   ]
-  const back = () => {
-    if (step === 'choose') router.push('/map')
-    else if (step === 'rules') setStep('choose')
-    else if (step === 'text-answer') setStep('text-lesson')
-    else if (step === 'exit') setStep(mode === 'watch' ? 'visual-post' : mode === 'read' ? 'text-summary' : 'sim-finale')
-    else router.push('/map')
-  }
+  const exit = useExitConfirm({
+    href: '/map',
+    note: 'ที่ส่งให้ระบบแล้วจะอยู่ต่อ ส่วนคำตอบหรือ Exit Check ที่ยังไม่ส่งจะยังไม่ถูกบันทึก',
+  })
   const footer = (() => {
     if (step === 'rules') return <GameButton onClick={beginMode}>เริ่มภารกิจ {mode === 'watch' ? 'Visual' : mode === 'read' ? 'Text' : 'Sim'} →</GameButton>
     if (step === 'visual-clip') return <GameButton onClick={nextVisualScene}>{visualScene >= path.watch.scenes.length - 1 ? 'ไปลากวางชิ้นส่วน' : VISUAL_SCHEDULE.includes(visualScene) ? 'หยุดตอบคำถาม' : 'ฉากถัดไป →'}</GameButton>
@@ -284,7 +282,8 @@ export function M2Flow({ missionTitle, path, state, recommendedMode = null }: { 
   })()
 
   return (
-    <AppScreen theme={theme} title={missionTitle} onBack={step === 'end' ? undefined : back} score={score} stage={step === 'end' ? 2 : step === 'exit' ? 1 : 0} stageCount={3} menu={menu} dock={footer}>
+    <>
+      <AppScreen theme={theme} title={missionTitle} onBack={step === 'end' ? undefined : exit.request} score={score} stage={step === 'end' ? 2 : step === 'exit' ? 1 : 0} stageCount={3} menu={menu} dock={footer}>
       {step === 'choose' ? (
         <ModePopup missionNo="2" title={missionTitle} recommended={recommendedMode ?? 'do'} reason={recommendedMode ? undefined : 'เลือกวิธีที่ถนัดได้เลย'} picked={picked} busy={busy} error={error} onPick={setPicked} onStart={() => void chooseMode()} onClose={() => router.push('/map')} presentation="drawer" />
       ) : null}
@@ -323,6 +322,8 @@ export function M2Flow({ missionTitle, path, state, recommendedMode = null }: { 
       {step === 'end' && final ? <GlassCard><div className="text-center"><DomeAvatar mood={final.grade === 'C' ? 'encourage' : 'celebrate'} size={110} decorative /><p className="text-label font-extrabold text-brand-700">สรุปผลภารกิจที่ 2</p><h2 className="mt-2 text-title font-extrabold text-[#3a2a18]">ได้เกรด {final.grade} · {final.score ?? 0}/100</h2><p className="mt-2 text-body text-[#3a2a18]">Exit Check {final.exitScore ?? 0}/30 · คะแนนระหว่างเรียน {Math.max(0, (final.score ?? 0) - (final.exitScore ?? 0))}/70</p><div className="mt-4"><Stars count={final.stars ?? 0} /></div>{final.grade === 'C' ? <p className="mt-4 rounded-2xl bg-[#fff3cf] p-4 text-body font-bold text-[#5c3c1b]">ยังไม่ปลดล็อกเกาะ 3 ลองซ่อมบทเรียน แล้วทำ Exit Check ใหม่อีกครั้งนะ</p> : <p className="mt-4 rounded-2xl bg-quest-100 p-4 text-body font-bold text-quest-800">ผ่านแล้ว ปลดล็อกเกาะ 3 ให้ไปต่อได้เลย</p>}</div></GlassCard> : null}
 
       {domeOpen ? <div className="fixed inset-0 z-[80] grid place-items-center bg-[#21150f]/40 p-4"><GlassCard className="max-w-md"><div className="flex items-start gap-3"><DomeAvatar mood="explain" size={64} decorative /><p className="text-body font-bold text-[#3a2a18]">ลองย้อนดูว่าชื่อเว็บแบ่งเป็น 3 ส่วนอย่างไร แล้วตอบด้วยคำของตัวเองได้เลยครับ</p></div><button type="button" onClick={() => setDomeOpen(false)} className="mt-4 min-h-12 w-full rounded-2xl bg-brand-600 text-body font-extrabold text-white">กลับไปตอบข้อเดิม</button></GlassCard></div> : null}
-    </AppScreen>
+      </AppScreen>
+      {exit.dialog}
+    </>
   )
 }

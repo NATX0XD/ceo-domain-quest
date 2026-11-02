@@ -25,6 +25,7 @@ export function GameQuiz({
   say,
   submitLabel = 'ส่งคำตอบ',
   onSubmit,
+  onBack,
 }: {
   title: string
   backHref?: string | null
@@ -33,6 +34,7 @@ export function GameQuiz({
   submitLabel?: string
   /** คืนข้อความผิดพลาดเมื่อส่งไม่สำเร็จ · คืน null เมื่อสำเร็จ (หน้าที่เรียกเปลี่ยนจอเอง) */
   onSubmit: (answers: Record<string, number>) => Promise<string | null>
+  onBack?: () => void
 }) {
   const [answers, setAnswers] = useState<Record<string, number>>({})
   const [index, setIndex] = useState(0)
@@ -60,6 +62,7 @@ export function GameQuiz({
     <GameFrame
       title={title}
       backHref={backHref}
+      onBack={onBack}
       count={`${safe + 1}/${total}`}
       mood="think"
       say={say}

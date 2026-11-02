@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/components/ui'
+import { StudentBackButton } from '@/components/student-navigation'
 
 /**
  * โครงหน้าจอแบบแอปของทั้งระบบ — **ทุกหน้าใช้ตัวนี้ ห้ามเขียนโครงเองรายหน้า**
@@ -147,10 +148,12 @@ export type AppHeaderProps = {
   /** เส้นคั่นใต้แถบหัว ช่วยให้เห็นว่าเนื้อหาเลื่อนลอดอยู่ข้างใต้ */
   divider?: boolean
   className?: string
+  /** ปุ่มย้อนกลับแบบไม้กลม ลิงก์ตายตัว ไม่ใช้ history.back() */
+  backHref?: string | null
 }
 
 /** กล่องมาตรฐานของแถบหัว — จัดระยะขอบและความกว้างให้ตรงกับเนื้อหาข้างใน main */
-export function AppHeader({ children, divider = true, className }: AppHeaderProps) {
+export function AppHeader({ children, divider = true, className, backHref = null }: AppHeaderProps) {
   return (
     <div
       className={cn(
@@ -159,7 +162,12 @@ export function AppHeader({ children, divider = true, className }: AppHeaderProp
         className,
       )}
     >
-      {children}
+      {backHref ? (
+        <div className="student-header-layout">
+          <StudentBackButton href={backHref} />
+          <div className="student-header-content">{children}</div>
+        </div>
+      ) : children}
     </div>
   )
 }

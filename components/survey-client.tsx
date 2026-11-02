@@ -102,6 +102,7 @@ export function SurveyClient({
   if (sent) {
     return (
       <StudentShell
+        backHref="/result"
         className="flex h-full min-h-0 flex-col gap-3"
         footer={
           <AppFooter>
@@ -131,6 +132,7 @@ export function SurveyClient({
   if (!open) {
     return (
       <StudentShell
+        backHref="/result"
         className="flex h-full min-h-0 flex-col gap-3"
         footer={
           <AppFooter>
@@ -158,6 +160,7 @@ export function SurveyClient({
 
   return (
     <StudentShell
+      backHref="/result"
       className="flex h-full min-h-0 flex-col gap-2.5"
       footer={
         <AppFooter>

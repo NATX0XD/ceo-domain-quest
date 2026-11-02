@@ -43,6 +43,7 @@ import { HelpPanel, ResultPanel, weakest } from './learn-path-result'
 import { CardSortGame } from './card-sort-game'
 import { LearnDoneScreen } from './learn-done'
 import { AppScreen, GlassCard, type MenuItem } from './app/app-screen'
+import { useExitConfirm } from '@/components/student-navigation'
 import { ChatReader, QuickChip } from './app/chat-reader'
 import { Confetti, Float, Shake, buzz } from './app/fx'
 import { themeFor } from './app/theme'
@@ -134,6 +135,10 @@ export function LearnPathClient({
   const reduce = useReducedMotion()
   const prevIdx = useRef(0)
   const theme = themeFor(missionId)
+  const exit = useExitConfirm({
+    href: '/map',
+    note: 'ที่ส่งให้ระบบแล้วจะอยู่ต่อ ส่วนคำตอบที่ยังไม่ส่งจะเก็บไว้เฉพาะเครื่องนี้และยังไม่คิดคะแนน',
+  })
 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -592,21 +597,6 @@ export function LearnPathClient({
   }, [idx])
   const viewKey = step
 
-  function back() {
-    if (step === 'intro') return router.back()
-    if (singleMode && step === 'do') return go('intro')
-    if (step === 'result') return go('intro')
-    if ((step === 'watch' || step === 'read' || step === 'do') && brief) return go('result')
-    if ((step === 'watch' || step === 'read') && reviewing) return go('questions')
-    if (step === 'questions') {
-      if (qPhase === 'supp') return setQPhase('help')
-      if (qPhase === 'help') return setQPhase('result')
-      if (qPhase === 'ask' && qIdx > 0) return setQIdx((i) => i - 1)
-      return go(askMode)
-    }
-    return go('result')
-  }
-
   const menu: MenuItem[] = [
     ...(canSwitch
       ? [
@@ -635,10 +625,11 @@ export function LearnPathClient({
   }
 
   return (
-    <AppScreen
+    <>
+      <AppScreen
       theme={theme}
       title={missionTitle}
-      onBack={step === 'done' ? undefined : back}
+      onBack={step === 'done' ? undefined : exit.request}
       score={score}
       stage={stage}
       stageCount={stageLabels.length}
@@ -1023,6 +1014,8 @@ export function LearnPathClient({
           ) : null}
         </motion.div>
       </AnimatePresence>
-    </AppScreen>
+      </AppScreen>
+      {exit.dialog}
+    </>
   )
 }

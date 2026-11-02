@@ -4,6 +4,7 @@ import { DomeAvatar, StatBadge, cn } from '@/components/ui'
 import { AppFooter, AppShell } from '@/components/app-shell'
 import { BottomNav } from '@/components/bottom-nav'
 import { SessionClock } from '@/components/session-clock'
+import { StudentBackButton } from '@/components/student-navigation'
 
 /**
  * โครงหน้าจอฝั่งนักเรียน — ห่อ AppShell อีกชั้นเพื่อเติมของที่ทุกหน้าของนักเรียนต้องมี
@@ -24,6 +25,10 @@ export type StudentShellProps = {
   footer?: ReactNode
   /** คลาสของกล่องเนื้อหาที่เลื่อนได้ */
   className?: string
+  /** ลิงก์กลับแบบกำหนดตายตัวสำหรับหน้าที่ไม่มี AppHeader */
+  backHref?: string | null
+  /** callback สำหรับ flow ที่ต้องเปิดกล่องยืนยันก่อนออก */
+  onBack?: () => void
 }
 
 export function StudentShell({
@@ -32,6 +37,8 @@ export function StudentShell({
   header,
   footer,
   className,
+  backHref = null,
+  onBack,
 }: StudentShellProps) {
   /*
    * ชั้น shell รับเฉพาะคลาสที่เป็น "ตัวระบุฉาก" (xxx-world-shell) ให้ CSS จับได้
@@ -46,12 +53,15 @@ export function StudentShell({
     <AppShell
       className={cn('student-world student-display', shellClass)}
       header={
-        <>
-          {/* S-11 แถบช่วงกิจกรรม + หน้าพัก "ดูจอหน้าห้อง" — อยู่ทุกหน้าของนักเรียน
-              ครูยังไม่เปิดคาบ = ไม่เรนเดอร์อะไรเลย */}
-          <SessionClock />
-          {header}
-        </>
+        <div className="student-shell-header-layout">
+          {backHref || onBack ? <StudentBackButton href={backHref ?? undefined} onClick={onBack} /> : null}
+          <div className="student-shell-header-content">
+            {/* S-11 แถบช่วงกิจกรรม + หน้าพัก "ดูจอหน้าห้อง" — อยู่ทุกหน้าของนักเรียน
+                ครูยังไม่เปิดคาบ = ไม่เรนเดอร์อะไรเลย */}
+            <SessionClock />
+            {header}
+          </div>
+        </div>
       }
       footer={
         footer || withBottomNav ? (

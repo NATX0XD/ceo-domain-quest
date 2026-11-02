@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, type CSSProperties, type ReactNode } from 'react'
-import { ArrowLeftIcon, StarIcon, cn } from '@/components/ui'
+import { StarIcon, cn } from '@/components/ui'
 import { SessionClock } from '@/components/session-clock'
 import { BottomSheet } from './bottom-sheet'
 import { CountUp } from './fx'
 import type { LearnTheme } from './theme'
+import { StudentBackButton } from '@/components/student-navigation'
 
 export interface MenuItem {
   key: string
@@ -75,14 +76,7 @@ export function AppScreen({
           style={{ background: theme.bar }}
         >
           {onBack ? (
-            <button
-              type="button"
-              onClick={onBack}
-              aria-label="ย้อนกลับ"
-              className="flex h-11 w-11 items-center justify-center rounded-full transition-transform active:scale-90 focus-ring"
-            >
-              <ArrowLeftIcon width={24} height={24} aria-hidden />
-            </button>
+            <StudentBackButton onClick={onBack} className="game-back-button" />
           ) : (
             <span className="w-3" />
           )}

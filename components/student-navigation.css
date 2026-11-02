@@ -1,0 +1,138 @@
+.student-back-button {
+  display: inline-grid;
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.student-back-button img {
+  width: 2.75rem;
+  height: 2.75rem;
+  object-fit: contain;
+}
+
+.student-back-button:hover { filter: brightness(1.06) saturate(1.05); }
+.student-back-button:active { transform: scale(.9); }
+
+.student-header-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: .35rem;
+}
+
+.student-header-content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.student-shell-header-layout {
+  display: flex;
+  align-items: flex-start;
+}
+
+.student-shell-header-content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.student-shell-header-layout > .student-back-button {
+  margin: .35rem .1rem 0 .45rem;
+}
+
+.gf-back.student-back-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.gf-back.student-back-button img { width: 2.75rem; height: 2.75rem; }
+
+.student-exit-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(39 23 12 / .58);
+}
+
+.student-exit-dialog {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  width: min(100%, 28rem);
+  gap: .75rem 1rem;
+  padding: 1.1rem;
+  border: 3px solid #6b2d12;
+  border-radius: 1.5rem;
+  background: #fff1d6;
+  box-shadow: 0 8px 0 #3b1707, inset 0 2px 0 rgb(255 255 255 / .8);
+  color: #3b1707;
+}
+
+.student-exit-dome {
+  align-self: end;
+  width: 7rem;
+  height: auto;
+  object-fit: contain;
+}
+
+.student-exit-copy { align-self: center; min-width: 0; }
+.student-exit-kicker {
+  margin: 0 0 .25rem;
+  color: #a85d28;
+  font-size: .75rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.student-exit-copy h2 { margin: 0; font-size: 1.25rem; font-weight: 900; line-height: 1.2; }
+.student-exit-copy p:last-child { margin: .5rem 0 0; font-size: .875rem; line-height: 1.5; }
+
+.student-exit-actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .6rem;
+}
+
+.student-exit-actions button {
+  min-height: 3rem;
+  border: 3px solid #6b2d12;
+  border-radius: 1rem;
+  font-size: .95rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.student-exit-stay {
+  background: linear-gradient(180deg, #ffc51b, #ff7411);
+  box-shadow: 0 4px 0 #4a1f0a;
+  color: #4a1f0a;
+}
+
+.student-exit-leave {
+  background: #fffaf0;
+  box-shadow: 0 4px 0 #6b2d12;
+  color: #6b2d12;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .student-back-button { transition: none; }
+}
+
+@media (max-width: 380px) {
+  .student-exit-dialog { grid-template-columns: 5.5rem minmax(0, 1fr); gap: .5rem .7rem; padding: .9rem; }
+  .student-exit-dome { width: 5.5rem; }
+  .student-exit-copy h2 { font-size: 1.1rem; }
+  .student-exit-copy p:last-child { font-size: .8rem; }
+}

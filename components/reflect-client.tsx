@@ -259,7 +259,7 @@ export function ReflectClient({
     return (
       <GameFrame
         title="ทบทวนแล้ว"
-        backHref={null}
+        backHref="/result"
         mood="celebrate"
         say="เก่งมาก ขอบคุณที่ตั้งใจจนจบ"
         footer={
@@ -318,7 +318,7 @@ export function ReflectClient({
   return (
     <GameFrame
       title="ทบทวนตัวเอง"
-      backHref={null}
+      backHref="/posttest"
       count={`${safe + 1}/${total}`}
       mood={current.kind === 'feeling' ? 'greet' : current.kind === 'stars' ? 'think' : 'happy'}
       say={SAY[current.id]}

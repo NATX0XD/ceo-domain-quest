@@ -99,6 +99,7 @@ export function SetupForm({
 
   return (
     <StudentShell
+      backHref="/home"
       className="setup-world-shell"
       // ฟอร์ม 3 ข้อยาวเกินจอ ปุ่มบันทึกจึงอยู่แถบท้ายที่ไม่เลื่อน
       // ข้อความบนปุ่มบอกด้วยว่าเหลืออีกกี่ข้อ นักเรียนไม่ต้องเลื่อนขึ้นไปดูแถบความคืบหน้า

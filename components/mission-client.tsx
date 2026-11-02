@@ -34,6 +34,7 @@ import {
 } from '@/components/ui'
 import type { ReactNode } from 'react'
 import { MissionPassCard } from '@/components/mission-pass-card'
+import { useExitConfirm } from '@/components/student-navigation'
 
 /**
  * หน้าจอภารกิจย่อย — **แสดงผลอย่างเดียว**
@@ -145,6 +146,10 @@ export function MissionClient({
   stationSection?: ReactNode
 }) {
   const router = useRouter()
+  const exit = useExitConfirm({
+    href: '/map',
+    note: 'คำใบ้หรือคำขอความช่วยเหลือที่ส่งไปแล้วจะยังอยู่ ส่วนคำตอบที่ยังไม่ได้กดตรวจจะหายไปเมื่อออกจากภารกิจ',
+  })
   const [channel, setChannel] = useState<ChannelId | null>(route)
   const [openCard, setOpenCard] = useState<number | null>(null)
   const [hints, setHints] = useState<string[]>(revealedHints)
@@ -440,8 +445,10 @@ export function MissionClient({
    * ⚠️ ห้ามเพิ่มบล็อกที่ความสูงไม่จำกัดลงในกรอบนี้อีก ถ้าจะเพิ่มของให้เอาเข้า <Sheet>
    */
   return (
-    <StudentShell
+    <>
+      <StudentShell
       className="mission-world-shell flex h-full min-h-0 flex-col gap-2 pt-3! pb-2!"
+      onBack={exit.request}
       footer={
         <AppFooter>
           {passed ? (
@@ -907,6 +914,8 @@ export function MissionClient({
           </div>
         ) : null}
       </Sheet>
-    </StudentShell>
+      </StudentShell>
+      {exit.dialog}
+    </>
   )
 }
