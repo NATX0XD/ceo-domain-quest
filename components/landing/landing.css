@@ -751,6 +751,16 @@ body:has(.ld) { height: 100%; min-height: 100dvh; overflow: hidden; overscroll-b
 .ld-launch .ld-count { gap: 6px; }
 .ld-launch .ld-count-cell { width: 60px; box-shadow: 0 3px 0 rgba(60,32,10,.28); }
 .ld-launch-main { width: 100%; }
+.ld-launch-open-actions { display: grid; gap: 8px; width: 100%; }
+.ld-launch-teacher-link {
+  justify-self: center;
+  color: var(--ld-ink-2);
+  font-family: var(--font-display-thai), sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+.ld-launch-teacher-link:hover { color: var(--ld-purple-d); }
 .ld-launch-teacher { display: grid; gap: 8px; padding-top: 12px; border-top: 2px dashed rgba(138,85,36,.3); }
 .ld-launch-thead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .ld-launch-thead b { font: 700 17px var(--font-display-thai), sans-serif; color: var(--ld-purple-d); }

@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   openGraph: { title: 'CEO Domain Quest', description: 'สร้างร้านในฝัน เรียนรู้โดเมนอย่างสนุก', images: ['/landing/logo.webp'] },
 }
 
-// NEXT_PUBLIC_OPEN_AT ถูกฝังตอน build — เปลี่ยนวันเปิดแล้วต้อง redeploy
+export const dynamic = 'force-dynamic'
+
 export default function LandingPage() {
-  return <Landing openAtEnv={process.env.NEXT_PUBLIC_OPEN_AT} />
+  return <Landing openAtEnv={process.env.NEXT_PUBLIC_OPEN_AT} forceOpen={process.env.APP_OPEN === 'true'} />
 }
