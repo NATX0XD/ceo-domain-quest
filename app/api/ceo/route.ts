@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { after, NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { Json } from '@/lib/db/types'
 import { listSubmissions, logEvent, saveSubmission, type Submission } from '@/lib/db/repo'
@@ -8,7 +8,7 @@ import {
 } from '@/lib/db/submission-scores'
 import { fallbackGradeReason } from '@/lib/ai'
 import { sourceInfo } from '@/components/server/ai'
-import { backgroundGrader } from '@/components/server/grade-queue'
+import { backgroundGrader, drainQueue } from '@/components/server/grade-queue'
 import { loadShopProfile, syncEarnedStars } from '@/components/server/game-state'
 import {
   bigMission,
@@ -371,6 +371,21 @@ export async function POST(request: Request) {
     .submit({ ...gradeInput, submissionId: submission.id })
     .then((result) => result.jobId)
     .catch(() => null)
+
+  /**
+   * Start the first queued job after the submission response is sent.  A single
+   * job per request keeps this path inside the shared provider rate limiter;
+   * the teacher drain remains the backstop for a busy classroom.
+   */
+  if (queued !== null) {
+    after(async () => {
+      try {
+        await drainQueue(1)
+      } catch {
+        // The persisted job stays pending for the manual worker/backstop.
+      }
+    })
+  }
 
   // ดาวของภารกิจใหญ่ให้ทันทีจากคะแนนที่เสนอ แล้วเขียนดาวรวมลง DB
   const totalStars = await syncEarnedStars(session.studentId)
