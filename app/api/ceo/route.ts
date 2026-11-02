@@ -168,6 +168,7 @@ function studentFacingFeedback(submission: Submission) {
       })),
       weightedTotal: null,
       weightedMax: null,
+      stars: typeof ai.stars === 'number' ? ai.stars : typeof rule?.stars === 'number' ? rule.stars : null,
       summary: typeof ai.feedback === 'string' ? alignSummaryNumbers(ai.feedback, rule) : null,
       aiReady: true,
       aiSummary: typeof ai.feedback === 'string' ? alignSummaryNumbers(ai.feedback, rule) : null,
@@ -182,6 +183,7 @@ function studentFacingFeedback(submission: Submission) {
     dimensions: [],
     weightedTotal: null,
     weightedMax: null,
+    stars: typeof rule?.stars === 'number' ? rule.stars : null,
     summary: null,
     aiReady: false,
     aiSummary: null,
@@ -221,6 +223,7 @@ function teacherFacingScores(
     dimensions,
     weightedTotal: teacher.weightedTotal,
     weightedMax: teacher.weightedMax,
+    stars: teacher.stars,
     summary: teacher.note,
     /** ครูตัดสินจบแล้ว ไม่ต้องบอกว่า AI กำลังอ่านอยู่อีก */
     aiReady: true as const,

@@ -3,12 +3,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { PageHeading, SignInGate, StudentShell } from '@/components/student-shell'
-import { PageStateCard } from '@/components/page-state-card'
 import './ceo-done.css'
 import { AppFooter } from '@/components/app-shell'
-import { StudentBackButton, useExitConfirm } from '@/components/student-navigation'
+import { useExitConfirm } from '@/components/student-navigation'
 import '@/components/mission-revisit.css'
-import { GradeStatusCard } from '@/components/grade-status-client'
 import { Sheet, SheetChip } from '@/components/sheet-client'
 import { GameHeader } from '@/components/learn/game-header'
 import { useM1Sound } from '@/components/learn/m1/m1-shell'
@@ -17,20 +15,17 @@ import './ceo-game.css'
 import {
   AlertIcon,
   Button,
-  Card,
-  CardHeader,
-  CheckIcon,
   ChevronRightIcon,
   ChoiceCard,
   ClockIcon,
-  DomeSays,
   EmptyState,
   InfoIcon,
-  LightbulbIcon,
   MicIcon,
   QuestIcon,
   SendIcon,
   StopIcon,
+  CreamCard,
+  WoodSign,
   cn,
 } from '@/components/ui'
 
@@ -89,6 +84,7 @@ interface CeoFeedback {
   }[]
   weightedTotal: number | null
   weightedMax: number | null
+  stars: number | null
   summary: string | null
   aiReady: boolean
   aiSummary: string | null
@@ -161,31 +157,6 @@ function clock(totalSeconds: number): string {
 
 /** ป้ายข้อมูลสั้น ๆ ใต้หัวหน้าจอ — เป็นข้อความล้วน กดไม่ได้ จึงไม่ใช้ปุ่ม */
 
-function SectionCard({
-  heading,
-  description,
-  icon,
-  trailing,
-  tone = 'plain',
-  elevated = false,
-  children,
-}: {
-  heading: React.ReactNode
-  description?: React.ReactNode
-  icon?: React.ReactNode
-  trailing?: React.ReactNode
-  tone?: 'plain' | 'brand'
-  elevated?: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <Card as="section" tone={tone} elevated={elevated} className="mt-4">
-      <CardHeader as="h2" title={heading} description={description} icon={icon} trailing={trailing} />
-      <div className="mt-4">{children}</div>
-    </Card>
-  )
-}
-
 /** กล่องข้อความแจ้งสถานะ — มีไอคอนคู่เสมอ ไม่ได้สื่อด้วยสีอย่างเดียว */
 
 export function CeoClient({
@@ -240,7 +211,6 @@ export function CeoClient({
   const [missing, setMissing] = useState<string[]>([])
   const [systemMessage, setSystemMessage] = useState<string | null>(null)
   const [needsJoin, setNeedsJoin] = useState(false)
-  const [justSubmitted, setJustSubmitted] = useState(false)
   /** ครูส่งงานกลับมาให้แก้ (สเปกข้อ 3.3) — null = ไม่ได้ถูกสั่งแก้ */
   const [revision, setRevision] = useState<CeoRevision | null>(initialRevision)
   const [feedback, setFeedback] = useState<CeoFeedback | null>(null)
@@ -517,7 +487,6 @@ export function CeoClient({
       }
 
       setSubmitted(true)
-      setJustSubmitted(true)
       setEditingAgain(false)
       setRevision(null)
     } catch {
@@ -612,16 +581,28 @@ export function CeoClient({
   }
 
   if (submitted && !editingAgain) {
+    const scoreLabel = feedback?.teacherConfirmed
+      ? 'คะแนนที่ครูยืนยัน'
+      : feedback?.aiStatus === 'ready'
+        ? 'คะแนนจาก AI'
+        : 'กำลังตรวจคะแนน'
+    const score = feedback?.weightedTotal
+    const scoreMax = feedback?.weightedMax
+    const starCount = feedback?.stars ?? 0
+    const aiSummary = feedback?.teacherConfirmed ? null : feedback?.aiSummary ?? feedback?.summary
+    const teacherComment = feedback?.teacherConfirmed ? feedback.summary?.trim() || null : null
+
     return (
       <StudentShell
-        className="ceo-world-shell"
-        /**
-         * หลังส่งแล้ว "สิ่งที่ต้องทำต่อ" มีได้สองอย่าง ปุ่มในแถบท้ายจึงเปลี่ยนตามสถานะ
-         * ครูส่งกลับมาให้แก้ = แก้แล้วส่งใหม่ · ไม่ได้ส่งกลับ = ไปขั้นต่อไป (ทบทวนตัวเอง)
-         * หน้านี้ยาว (ความเห็นรายด้าน + สิ่งที่ส่งไป) ปุ่มจึงต้องไม่หนีไปอยู่ท้ายสุด
-         */
+        className="ceo-world-shell ceo-submitted-shell"
+        withBottomNav
+        header={
+          <WoodSign title="ด่านบอส CEO">
+            <span className="ceo-sign-detail">ส่งใบเสนอชื่อเว็บแล้ว</span>
+          </WoodSign>
+        }
         footer={
-          <AppFooter>
+          <AppFooter className="ceo-submitted-footer">
             {revision ? (
               <Button
                 variant="primary"
@@ -629,7 +610,6 @@ export function CeoClient({
                 fullWidth
                 onClick={() => {
                   setEditingAgain(true)
-                  setJustSubmitted(false)
                 }}
               >
                 แก้แล้วส่งใหม่
@@ -637,7 +617,7 @@ export function CeoClient({
             ) : (
               <Link
                 href={posttestDone ? '/result' : '/posttest'}
-                className="btn-quest bg-brand-600 text-ink-onbrand hover:bg-brand-700"
+                className="game-button game-button--green game-button--lg ceo-primary-cta"
               >
                 {posttestDone ? 'ไปดูเกียรติบัตร' : 'ไปทำแบบทดสอบหลังเรียน'}
                 <ChevronRightIcon width={22} height={22} aria-hidden />
@@ -646,199 +626,78 @@ export function CeoClient({
           </AppFooter>
         }
       >
-        {/* ปุ่มย้อนกลับอยู่ในฉาก ไม่มีแถบหัวสีครีมแยก (แบบเดียวกับจอผลภารกิจ) */}
-        <div className="-mt-2 mb-2 flex">
-          <StudentBackButton href="/map" className="mission-top-back" label="กลับแผนที่" />
-        </div>
-        <PageStateCard
-          className="ceo-done-hero"
-          tone={revision ? 'warm' : 'done'}
-          art={revision ? '/icons/3d/memo.webp' : '/icons/3d/crown.webp'}
-          badge={revision ? '/icons/3d/warning.webp' : '/ui/kit2/badge-check.webp'}
-          title={<span className="ceo-done-title">{revision ? 'ครูส่งงานกลับมาให้แก้' : 'ส่งใบเสนอแล้ว'}</span>}
-          body={
-            revision
-              ? 'ไม่ได้แปลว่าผิดนะ ครูอยากให้เติมอีกนิดเดียว แก้แล้วส่งใหม่ได้เลย ฉบับเดิมยังอยู่'
-              : justSubmitted
-                ? `ใบเสนอชื่อเว็บส่งถึงที่ประชุมเรียบร้อย${nickname ? ` ${nickname}` : ''}`
-                : 'ใบเสนอชื่อเว็บของเราส่งไปแล้ว แก้ไม่ได้ ถ้าอยากแก้ให้บอกครู'
-          }
-        />
-
-        {/* ส่งแล้วต้องรู้ว่าอยู่ขั้นไหน ไม่ใช่นั่งเดา — poll ตามจังหวะที่เซิร์ฟเวอร์บอก
-            สถานะเปลี่ยนเมื่อไหร่ (ครูยืนยัน / ครูสั่งแก้) โหลดคะแนนกับคำสั่งแก้ใหม่ให้เอง
-            ไม่ต้องรีเฟรชหน้า */}
-        <GradeStatusCard className="mt-5" onSettled={() => void loadCeoStatus()} />
-
-        {/* ครูสั่งแก้ด้านไหน + ทำอะไรถึงจะได้ 3 (ข้อความจากรูบริกตรง ๆ) */}
-        {revision ? (
-          <div className="mt-5 rounded-2xl bg-spark-50 p-4 ring-1 ring-spark-100 ring-inset">
-            <p className="text-body font-bold text-ink">ครูบอกว่า: {revision.note}</p>
-            <ul className="mt-3 flex flex-col gap-3">
-              {revision.dimensions.map((d) => (
-                <li key={d.id} className="rounded-xl bg-surface-raised p-3">
-                  <p className="text-body font-bold text-ink">{d.name}</p>
-                  <p className="mt-1 text-label text-pretty text-ink-muted">
-                    ทำแบบนี้แล้วได้ 3 เต็ม: {d.whatGetsYouThere}
-                  </p>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 text-label text-ink-muted">
-              รอบที่ {revision.round} · แก้ได้อีก {revision.roundsLeft} รอบ
-              ถ้าไม่พอบอกครูได้ ครูเปิดให้เพิ่มได้
-            </p>
-            {/* ปุ่ม "แก้แล้วส่งใหม่" อยู่ในแถบท้ายที่ไม่เลื่อน ไม่ซ้ำอีกตัวในการ์ดนี้ */}
-          </div>
-        ) : null}
-
-        <DomeSays mood="celebrate" speakerName="โดม" avatarSize={72} className="mt-5">
-          {revision
-            ? 'แก้ตามที่ครูบอกแล้วกดส่งใหม่ได้เลย ฉบับเดิมยังอยู่ ไม่หาย'
-            : feedback?.teacherConfirmed
-              ? posttestDone ? 'ครูตรวจแล้ว เก่งมาก ไปดูเกียรติบัตรของเราได้เลย' : 'ครูตรวจแล้ว เก่งมาก ไปทำแบบทดสอบหลังเรียนต่อได้เลย'
-              : posttestDone ? 'ส่งใบเสนอแล้ว AI ตรวจให้เรียบร้อย ไปดูเกียรติบัตรได้เลย ครูอาจเขียนความเห็นเพิ่มภายหลัง' : 'ส่งใบเสนอแล้ว AI ตรวจให้เรียบร้อย ไปทำแบบทดสอบหลังเรียนต่อได้เลย'}
-        </DomeSays>
-
-        {/**
-          * S-27 ความเห็นรายด้าน — เจ้าของงานเห็นเอง ไม่ใช่เห็นแต่ครู
-          *
-          * ⚠️ หัวข้อกับป้ายกำกับตัวเลข **ต้องเปลี่ยนตาม `feedback.teacherConfirmed`**
-          *    ตัวเลขที่เซิร์ฟเวอร์ส่งมาเป็นของครูแล้วตั้งแต่ครูกดยืนยัน (ดู teacherFacingScores)
-          *    ถ้ายังพาดหัวว่า "ข้อเสนอ ไม่ใช่คะแนนสุดท้าย" อยู่ เด็กจะเข้าใจผิดว่า
-          *    คะแนนที่ครูตัดสินแล้วยังเปลี่ยนได้ — เป็นการโกหกที่ตัวเลขถูกแต่คำผิด
-          * ⚠️ ไม่มีคะแนนของเพื่อนอยู่ตรงนี้เลย และไม่มีคะแนนที่ AI เสนอด้วย
-          */}
-        {feedback ? (
-          <SectionCard
-            heading={
-              feedback.teacherConfirmed
-                ? 'คะแนนที่ครูยืนยันแล้ว'
-                : feedback.aiStatus === 'ready'
-                  ? 'ความเห็นเบื้องต้นจาก AI · คะแนนจริงรอครูยืนยัน'
-                  : feedback.aiStatus === 'unavailable'
-                    ? 'โดมยังอ่านใบเสนอไม่สำเร็จ'
-                    : 'โดมกำลังอ่านใบเสนอ…'
-            }
-            description={
-              feedback.teacherConfirmed
-                ? 'ครูตรวจและยืนยันคะแนนของงานชิ้นนี้แล้ว นี่คือผลจริงของเรา'
-                : feedback.aiStatus === 'ready'
-                  ? 'คำแนะนำนี้เป็นความเห็นเบื้องต้นต่อครู ไม่ใช่คะแนนสุดท้าย'
-                  : feedback.aiStatus === 'unavailable'
-                    ? 'ไม่กระทบงานของเรา ครูยังตรวจและยืนยันด้วยตนเองได้'
-                    : 'รอสักครู่นะครับ เดี๋ยวโดมจะส่งคำแนะนำสั้น ๆ ให้ครู'
-            }
-            icon={
-              feedback.teacherConfirmed ? (
-                <CheckIcon width={24} height={24} />
-              ) : (
-                <LightbulbIcon width={24} height={24} />
-              )
-            }
-            tone="brand"
-          >
-            {feedback.aiStatus === 'pending' ? (
-              <p className="text-body font-bold text-ink">โดมกำลังอ่านใบเสนอ…</p>
-            ) : null}
-            {feedback.weightedTotal !== null ? (
-              <p className="text-body-lg font-bold text-ink">
-                {feedback.teacherConfirmed ? 'คะแนนที่ครูให้' : 'คะแนนที่เสนอ'}{' '}
-                {feedback.weightedTotal}
-                {feedback.weightedMax !== null ? ` / ${feedback.weightedMax}` : ''}
-              </p>
-            ) : null}
-            {feedback.summary ? (
-              <p className="mt-1 text-body text-pretty text-ink-muted">{feedback.summary}</p>
-            ) : null}
-
-            <ul className="mt-3 flex flex-col gap-2">
-              {feedback.dimensions.map((d) => (
-                <li key={d.id} className="rounded-xl bg-surface-raised p-3">
-                  <p className="flex flex-wrap items-center justify-between gap-2 text-body font-bold text-ink">
-                    <span className="min-w-0">
-                      {d.name}
-                      {d.emphasized ? (
-                        <span className="ml-2 inline-flex items-center rounded-full bg-spark-100 px-2 py-0.5 text-note font-bold text-spark-700">
-                          ด้านที่เราขอให้เน้น
-                        </span>
-                      ) : null}
-                    </span>
-                    <span className="shrink-0 tabular-nums text-brand-700">
-                      {feedback.teacherConfirmed ? `${d.score}/3 · ${d.levelLabel}` : `ระดับเบื้องต้น · ${d.levelLabel}`}
-                    </span>
-                  </p>
-                  <p className="mt-1 text-label text-pretty text-ink-muted">{d.evidence}</p>
-                  <p className="mt-1 text-label text-pretty text-brand-700">
-                    ลองเพิ่ม: {d.suggestion}
-                  </p>
-                </li>
-              ))}
-            </ul>
-
-            {/* ครูตัดสินจบแล้วก็ไม่ต้องชวนให้ "รีบบอกครูก่อนครูตรวจ" อีก — คนละสถานการณ์กัน */}
-            <p className="mt-3 text-label text-pretty text-ink-muted">
-              {feedback.teacherConfirmed
-                ? 'คะแนนนี้ครูยืนยันแล้ว ข้อเสนอแนะรายด้านข้างบนเก็บไว้ใช้ตอนทำงานชิ้นต่อไปได้'
-                : `${
-                    feedback.aiReady
-                      ? 'AI ช่วยอ่านงานนี้อีกรอบแล้ว ครูจะเห็นทั้งสองความเห็นก่อนตัดสิน'
-                      : 'AI กำลังช่วยอ่านงานนี้อีกรอบ ครูจะเห็นทั้งสองความเห็นก่อนตัดสิน'
-                  } อยากแก้ก่อนครูตรวจให้ยกมือบอกครู ครูกดส่งงานกลับมาให้แก้ได้`}
-            </p>
-          </SectionCard>
-        ) : null}
-
-        <SectionCard
-          heading="สิ่งที่ส่งไป"
-          icon={<SendIcon width={24} height={24} />}
-          tone="plain"
-        >
-          {submission ? (
-            <dl className="flex flex-col gap-3">
-              <div className="rounded-xl bg-surface-sunken p-3">
-                <dt className="text-label font-semibold text-ink-muted">ชื่อเว็บ</dt>
-                <dd className="mt-0.5 text-body-lg font-extrabold break-all text-ink">
-                  {submission.domainName || NO_DATA}
-                  {submission.tld}
-                </dd>
-              </div>
-              <div className="rounded-xl bg-surface-sunken p-3">
-                <dt className="text-label font-semibold text-ink-muted">
-                  ด้านที่ขอให้ครูดูเป็นพิเศษ (คูณ 2)
-                </dt>
-                <dd className="mt-0.5 text-body font-bold text-pretty text-ink">
-                  {rubric.find((r) => r.id === submission.emphasisCriterion)?.dimension ?? NO_DATA}
-                </dd>
-              </div>
-            </dl>
-          ) : (
-            <EmptyState
-              as="h3"
-              title="ยังอ่านรายละเอียดใบเสนอไม่ได้"
-              description="ครูได้รับใบเสนอแล้ว แต่หน้านี้ยังโหลดรายละเอียดไม่ขึ้น ลองรีเฟรชหน้าอีกครั้ง"
-            />
-          )}
-        </SectionCard>
-
-        <div className="mt-6 flex flex-col gap-2">
-          {/* ตอนครูส่งกลับมาให้แก้ แถบท้ายถูกปุ่ม "แก้แล้วส่งใหม่" จองไว้
-              ทางไปขั้นต่อไปจึงยังต้องมีให้กดตรงนี้ */}
-          {revision && !posttestDone ? (
-            <Link
-              href="/posttest"
-              className="btn-base min-h-12 w-full bg-surface-raised text-brand-700 shadow-soft-1 ring-2 ring-brand-100 ring-inset hover:bg-brand-50"
-            >
-              ไปทำแบบทดสอบหลังเรียน
-            </Link>
-          ) : null}
-          <Link
-            href="/showcase"
-            className="btn-base min-h-12 w-full bg-surface-raised text-brand-700 shadow-soft-1 ring-2 ring-brand-100 ring-inset hover:bg-brand-50"
-          >
-            ไปดูผลงานของเพื่อน
+        <main className="ceo-submitted">
+          <Link href="/map" className="ceo-map-link">
+            <img src="/ui/kit2/back-button.webp" alt="" aria-hidden width={34} height={34} draggable={false} />
+            <span>กลับแผนที่</span>
           </Link>
-        </div>
+
+          <CreamCard className="ceo-success-panel" aria-labelledby="ceo-success-title">
+            <div className="ceo-success-art" aria-hidden="true">
+              <img src="/ui/kit2/replay-dome.webp" alt="" draggable={false} />
+              <img className="ceo-success-badge" src="/ui/kit2/badge-check.webp" alt="" draggable={false} />
+            </div>
+            <p className="ceo-success-kicker">ใบเสนอชื่อเว็บของเรา</p>
+            <h1 id="ceo-success-title">ส่งงานสำเร็จ{nickname ? ` · ${nickname}` : ''}</h1>
+            <p className="ceo-success-shop">{shopName || 'ร้านของเรา'}</p>
+
+            <div className="ceo-domain-chip">
+              <span className="ceo-domain-label">ชื่อเว็บที่เสนอ</span>
+              <strong>
+                {submission?.domainName || 'กำลังโหลด'}
+                {submission?.tld ?? ''}
+              </strong>
+            </div>
+
+            <div className="ceo-score-grid" aria-label="สรุปคะแนนและดาว">
+              <section className="ceo-score-tile">
+                <span className="ceo-score-label">{scoreLabel}</span>
+                <strong className="ceo-score-value">
+                  {score ?? '—'}
+                  <small>{scoreMax !== null && scoreMax !== undefined ? ` / ${scoreMax}` : ''}</small>
+                </strong>
+                <span className="ceo-score-note">
+                  {feedback?.aiStatus === 'pending' ? 'โดมกำลังอ่านงาน' : feedback?.aiStatus === 'unavailable' ? 'รอครูตรวจด้วยตัวเอง' : 'คะแนนถ่วงน้ำหนัก'}
+                </span>
+              </section>
+              <section className="ceo-score-tile">
+                <span className="ceo-score-label">ดาวที่ได้</span>
+                <span className="ceo-stars" aria-label={starCount ? `${starCount} ดาว` : 'กำลังรอผลดาว'}>
+                  {[1, 2, 3].map((star) => (
+                    <img
+                      key={star}
+                      src="/ui/kit2/badge-star.webp"
+                      alt=""
+                      aria-hidden="true"
+                      className={star <= starCount ? undefined : 'is-off'}
+                      draggable={false}
+                    />
+                  ))}
+                </span>
+                <span className="ceo-score-note">{starCount ? `${starCount} จาก 3 ดาว` : 'กำลังคำนวณ'}</span>
+              </section>
+            </div>
+
+            {aiSummary ? (
+              <div className="ceo-feedback ceo-feedback-ai">
+                <span className="ceo-feedback-label">สรุปจาก AI</span>
+                <p>{aiSummary}</p>
+              </div>
+            ) : null}
+            {teacherComment ? (
+              <div className="ceo-feedback ceo-feedback-teacher">
+                <span className="ceo-feedback-label">ครูเขียนถึงเรา</span>
+                <p>{teacherComment}</p>
+              </div>
+            ) : null}
+            {revision ? (
+              <div className="ceo-revision-note">
+                <strong>ครูส่งงานกลับมาให้เติมอีกนิด</strong>
+                <p>{revision.note}</p>
+              </div>
+            ) : null}
+          </CreamCard>
+        </main>
       </StudentShell>
     )
   }

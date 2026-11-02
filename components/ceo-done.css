@@ -1,5 +1,265 @@
-/* /ceo submitted / graded hero (components/ceo-client.tsx) */
-.psc.ceo-done-hero { flex: none; margin-top: .25rem; padding-top: 1rem; }
-.ceo-done-hero .psc-art { width: 7.5rem; height: 7.5rem; }
-.ceo-done-hero img.psc-art-img { width: 5.5rem; height: 5.5rem; }
-.ceo-done-title { font-size: 1.75rem; }
+/* /ceo submitted state — one compact result sheet for the student world. */
+
+.ceo-submitted-shell .app-shell-header {
+  padding: .35rem 1rem .45rem;
+  background: linear-gradient(180deg, rgb(255 241 214 / .98), rgb(255 241 214 / .7)) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.ceo-submitted-shell .student-shell-header-layout { display: block; }
+.ceo-submitted-shell .student-shell-header-content { width: 100%; }
+
+.ceo-submitted-shell .wood-sign {
+  width: min(100%, 23rem);
+  margin-inline: auto;
+}
+
+.ceo-sign-detail {
+  display: block;
+  color: #8c4c20;
+  font-size: .72rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.ceo-submitted-shell .app-shell-main {
+  background:
+    radial-gradient(18rem 12rem at 18% 12%, rgb(255 218 120 / .26), transparent 70%),
+    linear-gradient(180deg, #fff4dc 0%, #fffaf0 72%, #f8ead2 100%);
+}
+
+.ceo-submitted {
+  width: min(100%, 32rem);
+  min-height: 100%;
+  margin-inline: auto;
+  padding: .3rem 1rem 1.5rem;
+}
+
+.ceo-map-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: .35rem;
+  margin-bottom: .35rem;
+  padding-right: .95rem;
+  padding-left: .35rem;
+  color: #5a2812;
+  font-size: .84rem;
+  font-weight: 900;
+  text-decoration: none;
+  text-shadow: 0 1px 0 #fff8e7;
+}
+
+.ceo-map-link img { width: 2.2rem; height: 2.2rem; object-fit: contain; }
+.ceo-map-link:hover { filter: brightness(1.04) saturate(1.06); }
+.ceo-map-link:active { transform: translateY(2px); }
+
+.ceo-success-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: .35rem .75rem 1.2rem;
+  text-align: center;
+}
+
+.ceo-success-art {
+  position: relative;
+  width: 7rem;
+  height: 6.7rem;
+  margin-top: -.15rem;
+}
+
+.ceo-success-art > img:first-child {
+  display: block;
+  width: 7rem;
+  height: 7rem;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 3px rgb(74 31 10 / .22));
+}
+
+.ceo-success-badge {
+  position: absolute;
+  right: -.15rem;
+  bottom: -.05rem;
+  width: 2.4rem;
+  height: 2.4rem;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 2px rgb(74 31 10 / .24));
+}
+
+.ceo-success-kicker,
+.ceo-score-label,
+.ceo-feedback-label {
+  margin: 0;
+  color: #9a5b27;
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.ceo-success-panel h1 {
+  margin: .15rem 0 0;
+  color: #5a2412;
+  font-family: var(--font-display), var(--font-noto-sans-thai), sans-serif;
+  font-size: clamp(1.35rem, 6.2vw, 1.8rem);
+  font-weight: 900;
+  line-height: 1.15;
+  text-wrap: balance;
+  text-shadow: 0 1px 0 #fff8e7;
+}
+
+.ceo-success-shop {
+  max-width: 100%;
+  margin: .22rem 0 0;
+  overflow: hidden;
+  color: #71441f;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ceo-domain-chip {
+  width: 100%;
+  margin-top: .8rem;
+  padding: .65rem .8rem .7rem;
+  border: 2px solid rgb(154 91 39 / .3);
+  border-radius: .85rem;
+  background: #fff8e8;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .9);
+}
+
+.ceo-domain-label {
+  display: block;
+  color: #a46b3d;
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+.ceo-domain-chip strong {
+  display: block;
+  margin-top: .15rem;
+  overflow-wrap: anywhere;
+  color: #4b260f;
+  font-family: var(--font-display), var(--font-noto-sans-thai), sans-serif;
+  font-size: clamp(1.25rem, 6vw, 1.65rem);
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.ceo-score-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+  margin-top: .65rem;
+}
+
+.ceo-score-tile {
+  display: flex;
+  min-height: 6.1rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .2rem;
+  padding: .55rem .35rem .6rem;
+  border-radius: .8rem;
+  background: rgb(255 246 222 / .8);
+  box-shadow: inset 0 0 0 2px rgb(199 166 118 / .26);
+}
+
+.ceo-score-value {
+  color: #5a2412;
+  font-size: 1.65rem;
+  font-weight: 950;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ceo-score-value small { color: #8c6044; font-size: .82rem; font-weight: 800; }
+
+.ceo-score-note {
+  color: #8c6044;
+  font-size: .7rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.ceo-stars { display: flex; align-items: center; gap: .1rem; min-height: 2.05rem; }
+
+.ceo-stars img {
+  width: 1.95rem;
+  height: 1.95rem;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 1px rgb(107 45 18 / .22));
+}
+
+.ceo-stars img.is-off { filter: grayscale(1) opacity(.28); }
+
+.ceo-feedback {
+  width: 100%;
+  margin-top: .7rem;
+  padding: .65rem .75rem .7rem;
+  border-radius: .8rem;
+  text-align: left;
+}
+
+.ceo-feedback p,
+.ceo-revision-note p {
+  margin: .2rem 0 0;
+  color: #5b3820;
+  font-size: .83rem;
+  font-weight: 700;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.ceo-feedback-ai {
+  background: #f4efff;
+  box-shadow: inset 0 0 0 2px rgb(136 93 212 / .18);
+}
+
+.ceo-feedback-ai .ceo-feedback-label { color: #6843a5; }
+
+.ceo-feedback-teacher {
+  background: #eaf8ed;
+  box-shadow: inset 0 0 0 2px rgb(55 144 83 / .2);
+}
+
+.ceo-feedback-teacher .ceo-feedback-label { color: #287246; }
+
+.ceo-revision-note {
+  width: 100%;
+  margin-top: .7rem;
+  padding: .65rem .75rem;
+  border-radius: .8rem;
+  background: #fff1c7;
+  box-shadow: inset 0 0 0 2px rgb(206 139 43 / .24);
+  text-align: left;
+}
+
+.ceo-revision-note strong { color: #75420d; font-size: .85rem; }
+
+.ceo-submitted-footer {
+  padding-top: .55rem !important;
+  padding-bottom: .65rem !important;
+}
+
+.ceo-primary-cta { width: 100%; min-height: 3.5rem; }
+
+@media (max-width: 370px) {
+  .ceo-submitted-shell .app-shell-header { padding-inline: .7rem; }
+  .ceo-submitted { padding-inline: .7rem; }
+  .ceo-success-panel { padding-inline: .55rem; }
+  .ceo-success-art { transform: scale(.9); transform-origin: top center; margin-bottom: -.6rem; }
+  .ceo-score-tile { min-height: 5.7rem; }
+  .ceo-stars img { width: 1.7rem; height: 1.7rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ceo-map-link:active { transform: none; }
+}
