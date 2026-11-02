@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { PageHeading, SignInGate, StudentShell } from '@/components/student-shell'
 import './ceo-done.css'
@@ -103,6 +103,21 @@ interface CeoRevision {
 const MAX_RECORD_SECONDS = 120
 
 const NO_DATA = 'ยังไม่มีข้อมูล'
+
+function DomainText({ value }: { value: string }) {
+  const parts = value.split('.')
+  return (
+    <>
+      {parts.map((part, index) => (
+        <Fragment key={`${part}-${index}`}>
+          {index > 0 ? '.' : ''}
+          {part}
+          {index < parts.length - 1 ? <wbr /> : null}
+        </Fragment>
+      ))}
+    </>
+  )
+}
 
 /** id ของบับเบิลบอส — ช่องกรอกอ้างถึงเป็นคำอธิบาย (aria-describedby) */
 const BOSS_LINE_ID = 'ceo-boss-line'
@@ -215,6 +230,7 @@ export function CeoClient({
   const [revision, setRevision] = useState<CeoRevision | null>(initialRevision)
   const [feedback, setFeedback] = useState<CeoFeedback | null>(null)
   const [editingAgain, setEditingAgain] = useState(false)
+  const [teacherCommentOpen, setTeacherCommentOpen] = useState(false)
 
   // --- สถานะการอัดเสียง ---
   const [recording, setRecording] = useState(false)
@@ -591,63 +607,70 @@ export function CeoClient({
     const starCount = feedback?.stars ?? 0
     const aiSummary = feedback?.teacherConfirmed ? null : feedback?.aiSummary ?? feedback?.summary
     const teacherComment = feedback?.teacherConfirmed ? feedback.summary?.trim() || null : null
+    const domainValue = `${submission?.domainName || 'กำลังโหลด'}${submission?.tld ?? ''}`
 
     return (
-      <StudentShell
-        className="ceo-world-shell ceo-submitted-shell"
-        withBottomNav
-        header={
-          <WoodSign title="ด่านบอส CEO">
-            <span className="ceo-sign-detail">ส่งใบเสนอชื่อเว็บแล้ว</span>
-          </WoodSign>
-        }
-        footer={
-          <AppFooter className="ceo-submitted-footer">
-            {revision ? (
-              <Button
-                variant="primary"
-                size="lg"
-                fullWidth
-                onClick={() => {
-                  setEditingAgain(true)
-                }}
-              >
-                แก้แล้วส่งใหม่
-              </Button>
-            ) : (
-              <Link
-                href={posttestDone ? '/result' : '/posttest'}
-                className="game-button game-button--green game-button--lg ceo-primary-cta"
-              >
-                {posttestDone ? 'ไปดูเกียรติบัตร' : 'ไปทำแบบทดสอบหลังเรียน'}
-                <ChevronRightIcon width={22} height={22} aria-hidden />
-              </Link>
-            )}
-          </AppFooter>
-        }
-      >
-        <main className="ceo-submitted">
-          <Link href="/map" className="ceo-map-link">
-            <img src="/ui/kit2/back-button.webp" alt="" aria-hidden width={34} height={34} draggable={false} />
-            <span>กลับแผนที่</span>
-          </Link>
+      <>
+        <StudentShell
+          className="ceo-world-shell ceo-submitted-world-shell ceo-submitted-shell"
+          withBottomNav
+          header={
+            <WoodSign title="ด่านบอส CEO">
+              <span className="ceo-sign-detail">ส่งใบเสนอชื่อเว็บแล้ว</span>
+            </WoodSign>
+          }
+          footer={
+            <AppFooter className="ceo-submitted-footer">
+              {revision ? (
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  onClick={() => {
+                    setEditingAgain(true)
+                  }}
+                >
+                  แก้แล้วส่งใหม่
+                </Button>
+              ) : (
+                <Link
+                  href={posttestDone ? '/result' : '/posttest'}
+                  className="game-button game-button--green game-button--lg ceo-primary-cta"
+                >
+                  {posttestDone ? 'ไปดูเกียรติบัตร' : 'ไปทำแบบทดสอบหลังเรียน'}
+                  <ChevronRightIcon width={22} height={22} aria-hidden />
+                </Link>
+              )}
+            </AppFooter>
+          }
+        >
+          <main className="ceo-submitted">
+            <Link href="/map" className="ceo-map-link">
+              <img src="/ui/kit2/back-button.webp" alt="" aria-hidden width={34} height={34} draggable={false} />
+              <span>กลับแผนที่</span>
+            </Link>
 
-          <CreamCard className="ceo-success-panel" aria-labelledby="ceo-success-title">
-            <div className="ceo-success-art" aria-hidden="true">
-              <img src="/ui/kit2/replay-dome.webp" alt="" draggable={false} />
-              <img className="ceo-success-badge" src="/ui/kit2/badge-check.webp" alt="" draggable={false} />
-            </div>
-            <p className="ceo-success-kicker">ใบเสนอชื่อเว็บของเรา</p>
-            <h1 id="ceo-success-title">ส่งงานสำเร็จ{nickname ? ` · ${nickname}` : ''}</h1>
-            <p className="ceo-success-shop">{shopName || 'ร้านของเรา'}</p>
+            <CreamCard className="ceo-success-panel" aria-labelledby="ceo-success-title">
+              <div className="ceo-success-hero">
+                <div className="ceo-success-art" aria-hidden="true">
+                  <img src="/ui/kit2/replay-dome.webp" alt="" draggable={false} />
+                  <img className="ceo-success-badge" src="/ui/kit2/badge-check.webp" alt="" draggable={false} />
+                </div>
+                <div className="ceo-success-copy">
+                  <p className="ceo-success-kicker">ใบเสนอชื่อเว็บของเรา</p>
+                  <h1 id="ceo-success-title">
+                    ส่งงานสำเร็จ{nickname ? <span className="ceo-success-nickname"> · {nickname}</span> : null}
+                  </h1>
+                  <p className="ceo-success-shop">{shopName || 'ร้านของเรา'}</p>
+                </div>
+              </div>
 
-            <div className="ceo-domain-chip">
-              <span className="ceo-domain-label">ชื่อเว็บที่เสนอ</span>
-              <strong>
-                {submission?.domainName || 'กำลังโหลด'}
-                {submission?.tld ?? ''}
-              </strong>
-            </div>
+              <div className={`ceo-domain-chip${domainValue.length > 18 ? ' is-long' : ''}`}>
+                <span className="ceo-domain-label">ชื่อเว็บที่เสนอ</span>
+                <strong>
+                  <DomainText value={domainValue} />
+                </strong>
+              </div>
 
             <div className="ceo-score-grid" aria-label="สรุปคะแนนและดาว">
               <section className="ceo-score-tile">
@@ -684,21 +707,45 @@ export function CeoClient({
                 <p>{aiSummary}</p>
               </div>
             ) : null}
-            {teacherComment ? (
-              <div className="ceo-feedback ceo-feedback-teacher">
-                <span className="ceo-feedback-label">ครูเขียนถึงเรา</span>
-                <p>{teacherComment}</p>
+              {teacherComment ? (
+                <div className="ceo-feedback ceo-feedback-teacher">
+                  <span className="ceo-feedback-label">ครูเขียนถึงเรา</span>
+                  <p className="ceo-teacher-comment">{teacherComment}</p>
+                  <button type="button" className="ceo-read-more" onClick={() => setTeacherCommentOpen(true)}>
+                    อ่านเพิ่มเติม
+                  </button>
+                </div>
+              ) : null}
+              {revision ? (
+                <div className="ceo-revision-note">
+                  <strong>ครูส่งงานกลับมาให้เติมอีกนิด</strong>
+                  <p>{revision.note}</p>
+                </div>
+              ) : null}
+            </CreamCard>
+          </main>
+        </StudentShell>
+
+        {teacherCommentOpen && teacherComment ? (
+          <div className="ceo-comment-modal" role="dialog" aria-modal="true" aria-labelledby="ceo-comment-title">
+            <button
+              type="button"
+              className="ceo-comment-modal-backdrop"
+              aria-label="ปิดความคิดเห็นจากครู"
+              onClick={() => setTeacherCommentOpen(false)}
+            />
+            <section className="ceo-comment-modal-card">
+              <div className="ceo-comment-modal-head">
+                <h2 id="ceo-comment-title">ครูเขียนถึงเรา</h2>
+                <button type="button" className="ceo-comment-modal-close" onClick={() => setTeacherCommentOpen(false)}>
+                  ปิด
+                </button>
               </div>
-            ) : null}
-            {revision ? (
-              <div className="ceo-revision-note">
-                <strong>ครูส่งงานกลับมาให้เติมอีกนิด</strong>
-                <p>{revision.note}</p>
-              </div>
-            ) : null}
-          </CreamCard>
-        </main>
-      </StudentShell>
+              <p>{teacherComment}</p>
+            </section>
+          </div>
+        ) : null}
+      </>
     )
   }
   /**
