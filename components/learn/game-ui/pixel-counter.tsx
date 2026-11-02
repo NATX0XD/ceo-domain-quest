@@ -10,7 +10,6 @@
  */
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { TUT_ORDER, TUT_STEPS, nextTut, skipTut, startTut, type Tut } from './coach-steps'
 import { restartCurrentCustomer, restoreProgress, type ProgressStore } from './shift-progress'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
@@ -247,15 +246,88 @@ const CUSTOMER_SECONDS = 180
 const EXTRA_SECONDS = 60
 const EXTRA_COST = 1
 
-/* ---------- บทแนะนำครั้งแรก (โค้ชมาร์กบนลูกค้าคนแรก 5 ขั้น) ---------- */
-const TUT: Record<Tut, { target: string; text: string; skippable?: boolean }> = {
-  call: { target: '[data-tut="go"]', text: 'ลูกค้าคนแรกมาแล้ว กด เรียกคิว' },
-  card: { target: '.px-tagbox', text: 'ดูนามสกุลท้ายชื่อโดเมน เลือกชั้นให้ทุกชื่อ แล้วกด สัมภาษณ์ลูกค้า' },
-  ask: { target: '.px-askpanel', text: 'ถามว่าลูกค้าเป็นใคร มีเอกสารอะไร (ถามได้ 3 ข้อ)' },
-  tools: { target: '.px-tools', text: 'ไม่แน่ใจ กด ‹ คู่มือ ดูกฎ หรือ ถามโดม › ขอคำใบ้ (ปัดจอซ้าย/ขวาก็ได้)', skippable: true },
-  stamp: { target: '[data-tut="go"]', text: 'ไปประทับตรา เลือกตรา เลือกเหตุผล แล้วกด ประทับตรา' },
+/* ---------- บทแนะนำครั้งแรก: หนึ่งเป้าหมายต่อหนึ่ง action ---------- */
+type TutorialStepId =
+  | 'call'
+  | `tag-${number}`
+  | 'interview'
+  | `question-${string}`
+  | 'stamp-button'
+  | 'stamp-choice'
+  | 'extension'
+  | 'reason'
+  | 'submit'
+  | 'retry'
+  | 'finish'
+
+type TutorialStep = { id: TutorialStepId; target: string; text: string }
+
+function tutorialSteps(
+  current: ViewCase,
+  maxQuestions: number,
+  stamp: CounterStampId | null,
+  extension: string | null,
+  reason: string | null,
+  feedback: Feedback | null,
+): TutorialStep[] {
+  const steps: TutorialStep[] = [
+    { id: 'call', target: '[data-tut="call"]', text: 'แตะ เรียกคิว' },
+    ...current.domains.map((_, i) => ({ id: `tag-${i}` as const, target: `[data-tut="tag-${i}"]`, text: 'เลือกชั้นของชื่อนี้' })),
+    { id: 'interview', target: '[data-tut="interview"]', text: 'เลือกครบแล้ว แตะสัมภาษณ์ลูกค้า' },
+    ...current.questions.slice(0, maxQuestions).map((q) => ({ id: `question-${q.id}` as const, target: `[data-tut="question-${q.id}"]`, text: 'ถามลูกค้าข้อนี้' })),
+    { id: 'stamp-button', target: '[data-tut="stamp-button"]', text: 'ถามครบแล้ว แตะไปประทับตรา' },
+    { id: 'stamp-choice', target: '[data-tut="stamp-choice"]', text: 'เลือกตราที่ตรงกับคำตอบ' },
+  ]
+  if (stamp) {
+    const selected = stamp === 'suggest' || stamp === 'first-step'
+    if (selected && !extension) steps.push({ id: 'extension', target: '[data-tut="extension"]', text: 'เลือกนามสกุลที่เสนอ' })
+    if (!reason) steps.push({ id: 'reason', target: '[data-tut="reason"]', text: 'เลือกเหตุผลที่ตรง' })
+    if (reason) steps.push({ id: 'submit', target: '[data-tut="submit"]', text: 'แตะ ประทับตรา เพื่อส่ง' })
+  }
+  if (feedback?.kind === 'retry') steps.push({ id: 'retry', target: '[data-tut="retry"]', text: 'แตะลองตัดสินใหม่' })
+  else if (feedback) steps.push({ id: 'finish', target: '[data-tut="finish"]', text: 'แตะจบการซ้อมเพื่อไปต่อ' })
+  return steps
 }
-const TUT_STAMP_DESK = 'เลือกตรา 1 อัน (ต้องเสนอนามสกุลก็เลือกด้วย) เลือกเหตุผล แล้วกด ประทับตรา'
+
+function tutorialStepFor({
+  page,
+  current,
+  tags,
+  asked,
+  maxQuestions,
+  stamp,
+  needsExt,
+  extension,
+  reason,
+  feedback,
+}: {
+  page: Page
+  current: ViewCase
+  tags: Record<string, CounterCategory>
+  asked: string[]
+  maxQuestions: number
+  stamp: CounterStampId | null
+  needsExt: boolean
+  extension: string | null
+  reason: string | null
+  feedback: Feedback | null
+}): TutorialStepId {
+  if (feedback?.kind === 'retry') return 'retry'
+  if (feedback) return 'finish'
+  if (page === 'queue') return 'call'
+  if (page === 'card') {
+    const nextDomain = current.domains.findIndex((d) => !tags[d.name])
+    return nextDomain >= 0 ? `tag-${nextDomain}` : 'interview'
+  }
+  if (page === 'interview') {
+    const nextQuestion = current.questions.slice(0, maxQuestions).find((q) => !asked.includes(q.id))
+    return nextQuestion ? `question-${nextQuestion.id}` : 'stamp-button'
+  }
+  if (!stamp) return 'stamp-choice'
+  if (needsExt && !extension) return 'extension'
+  if (!reason) return 'reason'
+  return 'submit'
+}
 
 export function coachKey(studentId?: string | null) {
   return `m3-coach-v1:${studentId ?? 'guest'}`
@@ -337,7 +409,7 @@ export function PixelShift({
   const [timeUp, setTimeUp] = useState(false)
   const [restarting, setRestarting] = useState(false)
   const [penalty, setPenalty] = useState(initial.penalty)
-  const [tut, setTut] = useState<Tut | null>(() => startTut(tutorial, initial.caseIndex))
+  const [tut, setTut] = useState<TutorialStepId | null>(() => (tutorial && initial.caseIndex === 0 ? 'call' : null))
   const [look, setLook] = useState<Look>('counter')
   const [turnDir, setTurnDir] = useState<'l' | 'r' | null>(null)
   const [hbLeft, setHbLeft] = useState(hbSeconds)
@@ -756,20 +828,12 @@ export function PixelShift({
     finishTut.current?.()
   }
   useEffect(() => {
-    if (!tut) return
-    const n = nextTut(tut, { caseIndex, page, asked: asked.length, hasFeedback: !!feedback })
-    if (n === null) endTut()
-    else if (n !== tut) setTut(n)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- เลื่อนตามสถานะเกมเท่านั้น
-  }, [tut, page, asked.length, feedback, caseIndex])
-
-  function skipTutStep() {
-    if (!tut) return
+    if (!tut || !current) return
     if (look !== 'counter') turn('counter')
-    const after = skipTut(tut)
-    if (after) setTut(after)
-    else endTut()
-  }
+    const next = tutorialStepFor({ page, current, tags, asked, maxQuestions: data.maxQuestions, stamp, needsExt, extension, reason, feedback })
+    if (next !== tut) setTut(next)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tutorial follows game state only
+  }, [tut, page, current, tags, asked, data.maxQuestions, stamp, needsExt, extension, reason, feedback, look])
 
   if (!current) return null
 
@@ -839,7 +903,7 @@ export function PixelShift({
   const counterDock = feedback ? (
     feedback.kind === 'retry' ? (
       <div className="px-row">
-        <PxBtn tone="orange" onClick={retry}>
+        <PxBtn tone="orange" tut={practice ? 'retry' : undefined} onClick={retry}>
           ลองตัดสินใหม่
         </PxBtn>
         <PxBtn tone="cream" className="px-btn--narrow" onClick={() => turn('book')}>
@@ -848,7 +912,7 @@ export function PixelShift({
       </div>
     ) : feedback.kind === 'explain' ? (
       <div className="px-row">
-        <PxBtn tone="gold" busy={busy} onClick={() => advance(decisions)}>
+        <PxBtn tone="gold" tut={practice ? 'finish' : undefined} busy={busy} onClick={() => advance(decisions)}>
           {isLast ? (practice ? 'จบการซ้อม ›' : error ? 'ส่งอีกครั้ง' : 'ส่งผลทั้งกะ ›') : 'คนต่อไป ›'}
         </PxBtn>
         <PxBtn tone="cream" className="px-btn--narrow" onClick={() => turn('book')}>
@@ -856,14 +920,14 @@ export function PixelShift({
         </PxBtn>
       </div>
     ) : (
-      <PxBtn tone="gold" busy={busy} onClick={() => advance(decisions)}>
+      <PxBtn tone="gold" tut={practice ? 'finish' : undefined} busy={busy} onClick={() => advance(decisions)}>
         {isLast ? (practice ? 'จบการซ้อม ›' : error ? 'ส่งอีกครั้ง' : 'ส่งผลทั้งกะ ›') : 'ลูกค้าคนต่อไป ›'}
       </PxBtn>
     )
   ) : page === 'queue' ? (
     turnTools(
       <PxBtn
-        tut="go"
+        tut="call"
         onClick={() => {
           sfx('ok')
           setPage('card')
@@ -874,19 +938,19 @@ export function PixelShift({
     )
   ) : page === 'card' ? (
     turnTools(
-      <PxBtn tut="go" onClick={() => setPage(attempt === 2 ? 'stamp' : 'interview')} disabled={!allTagged}>
+      <PxBtn tut="interview" onClick={() => setPage(attempt === 2 ? 'stamp' : 'interview')} disabled={!allTagged}>
         {allTagged ? (attempt === 2 ? 'ไปตัดสินใหม่ ›' : 'สัมภาษณ์ลูกค้า') : 'จัดชั้นนามสกุลก่อน'}
       </PxBtn>,
     )
   ) : page === 'interview' ? (
     turnTools(
-      <PxBtn tut="go" onClick={() => setPage('stamp')} disabled={asked.length === 0}>
+      <PxBtn tut="stamp-button" onClick={() => setPage('stamp')} disabled={asked.length === 0}>
         {asked.length === 0 ? 'ถามอย่างน้อย 1 ข้อ' : 'ไปประทับตรา ›'}
       </PxBtn>,
     )
   ) : (
     turnTools(
-      <PxBtn tut="go" onClick={pressStamp} disabled={!canStamp || locked} busy={busy}>
+      <PxBtn tut="submit" onClick={pressStamp} disabled={!canStamp || locked} busy={busy}>
         {!stamp ? 'เลือกตรา 1 อัน' : needsExt && !extension ? 'เลือกนามสกุลที่เสนอ' : reason == null ? 'เลือกเหตุผล' : 'ประทับตรา'}
       </PxBtn>,
     )
@@ -902,6 +966,8 @@ export function PixelShift({
     )
 
   const blur = look === 'counter' && page === 'card' && !feedback ? 'is-blur' : look === 'counter' && page !== 'queue' ? 'is-soft' : ''
+  const coachSteps = tut ? tutorialSteps(current, data.maxQuestions, stamp, extension, reason, feedback) : []
+  const coachStep = tut ? coachSteps.find((s) => s.id === tut) : null
 
   /* ---------- การ์ดคำขอ (ใช้ซ้ำทุกขั้น) ---------- */
   const fieldRows = (
@@ -1218,7 +1284,7 @@ export function PixelShift({
                           <div className="px-tagbox" role="group" aria-label="จัดชั้นนามสกุลให้ชื่อบนใบคำขอ">
                             <p className="px-tagbox-title">ชื่อนี้อยู่ชั้นไหนของคู่มือ</p>
                             {current.domains.map((d) => (
-                              <div key={d.name} className={cn('px-tagrow', attempt === 2 && wrongHint.includes(d.name) && 'is-wrong')}>
+                              <div data-tut={`tag-${current.domains.indexOf(d)}`} key={d.name} className={cn('px-tagrow', attempt === 2 && wrongHint.includes(d.name) && 'is-wrong')}>
                                 <span className="px-tagrow-name" dir="auto">
                                   {d.label}
                                   <small>{d.role}</small>
@@ -1274,7 +1340,7 @@ export function PixelShift({
                                 {current.questions
                                   .filter((q) => !asked.includes(q.id))
                                   .map((q) => (
-                                    <button key={q.id} type="button" className="px-qchip" onClick={() => ask(q.id)}>
+                                    <button data-tut={`question-${q.id}`} key={q.id} type="button" className="px-qchip" onClick={() => ask(q.id)}>
                                       {q.text}
                                     </button>
                                   ))}
@@ -1322,7 +1388,7 @@ export function PixelShift({
                               </AnimatePresence>
                             </div>
                           </div>
-                          <div className="px-stamps" role="radiogroup" aria-label="ตรายาง">
+                          <div className="px-stamps" data-tut="stamp-choice" role="radiogroup" aria-label="ตรายาง">
                             {data.stamps.map((s) => (
                               <button
                                 key={s.id}
@@ -1347,7 +1413,7 @@ export function PixelShift({
                             ))}
                           </div>
                           {needsExt ? (
-                            <div className="px-card px-offer">
+                            <div className="px-card px-offer" data-tut="extension">
                               <p className="px-pill-title">{stamp === 'first-step' ? 'ทำขั้นแรกแล้วให้จดนามสกุลไหน' : 'เสนอเป็น'}</p>
                               <div className="px-radios" role="radiogroup" aria-label="นามสกุลที่เสนอ">
                                 {current.extensionOptions
@@ -1374,7 +1440,7 @@ export function PixelShift({
                             </div>
                           ) : null}
                           {stamp ? (
-                            <div className="px-card px-reasons" role="radiogroup" aria-label="เหตุผลที่บอกลูกค้า">
+                            <div className="px-card px-reasons" data-tut="reason" role="radiogroup" aria-label="เหตุผลที่บอกลูกค้า">
                               <p className="px-pill-title">เหตุผลที่บอกลูกค้า</p>
                               {reasons.map((r) => (
                                 <button
@@ -1538,11 +1604,10 @@ export function PixelShift({
       {tut && !timeUp ? (
         <Coach
           key={tut}
-          target={tut === 'stamp' && page === 'stamp' ? '.px-stamps' : TUT[tut].target}
-          text={tut === 'stamp' && page === 'stamp' ? TUT_STAMP_DESK : TUT[tut].text}
-          step={TUT_ORDER.indexOf(tut) + 1}
-          total={TUT_STEPS}
-          onNext={TUT[tut].skippable ? skipTutStep : undefined}
+          target={coachStep?.target ?? '[data-tut="call"]'}
+          text={coachStep?.text ?? 'ทำตามเป้าที่สว่างอยู่'}
+          step={Math.max(1, coachSteps.findIndex((s) => s.id === tut) + 1)}
+          total={Math.max(1, coachSteps.length)}
           onSkip={endTut}
         />
       ) : null}
@@ -1584,24 +1649,64 @@ function Coach({
   onSkip: () => void
 }) {
   const [rect, setRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
+  const [cardTop, setCardTop] = useState(8)
+  const cardRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
+    let cancelled = false
+    let aligned = false
+    const findTarget = () => [...document.querySelectorAll<HTMLElement>(target)].find((el) => !el.closest('[inert]'))
     const measure = () => {
-      const els = [...document.querySelectorAll<HTMLElement>(target)].filter((el) => !el.closest('[inert]'))
-      const el = els[0]
+      const el = findTarget()
       const r = el?.getBoundingClientRect()
-      if (!r || r.width === 0 || r.right < 0 || r.left > window.innerWidth) return setRect(null)
+      if (!r || r.width === 0 || r.height === 0 || r.right < 0 || r.left > window.innerWidth) return setRect(null)
+      if (cancelled) return
       setRect((old) =>
         old && Math.abs(old.top - r.top) < 1 && Math.abs(old.left - r.left) < 1 && Math.abs(old.width - r.width) < 1 && Math.abs(old.height - r.height) < 1
           ? old
           : { top: r.top, left: r.left, width: r.width, height: r.height },
       )
     }
-    measure()
-    const id = window.setInterval(measure, 250)
-    return () => window.clearInterval(id)
+    const align = () => {
+      if (cancelled) return
+      const el = findTarget()
+      if (el && !aligned) {
+        aligned = true
+        const scrollParent = el.closest<HTMLElement>('.px-view')
+        const dockTop = document.querySelector<HTMLElement>('.px-dock')?.getBoundingClientRect().top ?? window.innerHeight
+        const safeTop = 8
+        const safeBottom = dockTop - 10
+        const r = el.getBoundingClientRect()
+        if (scrollParent && (r.top < safeTop || r.bottom > safeBottom)) {
+          const wantedCenter = (safeTop + safeBottom) / 2
+          scrollParent.scrollBy({ top: r.top + r.height / 2 - wantedCenter, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+        }
+      }
+      measure()
+    }
+    const frame = window.requestAnimationFrame(() => window.requestAnimationFrame(align))
+    const id = window.setInterval(measure, 180)
+    window.addEventListener('resize', measure)
+    return () => {
+      cancelled = true
+      window.cancelAnimationFrame(frame)
+      window.clearInterval(id)
+      window.removeEventListener('resize', measure)
+    }
   }, [target])
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 800
-  const below = rect ? rect.top + rect.height / 2 < vh * 0.45 : false
+
+  useEffect(() => {
+    if (!rect || !cardRef.current) return
+    const vh = window.innerHeight
+    const cardHeight = cardRef.current.getBoundingClientRect().height
+    const dockTop = document.querySelector<HTMLElement>('.px-dock')?.getBoundingClientRect().top ?? vh
+    const topCandidate = 8
+    const bottomCandidate = Math.max(8, dockTop - cardHeight - 8)
+    const overlaps = (top: number) => top < rect.top + rect.height + 8 && top + cardHeight > rect.top - 8
+    const preferred = rect.top + rect.height / 2 < (dockTop + 8) / 2 ? bottomCandidate : topCandidate
+    const alternate = preferred === topCandidate ? bottomCandidate : topCandidate
+    setCardTop(!overlaps(preferred) ? preferred : !overlaps(alternate) ? alternate : preferred)
+  }, [rect])
+
   const pad = 6
   return (
     <div className="px-coach" role="dialog" aria-modal="false" aria-label={`บทแนะนำ ขั้น ${step} จาก ${total}`}>
@@ -1613,11 +1718,9 @@ function Coach({
         />
       ) : null}
       <div
-        className={cn('px-coach-card', below ? 'is-below' : 'is-above')}
-        style={
-          // เป้าอยู่ครึ่งบน = การ์ดอยู่ใต้เป้า · เป้าอยู่ครึ่งล่าง = การ์ดชิดขอบบน (ทับหัวจอ/HUD แทนลูกค้าและบทสนทนา)
-          rect && below ? { top: Math.min(vh - 170, rect.top + rect.height + 14) } : { top: 'max(8px, env(safe-area-inset-top))' }
-        }
+        ref={cardRef}
+        className="px-coach-card"
+        style={{ top: cardTop }}
       >
         <PxImg srcs={PX_ASSET.dome('happy')} className="px-coach-dome" />
         <div>

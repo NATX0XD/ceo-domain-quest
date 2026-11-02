@@ -429,7 +429,7 @@
 .px-coach-card { position: fixed; right: 10px; left: 10px; display: grid; grid-template-columns: 46px 1fr; align-items: start; gap: 8px; max-width: 540px; margin: 0 auto; padding: 8px 10px; border: 3px solid var(--ink); border-radius: 12px; background: #fffaf0; box-shadow: 0 5px 0 var(--ink); pointer-events: auto; }
 .px-coach-dome { width: 46px; height: auto; image-rendering: auto !important; }
 .px-coach-card small { color: var(--purple); font-size: 12px; font-weight: 900; }
-.px-coach-card p { margin: 1px 0 2px; color: #241a44; font-size: 14.5px; font-weight: 800; line-height: 1.45; }
+.px-coach-card p { margin: 1px 0 2px; overflow: hidden; color: #241a44; font-size: 14.5px; font-weight: 800; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
 .px-coach-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .px-coach-actions .px-link { margin: 0; padding: 4px 2px; font-size: 13px; color: #6b5a8f; }
 .px-coach-next { min-height: 40px; padding: 4px 16px; border: 3px solid var(--ink); border-radius: 8px; background: var(--purple); box-shadow: 0 3px 0 var(--ink); color: #fff; font: inherit; font-size: 15px; font-weight: 900; cursor: pointer; }
