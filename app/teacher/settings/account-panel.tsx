@@ -50,7 +50,6 @@ export function TeacherAccountPanel({ email, initialDisplayName }: Props) {
       <Card icon={<Icon3d name="bust-in-silhouette" size={22} />} tone="blue" title={<span id="teacher-account-title">บัญชี</span>}>
         <dl className="mb-4 grid gap-3 text-[15px] sm:grid-cols-2">
           <div><dt className="text-[14px] text-[var(--c-ink-3)]">อีเมล</dt><dd className="break-all font-medium text-[var(--c-ink)]">{email}</dd></div>
-          <div><dt className="text-[14px] text-[var(--c-ink-3)]">ชื่อที่แสดง</dt><dd className="font-medium text-[var(--c-ink)]">{initialDisplayName || 'ยังไม่ได้ตั้งชื่อ'}</dd></div>
         </dl>
         <form className="grid gap-4" onSubmit={(event) => { event.preventDefault(); void submit({ displayName }, 'name') }}>
           <Field label="เปลี่ยนชื่อที่แสดง" htmlFor="acc-name" help="ชื่อนี้แสดงบนแผงครู">

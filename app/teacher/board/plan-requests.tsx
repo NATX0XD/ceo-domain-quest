@@ -170,9 +170,8 @@ export function PlanRequests({
   return (
     <section className="t3-card p-4 sm:p-6" aria-label="คำขอเปลี่ยนแผนจากผู้เรียน">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="m-0 flex items-center gap-2.5 text-[18px] font-bold">
-          <span aria-hidden data-tone="blue" className="t3-tile size-10 rounded-xl"><Icon3d name="speech-balloon" size={24} /></span>
-          คำขอจากนักเรียน
+        <h2 className="m-0 flex items-center gap-2.5 text-[16px] font-bold">
+          {showAnswered ? 'คำขอที่ตอบแล้ว' : 'คำขอที่รอตอบ'}
           {pending.length > 0 ? <StatusBadge status="atrisk">รอตอบ {pending.length}</StatusBadge> : null}
           <InfoTip
             label="เรื่องคำขอ"

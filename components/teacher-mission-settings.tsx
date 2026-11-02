@@ -169,7 +169,6 @@ export function TeacherMissionSettings({ classroomId, initial }: { classroomId: 
   const activeNo = IDS.indexOf(active) + 1
   const bad = Boolean(notice && notice.includes('ไม่สำเร็จ'))
   const color = missionColor(activeNo)
-  const hero = HERO[active]
   const groups = [
     ...GROUPS[active],
   ]
@@ -209,27 +208,17 @@ export function TeacherMissionSettings({ classroomId, initial }: { classroomId: 
         })}
       </div>
 
-      <div
-        className="relative overflow-hidden rounded-[20px] px-6 py-6 text-white sm:px-8"
-        style={{ background: `linear-gradient(120deg, color-mix(in srgb, ${color} 85%, black) 0%, ${color} 60%, color-mix(in srgb, ${color} 70%, white) 100%)`, boxShadow: '0 14px 30px rgb(40 30 90 / .2)' }}
-      >
-        <div className="relative z-[1] flex flex-wrap items-center justify-between gap-4 sm:pr-[min(24%,8rem)]">
-          <div className="flex min-w-0 flex-1 items-center gap-4 max-sm:basis-full">
-            <span aria-hidden className="grid size-16 shrink-0 place-items-center rounded-2xl bg-white shadow-lg"><Icon3d name={hero.icon} size={40} /></span>
-            <div className="min-w-0">
-              <h2 className="m-0 text-[22px] leading-8 font-extrabold sm:text-[26px]">{current.label}</h2>
-              <p className="mt-0.5 text-[14px] leading-6 text-white/90">{current.help} ค่าเริ่มต้นถูกเลือกให้เหมาะกับเนื้อหาปัจจุบัน</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" onClick={reset}>คืนค่าเริ่มต้น</Button>
-            <Button size="sm" kind="primary" onClick={() => void save()} disabled={saving} className="!bg-white !text-[var(--c-brand)] !shadow-lg">
-              {saving ? 'กำลังบันทึก…' : 'บันทึกด่านนี้'}
-            </Button>
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="m-0 min-w-0 flex-1 text-[14px] leading-6 text-[var(--c-ink-2)]">
+          <span aria-hidden className="mr-2 inline-block size-2.5 rounded-full align-middle" style={{ background: color }} />
+          {current.help}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" onClick={reset}>คืนค่าเริ่มต้น</Button>
+          <Button size="sm" kind="primary" onClick={() => void save()} disabled={saving}>
+            {saving ? 'กำลังบันทึก…' : 'บันทึกด่านนี้'}
+          </Button>
         </div>
-        {/* eslint-disable-next-line @next/next/no-img-element -- ภาพตกแต่งนิ่ง */}
-        <img src={hero.art} alt="" aria-hidden draggable={false} className="t3-hero-art max-sm:hidden" style={{ height: '105%', maxWidth: '20%' }} />
       </div>
 
       <div className="t3-card flex flex-wrap items-center gap-3 p-4" style={{ borderColor: `color-mix(in srgb, ${color} 35%, white)`, background: `color-mix(in srgb, ${color} 7%, white)` }}>

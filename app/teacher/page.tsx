@@ -6,6 +6,7 @@ import { loadTeacherPage, type SearchParams } from './_lib/teacher-page'
 import { PageBody } from './_ux/page-head'
 import { getServiceClient } from '@/lib/db/client'
 import { HomeOverview, type HomeStudent } from './_ux/home-overview'
+import { loadShopTypes, toCardData } from './_lib/student-cards-data'
 
 export const metadata: Metadata = { title: 'สำหรับครู — CEO Domain Quest' }
 
@@ -42,14 +43,12 @@ export default async function TeacherPage({
       ])
     : [null, null]
 
-  const students: HomeStudent[] = (raw?.students ?? []).map((student) => ({
-    studentId: student.studentId,
-    nickname: student.nickname,
-    passed: student.missions.filter((m) => m.passed).map((m) => m.missionId),
-    started: student.missions.map((m) => m.missionId),
-    ceoDone: student.submission !== null,
-    pre: student.profile?.preTestScore ?? null,
-  }))
+  const types = await loadShopTypes((raw?.students ?? []).map((st) => st.studentId))
+  const cards = toCardData(raw, types, new Set((pending ?? []).map((p) => p.student_id)))
+  const students: HomeStudent[] = cards.map((c, i) => {
+    const st = raw!.students[i]!
+    return { ...c, passedIds: st.missions.filter((m) => m.passed).map((m) => m.missionId), startedIds: st.missions.map((m) => m.missionId) }
+  })
 
   const me = await getServiceClient().from('teachers').select('name, email').eq('id', data.teacherId).maybeSingle()
   const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Bangkok' }).format(new Date()))

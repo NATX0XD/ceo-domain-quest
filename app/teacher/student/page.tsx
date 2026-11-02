@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { getClassroomReportRaw, listPendingReview } from '@/lib/db/repo'
-import { Icon3d } from '../_ux/v2'
 import { StudentReportClient } from './student-report-client'
+import { StudentCards } from '../_ux/student-cards'
+import { loadShopTypes, toCardData } from '../_lib/student-cards-data'
 import { TeacherSignedOut, TeacherSubPage, loadTeacherPage, one, type SearchParams } from '../_lib/teacher-page'
 
 /**
@@ -36,20 +37,25 @@ export default async function TeacherStudentReportPage({
     cleared: st.missions.filter((m) => m.passed).length + (st.submission !== null ? 1 : 0),
   }))
 
+  const askedStudent = one(params.studentId)
+  if (!askedStudent) {
+    const types = await loadShopTypes((raw?.students ?? []).map((st) => st.studentId))
+    const cards = toCardData(raw, types, pendingNames)
+    return (
+      <TeacherSubPage data={data} title="นักเรียนรายคน" subtitle="">
+        <StudentCards students={cards} classroomId={data.selectedId} roomCode={data.selectedRoomCode} />
+      </TeacherSubPage>
+    )
+  }
+
   return (
     <TeacherSubPage
       data={data}
       title="รายงานรายคน"
-      subtitle={
-        data.selectedRoomCode
-          ? `ห้อง ${data.selectedRoomCode}`
-          : 'ยังไม่มีห้องเรียน'
-      }
+      subtitle=""
       basePath="/teacher/student"
-      icon={<Icon3d name="graduation-cap" size={36} />}
-      tone="blue"
     >
-      <StudentReportClient classroomId={data.selectedId} studentId={one(params.studentId) ?? roster[0]?.studentId ?? null} initialRoster={roster} />
+      <StudentReportClient classroomId={data.selectedId} studentId={askedStudent} initialRoster={roster} />
     </TeacherSubPage>
   )
 }

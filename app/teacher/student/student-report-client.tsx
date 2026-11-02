@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { AlertIcon } from '../../../components/ui'
 import { Dialog } from '../_ux/dialog'
@@ -253,6 +253,16 @@ export function StudentReportClient({
     )
   }
 
+  // ?print=1 (จากเมนูการ์ดนักเรียน) = เปิดรายงานแล้วสั่งพิมพ์ครั้งเดียวเมื่อข้อมูลพร้อม
+  const printedRef = useRef(false)
+  useEffect(() => {
+    if (!report || printedRef.current) return
+    if (new URLSearchParams(window.location.search).get('print') !== '1') return
+    printedRef.current = true
+    const t = window.setTimeout(() => window.print(), 400)
+    return () => window.clearTimeout(t)
+  }, [report])
+
   const profile = report?.profile ?? null
   const suggested = str(profile?.channel_suggested)
   const chosen = str(profile?.learning_route)
@@ -268,7 +278,10 @@ export function StudentReportClient({
   const passedCount = report ? report.missions.filter((m) => m.passedAt).length : 0
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-5">
+      <Link href={`/teacher/student${classroomId ? `?classroomId=${classroomId}` : ''}`} className="inline-flex w-fit items-center gap-1 text-[14px] font-semibold text-[var(--c-brand)] print:hidden">
+        ‹ นักเรียนทั้งหมด
+      </Link>
       {/* เลือกคน — มือถือใช้ช่องเลือก · จอใหญ่ใช้รายชื่อด้านข้าง */}
       <nav aria-label="เลือกนักเรียน" className="flex flex-wrap items-center gap-3 print:hidden lg:hidden">
         <label className="flex items-center gap-2">

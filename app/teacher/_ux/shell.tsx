@@ -181,8 +181,8 @@ export function TeacherShell({
       title: 'นักเรียน',
       items: [
         { href: `/teacher/student${q}`, label: 'นักเรียนรายคน', icon: ico('graduation-cap') },
-        { href: `/teacher/review${q}`, label: 'งานรอตรวจ', icon: ico('memo'), badge: badges.review, urgent: true },
-        { href: `/teacher/requests${q}`, label: 'คำขอจากนักเรียน', icon: ico('speech-balloon'), badge: badges.requests },
+        { href: `/teacher/review${q}`, label: 'งานรอตรวจ', icon: ico('memo') },
+        { href: `/teacher/requests${q}`, label: 'คำขอจากนักเรียน', icon: ico('speech-balloon') },
       ],
     },
     {
@@ -214,7 +214,7 @@ export function TeacherShell({
   const hits = term.trim() ? flat.filter((i) => i.label.includes(term.trim())) : flat
 
   const nav = (isMini: boolean) => (
-    <nav aria-label="เมนูหลัก" className="t3-side-panel t3-scroll mx-3 flex min-h-0 flex-1 flex-col overflow-y-auto p-2.5">
+    <nav aria-label="เมนูหลัก" className="t3-side-panel t3-sidenav flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-1">
       {groups.map((g) => (
         <div key={g.title} className="mb-3 last:mb-0">
           <p className={`t3-group-title ${isMini ? 'sr-only' : ''}`}>{g.title}</p>
@@ -348,7 +348,7 @@ export function TeacherShell({
               </svg>
             </button>
 
-            <p aria-current="page" className="min-w-0 shrink truncate text-[18px] font-extrabold text-[var(--c-ink)] max-sm:hidden">{pageLabel}</p>
+            <h1 aria-current="page" className="m-0 min-w-0 shrink truncate text-[18px] leading-7 font-bold text-[var(--c-ink)]">{pageLabel}</h1>
 
             {/* ค้นหาหน้า — พิมพ์ชื่อเมนูแล้วกดเข้า */}
             <div ref={searchRef} className="relative ml-2 hidden min-w-0 max-w-md flex-1 md:block">
@@ -485,43 +485,6 @@ export function TeacherShell({
               ) : null}
             </div>
 
-            {/* เมนูบัญชี */}
-            <div ref={menuRef} className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                aria-label="เมนูบัญชีครู"
-                className="flex items-center gap-2.5 rounded-xl py-1 pr-1 pl-1 hover:bg-[var(--c-bg)] focus-ring sm:pr-2"
-              >
-                <Avatar name={displayName} size={38} tone="purple" />
-                <span className="hidden min-w-0 text-left leading-tight lg:block">
-                  <span className="block max-w-[10rem] truncate text-[14px] font-bold text-ink">{displayName}</span>
-                  <span className="block text-[12px] text-ink-muted">ครูผู้สอน</span>
-                </span>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden className="hidden text-ink-muted sm:block">
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </button>
-              {menuOpen ? (
-                <div role="menu" className="absolute top-13 right-0 z-30 w-64 rounded-2xl bg-white p-1.5 shadow-[var(--sh-pop)] ring-1 ring-[var(--c-line)]">
-                  <p className="truncate px-3 py-2 text-[13px] text-ink-muted">{teacherEmail}</p>
-                  <Link role="menuitem" href={`/teacher/settings${q}`} className="flex min-h-10 items-center rounded-xl px-3 text-[14px] text-ink hover:bg-surface-sunken">
-                    ตั้งค่า
-                  </Link>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={signOut}
-                    disabled={signingOut}
-                    className="flex min-h-10 w-full items-center rounded-xl px-3 text-left text-[14px] text-danger-700 hover:bg-danger-100 disabled:opacity-60"
-                  >
-                    {signingOut ? 'กำลังออก…' : 'ออกจากระบบ'}
-                  </button>
-                </div>
-              ) : null}
-            </div>
           </header>
 
           <TeacherDeviceRecommendation />
