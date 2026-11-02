@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic'
  */
 function TeacherSignInScreen() {
   return (
-    <div className="teacher-auth-route">
+    <div className="tla-route">
       <TeacherLoginClient />
     </div>
   )

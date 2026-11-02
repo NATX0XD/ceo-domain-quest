@@ -1,0 +1,54 @@
+/* Teacher entry screens use the same island materials as the student game.
+   The CMS below this entry point intentionally keeps its existing dashboard layout. */
+.tla-route {
+  min-height: 100dvh;
+  background:
+    linear-gradient(180deg, rgb(20 91 144 / .2), rgb(78 43 87 / .38)),
+    url('/landing/sea-bg.webp') center / cover;
+}
+.tla-shell {
+  max-width: 36rem;
+  min-height: 100dvh;
+  background:
+    linear-gradient(180deg, rgb(32 169 243 / .16), rgb(255 241 214 / .78)),
+    url('/landing/sea-bg.webp') center / cover;
+  box-shadow: 0 0 48px rgb(36 20 60 / .28);
+}
+.tla-shell .app-shell-main { background: transparent; }
+.tla-shell .app-shell-footer {
+  background: rgb(255 241 214 / .88);
+  border-color: rgb(107 45 18 / .22);
+}
+.tla-content { width: min(100%, 34rem); margin-inline: auto; }
+.tla-brand {
+  position: relative;
+  display: flex;
+  min-height: 5.2rem;
+  align-items: flex-end;
+  justify-content: center;
+  margin: 0 auto -.35rem;
+}
+.tla-logo { width: min(13rem, 68vw); filter: drop-shadow(0 7px 4px rgb(48 25 57 / .2)); }
+.tla-dome { width: 5.4rem; height: 5.4rem; object-fit: contain; margin-left: -1rem; filter: drop-shadow(0 7px 4px rgb(48 25 57 / .22)); }
+.tla-shell .wood-sign { margin-top: .4rem; }
+.tla-card { color: #4a1f0a; }
+.tla-card label { color: #4a1f0a; }
+.tla-card input {
+  border: 2px solid rgb(107 45 18 / .32);
+  background: #fffaf0;
+  color: #4a1f0a;
+  box-shadow: inset 0 2px 4px rgb(107 45 18 / .08);
+}
+.tla-card input:focus { border-color: #7e4bdd; box-shadow: 0 0 0 4px rgb(126 75 221 / .18), inset 0 2px 4px rgb(107 45 18 / .08); }
+.tla-card .tla-help { background: rgb(255 248 231 / .78); border-color: rgb(107 45 18 / .2); color: #5d4630; }
+.tla-card a { color: #5c2d9b; }
+.tla-shell .game-button--primary,
+.tla-shell .btn-base.game-button--primary {
+  background: linear-gradient(180deg, #a98bff 0%, #6c43bb 100%) !important;
+  color: #fff !important;
+  border-color: #efe6ff !important;
+  box-shadow: 0 7px 0 #3b216f, inset 0 3px 0 rgb(255 255 255 / .56), inset 0 -4px 0 rgb(41 19 88 / .28) !important;
+  text-shadow: 0 2px 0 rgb(49 27 96 / .36);
+}
+.tla-shell .game-button--primary:active:not(:disabled),
+.tla-shell .btn-base.game-button--primary:active:not(:disabled) { box-shadow: 0 3px 0 #3b216f, inset 0 2px 0 rgb(255 255 255 / .4) !important; }

@@ -1,10 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertIcon } from '@/components/ui'
-import { Icon3d } from '@/app/teacher/_ux/v2'
+import { AlertIcon, Button, CreamCard, InfoIcon, TextField, WoodSign } from '@/components/ui'
+import { AppFooter, AppShell } from '@/components/app-shell'
+import { TeacherDevicePopup } from '@/components/teacher-device-popup'
+import '@/app/teacher/teacher-auth-legacy.css'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+
+/** ผูกปุ่มเข้าสู่ระบบที่อยู่ในแถบท้าย เข้ากับฟอร์มที่อยู่ในส่วนเลื่อนได้ */
+const FORM_ID = 'teacher-login-form'
 
 /**
  * ฟอร์มเข้าสู่ระบบของครู — ส่งไป POST /api/teacher/login เท่านั้น
@@ -41,68 +46,92 @@ export function TeacherLoginClient() {
   }
 
   return (
-    <main className="teacher-cms teacher-auth-page">
-      <section className="teacher-auth-card" aria-labelledby="teacher-login-title">
-        <div className="teacher-auth-brand">
-          <span aria-hidden className="teacher-auth-mark">
-            <Icon3d name="rocket" size={30} />
-          </span>
-          <div>
-            <h1 id="teacher-login-title" className="teacher-auth-title">เข้าสู่ระบบครู</h1>
-            <p className="teacher-auth-desc">CEO Domain Quest · เปิดห้องและดูผลนักเรียน</p>
-          </div>
-        </div>
+    <>
+    <TeacherDevicePopup />
+    <AppShell
+      student={false}
+      className="tla-shell"
+      footer={
+        <AppFooter>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            variant="primary"
+            size="lg"
+            fullWidth
+            disabled={busy}
+            loading={busy}
+            loadingLabel="กำลังเข้าสู่ระบบ"
+          >
+            เข้าสู่ระบบ
+          </Button>
+        </AppFooter>
+      }
+    >
+      <div className="tla-content px-4 pt-5 pb-8">
+      <div className="tla-brand" aria-hidden="true">
+        <img src="/landing/logo.webp" alt="" className="tla-logo" />
+        <img src="/dome/mascot/dome-greet.webp" alt="" className="tla-dome" />
+      </div>
+      <WoodSign title="ห้องของครู">เข้าสู่ระบบเพื่อเปิดห้องและดูผลนักเรียน</WoodSign>
 
-        <form
-          className="teacher-auth-form"
-          onSubmit={(e) => {
-            e.preventDefault()
-            void submit()
-          }}
+      {/* ครอบด้วย <form> เพื่อให้กด Enter ในช่องไหนก็ส่งฟอร์มได้ ไม่ต้องเอาเมาส์ไปกดปุ่ม */}
+      <CreamCard className="tla-card mt-5 p-5">
+      <form
+        id={FORM_ID}
+        onSubmit={(e) => {
+          e.preventDefault()
+          void submit()
+        }}
+      >
+      <div className="flex flex-col gap-5">
+        <TextField
+          id="teacher-email"
+          label="อีเมล"
+          type="email"
+          autoComplete="username"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={busy}
+        />
+        <TextField
+          id="teacher-password"
+          label="รหัสผ่าน"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={busy}
+        />
+      </div>
+
+      {/* ข้อความผิดมีไอคอนคู่เสมอ ไม่ได้สื่อด้วยสีแดงอย่างเดียว (WCAG 1.4.1) */}
+      {error ? (
+        <p
+          role="alert"
+          className="mt-5 flex items-start gap-2 rounded-2xl bg-danger-100 p-4 text-label font-semibold text-danger-700"
         >
-          <label>
-            อีเมล
-            <input
-              id="teacher-email"
-              type="email"
-              autoComplete="username"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={busy}
-            />
-          </label>
-          <label>
-            รหัสผ่าน
-            <input
-              id="teacher-password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={busy}
-            />
-          </label>
-          {/* ข้อความผิดมีไอคอนคู่เสมอ ไม่ได้สื่อด้วยสีแดงอย่างเดียว (WCAG 1.4.1) */}
-          {error ? (
-            <p role="alert" className="teacher-auth-error">
-              <AlertIcon width={20} height={20} className="mt-0.5 shrink-0" />
-              <span>{error}</span>
-            </p>
-          ) : null}
-          <button type="submit" className="teacher-auth-submit" disabled={busy} aria-busy={busy || undefined}>
-            {busy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}
-          </button>
-        </form>
+          <AlertIcon width={20} height={20} className="mt-0.5 shrink-0" />
+          <span>{error}</span>
+        </p>
+      ) : null}
+      </form>
 
-        {/* ระบบนี้ไม่มีเมลรีเซ็ตรหัสเอง ทางออกเดียวคือผู้ดูแลระบบตั้งให้ใหม่ จึงเขียนตรง ๆ แบบนั้น (flow-1.md ข้อ 26) */}
-        <p className="teacher-auth-help">
+      {/* วันแข่งจริง ครูที่จำรหัสไม่ได้ต้องรู้ว่าไปต่อทางไหน ไม่ใช่ตันอยู่หน้านี้ (flow-1.md ข้อ 26)
+          ระบบนี้ไม่มีเมลรีเซ็ตรหัสเอง ทางออกเดียวคือผู้ดูแลระบบตั้งให้ใหม่ จึงเขียนตรง ๆ แบบนั้น */}
+      <p className="tla-help mt-6 flex items-start gap-2 rounded-2xl bg-brand-50 p-4 text-label text-pretty text-ink-muted ring-1 ring-brand-100 ring-inset">
+        <InfoIcon width={20} height={20} aria-hidden className="mt-0.5 shrink-0 text-brand-700" />
+        <span>
           ลืมรหัสผ่าน หรือยังไม่มีบัญชี ให้ติดต่อผู้ดูแลระบบของวิทยาลัยเพื่อตั้งรหัสใหม่ให้
           หน้านี้ไม่มีการส่งลิงก์รีเซ็ตทางอีเมล
-        </p>
-        <p className="teacher-auth-foot">
-          <Link href="/teacher/signup">มีรหัสเชิญ? สมัครครู</Link>
-        </p>
-      </section>
-    </main>
+        </span>
+      </p>
+      <p className="mt-4 text-center text-label font-semibold text-brand-700">
+        <Link href="/teacher/signup" className="underline underline-offset-4">มีรหัสเชิญ? สมัครครู</Link>
+      </p>
+      </CreamCard>
+      </div>
+    </AppShell>
+    </>
   )
 }
