@@ -7,6 +7,7 @@ import { useExitConfirm } from "@/components/student-navigation";
 import { ModePopup } from "@/components/learn/mode-popup";
 import { postLearn, type LearnModeId } from "@/components/learn/learn-path-api";
 import type { LearnPath, LearnState } from "@/components/server/learn-path";
+import type { MissionSettings } from "@/lib/mission-settings";
 import { Dome, Domain, KIT, M2Button, M2Screen, Panel, PartsLegend, withDomains } from "./m2/m2-kit";
 import { SimFinale, SimStage1, SimStage2, SimStage3, SimStage4, SimStorm, SimTutorial, type SimResult } from "./m2/m2-sim";
 import {
@@ -96,11 +97,13 @@ export function M2Flow({
   path,
   state,
   recommendedMode = null,
+  settings,
 }: {
   missionTitle: string;
   path: LearnPath;
   state: LearnState;
   recommendedMode?: LearnModeId | null;
+  settings: MissionSettings["m2"];
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<LearnModeId | null>(state.chosen);
@@ -141,6 +144,7 @@ export function M2Flow({
 
   const exit = useExitConfirm({ href: "/map", note: "คำตอบที่ยังไม่ส่งจะยังไม่ถูกบันทึก" });
   const chrome = { onBack: exit.request, soundOn, onSound: () => setSoundOn((value) => !value) };
+  const simStepAfter = (stage: number): Step => stage >= settings.simStages ? "s-finale" : (`s-stage${stage + 1}` as Step);
 
   async function send<T>(payload: unknown): Promise<T | null> {
     setBusy(true);
@@ -431,6 +435,7 @@ export function M2Flow({
           <TextChat
             chrome={chrome}
             questions={path.read.questions as TextQuestion[]}
+            maxAttempts={settings.textAttempts}
             grade={(question, answer, attempt) =>
               send<TextGrade>({ kind: "text", mode: "read", questionId: question.id, answer, attempt })
             }
@@ -454,15 +459,15 @@ export function M2Flow({
       case "s-tutorial":
         return <SimTutorial chrome={chrome} onDone={() => setStep("s-stage1")} />;
       case "s-stage1":
-        return <SimStage1 chrome={chrome} check={simCheck(1)} onPass={() => setStep("s-stage2")} />;
+        return <SimStage1 chrome={chrome} check={simCheck(1)} onPass={() => setStep(simStepAfter(1))} />;
       case "s-stage2":
-        return <SimStage2 chrome={chrome} check={simCheck(2)} onPass={() => setStep("s-stage3")} />;
+        return <SimStage2 chrome={chrome} check={simCheck(2)} onPass={() => setStep(simStepAfter(2))} />;
       case "s-stage3":
         return (
           <SimStage3
             chrome={chrome}
             check={(order) => send<SimResult>({ kind: "sim", stage: 3, order })}
-            onPass={() => setStep("s-stage4")}
+            onPass={() => setStep(simStepAfter(3))}
           />
         );
       case "s-stage4":
@@ -472,14 +477,14 @@ export function M2Flow({
             check={simCheck(4)}
             onPass={() => {
               setStageScore(70);
-              setStep("s-finale");
+              setStep(simStepAfter(4));
             }}
           />
         );
       case "s-finale":
         return <SimFinale chrome={chrome} onNext={() => setStep("exit")} />;
       case "exit":
-        return <ExitCheck key={repairHits} chrome={chrome} busy={busy} onSubmit={(answers) => void submitExit(answers)} />;
+        return <ExitCheck key={repairHits} chrome={chrome} busy={busy} questionCount={settings.exitQuestions} onSubmit={(answers) => void submitExit(answers)} />;
       case "end":
         return final ? (
           <Ending

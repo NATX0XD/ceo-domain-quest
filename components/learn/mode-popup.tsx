@@ -62,6 +62,7 @@ export interface ModePopupProps {
   onPick: (m: LearnModeId) => void
   onStart: () => void
   onClose: () => void
+  enabledModes?: readonly LearnModeId[]
   /** The same component is used on the map and while changing mode in a mission. */
   presentation?: 'drawer' | 'modal'
 }
@@ -77,6 +78,7 @@ export function ModePopup({
   onPick,
   onStart,
   onClose,
+  enabledModes = ['watch', 'read', 'do'],
   presentation = 'drawer',
 }: ModePopupProps) {
   const reduce = useReducedMotion()
@@ -98,6 +100,7 @@ export function ModePopup({
   }, [onClose])
 
   const pickedInfo = MODES.find((m) => m.id === picked)
+  const visibleModes = MODES.filter((mode) => enabledModes.includes(mode.id))
 
   const drawer = presentation === 'drawer'
   // ทุกภารกิจใช้กรอบภาพทางการเดียวกัน ข้อความเฉพาะภารกิจวางเป็นข้อความสดทับ
@@ -204,6 +207,7 @@ export function ModePopup({
             onPick={onPick}
             onStart={onStart}
             onClose={onClose}
+            enabledModes={enabledModes}
           />
         ) : (
         <div className="relative z-10 rounded-[28px] bg-[#fcf6eb] px-3 pb-4 pt-5 shadow-[0_18px_40px_rgba(30,10,60,0.4),inset_0_2px_0_rgba(255,255,255,0.9)] ring-1 ring-[#f1e3cb] sm:px-6 sm:pb-6">
@@ -237,7 +241,7 @@ export function ModePopup({
           </div>
 
           <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
-            {MODES.map((m) => (
+            {visibleModes.map((m) => (
               <ModeCard
                 key={m.id}
                 mode={m}
@@ -295,7 +299,9 @@ function OfficialModeArtwork({
   onPick,
   onStart,
   onClose,
+  enabledModes = ['watch', 'read', 'do'],
 }: Omit<ModePopupProps, 'presentation' | 'reason'>) {
+  const visibleModes = MODES.filter((mode) => enabledModes.includes(mode.id))
   return (
     // กรอบทางการตัดขอบล่าง (ปุ่มส้มในภาพ) ออก แล้วต่อพื้นครีมลงถึงขอบจอ = ลิ้นชักล่างจริง ปุ่มเริ่มเป็น HTML มีระยะหายใจ
     <div className="relative w-full max-w-[720px] select-none [container-type:inline-size]" aria-label={`เลือกวิธีเรียนสำหรับภารกิจที่ ${missionNo}`}>
@@ -319,7 +325,7 @@ function OfficialModeArtwork({
           {/* ปิดการ์ดในภาพ (มีวงกลม radio ที่ดูเหมือนเลข 0) แล้ววางการ์ด HTML ที่เห็นชัดว่าเลือกอันไหนอยู่ */}
           <div aria-hidden="true" className="absolute inset-x-[5.4%] top-[52.6%] h-[32.28%] rounded-t-[4cqw] bg-[#fdf6ea]" />
           <div role="radiogroup" aria-label="เลือกวิธีเรียน" className="pointer-events-auto absolute inset-x-[6.2%] top-[55.6%] grid h-[28.2%] grid-cols-3 gap-[2.2cqw]">
-            {MODES.map((mode) => (
+            {visibleModes.map((mode) => (
               <ModeCard
                 key={mode.id}
                 mode={mode}

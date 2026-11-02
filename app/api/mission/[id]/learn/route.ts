@@ -13,6 +13,7 @@ import {
   recentGameSolved,
   scoreOpenAnswers,
   scoreWarmup,
+  PASS_SCORE,
 } from '@/components/server/learn-path'
 import { ai } from '@/components/server/ai'
 import { LEGACY_SHIFT, checkCounterStep, publicCounterData, scoreCounter } from '@/components/server/learn-counter'
@@ -21,6 +22,8 @@ import { checkRegistrarStep, scoreRegistrar } from '@/components/server/learn-re
 import { handleM2Step } from '@/components/server/m2-flow'
 import { hasShopProfile } from '@/components/server/shop-gate'
 import { pretestBlockResponse } from '@/components/server/pretest-required'
+import { getMissionSettings } from '@/lib/mission-settings'
+import { currentM4AttemptSettings } from '@/components/server/m4-attempt'
 import {
   errorResponse,
   readJsonBody,
@@ -74,6 +77,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const body = parsed.data
   const studentId = session.studentId
   const missionId = mission.id
+  const missionSettings = missionId === 'm1' ? await getMissionSettings(session.classroomId, 'm1') : null
 
   try {
     if (body.action === 'm2') {
@@ -83,7 +87,10 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
 
     if (body.action === 'warmup') {
       if (!isAdaptiveLearnPath(path)) return errorResponse('single-mode', 'ภารกิจนี้เข้าเกมโดยตรง ไม่มีช่วงเช็กพื้นฐาน', 400)
-      const result = await scoreWarmup(path, body.answers)
+      const enabledModes = missionSettings
+        ? LEARN_MODES.filter((mode) => missionSettings.modesEnabled[mode])
+        : LEARN_MODES
+      const result = await scoreWarmup(path, body.answers, enabledModes)
       await logEvent(studentId, LEARN_EVENTS.warmup, {
         missionId,
         score: result.score,
@@ -97,6 +104,9 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
 
     if (body.action === 'choose') {
       if (!isAdaptiveLearnPath(path)) return errorResponse('single-mode', 'ภารกิจนี้มีโหมดลงมือทำเดียว ไม่ต้องเลือกวิธีเรียน', 400)
+      if (missionSettings && !missionSettings.modesEnabled[body.mode]) {
+        return errorResponse('mode-disabled', 'โหมดนี้ถูกปิดไว้โดยครู เลือกโหมดที่เปิดอยู่', 409)
+      }
       const state = await loadLearnState(studentId, missionId)
       /**
        * วิธีเรียนในด่าน (ดู/อ่าน/ลงมือ) เป็นตัวเลือกเฉพาะภารกิจ — ห้ามเขียนทับ profiles.learning_route
@@ -121,7 +131,11 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
         path[body.mode].questions.map((q) => [q.id, body.answers[q.id] ?? '']),
       )
       // AI ช่วยตรวจคำตอบที่ใช้คำของตัวเอง (งบ 5 วินาที) คะแนนไม่มีวันต่ำกว่าคำสำคัญ ล่ม = คำสำคัญล้วน
-      const result = await scoreOpenAnswers(path, body.mode, answers, { checker: ai, studentId })
+      const result = await scoreOpenAnswers(path, body.mode, answers, {
+        checker: missionSettings?.aiFeedback === false ? null : ai,
+        studentId,
+        passScore: missionSettings?.passScore ?? PASS_SCORE,
+      })
       await logEvent(studentId, LEARN_EVENTS.answer, {
         missionId,
         mode: body.mode,
@@ -149,14 +163,15 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     if (body.action === 'shift') {
       if (path.do.kind !== 'counter') return errorResponse('bad-request', 'ด่านนี้ไม่มีการสุ่มลูกค้า', 400)
       const before = await readShift(studentId).catch(() => null)
-      const shift = await startNewShift(studentId, before?.caseIds)
-      return NextResponse.json({ cases: publicCounterData(shift.caseIds).cases })
+      const m3 = await getMissionSettings(session.classroomId, 'm3')
+      const shift = await startNewShift(studentId, before?.caseIds, m3)
+      return NextResponse.json({ cases: publicCounterData(shift.caseIds, shift.settings).cases })
     }
 
     if (body.action === 'step') {
       const step =
         path.do.kind === 'counter'
-          ? checkCounterStep(body.payload)
+          ? checkCounterStep(body.payload, (await currentShift(studentId, await getMissionSettings(session.classroomId, 'm3')).catch(() => null))?.settings?.customerQuestions)
           : path.do.kind === 'registrar'
             ? checkRegistrarStep(body.payload)
             : null
@@ -169,12 +184,13 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     let result: { score: number; passed: boolean; detail: unknown }
     if (path.do.kind === 'counter') {
       // ตรวจกับลูกค้าในกะที่เซิร์ฟเวอร์จับให้ ไม่เชื่อรายชื่อเคสจากเบราว์เซอร์
-      const shift = await currentShift(studentId).catch(() => null)
-      result = scoreCounter(body.payload, shift?.caseIds ?? LEGACY_SHIFT)
+      const shift = await currentShift(studentId, await getMissionSettings(session.classroomId, 'm3')).catch(() => null)
+      result = scoreCounter(body.payload, shift?.caseIds ?? LEGACY_SHIFT, shift?.settings)
     } else if (path.do.kind === 'registrar') {
-      result = scoreRegistrar(body.payload)
+      const m4 = await currentM4AttemptSettings(studentId, await getMissionSettings(session.classroomId, 'm4'))
+      result = scoreRegistrar(body.payload, m4)
     } else if (path.do.kind === 'cards') {
-      result = await scoreCardSort(path, body.payload)
+      result = await scoreCardSort(path, body.payload, missionSettings?.passScore ?? PASS_SCORE)
     } else {
       const solved = await recentGameSolved(studentId, missionId)
       result = { score: solved ? 100 : 0, passed: solved, detail: null }

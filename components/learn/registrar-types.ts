@@ -65,6 +65,14 @@ export interface RegistrarData {
   }
 }
 
+export interface RegistrarRuntimeSettings {
+  timerSeconds: number
+  startCoins: number
+  explainPass: number
+  eventsPass: number
+  tutorialEnabled: boolean
+}
+
 export type OwnerType = 'individual' | 'company'
 
 /** บัตรนามสกุลของฉันจากด่าน 3 (ส่งมาเป็น prop ถ้ามี) */

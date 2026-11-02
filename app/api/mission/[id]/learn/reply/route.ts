@@ -12,6 +12,7 @@ import {
 import { ai } from '@/components/server/ai'
 import { hasShopProfile } from '@/components/server/shop-gate'
 import { pretestBlockResponse } from '@/components/server/pretest-required'
+import { getMissionSettings } from '@/lib/mission-settings'
 import { errorResponse, readJsonBody, readStudentSession, unauthorized } from '../../../../_lib/session-cookie'
 
 /**
@@ -40,10 +41,11 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const parsed = BodySchema.safeParse(await readJsonBody(request))
   if (!parsed.success) return errorResponse('bad-request', 'รูปแบบข้อมูลไม่ถูกต้อง', 400)
   const { mode, questionId, answer } = parsed.data
+  const settings = id === 'm1' ? await getMissionSettings(session.classroomId, 'm1') : null
 
   const quota = attempt(`learn-reply:${session.studentId}`, Date.now(), DOME_REPLY_MAX_PER_WINDOW)
   const result: DomeReply | null = quota.allowed
-    ? await domeLearnReply(path, mode, questionId, answer, { checker: ai })
+    ? await domeLearnReply(path, mode, questionId, answer, { checker: settings?.aiFeedback === false ? null : ai })
     : { reply: DOME_REPLY_FALLBACK[mode], source: 'fallback', provider: 'rules', fallbackReason: 'quota-exceeded', ms: 0 }
   if (!result) return errorResponse('bad-request', 'ไม่พบคำถามข้อนี้', 400)
 

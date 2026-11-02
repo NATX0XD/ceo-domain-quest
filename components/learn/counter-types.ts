@@ -61,6 +61,19 @@ export interface CounterData {
   cases: CounterCase[]
 }
 
+export interface CounterRuntimeSettings {
+  practiceEnabled: boolean
+  realCustomers: number
+  customerSeconds: number
+  extendSeconds: number
+  handbookSeconds: number
+  customerQuestions: number
+  domeQuota: number | null
+  hints: number
+  tagPass: number
+  stampPass: number
+}
+
 /** สิ่งที่ client ส่งไป `POST /api/mission/m3/learn` ใน `{ action:'do', payload }` */
 export interface CounterDecision {
   caseId: string

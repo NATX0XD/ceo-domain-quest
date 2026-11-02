@@ -40,6 +40,18 @@ beforeEach(() => {
 })
 
 describe('scoreOpenAnswers + AI ช่วยตรวจ', () => {
+  it('ใช้ passScore ของห้องเรียนแทนค่าเริ่มต้น', async () => {
+    const answers = {
+      'm1-wq1': 'ชื่อเว็บร้าน',
+      'm1-wq2': 'บราวเซอร์ส่งคำขอไปที่เซิร์ฟเวอร์ตามไอพีจาก DNS แล้วเว็บแสดงขึ้นมา',
+    }
+    const defaultResult = await scoreOpenAnswers(path, 'watch', answers)
+    const strictResult = await scoreOpenAnswers(path, 'watch', answers, { passScore: defaultResult.score })
+    expect(defaultResult.passed).toBe(true)
+    expect(strictResult.score).toBe(defaultResult.score)
+    expect(strictResult.passed).toBe(false)
+  })
+
   it('คำตอบ DNS/IP/server แบบภาษานักเรียนผ่าน keyword rubric ได้', async () => {
     const answer = 'บราวเซอร์ส่งคำขอไปที่เซิร์ฟเวอร์ตามไอพีจาก DNS แล้วเว็บแสดงขึ้นมา'
     const r = await scoreOpenAnswers(path, 'watch', { 'm1-wq1': 'ชื่อเว็บร้าน', 'm1-wq2': answer })

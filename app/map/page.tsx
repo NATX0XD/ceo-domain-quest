@@ -11,6 +11,8 @@ import { requireShopProfile } from '@/components/server/shop-gate'
 import { pretestRequirement } from '@/components/server/pretest-required'
 import { loadSelfProfileDb } from '@/components/server/game-state'
 import type { LearnModeId } from '@/components/learn/learn-path-api'
+import { LEARN_MODES } from '@/components/server/learn-path'
+import { getMissionSettings } from '@/lib/mission-settings'
 
 export const metadata: Metadata = { title: 'แผนภารกิจของฉัน — CEO Domain Quest' }
 export const dynamic = 'force-dynamic'
@@ -22,6 +24,7 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
   if (!session) return <SignInGate message="ใส่รหัสห้องกับ PIN ที่ครูให้ก่อน แล้วแผนภารกิจจะขึ้นมาให้ดูทั้งเส้นทาง" />
 
   await requireShopProfile(session.studentId)
+  const m1Settings = await getMissionSettings(session.classroomId, 'm1')
   const data = await lessonSummary(session.studentId)
   const self = await loadSelfProfileDb(session.studentId)
   const pretest = await pretestRequirement(session.studentId)
@@ -51,6 +54,7 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
           href: '/ceo',
         }}
         recommendedMode={recommendedMode}
+        enabledModesByMission={{ m1: LEARN_MODES.filter((mode) => m1Settings.modesEnabled[mode]) }}
         justDone={justDone}
         pretestLock={pretest.done ? null : { open: pretest.open }}
       />

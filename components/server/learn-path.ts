@@ -159,22 +159,25 @@ export interface WarmupResult {
 }
 
 /** 0-1 ข้อ = ดูภาพรวมก่อน · 2 = อ่านทบทวน · 3 = ลงมือทำได้เลย — เป็นข้อเสนอเท่านั้น */
-export function recommendMode(score: number): { mode: LearnMode; reason: string } {
-  if (score >= 3) {
-    return { mode: 'do', reason: 'ตอบถูกครบ 3 ข้อ พื้นฐานแน่นแล้ว ลองลงมือทำจริงเลยน่าจะสนุกที่สุด' }
+export function recommendMode(score: number, enabledModes: readonly LearnMode[] = LEARN_MODES): { mode: LearnMode; reason: string } {
+  const available = LEARN_MODES.filter((mode) => enabledModes.includes(mode))
+  const preferred = score >= 3 ? 'do' : score === 2 ? 'read' : 'watch'
+  const mode = available.includes(preferred) ? preferred : ([preferred, 'read', 'watch', 'do'] as const).find((item) => available.includes(item)) ?? 'watch'
+  if (mode === 'do') {
+    return { mode, reason: score >= 3 ? 'ตอบถูกครบ 3 ข้อ พื้นฐานแน่นแล้ว ลองลงมือทำจริงเลยน่าจะสนุกที่สุด' : 'พร้อมแล้ว ลองลงมือทำจริงเลยน่าจะสนุกที่สุด' }
   }
-  if (score === 2) {
-    return { mode: 'read', reason: 'ตอบถูก 2 ข้อ รู้เรื่องนี้มาบ้างแล้ว อ่านแชตทบทวนอีกนิดจะครบขึ้น' }
+  if (mode === 'read') {
+    return { mode, reason: score === 2 ? 'ตอบถูก 2 ข้อ รู้เรื่องนี้มาบ้างแล้ว อ่านแชตทบทวนอีกนิดจะครบขึ้น' : 'อ่านแชตทบทวนอีกนิด จะช่วยให้เห็นภาพชัดขึ้น' }
   }
   return { mode: 'watch', reason: 'เรื่องนี้ยังใหม่สำหรับเรา เริ่มจากดูภาพรวมก่อนจะเข้าใจง่ายที่สุด' }
 }
 
-export async function scoreWarmup(path: LearnPath, answers: number[]): Promise<WarmupResult> {
+export async function scoreWarmup(path: LearnPath, answers: number[], enabledModes: readonly LearnMode[] = LEARN_MODES): Promise<WarmupResult> {
   if (!isAdaptiveLearnPath(path)) throw new Error(`learn-path ${path.missionId} ไม่มี warmup`)
   const key = await loadAnswers(path.missionId)
   const perQuestion = path.warmup.map((q, i) => key.warmup[q.id] === answers[i])
   const score = perQuestion.filter(Boolean).length
-  const { mode, reason } = recommendMode(score)
+  const { mode, reason } = recommendMode(score, enabledModes)
   return { score, total: path.warmup.length, perQuestion, recommended: mode, reason }
 }
 
@@ -212,7 +215,7 @@ function clampScore(n: number): number {
   return Math.max(0, Math.min(100, n))
 }
 
-export function scoreOpenAnswer(rubric: Rubric, id: string, text: string): QuestionScore {
+export function scoreOpenAnswer(rubric: Rubric, id: string, text: string, passScore = PASS_SCORE): QuestionScore {
   const norm = normalizeAnswer(text)
   let score = 0
   const missing: string[] = []
@@ -228,7 +231,7 @@ export function scoreOpenAnswer(rubric: Rubric, id: string, text: string): Quest
   return {
     id,
     score,
-    feedback: score > PASS_SCORE ? rubric.feedbackPass : rubric.feedbackRetry,
+    feedback: score > passScore ? rubric.feedbackPass : rubric.feedbackRetry,
     missing,
     source: 'rule',
     keywordScore: score,
@@ -296,6 +299,7 @@ export function mergeAiCheck(
   check: LearnCheckItemResult,
   provider: Exclude<AnswerSource, 'rule'>,
   context: { answer: string; question: string } = { answer: '', question: '' },
+  passScore = PASS_SCORE,
 ): QuestionScore {
   const aiScore = clampScore(rubric.concepts.reduce((s, c, i) => s + (check.covered[i] ? c.points : 0), 0))
   const base: QuestionScore = { ...keyword, source: provider, aiScore }
@@ -305,7 +309,7 @@ export function mergeAiCheck(
         ...base,
         score: aiScore,
         missing: rubric.concepts.filter((_, i) => !check.covered[i]).map((c) => c.label),
-        feedback: aiScore > PASS_SCORE ? rubric.feedbackPass : rubric.feedbackRetry,
+        feedback: aiScore > passScore ? rubric.feedbackPass : rubric.feedbackRetry,
       }
     : base
   if (!check.feedback?.trim()) return merged
@@ -316,7 +320,7 @@ export function mergeAiCheck(
     .filter(({ c, i }) => !check.covered[i] && !c.any.some((w) => normalizeAnswer(w).length > 0 && answerNorm.includes(normalizeAnswer(w))))
     .map(({ i }) => i)
   if (feedbackGivesAway(rubric, check.feedback, { ...context, missing: missingIdx })) return merged
-  if (!feedbackFitsResult(check.feedback, merged.score > PASS_SCORE)) return merged
+  if (!feedbackFitsResult(check.feedback, merged.score > passScore)) return merged
   return { ...merged, feedback: check.feedback.trim(), feedbackSource: 'ai' }
 }
 
@@ -341,6 +345,7 @@ export interface OpenAnswerOptions {
   checker?: Pick<AiClient, 'learnCheck'> | null
   /** นับโควตา AI รายคน */
   studentId?: string
+  passScore?: number
 }
 
 export async function scoreOpenAnswers(
@@ -356,7 +361,8 @@ export async function scoreOpenAnswers(
     if (!rubric) throw new Error(`learn-paths-answers: ไม่มี rubric ของ ${q.id}`)
     return rubric
   })
-  let perQuestion = questions.map((q, i) => scoreOpenAnswer(rubrics[i]!, q.id, answers[q.id] ?? ''))
+  const passScore = options.passScore ?? PASS_SCORE
+  let perQuestion = questions.map((q, i) => scoreOpenAnswer(rubrics[i]!, q.id, answers[q.id] ?? '', passScore))
 
   // ส่งทุกข้อที่มีเนื้อหาจริงในคำขอเดียว — ข้อที่คำสำคัญเต็มแล้วก็ส่ง เพื่อให้โดมตอบกลับด้วยคำสรุปจริงของ AI
   const items = questions
@@ -379,7 +385,7 @@ export async function scoreOpenAnswers(
         perQuestion = perQuestion.map((q, i) => {
           const item = byId.get(q.id)
           const context = { answer: answers[q.id] ?? '', question: questions[i]!.prompt }
-          return item ? mergeAiCheck(rubrics[i]!, q, item, provider, context) : q
+          return item ? mergeAiCheck(rubrics[i]!, q, item, provider, context, passScore) : q
         })
       }
     } catch (err) {
@@ -389,7 +395,7 @@ export async function scoreOpenAnswers(
   }
 
   const score = Math.round(perQuestion.reduce((s, q) => s + q.score, 0) / Math.max(1, perQuestion.length))
-  return { score, passed: score > PASS_SCORE, perQuestion }
+  return { score, passed: score > passScore, perQuestion }
 }
 
 /* ------------------------------------------------------ จัดการ์ด (ลงมือทำ) */
@@ -408,6 +414,7 @@ const CardSortPayloadSchema = z.object({ placements: z.record(z.string(), z.stri
 export async function scoreCardSort(
   path: LearnPath,
   payload: unknown,
+  passScore = PASS_SCORE,
 ): Promise<{ score: number; passed: boolean; detail: CardSortDetail }> {
   const key = (await loadAnswers(path.missionId)).cardSort
   if (!key) throw new Error(`learn-paths-answers: ไม่มี cardSort ของ ${path.missionId}`)
@@ -416,7 +423,7 @@ export async function scoreCardSort(
   const correct = ids.filter((id) => placements[id] === key.zones[id])
   const wrong = ids.filter((id) => !correct.includes(id))
   const score = correct.reduce((s, id) => s + (key.weights[id] ?? 0), 0)
-  const passed = score > PASS_SCORE
+  const passed = score > passScore
   const feedback =
     key.byCorrect[[...correct].sort().join('+')] ??
     (score <= 30 ? key.byBand.low : passed ? key.byBand.pass : key.byBand.mid)

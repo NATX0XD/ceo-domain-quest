@@ -230,3 +230,13 @@ describe('publicRegistrarData', () => {
     expect(data.explain.renewalChoices).toHaveLength(answersJson.renewalPoints.length)
   })
 })
+
+describe('ค่าตั้งของครูกับด่าน 4', () => {
+  it('startCoins ใน publicRegistrarData และเกณฑ์ eventsPass', () => {
+    expect(publicRegistrarData({ startCoins: 9000 }).fee.startCoins).toBe(9000)
+    const events = Object.fromEntries(Object.keys(answersJson.events).map((id) => [id, wrongChoice(id as keyof typeof answersJson.events)]))
+    expect(scoreRegistrar(full({ events }), { explainPass: 7, eventsPass: 3 }).passed).toBe(false)
+    expect(scoreRegistrar(full(), { explainPass: 7, eventsPass: 4 }).passed).toBe(true)
+    expect(scoreRegistrar(full(), { explainPass: 10.5, eventsPass: 3 }).passed).toBe(false)
+  })
+})

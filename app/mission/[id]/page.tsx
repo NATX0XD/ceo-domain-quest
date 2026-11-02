@@ -20,9 +20,11 @@ import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { LearnPathClient } from '@/components/learn/learn-path-client'
 import { M2Flow } from '@/components/learn/m2-flow'
 import { ReplayMarker } from '@/components/mission-revisit'
-import { PASS_SCORE, findLearnPath, loadLearnState, type LearnState } from '@/components/server/learn-path'
+import { LEARN_MODES, PASS_SCORE, findLearnPath, loadLearnState, type LearnState } from '@/components/server/learn-path'
+import { DEFAULTS, getMissionSettings } from '@/lib/mission-settings'
 import { publicCounterData } from '@/components/server/learn-counter'
 import { currentShift } from '@/components/server/m3-shift'
+import { startM4Attempt } from '@/components/server/m4-attempt'
 import { publicRegistrarData } from '@/components/server/learn-registrar'
 import { requireShopProfile } from '@/components/server/shop-gate'
 import { pretestRequirement } from '@/components/server/pretest-required'
@@ -61,6 +63,17 @@ export default async function MissionPage({
   }
 
   const shopProfile = await requireShopProfile(session.studentId)
+  const [m1Settings, m2Settings] = await Promise.all([
+    mission.id === 'm1' ? getMissionSettings(session.classroomId, 'm1') : Promise.resolve(null),
+    mission.id === 'm2' ? getMissionSettings(session.classroomId, 'm2') : Promise.resolve(null),
+  ])
+  const m3Settings = mission.id === 'm3' ? await getMissionSettings(session.classroomId, 'm3') : null
+  const counterShift = mission.id === 'm3' ? await currentShift(session.studentId, m3Settings ?? undefined) : null
+  const m4Settings = mission.id === 'm4' ? await getMissionSettings(session.classroomId, 'm4') : null
+  if (m4Settings) await startM4Attempt(session.studentId, m4Settings).catch(() => undefined)
+  const m1EnabledModes = m1Settings
+    ? LEARN_MODES.filter((mode) => m1Settings.modesEnabled[mode])
+    : [...LEARN_MODES]
   // ต้องส่งแบบทดสอบก่อนเรียนก่อน ทุกภารกิจ (API ของภารกิจก็กั้นด้วย 409 เช่นกัน)
   const pretest = await pretestRequirement(session.studentId)
   if (!pretest.done) return <PretestGateScreen open={pretest.open} />
@@ -102,6 +115,7 @@ export default async function MissionPage({
               path={studentLearnPath}
               state={shownState}
               recommendedMode={recommendedMode}
+              settings={m2Settings ?? DEFAULTS.m2}
             />
           </>
         )
@@ -117,11 +131,15 @@ export default async function MissionPage({
           path={studentLearnPath}
           state={shownState}
           replay={replaying}
-          passScore={PASS_SCORE}
+          passScore={mission.id === 'm1' ? (m1Settings?.passScore ?? PASS_SCORE) : PASS_SCORE}
+          enabledModes={mission.id === 'm1' ? m1EnabledModes : undefined}
+          aiFeedback={mission.id === 'm1' ? (m1Settings?.aiFeedback ?? true) : undefined}
           gameData={kind === 'game' ? buildGameData(studentMission, session.studentId) : null}
-          counterData={kind === 'counter' ? publicCounterData((await currentShift(session.studentId)).caseIds) : null}
-          counterPracticeData={kind === 'counter' ? publicCounterData(['c6']) : null}
-          registrarData={kind === 'registrar' ? publicRegistrarData() : null}
+          counterData={counterShift ? publicCounterData(counterShift.caseIds, counterShift.settings) : null}
+          counterPracticeData={kind === 'counter' ? publicCounterData(['c6'], counterShift?.settings) : null}
+          counterSettings={counterShift?.settings ?? null}
+          registrarSettings={m4Settings}
+          registrarData={kind === 'registrar' ? publicRegistrarData(m4Settings ?? undefined) : null}
           registrarCard={kind === 'registrar' ? await registrarCardFor(session.studentId) : null}
           recommendedMode={recommendedMode}
         />

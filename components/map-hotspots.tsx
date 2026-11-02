@@ -29,6 +29,7 @@ type MapHotspotsProps = {
   boss: Boss
   nudge?: TestNudge | null
   recommendedMode?: LearnModeId | null
+  enabledModesByMission?: Record<string, readonly LearnModeId[]>
   /** มาจาก /map?done=m1 หลังจบภารกิจ = ฉลองเกาะนั้น แล้วชี้เกาะถัดไป */
   justDone?: string | null
   /** ยังไม่ได้ส่งแบบทดสอบก่อนเรียน = ล็อกทุกเกาะ (open = ครูเปิดแบบทดสอบแล้ว) · null = ไม่ล็อก */
@@ -56,7 +57,7 @@ function statusOf(mission: Mission, unlocked: boolean) {
   return 'ล็อกอยู่'
 }
 
-export function MapHotspots({ imageState, missions, boss, nudge = null, recommendedMode = null, justDone = null, pretestLock = null }: MapHotspotsProps) {
+export function MapHotspots({ imageState, missions, boss, nudge = null, recommendedMode = null, enabledModesByMission = {}, justDone = null, pretestLock = null }: MapHotspotsProps) {
   const reduce = useReducedMotion()
   const doneIndex = justDone ? missions.findIndex((m) => m.id === justDone && m.passed) : -1
   const [celebrate, setCelebrate] = useState(doneIndex >= 0)
@@ -90,7 +91,8 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
     setCelebrate(false)
     if (index < 2) {
       setDrawerIndex(index)
-      setPicked(recommendedMode ?? 'do')
+      const enabled = enabledModesByMission[missions[index]?.id ?? ''] ?? ['watch', 'read', 'do']
+      setPicked(recommendedMode && enabled.includes(recommendedMode) ? recommendedMode : enabled[0] ?? 'do')
       setDrawerError(null)
       return
     }
@@ -304,6 +306,7 @@ export function MapHotspots({ imageState, missions, boss, nudge = null, recommen
           onPick={setPicked}
           onStart={() => void startFromDrawer()}
           onClose={() => setDrawerIndex(null)}
+          enabledModes={enabledModesByMission[missions[drawerIndex].id]}
           presentation="drawer"
         />
       ) : null}

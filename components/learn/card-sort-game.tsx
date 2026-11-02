@@ -48,6 +48,7 @@ export function CardSortGame({
   onChangeMode,
   onLater,
   onPassed,
+  passScore = 60,
 }: {
   data: CardSortData
   mission: string
@@ -58,6 +59,7 @@ export function CardSortGame({
   onLater: () => void
   /** ผ่านแล้วกดไปต่อ = ส่งต่อให้เส้นทางเรียน */
   onPassed?: (res: DoResponse) => void
+  passScore?: number
 }) {
   const reduce = useReducedMotion()
   const [order, setOrder] = useState(data.cards)
@@ -221,7 +223,7 @@ export function CardSortGame({
             </span>
             <span className="m1-chip is-purple">
               <img src="/icons/3d/trophy.webp" alt="" aria-hidden />
-              เกิน 60% ผ่าน
+              เกิน {passScore}% ผ่าน
             </span>
           </div>
         </M1Board>
@@ -261,7 +263,7 @@ export function CardSortGame({
                 {passed ? 'ผ่านภารกิจแล้ว' : 'ยังไม่ผ่าน ลองอีกครั้งนะ'}
               </p>
               <p className="lr-note">
-                {passed ? 'ได้คะแนนมากกว่า 60% จึงผ่านกิจกรรมนี้แล้ว' : attempt === 1 ? 'แก้การจับคู่ได้อีก 1 รอบ' : 'ใช้รอบแก้ครบแล้ว'}
+                {passed ? `ได้คะแนนมากกว่า ${passScore}% จึงผ่านกิจกรรมนี้แล้ว` : attempt === 1 ? 'แก้การจับคู่ได้อีก 1 รอบ' : 'ใช้รอบแก้ครบแล้ว'}
               </p>
             </div>
           </div>

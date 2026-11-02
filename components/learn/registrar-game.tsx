@@ -26,6 +26,7 @@ import {
   type ExplainPayload,
   type RegistrarCard,
   type RegistrarData,
+  type RegistrarRuntimeSettings,
   type RegistrarPayload,
   type RegistrarResult,
   type RegistrarStepPayload,
@@ -57,11 +58,13 @@ type Props = {
   card?: RegistrarCard | null
   /** จบด่านแล้วกดไปต่อ (หน้าจบบทเรียน) ถ้าไม่ส่งมาไปที่ด่านหลัก */
   onFinish?: () => void
+  /** ค่าตั้งของครูจาก snapshot ของเซิร์ฟเวอร์ */
+  settings?: RegistrarRuntimeSettings | null
 }
 
 type EventLog = Record<string, { choice: number; correct: boolean }>
 
-export function RegistrarGame({ data, onSubmit, onStep, card, onFinish }: Props) {
+export function RegistrarGame({ data, onSubmit, onStep, card, onFinish, settings }: Props) {
   const { reduce, slide } = useGameMotion()
   const router = useRouter()
   const myCard = card ?? SAMPLE_CARD
@@ -69,7 +72,7 @@ export function RegistrarGame({ data, onSubmit, onStep, card, onFinish }: Props)
   const stepText = useMemo(() => new Map(data.steps.map((s) => [s.id, s.text])), [data.steps])
   const ev = (stage: string) => data.events.find((e) => e.stage === stage)
 
-  const [view, setView] = useState<View>('intro')
+  const [view, setView] = useState<View>(settings?.tutorialEnabled === false ? 'play' : 'intro')
   const [confetti, setConfetti] = useState(0)
   const [placed, setPlaced] = useState<string[]>([])
   const [placing, setPlacing] = useState<string | null>(null)
@@ -77,7 +80,7 @@ export function RegistrarGame({ data, onSubmit, onStep, card, onFinish }: Props)
   const [reasonLine, setReasonLine] = useState<string | null>(null)
   const [misses, setMisses] = useState(0)
   const [events, setEvents] = useState<EventLog>({})
-  const [coins, setCoins] = useState(data.fee.startCoins)
+  const [coins, setCoins] = useState(settings?.startCoins ?? data.fee.startCoins)
   const [searched, setSearched] = useState(false)
   const [domain, setDomain] = useState<{ name: string; tld: string } | null>(null)
   const [form, setForm] = useState<FormValue>({ applicant: '', email: '', years: 1 })
@@ -91,7 +94,7 @@ export function RegistrarGame({ data, onSubmit, onStep, card, onFinish }: Props)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [stepError, setStepError] = useState<string | null>(null)
   const alive = useRef(true)
-  const [sec, setSec] = useState(270)
+  const [sec, setSec] = useState(settings?.timerSeconds ?? 270)
   useEffect(() => {
     const t = window.setInterval(() => setSec((n) => Math.max(0, n - 1)), 1000)
     return () => window.clearInterval(t)

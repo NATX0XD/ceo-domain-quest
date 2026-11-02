@@ -11,6 +11,7 @@ import { resolveBossTemplate } from '@/app/api/ceo/_lib/boss-template'
 import { buildStoryInput } from '@/app/api/story/_lib/input'
 import { storyItemFor } from '@/app/api/story/_lib/runner'
 import { storyIdForTemplate } from '@/core/boss-scenario'
+import { getMissionSettings } from '@/lib/mission-settings'
 
 export const metadata: Metadata = { title: 'ด่านบอส CEO — CEO Domain Quest' }
 
@@ -30,7 +31,7 @@ export default async function CeoPage() {
     return <SignInGate message="ใส่รหัสห้อง 6 ตัวกับรหัส 4 หลักที่ครูให้ก่อน แล้วค่อยกลับมาทำด่านบอส" />
   }
 
-  const [student, shop, summary, submissions, bossTemplate, profile] = await Promise.all([
+  const [student, shop, summary, submissions, bossTemplate, profile, settings] = await Promise.all([
     getStudent(session.studentId),
     loadShopProfile(session.studentId),
     lessonSummary(session.studentId),
@@ -38,6 +39,7 @@ export default async function CeoPage() {
     // S-22 แม่แบบด่านบอสของคนนี้โดยเฉพาะ ล้มก็ยังเปิดหน้าได้ด้วยสถานการณ์กลาง
     resolveBossTemplate(session.studentId).catch(() => null),
     getProfile(session.studentId).catch(() => null),
+    getMissionSettings(session.classroomId, 'ceo'),
   ])
 
   /**
@@ -67,13 +69,17 @@ export default async function CeoPage() {
    * ครูสั่งให้แก้อยู่หรือเปล่า — ส่งมาเป็น prop ตั้งต้นด้วย
    * หน้าจะได้บอกได้ทันทีตั้งแต่เรนเดอร์แรก ไม่ต้องรอ fetch (และอ่านได้แม้ JS ยังไม่ทำงาน)
    */
-  const revision = revisionState(submissions)
+  const revision = revisionState(submissions, settings.revisions)
 
   /**
    * รูปแบบการส่งงานลำดับแรกในไฟล์เนื้อหาคือแบบที่หน้าเว็บนี้ทำงานได้เต็มรูปแบบ (พิมพ์ในหน้าเว็บ)
    * อีกสองแบบเลือกได้และถูกบันทึก แต่ตัวงานจริงส่งกับครูหน้าห้อง จึงอ่านจากลำดับไม่ใช่จากรหัสที่ฝังไว้
    */
-  const primaryModeId = bigMission.submitModes[0]?.id ?? ''
+  const enabledSubmitModes = bigMission.submitModes.filter((mode) => {
+    const key = mode.id === 'bm-mode-write' ? 'write' : mode.id === 'bm-mode-voice' ? 'voice' : 'design'
+    return settings.submitModes[key]
+  })
+  const primaryModeId = enabledSubmitModes[0]?.id ?? ''
 
   return (
     <CeoClient
@@ -84,7 +90,7 @@ export default async function CeoPage() {
       objective={bigMission.objective}
       scenario={scenario}
       guidingQuestions={bigMission.guidingQuestions.map((q) => ({ id: q.id, text: q.text }))}
-      submitModes={bigMission.submitModes.map((m) => ({
+      submitModes={enabledSubmitModes.map((m) => ({
         id: m.id,
         label: m.label,
         icon: m.icon,

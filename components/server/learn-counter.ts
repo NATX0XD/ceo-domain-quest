@@ -8,6 +8,7 @@ import {
   type CounterData,
   type CounterDetail,
   type CounterGroupResult,
+  type CounterRuntimeSettings,
   type CounterStepResult,
 } from '../learn/counter-types'
 
@@ -88,19 +89,36 @@ const answersSchema = z.object({
   ),
 })
 
-const decisionSchema = z.object({
-  caseId: z.string().min(1).max(40),
-  tags: z.record(z.string().max(80), category),
-  asked: z.array(z.string().max(20)).max(3),
-  stamp,
-  extension: z.string().max(40).nullable(),
-  attempt: z.union([z.literal(1), z.literal(2)]).optional(),
-  reason: z.string().max(20).nullable().optional(),
-})
+function decisionSchema(maxQuestions = 3) {
+  return z.object({
+    caseId: z.string().min(1).max(40),
+    tags: z.record(z.string().max(80), category),
+    asked: z.array(z.string().max(20)).max(maxQuestions),
+    stamp,
+    extension: z.string().max(40).nullable(),
+    attempt: z.union([z.literal(1), z.literal(2)]).optional(),
+    reason: z.string().max(20).nullable().optional(),
+  })
+}
 
-const payloadSchema = z.object({ decisions: z.array(decisionSchema).max(20) })
+function payloadSchema(maxQuestions = 3) {
+  return z.object({ decisions: z.array(decisionSchema(maxQuestions)).max(20) })
+}
 
-type Decision = z.infer<typeof decisionSchema>
+const DEFAULT_RUNTIME_SETTINGS: CounterRuntimeSettings = {
+  practiceEnabled: true,
+  realCustomers: 2,
+  customerSeconds: 180,
+  extendSeconds: 60,
+  handbookSeconds: 15,
+  customerQuestions: 3,
+  domeQuota: null,
+  hints: 2,
+  tagPass: 80,
+  stampPass: 60,
+}
+
+type Decision = z.infer<ReturnType<typeof decisionSchema>>
 type Answer = (typeof ANSWERS.cases)[number]
 
 function judge(ans: Answer, d: Decision | undefined) {
@@ -186,13 +204,14 @@ export function newShiftSeed(
   previous?: readonly string[] | null,
   random: () => number = Math.random,
   excluded: readonly string[] = [],
+  size = DATA.shiftSize,
 ): { seed: number; caseIds: string[] } {
   const same = (ids: string[]) => !!previous && ids.length === previous.length && ids.every((id) => previous.includes(id))
   let seed = Math.floor(random() * 2 ** 31)
-  let caseIds = drawShift(seed, DATA.shiftSize, excluded)
+  let caseIds = drawShift(seed, size, excluded)
   for (let i = 0; i < 8 && same(caseIds); i++) {
     seed = Math.floor(random() * 2 ** 31)
-    caseIds = drawShift(seed, DATA.shiftSize, excluded)
+    caseIds = drawShift(seed, size, excluded)
   }
   return { seed, caseIds }
 }
@@ -213,10 +232,17 @@ export function counterHandbookFacts(): string {
 }
 
 /** ข้อมูลสาธารณะของเกม ส่งเฉพาะลูกค้าในกะนี้ (เรียงตามลำดับในกะ) */
-export function publicCounterData(caseIds?: readonly string[]): CounterData {
-  if (!caseIds) return DATA
+export function publicCounterData(caseIds?: readonly string[], settings: Partial<CounterRuntimeSettings> = {}): CounterData {
+  const runtime = { ...DEFAULT_RUNTIME_SETTINGS, ...settings }
+  const runtimeData = {
+    shiftSize: runtime.realCustomers,
+    maxQuestions: runtime.customerQuestions,
+    hintsPerShift: runtime.hints,
+    handbookSeconds: runtime.handbookSeconds,
+  }
+  if (!caseIds) return { ...DATA, ...runtimeData }
   const cases = caseIds.map((id) => DATA.cases.find((c) => c.id === id)).filter((c): c is CounterData['cases'][number] => !!c)
-  return { ...DATA, cases }
+  return { ...DATA, ...runtimeData, cases }
 }
 
 /** คลังลูกค้าทั้งหมด (ใช้ในเทสต์/ตรวจเนื้อหา) */
@@ -228,8 +254,12 @@ export function counterPoolIds(): string[] {
  * ให้คะแนนทั้งกะ — นับเฉพาะลูกค้าใน `caseIds` (กะที่เซิร์ฟเวอร์จับให้นักเรียนคนนี้)
  * ไม่ส่ง = ใช้ชุดสำรอง 2 คน
  */
-export function scoreCounter(payload: unknown, caseIds: readonly string[] = LEGACY_SHIFT): { score: number; passed: boolean; detail: unknown } {
-  const parsed = payloadSchema.safeParse(payload)
+export function scoreCounter(
+  payload: unknown,
+  caseIds: readonly string[] = LEGACY_SHIFT,
+  settings: Pick<CounterRuntimeSettings, 'customerQuestions' | 'tagPass' | 'stampPass'> = DEFAULT_RUNTIME_SETTINGS,
+): { score: number; passed: boolean; detail: unknown } {
+  const parsed = payloadSchema(settings.customerQuestions).safeParse(payload)
   if (!parsed.success) {
     const detail: CounterDetail = {
       tagAccuracy: 0,
@@ -290,7 +320,7 @@ export function scoreCounter(payload: unknown, caseIds: readonly string[] = LEGA
   const tagAccuracy = tagsTotalAll > 0 ? tagsCorrectAll / tagsTotalAll : 0
   const stampAccuracy = stampMax > 0 ? stampPoints / stampMax : 0
   const score = Math.round(50 * tagAccuracy + 50 * stampAccuracy)
-  const passed = stampAccuracy >= 0.6 && tagAccuracy >= 0.8
+  const passed = stampAccuracy * 100 >= settings.stampPass && tagAccuracy * 100 >= settings.tagPass
 
   const groups = COUNTER_CATEGORIES.map((c) => groupMap.get(c)).filter((g): g is CounterGroupResult => !!g)
   const detail: CounterDetail = { tagAccuracy, stampAccuracy, cases, stampPoints, stampMax, groups }
@@ -302,11 +332,11 @@ export function scoreCounter(payload: unknown, caseIds: readonly string[] = LEGA
  * คำอธิบายเปิดเฉพาะตอนลองแก้ครั้งที่ 2 แล้วยังไม่ถูก
  * @throws ZodError เมื่อรูปแบบข้อมูลผิด (route ตอบ 400)
  */
-export function checkCounterStep(payload: unknown): {
+export function checkCounterStep(payload: unknown, maxQuestions = 3): {
   result: CounterStepResult
   log: { caseId: string; attempt: 1 | 2; correct: boolean }
 } {
-  const d = decisionSchema.parse(payload)
+  const d = decisionSchema(maxQuestions).parse(payload)
   const ans = ANSWERS.cases.find((c) => c.caseId === d.caseId)
   const attempt = d.attempt ?? 1
   if (!ans) {

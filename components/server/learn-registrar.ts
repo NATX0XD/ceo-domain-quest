@@ -126,8 +126,8 @@ const StepSchema = z.discriminatedUnion('kind', [
 ])
 
 /** ส่วนสาธารณะ (ไม่มีเฉลย) สำหรับส่งให้ RegistrarGame */
-export function publicRegistrarData(): RegistrarData {
-  return publicData
+export function publicRegistrarData(settings?: { startCoins: number }): RegistrarData {
+  return settings ? { ...publicData, fee: { ...publicData.fee, startCoins: settings.startCoins } } : publicData
 }
 
 /** คำสำคัญของแต่ละขั้น ใช้ตรวจคำอธิบายที่พิมพ์เอง */
@@ -298,7 +298,10 @@ export function checkRegistrarStep(payload: unknown): { result: RegistrarStepRes
   }
 }
 
-export function scoreRegistrar(payload: unknown): RegistrarResult {
+export function scoreRegistrar(
+  payload: unknown,
+  settings: { explainPass: number; eventsPass: number } = { explainPass: PASS_EXPLAIN, eventsPass: MIN_EVENTS_CORRECT },
+): RegistrarResult {
   const parsed = RegistrarPayloadSchema.safeParse(payload)
   if (!parsed.success) {
     const detail: RegistrarDetail = {
@@ -347,7 +350,7 @@ export function scoreRegistrar(payload: unknown): RegistrarResult {
   const explainPoints = (rub.total / 10) * EXPLAIN_POINTS
 
   const raw = orderPoints + eventPoints + explainPoints
-  const passed = rub.total >= PASS_EXPLAIN && eventsCorrect >= MIN_EVENTS_CORRECT
+  const passed = rub.total >= settings.explainPass && eventsCorrect >= settings.eventsPass
   const stars = !passed ? 0 : parsed.data.repaired ? 1 : firstTry === orderTotal && rub.total >= 9 ? 3 : 2
 
   const detail: RegistrarDetail = {

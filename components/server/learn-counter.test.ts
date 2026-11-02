@@ -246,3 +246,23 @@ describe('drawShift สุ่มลูกค้าต่อกะ', () => {
     expect(publicCounterData(ids).cases.map((c) => c.id)).toEqual(ids)
   })
 })
+
+describe('ค่าตั้งของครูกับด่าน 3', () => {
+  it('shiftSize และ publicCounterData ตามค่าตั้ง', () => {
+    expect(newShiftSeed(null, Math.random, [], 3).caseIds).toHaveLength(3)
+    const d = publicCounterData(undefined, { realCustomers: 3, customerQuestions: 1, hints: 0, handbookSeconds: 30 })
+    expect(d).toMatchObject({ shiftSize: 3, maxQuestions: 1, hintsPerShift: 0, handbookSeconds: 30 })
+  })
+  it('เกณฑ์ผ่านติดแท็ก/ตราตามค่าตั้ง และจำกัดจำนวนคำถาม', () => {
+    const base = { customerQuestions: 3, tagPass: 80, stampPass: 60 }
+    const decisions = legacy.map(perfect)
+    expect(scoreCounter({ decisions }, LEGACY_SHIFT, { ...base, tagPass: 100 }).passed).toBe(true)
+    const bad = decisions.map((d, i) => (i === 0 ? { ...d, stamp: d.stamp === 'reject' ? 'approve' : 'reject', extension: null } : d))
+    const loose = scoreCounter({ decisions: bad }, LEGACY_SHIFT, { ...base, stampPass: 50 })
+    const strict = scoreCounter({ decisions: bad }, LEGACY_SHIFT, { ...base, stampPass: 100 })
+    expect(strict.passed).toBe(false)
+    expect(loose.score).toBe(strict.score)
+    const asked = decisions.map((d) => ({ ...d, asked: ['a', 'b'] }))
+    expect(scoreCounter({ decisions: asked }, LEGACY_SHIFT, { ...base, customerQuestions: 1 }).passed).toBe(false)
+  })
+})

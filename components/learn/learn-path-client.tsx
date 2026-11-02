@@ -7,9 +7,10 @@ import type { LearnPath, LearnState } from '@/components/server/learn-path'
 import {
   type CounterData,
   type CounterDecision,
+  type CounterRuntimeSettings,
   type CounterStepResult,
 } from '@/components/learn/counter-types'
-import type { RegistrarCard, RegistrarData, RegistrarStepPayload } from '@/components/learn/registrar-types'
+import type { RegistrarCard, RegistrarData, RegistrarRuntimeSettings, RegistrarStepPayload } from '@/components/learn/registrar-types'
 import { MissionGame, type GameData } from '@/components/mission-game'
 import { CounterGame } from '@/components/learn/counter-game'
 import { RegistrarGame } from '@/components/learn/registrar-game'
@@ -86,9 +87,13 @@ export interface LearnPathClientProps {
   path: LearnPath
   state: LearnState
   passScore: number
+  enabledModes?: readonly LearnModeId[]
+  aiFeedback?: boolean
   gameData?: GameData | null
   counterData?: CounterData | null
   counterPracticeData?: CounterData | null
+  counterSettings?: CounterRuntimeSettings | null
+  registrarSettings?: RegistrarRuntimeSettings | null
   registrarData?: RegistrarData | null
   registrarCard?: RegistrarCard | null
   recommendedMode?: LearnModeId | null
@@ -103,9 +108,13 @@ export function LearnPathClient({
   path,
   state,
   passScore,
+  enabledModes = ['watch', 'read', 'do'],
+  aiFeedback = true,
   gameData,
   counterData,
   counterPracticeData,
+  counterSettings,
+  registrarSettings,
   registrarData,
   registrarCard,
   recommendedMode = null,
@@ -125,7 +134,8 @@ export function LearnPathClient({
     singleMode ? (state.chosen === 'do' || directGame ? 'do' : 'intro') : (state.chosen ?? 'result'),
   )
   const [mode, setMode] = useState<LearnModeId | null>(state.chosen ?? (directGame ? 'do' : null))
-  const [picked, setPicked] = useState<LearnModeId | null>(state.chosen ?? recommendedMode ?? 'do')
+  const initialRecommended = recommendedMode && enabledModes.includes(recommendedMode) ? recommendedMode : enabledModes[0] ?? 'do'
+  const [picked, setPicked] = useState<LearnModeId | null>(state.chosen ?? initialRecommended)
 
   const [sceneIdx, setSceneIdx] = useState(0)
   const [autoPlay, setAutoPlay] = useState(true)
@@ -282,7 +292,7 @@ export function LearnPathClient({
   }
 
   async function submitChoose() {
-    if (!picked) return
+    if (!picked || !enabledModes.includes(picked)) return
     setBusy(true)
     setError(null)
     const res = await postLearn<{ ok: true }>(missionId, {
@@ -906,13 +916,16 @@ export function LearnPathClient({
           }}
           onStart={submitChoose}
           onClose={() => (mode ? go(mode) : router.push('/map'))}
+          enabledModes={enabledModes}
           presentation="drawer"
         />
       ) : null}
       {step === 'result' && isM1 ? (
         <M1ModeChooser
-          recommended={recommendedMode ?? 'do'}
+          recommended={initialRecommended}
           picked={picked}
+          enabledModes={enabledModes}
+          passScore={passScore}
           error={error}
           onPick={(m) => {
             buzz()
@@ -981,6 +994,7 @@ export function LearnPathClient({
               title={path.watch.brief?.title ?? path.watch.title}
               situation={path.watch.brief?.situation ?? path.story}
               tip={path.watch.brief?.tip ?? 'ดูเรื่องราวให้จบ แล้วตอบคำถามโดม 2 ข้อด้วยคำของตนเอง'}
+            passScore={passScore}
             />
           ) : null}
           {isM1 && step === 'read' && brief ? (
@@ -1303,7 +1317,7 @@ export function LearnPathClient({
                 onChange={(id, value) => setAnswers((prev) => ({ ...prev, [id]: value }))}
                 qIdx={qIdx}
                 onlyId={qPhase === 'supp' && answerResult ? (weakest(answerResult)?.id ?? null) : null}
-                domeNote={qPhase === 'supp' && answerResult ? aiReply(weakest(answerResult)) : null}
+                domeNote={qPhase === 'supp' && answerResult && aiFeedback ? aiReply(weakest(answerResult)) : null}
                 replies={domeReplies}
                 pendingId={qPhase === 'ask' ? replyPending : null}
                 onReview={qPhase === 'ask' ? () => startReview(questions[qIdx]?.review) : undefined}
@@ -1382,6 +1396,7 @@ export function LearnPathClient({
                 <CardSortGame
                   data={path.do.cards}
                   mission={missionId}
+                  passScore={passScore}
                   storageKey={`${storeKey}:cards`}
                   onSubmit={submitDo}
                   onChangeMode={() => go('result')}
@@ -1405,11 +1420,12 @@ export function LearnPathClient({
                   studentId={studentId}
                   replay={replay}
                   level={undefined}
+                  settings={counterSettings}
                   onExit={exit.request}
                   onFinish={() => go('done')}
                 />
               ) : path.do.kind === 'registrar' && registrarData ? (
-                <RegistrarGame data={registrarData} card={registrarCard} onSubmit={submitDo} onStep={checkRegistrar} onFinish={() => go('done')} />
+                <RegistrarGame data={registrarData} settings={registrarSettings} card={registrarCard} onSubmit={submitDo} onStep={checkRegistrar} onFinish={() => go('done')} />
               ) : (
                 <Card tone="spark" padding="sm">
                   <p className="flex items-center gap-2 text-label font-bold text-ink">

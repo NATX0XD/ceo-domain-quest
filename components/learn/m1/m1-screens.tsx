@@ -19,13 +19,18 @@ export function M1ModeChooser({
   picked,
   onPick,
   error,
+  enabledModes = ['watch', 'read', 'do'],
+  passScore = 60,
 }: {
   recommended: LearnModeId
   picked: LearnModeId | null
   onPick: (m: LearnModeId) => void
   error?: string | null
+  enabledModes?: readonly LearnModeId[]
+  passScore?: number
 }) {
   const reduce = useReducedMotion()
+  const visibleModes = MODES.filter((mode) => enabledModes.includes(mode.id))
   return (
     <div className="m1-stack">
       <DomeSays mood="greet" size={112}>
@@ -34,7 +39,7 @@ export function M1ModeChooser({
       <M1Board className="m1-chooser">
         <h2 className="m1-chooser-title">อยากเรียนแบบไหนดี?</h2>
         <div className="m1-mode-grid" role="radiogroup" aria-label="เลือกวิธีเรียน">
-          {MODES.map((m, i) => {
+          {visibleModes.map((m, i) => {
             const on = picked === m.id
             return (
               <motion.button
@@ -64,7 +69,7 @@ export function M1ModeChooser({
           items={[
             { icon: '/icons/3d/books.webp', label: 'เรียนรู้', note: 'ตามวิธีที่เลือก' },
             { icon: '/icons/3d/speech-balloon.webp', label: 'ตอบโดม', note: 'หรือจับคู่การ์ด' },
-            { icon: '/icons/3d/trophy.webp', label: 'เกิน 60%', note: 'ผ่านไปต่อ' },
+            { icon: '/icons/3d/trophy.webp', label: `เกิน ${passScore}%`, note: 'ผ่านไปต่อ' },
           ]}
         />
         {error ? (
@@ -78,7 +83,7 @@ export function M1ModeChooser({
 }
 
 /** W0 — รับภารกิจก่อนดูคลิป */
-export function M1WatchBrief({ title, situation, tip }: { title: string; situation: string; tip: string }) {
+export function M1WatchBrief({ title, situation, tip, passScore = 60 }: { title: string; situation: string; tip: string; passScore?: number }) {
   return (
     <div className="m1-stack">
       <M1Board className="m1-brief">
@@ -101,7 +106,7 @@ export function M1WatchBrief({ title, situation, tip }: { title: string; situati
           items={[
             { icon: '/icons/3d/television.webp', label: 'ดูคลิปจนจบ', note: 'กดเล่นซ้ำได้' },
             { icon: '/icons/3d/speech-balloon.webp', label: 'ตอบโดม 2 ข้อ', note: 'ด้วยคำของตัวเอง' },
-            { icon: '/icons/3d/trophy.webp', label: 'เกิน 60% ผ่าน', note: 'ไปต่อได้ทันที' },
+            { icon: '/icons/3d/trophy.webp', label: `เกิน ${passScore}% ผ่าน`, note: 'ไปต่อได้ทันที' },
           ]}
         />
       </M1Board>

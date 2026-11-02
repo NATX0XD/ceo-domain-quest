@@ -26,6 +26,7 @@ import type {
   CounterDecision,
   CounterDetail,
   CounterMood,
+  CounterRuntimeSettings,
   CounterStampId,
   CounterStep,
   CounterStepResult,
@@ -350,6 +351,7 @@ export function PixelShift({
   practiceLabel,
   hbSeconds,
   hintsTotal,
+  runtime,
   onCheck,
   onComplete,
   onStat,
@@ -374,11 +376,16 @@ export function PixelShift({
   onStat?: (k: 'handbook' | 'dome') => void
   hbSeconds: number
   hintsTotal: number
+  /** ค่าตั้งของครู (snapshot จากเซิร์ฟเวอร์) */
+  runtime?: Pick<CounterRuntimeSettings, 'customerSeconds' | 'extendSeconds' | 'domeQuota'>
   onCheck?: (decision: CounterDecision) => Promise<CounterStepResult>
   onExit?: () => void
   onComplete: (all: CounterDecision[]) => Promise<void>
 }) {
   const { reduce, spring } = useGameMotion()
+  const customerSeconds = runtime?.customerSeconds ?? CUSTOMER_SECONDS
+  const extendSeconds = runtime?.extendSeconds ?? EXTRA_SECONDS
+  const domeQuota = runtime?.domeQuota ?? null
   const exit = useExitConfirm(onExit)
   const [soundOn, toggleSound] = useM3Sound()
   const clock = useShiftClock()
@@ -406,6 +413,7 @@ export function PixelShift({
   const [domeLog, setDomeLog] = useState<DomeLine[]>([])
   const [domeTyped, setDomeTyped] = useState('')
   const [domeBusy, setDomeBusy] = useState(false)
+  const [domeUsed, setDomeUsed] = useState(0)
   const [timeUp, setTimeUp] = useState(false)
   const [restarting, setRestarting] = useState(false)
   const [penalty, setPenalty] = useState(initial.penalty)
@@ -414,7 +422,7 @@ export function PixelShift({
   const [turnDir, setTurnDir] = useState<'l' | 'r' | null>(null)
   const [hbLeft, setHbLeft] = useState(hbSeconds)
   const [dragX, setDragX] = useState(0)
-  const [custLeft, setCustLeft] = useState(CUSTOMER_SECONDS)
+  const [custLeft, setCustLeft] = useState(customerSeconds)
   const [stamping, setStamping] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -627,7 +635,8 @@ export function PixelShift({
     setFeedback(null)
     setWrongHint([])
     setLook('counter')
-    setCustLeft(CUSTOMER_SECONDS)
+    setCustLeft(customerSeconds)
+    setDomeUsed(0)
   }
 
   /** คำใบ้จากปุ่ม: จำกัดต่อลูกค้า 1 คน (ลูกค้าคนใหม่ได้ครบอีกครั้ง) */
@@ -646,6 +655,8 @@ export function PixelShift({
   async function askDomeFree() {
     const q = domeTyped.trim()
     if (!q || domeBusy) return
+    if (domeQuota !== null && domeUsed >= domeQuota) return
+    setDomeUsed((n) => n + 1)
     sfx('tap')
     onStat?.('dome')
     setDomeTyped('')
@@ -797,7 +808,7 @@ export function PixelShift({
     sfx('ok')
     setPenalty((n) => n + EXTRA_COST)
     setPoints((p) => Math.max(0, p - EXTRA_COST))
-    setCustLeft((s) => s + EXTRA_SECONDS)
+    setCustLeft((s) => s + extendSeconds)
     setTimeUp(false)
   }
 
@@ -1527,12 +1538,16 @@ export function PixelShift({
                     value={domeTyped}
                     maxLength={200}
                     onChange={(e) => setDomeTyped(e.target.value)}
-                    placeholder="พิมพ์ถามโดม เช่น .or.th ใครจดได้"
+                    placeholder={domeQuota !== null && domeUsed >= domeQuota ? 'โควตาถามโดมของลูกค้าคนนี้หมดแล้ว' : 'พิมพ์ถามโดม เช่น .or.th ใครจดได้'}
+                    disabled={domeQuota !== null && domeUsed >= domeQuota}
                   />
-                  <button type="submit" disabled={!domeTyped.trim() || domeBusy} aria-label="ส่งคำถามถึงโดม">
+                  <button type="submit" disabled={!domeTyped.trim() || domeBusy || (domeQuota !== null && domeUsed >= domeQuota)} aria-label="ส่งคำถามถึงโดม">
                     ›
                   </button>
                 </form>
+                {domeQuota !== null ? (
+                  <p className="px-muted" data-testid="dome-quota">ถามโดมเองได้อีก {Math.max(0, domeQuota - domeUsed)}/{domeQuota} ครั้งสำหรับลูกค้าคนนี้</p>
+                ) : null}
               </div>
             </section>
           </div>
@@ -1583,7 +1598,7 @@ export function PixelShift({
           <PxImg srcs={PX_ASSET.dome('thinking')} className="px-timeup-dome" />
           <h2>หมดเวลาแล้ว</h2>
           <p>
-            {current.name} รอนานแล้ว จะเล่นต่ออีก {EXTRA_SECONDS} วินาที (หัก {EXTRA_COST} เหรียญ) หรือ{onRestart ? 'เริ่มกะใหม่กับลูกค้าชุดใหม่' : 'เริ่มลูกค้าคนนี้ใหม่'}
+            {current.name} รอนานแล้ว {extendSeconds > 0 ? `จะเล่นต่ออีก ${extendSeconds} วินาที (หัก ${EXTRA_COST} เหรียญ) หรือ` : ''}{onRestart ? 'เริ่มกะใหม่กับลูกค้าชุดใหม่' : 'เริ่มลูกค้าคนนี้ใหม่'}
           </p>
           {penalty > 0 ? <p className="px-muted">กะนี้ต่อเวลาไปแล้ว {penalty} ครั้ง</p> : null}
           {error && timeUp ? (
@@ -1592,9 +1607,11 @@ export function PixelShift({
             </p>
           ) : null}
           <div className="px-stack">
-            <PxBtn tone="gold" onClick={keepPlaying} disabled={restarting}>
-              เล่นต่อ +{EXTRA_SECONDS} วิ (−{EXTRA_COST} เหรียญ)
-            </PxBtn>
+            {extendSeconds > 0 ? (
+              <PxBtn tone="gold" onClick={keepPlaying} disabled={restarting}>
+                เล่นต่อ +{extendSeconds} วิ (−{EXTRA_COST} เหรียญ)
+              </PxBtn>
+            ) : null}
             <PxBtn tone="cream" onClick={() => void restartShift()} busy={restarting}>
               {onRestart ? 'เริ่มกะใหม่ (สุ่มลูกค้าใหม่)' : 'เริ่มลูกค้าคนนี้ใหม่'}
             </PxBtn>

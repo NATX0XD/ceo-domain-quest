@@ -16,6 +16,7 @@ import {
   type CounterDecision,
   type CounterDetail,
   type CounterLevel,
+  type CounterRuntimeSettings,
   type CounterStepResult,
 } from './counter-types'
 
@@ -77,6 +78,7 @@ export function CounterGame({
   onExit,
   onFinish,
   replay,
+  settings,
 }: {
   data: CounterData
   /** ลูกค้าตัวอย่าง c6 ใช้เฉพาะ tutorial ไม่ส่งเข้า scorer/rotation */
@@ -90,6 +92,8 @@ export function CounterGame({
   studentId?: string
   /** เปิดจากปุ่มเล่นซ้ำหลังจบด่าน — จับลูกค้าชุดใหม่ก่อนเริ่มกะ */
   replay?: boolean
+  /** ค่าตั้งของครูที่เซิร์ฟเวอร์ snapshot ไว้ให้กะนี้ */
+  settings?: CounterRuntimeSettings | null
   /** ระดับตามคะแนนวอร์มอัพ ไม่ส่ง = ใช้ค่าในเนื้อหา */
   level?: CounterLevel
   /** ธุรกิจของผู้เล่น ใช้กับลูกค้าคนสุดท้าย (S17) */
@@ -179,7 +183,9 @@ export function CounterGame({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replay])
 
-  const lv = level ? COUNTER_LEVELS[level] : { handbookSeconds: data.handbookSeconds, hints: data.hintsPerShift }
+  const lv = settings
+    ? { handbookSeconds: settings.handbookSeconds, hints: settings.hints }
+    : level ? COUNTER_LEVELS[level] : { handbookSeconds: data.handbookSeconds, hints: data.hintsPerShift }
   const detail = result && isDetail(result.detail) ? result.detail : null
 
   async function finishShift(all: CounterDecision[]) {
@@ -243,7 +249,7 @@ export function CounterGame({
         replay={replay}
         onReady={() => {
           rememberShift(shiftCases.map((c) => c.id))
-          setStage(replay ? 'play' : 'practice')
+          setStage(replay || settings?.practiceEnabled === false ? 'play' : 'practice')
         }}
         onPracticeAgain={() => {
           setPracticeKind('tutorial')
@@ -338,6 +344,7 @@ export function CounterGame({
         practiceLabel={isTutorial ? 'ลูกค้าฝึก · ยังไม่นับคะแนน' : undefined}
         hbSeconds={lv.handbookSeconds}
         hintsTotal={lv.hints}
+        runtime={settings ?? undefined}
         onCheck={onCheck}
         onExit={onExit}
         onComplete={async () => setStage(isTutorial ? 'transition' : 'ready')}
@@ -354,6 +361,7 @@ export function CounterGame({
       cases={cases}
       hbSeconds={lv.handbookSeconds}
       hintsTotal={lv.hints}
+      runtime={settings ?? undefined}
       onCheck={onCheck}
       onStat={bump}
       onExit={onExit}

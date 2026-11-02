@@ -78,12 +78,14 @@ type Phase =
 export function TextChat({
   chrome,
   questions,
+  maxAttempts = 4,
   grade,
   saveNotebook,
   onFinish,
 }: {
   chrome: Chrome;
   questions: TextQuestion[];
+  maxAttempts?: number;
   grade: (question: TextQuestion, answer: string, attempt: number) => Promise<TextGrade | null>;
   saveNotebook: () => Promise<boolean>;
   onFinish: (scores: number[]) => void;
@@ -193,13 +195,13 @@ export function TextChat({
       return;
     }
     setAttempts((all) => ({ ...all, [question.id]: attempt }));
-    if (result.correct || result.reveal) {
+    if (result.correct || result.reveal || attempt >= maxAttempts) {
       push(
         mk(
           "dome",
           result.correct
             ? `ถูกต้องครับ! ${result.feedback ?? ""}`
-            : `ไม่เป็นไรครับ เฉลยคือ ${result.reveal}`,
+              : `ไม่เป็นไรครับ ${result.reveal ?? "ครบจำนวนครั้งแล้ว ลองดูสรุปด้านบนอีกครั้งนะ"}`,
           result.correct ? "ok" : "warn",
         ),
       );

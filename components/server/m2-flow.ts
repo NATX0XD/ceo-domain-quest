@@ -1,9 +1,10 @@
 import { z } from 'zod'
 import type { MissionId } from '@/lib/db/repo'
-import { logEvent } from '@/lib/db/repo'
+import { getStudent, logEvent } from '@/lib/db/repo'
 import { loadMissionRow, recordMissionAnswer, setMissionStarsDb } from '@/components/server/game-state'
 import { ai } from '@/components/server/ai'
 import { findLearnPath, scoreOpenAnswers } from '@/components/server/learn-path'
+import { DEFAULTS, getMissionSettings, type MissionSettings } from '@/lib/mission-settings'
 
 const StopSchema = z.object({
   kind: z.literal('stop'),
@@ -28,7 +29,7 @@ const TextSchema = z.object({
   mode: z.enum(['watch', 'read']).default('read'),
   questionId: z.string().min(1).max(40),
   answer: z.string().max(1000),
-  attempt: z.number().int().min(1).max(4),
+  attempt: z.number().int().min(1).max(6),
 })
 
 const SimSchema = z.object({
@@ -40,7 +41,7 @@ const SimSchema = z.object({
 
 const ExitSchema = z.object({
   kind: z.literal('exit'),
-  answers: z.array(z.number().int().min(0).max(2)).length(3),
+  answers: z.array(z.number().int().min(0).max(2)).min(1).max(3),
   stageScore: z.number().min(0).max(70),
   repair: z.boolean().optional().default(false),
 })
@@ -90,15 +91,19 @@ function stopResult(input: z.infer<typeof StopSchema>): Extract<M2StepResult, { 
   return { kind: 'stop', correct: false, phase: 'explain', explanation: STOP_EXPLANATIONS[input.stop] }
 }
 
-async function textResult(studentId: string, input: z.infer<typeof TextSchema>): Promise<Extract<M2StepResult, { kind: 'text' }>> {
+async function textResult(studentId: string, input: z.infer<typeof TextSchema>, settings: MissionSettings['m2']): Promise<Extract<M2StepResult, { kind: 'text' }>> {
   const path = findLearnPath('m2')
   if (!path || (path[input.mode].questions as readonly { id: string }[]).every((q) => q.id !== input.questionId)) {
     throw new Error('m2 text question not found')
   }
-  const result = await scoreOpenAnswers(path, input.mode, { [input.questionId]: input.answer }, { checker: ai, studentId })
+  const result = await scoreOpenAnswers(path, input.mode, { [input.questionId]: input.answer }, {
+    checker: settings.aiFeedback ? ai : null,
+    studentId,
+    passScore: settings.passScore,
+  })
   const item = result.perQuestion.find((q) => q.id === input.questionId)
   if (!item) throw new Error('m2 text score missing')
-  const correct = item.score > 60
+  const correct = item.score > settings.passScore
   const reveals: Record<string, string> = {
     'm2-rq1': 'parts คือ Subdomain, forcespeed คือ SLD ชื่อหลัก และ .com คือ TLD ที่บอกกลุ่มใหญ่',
     'm2-rq2': 'เริ่มจาก .com ทางขวาสุด แล้วอ่านย้อนมาที่ชื่อหลักตรงกลาง ก่อนถึงบริการย่อยทางซ้าย',
@@ -110,7 +115,7 @@ async function textResult(studentId: string, input: z.infer<typeof TextSchema>):
     answers: { [input.questionId]: input.answer },
   })
   if (correct) return { kind: 'text', correct: true, score: item.score, feedback: item.feedback, source: item.source }
-  if (input.attempt <= 2) {
+  if (input.attempt < settings.textAttempts) {
     const question = path[input.mode].questions.find((q) => q.id === input.questionId)
     return { kind: 'text', correct: false, score: item.score, feedback: item.feedback, hint: question?.hint ?? 'ลองย้อนอ่านบทเรียนช่วงนี้อีกครั้งนะ', source: item.source }
   }
@@ -158,13 +163,14 @@ const SIM_RETRY: Record<number, string> = {
   4: 'ชื่อนี้มีนามสกุล 2 ชิ้น ลองดูว่าชิ้นไหนเป็นชื่อร้าน ชิ้นไหนเป็นบริการย่อย แล้ววางใหม่นะ',
 }
 
-async function exitResult(studentId: string, input: z.infer<typeof ExitSchema>): Promise<Extract<M2StepResult, { kind: 'exit' }>> {
-  const correct = EXIT_ANSWERS.filter((answer, i) => input.answers[i] === answer).length
-  const exitScore = Math.round((correct / 3) * 30)
+async function exitResult(studentId: string, input: z.infer<typeof ExitSchema>, settings: MissionSettings['m2']): Promise<Extract<M2StepResult, { kind: 'exit' }>> {
+  if (input.answers.length !== settings.exitQuestions) throw new Error('m2 exit question count mismatch')
+  const correct = EXIT_ANSWERS.slice(0, settings.exitQuestions).filter((answer, i) => input.answers[i] === answer).length
+  const exitScore = Math.round((correct / settings.exitQuestions) * 30)
   const score = Math.max(0, Math.min(100, Math.round(input.stageScore) + exitScore))
   // A zero-answer Exit Check is the storyboard's “almost there” ending even when
   // the learner completed the practice board. This keeps the repair drill reachable.
-  const grade = correct === 0 ? 'C' : score >= 90 ? 'A' : score >= 60 ? 'B' : 'C'
+  const grade = correct === 0 ? 'C' : score >= 90 ? 'A' : score >= settings.passScore ? 'B' : 'C'
   const passed = grade !== 'C'
   const stars = grade === 'A' ? 3 : grade === 'B' ? 2 : 0
   await logEvent(studentId, 'learn-m2-exit', { missionId: 'm2', score, exitScore, grade, passed, answers: input.answers, repair: input.repair })
@@ -177,8 +183,14 @@ async function exitResult(studentId: string, input: z.infer<typeof ExitSchema>):
   return { kind: 'exit', score, exitScore, grade, passed, stars }
 }
 
-export async function handleM2Step(studentId: string, payload: unknown): Promise<M2StepResult> {
+async function settingsForStudent(studentId: string): Promise<MissionSettings['m2']> {
+  const student = await getStudent(studentId)
+  return student ? getMissionSettings(student.classroom_id, 'm2') : DEFAULTS.m2
+}
+
+export async function handleM2Step(studentId: string, payload: unknown, providedSettings?: MissionSettings['m2']): Promise<M2StepResult> {
   const parsed = z.discriminatedUnion('kind', [StopSchema, PostSchema, DragSchema, TextSchema, SimSchema, ExitSchema, NotebookSchema]).parse(payload)
+  const settings = providedSettings ?? (await settingsForStudent(studentId))
   if (parsed.kind === 'stop') return stopResult(parsed)
   if (parsed.kind === 'post') {
     // post-clip question 1: kanombanyai.com vs kanombanyai.net — the TLD differs, so not the same site
@@ -188,8 +200,11 @@ export async function handleM2Step(studentId: string, payload: unknown): Promise
       explanation: '.com กับ .net เป็นคนละส่วนขวาสุด จึงเป็นคนละเว็บได้ ต้องดูให้ครบทุกส่วน',
     }
   }
-  if (parsed.kind === 'text') return textResult(studentId, parsed)
-  if (parsed.kind === 'sim') return simResult(parsed)
+  if (parsed.kind === 'text') return textResult(studentId, parsed, settings)
+  if (parsed.kind === 'sim') {
+    if (parsed.stage > settings.simStages) return { kind: 'sim', correct: false, reason: 'ด่านจำลองนี้ถูกปิดไว้ตามการตั้งค่าของครู' }
+    return simResult(parsed)
+  }
   if (parsed.kind === 'visual-drag') {
     const expected: Record<string, string> = { slot1: 'booking', slot2: 'kanombanyai', slot3: '.com' }
     const wrong = Object.keys(expected).filter((slot) => parsed.placements[slot] !== expected[slot])
@@ -200,6 +215,6 @@ export async function handleM2Step(studentId: string, payload: unknown): Promise
     await logEvent(studentId, 'learn-m2-notebook', { missionId: 'm2', text: parsed.text })
     return { kind: 'notebook', saved: true }
   }
-  return exitResult(studentId, parsed)
+  return exitResult(studentId, parsed, settings)
 }
 

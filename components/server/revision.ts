@@ -96,12 +96,12 @@ export interface RevisionState {
   blockedReason: string | null
 }
 
-export function revisionState(rows: Submission[]): RevisionState {
+export function revisionState(rows: Submission[], maxRevisionRounds = MAX_REVISION_ROUNDS): RevisionState {
   const versions = bigMissionSubmissions(rows)
   const latest = versions[0] ?? null
   const request = revisionRequestOf(latest)
   const roundsUsed = Math.max(0, versions.length - 1)
-  const limit = request?.overrideLimit ? roundsUsed + 1 : MAX_REVISION_ROUNDS
+  const limit = request?.overrideLimit ? roundsUsed + 1 : Math.max(0, maxRevisionRounds)
   const roundsLeft = Math.max(0, limit - roundsUsed)
 
   if (!latest) {
@@ -111,7 +111,7 @@ export function revisionState(rows: Submission[]): RevisionState {
       request: null,
       canResubmit: true,
       roundsUsed: 0,
-      roundsLeft: MAX_REVISION_ROUNDS,
+      roundsLeft: Math.max(0, maxRevisionRounds),
       blockedReason: null,
     }
   }

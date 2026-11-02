@@ -26,6 +26,7 @@ import {
   unauthorized,
 } from '../_lib/session-cookie'
 import { hasShopProfile } from '@/components/server/shop-gate'
+import { getMissionSettings } from '@/lib/mission-settings'
 
 /**
  * ภารกิจใหญ่ CEO (ขั้นที่ 4) — ส่งใบเสนอชื่อเว็บลงตาราง submissions
@@ -55,12 +56,13 @@ export async function GET() {
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง')
   if (!(await hasShopProfile(session.studentId))) return errorResponse('no-profile', 'ยังไม่ได้ตั้งค่าร้าน กลับไปที่หน้า /setup ก่อน', 409, { href: '/setup' })
+  const settings = await getMissionSettings(session.classroomId, 'ceo')
   /**
    * ต้องกรองแบบเดียวกับ POST — ใบของสถานี B ไม่มี emphasis_criterion ส่วนใบภารกิจใหญ่บังคับมีเสมอ
    * ถ้าไม่กรอง นักเรียนที่เพิ่งยื่นจดทะเบียนที่ m3 จะเปิดหน้าด่านบอสแล้วเจอว่า "ส่งไปแล้ว" ทั้งที่ยังไม่ได้ส่ง
    */
   const all = await listSubmissions(session.studentId)
-  const state = revisionState(all)
+  const state = revisionState(all, settings.revisions)
   const latest = state.latest
   return NextResponse.json({
     submitted: latest !== null,
@@ -94,6 +96,11 @@ export async function GET() {
      * ⚠️ **ไม่ส่งดาวหรือคะแนนของคนอื่น** และย้ำเสมอว่าเป็นข้อเสนอ ครูเป็นคนตัดสิน
      */
     feedback: latest ? studentFacingFeedback(latest) : null,
+    settings: {
+      aiGrading: settings.aiGrading,
+      revisions: settings.revisions,
+      submitModes: settings.submitModes,
+    },
   })
 }
 
@@ -236,13 +243,14 @@ export async function POST(request: Request) {
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง ใส่รหัสห้องกับ PIN ที่หน้า /join ก่อน')
   if (!(await hasShopProfile(session.studentId))) return errorResponse('no-profile', 'ยังไม่ได้ตั้งค่าร้าน กลับไปที่หน้า /setup ก่อน', 409, { href: '/setup' })
+  const settings = await getMissionSettings(session.classroomId, 'ceo')
 
   /**
    * ส่งซ้ำได้เมื่อครูกด "ส่งกลับให้แก้" เท่านั้น (สเปกข้อ 3.3)
    * ฉบับใหม่เป็น **แถวใหม่** ฉบับเดิมไม่ถูกทับ ครูจึงเทียบได้ว่านักเรียนแก้อะไร
    * เกินโควตารอบแก้แล้วไม่ตัน — ครูติ๊กปลดล็อกให้แก้ต่อได้ที่หน้าครู
    */
-  const state = revisionState(await listSubmissions(session.studentId))
+  const state = revisionState(await listSubmissions(session.studentId), settings.revisions)
   if (!state.canResubmit) {
     return errorResponse(
       state.request ? 'revision-limit' : 'already-submitted',
@@ -260,6 +268,8 @@ export async function POST(request: Request) {
 
   const { modeId, focusRubricId, fields, selfAssessment } = parsed.data
   if (!isSubmitModeId(modeId)) return errorResponse('bad-mode', 'ไม่มีรูปแบบการส่งงานนี้', 400)
+  const modeSetting = modeId === 'bm-mode-write' ? 'write' : modeId === 'bm-mode-voice' ? 'voice' : modeId === 'bm-mode-design' ? 'design' : null
+  if (!modeSetting || !settings.submitModes[modeSetting]) return errorResponse('mode-disabled', 'รูปแบบการส่งงานนี้ถูกปิดไว้โดยครู', 409)
   if (!isRubricId(focusRubricId)) return errorResponse('bad-rubric', 'ไม่มีด้านนี้ในรูบริก', 400)
 
   // ตรวจความครบถ้วนที่เซิร์ฟเวอร์ ไม่เชื่อการตรวจของหน้าเว็บ
@@ -353,7 +363,7 @@ export async function POST(request: Request) {
        * พอฝั่ง DB มีฟังก์ชันอัปเดต ai_scores ย้อนหลัง จะเติมช่อง aiProposed แล้วเปลี่ยนเป็น 'done'
        */
       // 'pending-ai' = คะแนนที่เห็นมาจากกฎ งานเข้าคิวรอ AI ตรวจอยู่ (worker เติม aiProposed ให้ทีหลัง)
-      gradingStatus: 'pending-ai',
+      gradingStatus: settings.aiGrading ? 'pending-ai' : 'not-requested',
       /** ฉบับที่เท่าไรของคนนี้ (1 = ฉบับแรก) ครูใช้เทียบว่าที่แก้มาดีขึ้นตรงไหน */
       version: revisionRound + 1,
       ruleScores: {
@@ -386,10 +396,12 @@ export async function POST(request: Request) {
    * ฝากงานให้ AI ตรวจเบื้องหลัง — ไม่รอผล ไม่แตะเน็ตในคำขอนี้
    * ถ้าเข้าคิวไม่สำเร็จก็ไม่กระทบนักเรียน เพราะคะแนนจากกฎบันทึกไปแล้ว
    */
-  const queued = await backgroundGrader()
-    .submit({ ...gradeInput, submissionId: submission.id })
-    .then((result) => result.jobId)
-    .catch(() => null)
+  const queued = settings.aiGrading
+    ? await backgroundGrader()
+        .submit({ ...gradeInput, submissionId: submission.id })
+        .then((result) => result.jobId)
+        .catch(() => null)
+    : null
 
   /**
    * Start the first queued job after the submission response is sent.  A single

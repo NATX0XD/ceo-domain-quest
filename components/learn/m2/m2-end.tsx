@@ -18,22 +18,25 @@ export const EXIT_QUESTIONS = [
 export function ExitCheck({
   chrome,
   busy,
+  questionCount = EXIT_QUESTIONS.length,
   onSubmit,
 }: {
   chrome: Chrome;
   busy: boolean;
+  questionCount?: number;
   onSubmit: (answers: number[]) => void;
 }) {
+  const questions = EXIT_QUESTIONS.slice(0, questionCount);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [picked, setPicked] = useState<number | null>(null);
-  const question = EXIT_QUESTIONS[index]!;
+  const question = questions[index]!;
   function pick(choice: number) {
     if (picked !== null || busy) return;
     setPicked(choice);
     const next = [...answers, choice];
     window.setTimeout(() => {
-      if (next.length >= EXIT_QUESTIONS.length) onSubmit(next);
+      if (next.length >= questions.length) onSubmit(next);
       else {
         setAnswers(next);
         setIndex((value) => value + 1);
@@ -42,7 +45,7 @@ export function ExitCheck({
     }, 550);
   }
   return (
-    <M2Screen {...chrome} title="เช็กความเข้าใจ" subtitle={`ข้อ ${index + 1}/3`} className="m2g-exit">
+    <M2Screen {...chrome} title="เช็กความเข้าใจ" subtitle={`ข้อ ${index + 1}/${questions.length}`} className="m2g-exit">
       <div className="m2g-exit-q">
         <img className="m2g-exit-dome" src={KIT("dome_cheer")} alt="โดม" draggable={false} />
         <div className="m2g-exit-bubble" key={index}>
