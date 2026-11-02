@@ -7,6 +7,7 @@ import { CounterFinalSelf, CounterOnboarding } from './game-ui/counter-prep'
 import { Cta, DomeSay, M3Stage, Panel, sfx } from './game-ui/counter-shell'
 import { PixelReport, PixelShift, coachKey } from './game-ui/pixel-counter'
 import type { ProgressStore, ShiftProgress } from './game-ui/shift-progress'
+import { isFreshM3Shift, M3_CUSTOMER_POOL_SIZE, M3_SHIFT_SIZE, readM3Seen, rememberM3Customers } from './m3-customer-rotation'
 import {
   COUNTER_LEVELS,
   type CounterCase,
@@ -74,6 +75,7 @@ export function CounterGame({
   business,
   onExit,
   onFinish,
+  replay,
 }: {
   data: CounterData
   onSubmit: (payload: unknown) => Promise<SubmitResult>
@@ -83,6 +85,8 @@ export function CounterGame({
   onNewShift?: () => Promise<CounterData['cases']>
   /** ใช้จำว่าเคยดูบทแนะนำแล้ว (ต่อนักเรียน) */
   studentId?: string
+  /** เปิดจากปุ่มเล่นซ้ำหลังจบด่าน — จับลูกค้าชุดใหม่ก่อนเริ่มกะ */
+  replay?: boolean
   /** ระดับตามคะแนนวอร์มอัพ ไม่ส่ง = ใช้ค่าในเนื้อหา */
   level?: CounterLevel
   /** ธุรกิจของผู้เล่น ใช้กับลูกค้าคนสุดท้าย (S17) */
@@ -112,8 +116,64 @@ export function CounterGame({
   const bump = (k: 'handbook' | 'dome') => setStats((x) => ({ ...x, [k]: x[k] + 1 }))
 
   const [shiftCases, setShiftCases] = useState(data.cases)
+  const [replayReady, setReplayReady] = useState(!replay)
   const cases = useMemo(() => shiftCases.map((c) => toView(c)), [shiftCases])
   const shiftData = useMemo(() => ({ ...data, cases: shiftCases }), [data, shiftCases])
+
+  function rememberShift(ids: readonly string[]) {
+    try {
+      const seen = readM3Seen(window.localStorage, studentId)
+      rememberM3Customers(window.localStorage, studentId, seen, ids)
+    } catch {
+      /* localStorage is optional; server shift history is authoritative */
+    }
+  }
+
+  async function freshShift(): Promise<CounterData['cases']> {
+    if (!onNewShift) return shiftCases
+    const seen = (() => {
+      try {
+        return readM3Seen(window.localStorage, studentId)
+      } catch {
+        return []
+      }
+    })()
+    let last: CounterData['cases'] = []
+    // The server excludes every previous shift. The small retry loop also protects
+    // students whose local history is ahead of an older server event stream.
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      last = await onNewShift()
+      const ids = last.map((c) => c.id)
+      if (isFreshM3Shift(ids, seen) || seen.length >= M3_CUSTOMER_POOL_SIZE) {
+        rememberShift(ids)
+        return last
+      }
+    }
+    rememberShift(last.map((c) => c.id))
+    return last
+  }
+
+  useEffect(() => {
+    if (!replay || !onNewShift) return
+    let cancelled = false
+    setReplayReady(false)
+    void freshShift()
+      .then((next) => {
+        if (!cancelled && next.length >= M3_SHIFT_SIZE) setShiftCases(next)
+      })
+      .catch(() => {
+        /* Keep the server's current shift if a replay refresh cannot reach the API. */
+      })
+      .finally(() => {
+        if (!cancelled) setReplayReady(true)
+      })
+    return () => {
+      cancelled = true
+    }
+    // Replay is intentionally a one-time preparation step for this mounted run.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [replay])
+
   // บทแนะนำครั้งแรก: อ่านครั้งเดียวตอนเปิด (กัน StrictMode เรียก effect ซ้ำ)
   const [coach, setCoach] = useState(false)
   const coachRead = useRef(false)
@@ -139,6 +199,7 @@ export function CounterGame({
 
   async function finishShift(all: CounterDecision[]) {
     const r = await onSubmit({ decisions: all })
+    rememberShift(shiftCases.map((c) => c.id))
     setResult(r)
     setStage(selfCard ? 'report' : 'final')
   }
@@ -160,7 +221,7 @@ export function CounterGame({
   async function reshuffle() {
     if (onNewShift) {
       try {
-        const next = await onNewShift()
+        const next = await freshShift()
         if (next.length > 0) setShiftCases(next)
       } catch {
         /* เน็ตล้ม: เล่นชุดเดิมต่อ เซิร์ฟเวอร์ยังตรวจกับกะเดิม */
@@ -181,7 +242,16 @@ export function CounterGame({
   const finish = onFinish ?? (() => router.push('/map?done=m3'))
 
   if (stage === 'onboarding') {
-    return <CounterOnboarding data={shiftData} onReady={() => setStage('play')} onExit={onExit} />
+    if (!replayReady) {
+      return (
+        <M3Stage pill="กำลังจัดคิว" onBack={onExit} bg="counter">
+          <Panel kicker="รอสักครู่นะ" title="กำลังจับลูกค้าชุดใหม่">
+            <p className="m3s-lead">รอบเล่นซ้ำจะไม่เรียกลูกค้าคนเดิม จนกว่าคลังลูกค้าจะครบทุกคน</p>
+          </Panel>
+        </M3Stage>
+      )
+    }
+    return <CounterOnboarding data={shiftData} onReady={() => { rememberShift(shiftCases.map((c) => c.id)); setStage('play') }} onExit={onExit} />
   }
 
   if (stage === 'final') {

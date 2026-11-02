@@ -168,6 +168,82 @@
         "q3"
       ],
       "explanation": ".or.th สงวนไว้ให้องค์กรไม่แสวงหากำไร คุณแพรเป็นมูลนิธิที่จดทะเบียนและมีใบอนุญาตจัดตั้ง จึงจด .or.th ได้ตามที่ขอ ส่วน .org อยู่หมวด gTLD ที่ใครก็จดได้"
+    },
+    {
+      "caseId": "c11",
+      "tags": { "arumpart.in.th": "ccTLD ไทย", "arumpart.com": "gTLD ทั่วไป" },
+      "stamp": "approve",
+      "acceptedExtensions": [],
+      "reason": "r1",
+      "keyQuestions": ["q1", "q2"],
+      "explanation": "อาร์มเป็นบุคคลทั่วไปและมีบัตรประชาชน จึงจด .in.th ได้ ส่วน .com เป็น gTLD ที่ใครก็จดได้"
+    },
+    {
+      "caseId": "c12",
+      "tags": { "baanrak.or.th": "หมวดเฉพาะที่สงวน", "baanrak.org": "gTLD ทั่วไป" },
+      "stamp": "suggest",
+      "acceptedExtensions": [".org", ".com", ".in.th"],
+      "reason": "r1",
+      "keyQuestions": ["q2", "q3"],
+      "explanation": "กลุ่มอาสายังไม่มีเอกสารองค์กร จึงยังใช้ .or.th ไม่ได้ ให้เสนอ .org ที่ใครก็จดได้ หรือ .in.th ที่ใช้บัตรประชาชนจด"
+    },
+    {
+      "caseId": "c13",
+      "tags": { "suksaschool.ac.th": "หมวดเฉพาะที่สงวน", "suksaschool.com": "gTLD ทั่วไป" },
+      "stamp": "first-step",
+      "acceptedExtensions": [".ac.th"],
+      "reason": "r1",
+      "keyQuestions": ["q2", "q3"],
+      "line": "ผมจะไปขอหนังสือรับรองจากโรงเรียน แล้วกลับมาจด suksaschool.ac.th ครับ",
+      "explanation": "โรงเรียนมีสิทธิ์ใช้ .ac.th แต่ต้องมีหนังสือรับรองจากโรงเรียนก่อน วันนี้ครูกฤตมีแค่บัตรประชาชน จึงให้ทำขั้นแรกก่อน"
+    },
+    {
+      "caseId": "c14",
+      "tags": { "queuecity.go.th": "หมวดเฉพาะที่สงวน", "queuecity.co.th": "ccTLD ไทย" },
+      "stamp": "suggest",
+      "acceptedExtensions": [".co.th", ".com", ".shop", ".in.th"],
+      "reason": "r2",
+      "keyQuestions": ["q1", "q3"],
+      "explanation": ".go.th สงวนไว้ให้หน่วยงานราชการ บริษัทเอกชนจึงใช้ไม่ได้ แม้จะรับงานเทศบาล ควรเสนอ .co.th ตามเอกสารบริษัท"
+    },
+    {
+      "caseId": "c15",
+      "tags": { "fastline.net.th": "หมวดเฉพาะที่สงวน", "fastline.com": "gTLD ทั่วไป" },
+      "stamp": "reject",
+      "acceptedExtensions": [],
+      "reason": "r3",
+      "keyQuestions": ["q2", "q3"],
+      "line": "ขอโทษครับ ผมจะกลับไปเตรียมใบอนุญาตจริงมายื่นใหม่ครับ",
+      "explanation": ".net.th สงวนไว้ให้ผู้ได้รับใบอนุญาตโทรคมนาคม ร้านนี้ไม่มีใบอนุญาตจริงและยื่นเอกสารปลอม จึงต้องปฏิเสธคำขอ"
+    },
+    {
+      "caseId": "c16",
+      "tags": { "pimjai.co.th": "ccTLD ไทย", "pimjai.in.th": "ccTLD ไทย" },
+      "stamp": "approve",
+      "acceptedExtensions": [],
+      "reason": "r1",
+      "keyQuestions": ["q1", "q2"],
+      "explanation": "คุณพิมจดทะเบียนบริษัทและมีเอกสารบริษัทกับ VAT จึงจด .co.th ได้ตามที่ขอ ส่วน .in.th เป็นชื่อสำรองในหมวดไทย"
+    },
+    {
+      "caseId": "c17",
+      "tags": { "ช่างไม้.ไทย": "ccTLD ไทย", "changmai.in.th": "ccTLD ไทย" },
+      "stamp": "first-step",
+      "acceptedExtensions": [".in.th"],
+      "reason": "r1",
+      "keyQuestions": ["q2", "q4"],
+      "line": "เข้าใจแล้วครับ ผมจะจด changmai.in.th ก่อน แล้วค่อยพ่วงชื่อภาษาไทยครับ",
+      "explanation": ".ไทย จดเดี่ยวไม่ได้ ต้องมีชื่อ .th ก่อน ลุงสมชายเป็นบุคคลทั่วไปจึงจด .in.th ก่อน แล้วค่อยจดชื่อภาษาไทยพ่วง"
+    },
+    {
+      "caseId": "c18",
+      "tags": { "heritage.mi.th": "หมวดเฉพาะที่สงวน", "heritage.org": "gTLD ทั่วไป" },
+      "stamp": "reject",
+      "acceptedExtensions": [],
+      "reason": "r3",
+      "keyQuestions": ["q1", "q3"],
+      "line": "เข้าใจแล้วค่ะ จะกลับไปใช้ชื่อ .org แทนสำหรับพิพิธภัณฑ์เอกชนค่ะ",
+      "explanation": ".mi.th สงวนไว้ให้หน่วยงานทหาร พิพิธภัณฑ์เอกชนไม่มีสิทธิ์ใช้ จึงต้องปฏิเสธคำขอและให้ใช้ .org หรือ .co.th ตามสิทธิ์"
     }
   ]
 }

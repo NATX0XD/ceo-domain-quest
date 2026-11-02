@@ -1400,6 +1400,7 @@ export function LearnPathClient({
                   onCheck={checkCounter}
                   onNewShift={newCounterShift}
                   studentId={studentId}
+                  replay={replay}
                   level={undefined}
                   onExit={exit.request}
                   onFinish={() => go('done')}

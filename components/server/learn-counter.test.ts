@@ -5,7 +5,7 @@ import type { CounterDecision, CounterDetail } from '../learn/counter-types'
 import { LEGACY_SHIFT, checkCounterStep, counterPoolIds, drawShift, newShiftSeed, publicCounterData, scoreCounter, validShift } from './learn-counter'
 
 type Answer = (typeof answers.cases)[number]
-/** เทสต์คะแนนเดิมใช้กะชุดเดิม 4 คน (ค่าเริ่มต้นของ scoreCounter) */
+/** เทสต์คะแนนใช้กะสำรอง 3 คน (ค่าเริ่มต้นของ scoreCounter) */
 const legacy = answers.cases.filter((a) => (LEGACY_SHIFT as readonly string[]).includes(a.caseId))
 
 function perfect(a: Answer): CounterDecision {
@@ -108,11 +108,11 @@ describe('scoreCounter ด่าน 3 เคาน์เตอร์รับจ
 
   it('ตราผิดได้ 0 แต้ม และไม่ผ่านเมื่อแต้มตราต่ำกว่า 60% แม้ป้ายถูกหมด', () => {
     const decisions = legacy.map((a, i) =>
-      i < 2 ? perfect(a) : { ...perfect(a), stamp: a.stamp === 'reject' ? 'approve' : 'reject', extension: null },
+      i < 1 ? perfect(a) : { ...perfect(a), stamp: a.stamp === 'reject' ? 'approve' : 'reject', extension: null },
     )
     const r = scoreCounter({ decisions })
     const detail = r.detail as CounterDetail
-    expect(detail.cases.map((c) => c.points)).toEqual([2, 2, 0, 0])
+    expect(detail.cases.map((c) => c.points)).toEqual([2, 0, 0])
     expect(detail.tagAccuracy).toBe(1)
     expect(r.passed).toBe(false)
   })
@@ -176,17 +176,17 @@ describe('scoreCounter ด่าน 3 เคาน์เตอร์รับจ
   })
 
   it('ลูกค้าทุกคนมีภาพและคำลงท้ายตรงเพศ (ชาย ครับ / หญิง ค่ะ)', () => {
-    const male = new Set(['c2', 'c3', 'c7', 'c9'])
+    const male = new Set(['c2', 'c3', 'c7', 'c9', 'c11', 'c13', 'c15', 'c17'])
     for (const c of publicCounterData().cases) {
-      expect(c.portrait).toMatch(/^c([1-9]|10)$/)
+      expect(c.portrait).toMatch(/^c([1-9]|1[0-8])$/)
       const text = [c.greeting, ...c.questions.map((q) => q.reply)].join(' ')
       if (male.has(c.portrait!)) expect(text).not.toMatch(/ค่ะ|คะ/)
       else expect(text).not.toMatch(/ครับ/)
     }
   })
 
-  it('คลังลูกค้ามีอย่างน้อย 8 คน ครบทั้ง 4 ตรา และครบ 3 ชั้นของคู่มือ', () => {
-    expect(counterPoolIds().length).toBeGreaterThanOrEqual(8)
+  it('คลังลูกค้ามีอย่างน้อย 18 คน ครบทั้ง 4 ตรา และครบ 3 ชั้นของคู่มือ', () => {
+    expect(counterPoolIds().length).toBeGreaterThanOrEqual(18)
     const stamps = new Set(answers.cases.map((a) => a.stamp))
     for (const s of ['approve', 'suggest', 'first-step', 'reject']) expect(stamps.has(s)).toBe(true)
     const cats = new Set(answers.cases.flatMap((a) => Object.values(a.tags)))
@@ -199,12 +199,12 @@ describe('drawShift สุ่มลูกค้าต่อกะ', () => {
   it('seed เดิมได้ชุดเดิมและลำดับเดิม (รีเฟรชไม่สลับ)', () => {
     for (const seed of [1, 42, 99999, 2 ** 31 - 1]) expect(drawShift(seed)).toEqual(drawShift(seed))
   })
-  it('ได้ 4 คนไม่ซ้ำ มีอนุมัติ เสนอใหม่ และขั้นแรก/ปฏิเสธ ครบ 3 ชั้นทุก seed', () => {
+  it('ได้ 3 คนไม่ซ้ำ มีอนุมัติ เสนอใหม่ และขั้นแรก/ปฏิเสธ ครบ 3 ชั้นทุก seed', () => {
     const seen = new Set<string>()
     for (let seed = 0; seed < 300; seed++) {
       const ids = drawShift(seed)
-      expect(ids).toHaveLength(4)
-      expect(new Set(ids).size).toBe(4)
+      expect(ids).toHaveLength(3)
+      expect(new Set(ids).size).toBe(3)
       const stamps = ids.map(stampOf)
       expect(stamps).toContain('approve')
       expect(stamps).toContain('suggest')
@@ -225,6 +225,20 @@ describe('drawShift สุ่มลูกค้าต่อกะ', () => {
     expect([...next.caseIds].sort()).not.toEqual([...prev].sort())
     expect(validShift(['c1', 'zzz', 'c1', 5])).toEqual(['c1'])
     expect(validShift([])).toEqual([...LEGACY_SHIFT])
+  })
+  it('หมุนครบทั้งคลังโดยไม่ซ้ำระหว่างกะ แล้วเริ่มสุ่มรอบใหม่เมื่อหมดคลัง', () => {
+    const seen = new Set<string>()
+    let previous: string[] = []
+    for (let run = 0; run < 6; run += 1) {
+      const next = newShiftSeed(previous, () => 0.42, [...seen])
+      expect(next.caseIds).toHaveLength(3)
+      expect(next.caseIds.some((id) => seen.has(id))).toBe(false)
+      next.caseIds.forEach((id) => seen.add(id))
+      previous = next.caseIds
+    }
+    expect(seen.size).toBe(counterPoolIds().length)
+    const reshuffled = newShiftSeed(previous, () => 0.91, [...seen])
+    expect(reshuffled.caseIds).toHaveLength(3)
   })
   it('scoreCounter ตรวจเฉพาะลูกค้าในกะ: ตอบถูกครบกะได้ 100 ส่งเคสนอกกะไม่ช่วย', () => {
     const ids = drawShift(123)

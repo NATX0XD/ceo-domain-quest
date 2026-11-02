@@ -50,3 +50,13 @@ All transparent webp, same pixel style and purple accent, no baked text. Code pa
 - c9 หมอกฤต  male 30s, doctor white coat + stethoscope (private clinic) — speaks ครับ
 - c10 คุณแพร female 40s, foundation/NGO worker, polo shirt + volunteer badge, holds folder — speaks ค่ะ
 Each: c{n}-neutral, c{n}-happy, c{n}-confused, c{n}-upset, c{n}-walk (.webp, 768x1024 transparent), same pixel style/scale/baseline as c1..c6.
+
+New pool customers c11–c18 (each has neutral, happy, confused, upset, and walk WebP variants at 768x1024 with transparent backgrounds):
+- c11 อาร์ม — male young online electronics seller; .in.th / .com; speaks ครับ
+- c12 นก — female community organic-farm volunteer; .or.th / .org; speaks ค่ะ
+- c13 ครูกฤต — male public-school teacher; .ac.th / .com; speaks ครับ
+- c14 คุณมะลิ — female private queue-system company clerk; .go.th / .co.th; speaks ค่ะ
+- c15 พี่บอส — male network installer without a telecom licence; .net.th / .com; speaks ครับ
+- c16 คุณพิม — female registered handmade-soap company owner; .co.th / .in.th; speaks ค่ะ
+- c17 ลุงสมชาย — male one-person wood artisan; ช่างไม้.ไทย / .in.th; speaks ครับ
+- c18 คุณรดา — female private museum administrator; .mi.th / .org; speaks ค่ะ

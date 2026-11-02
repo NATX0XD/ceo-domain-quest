@@ -29,7 +29,7 @@ const counterDataSchema = z.object({
   title: z.string(),
   intro: z.string(),
   maxQuestions: z.number().int().positive(),
-  shiftSize: z.number().int().positive().default(4),
+  shiftSize: z.number().int().positive().default(3),
   hintsPerShift: z.number().int().nonnegative(),
   handbookSeconds: z.number().int().positive(),
   categories: z.array(z.object({ id: category, label: z.string(), short: z.string() })),
@@ -119,8 +119,8 @@ function judge(ans: Answer, d: Decision | undefined) {
 const DATA: CounterData = counterDataSchema.parse(publicJson)
 const ANSWERS = answersSchema.parse(answersJson)
 
-/** ชุดลูกค้าเดิม 4 คน ใช้เมื่ออ่านกะของนักเรียนไม่ได้ */
-export const LEGACY_SHIFT = ['c1', 'c2', 'c3', 'c4'] as const
+/** ชุดสำรอง 3 คน ใช้เมื่ออ่านกะของนักเรียนไม่ได้ */
+export const LEGACY_SHIFT = ['c1', 'c2', 'c3'] as const
 
 /* ---------- สุ่มลูกค้าต่อกะ (กำหนดด้วย seed ซ้ำได้เสมอ) ---------- */
 
@@ -149,16 +149,19 @@ function shuffled<T>(list: readonly T[], rand: () => number): T[] {
  * อนุมัติ 1 · เสนอนามสกุลใหม่ 1 · ทำขั้นแรกก่อน/ปฏิเสธ 1 · ที่เหลือสุ่ม และป้ายครบทั้ง 3 ชั้นของคู่มือ
  * seed เดิมได้ชุดเดิมและลำดับเดิมทุกครั้ง (รีเฟรชไม่สลับลูกค้า)
  */
-export function drawShift(seed: number, size = DATA.shiftSize): string[] {
+export function drawShift(seed: number, size = DATA.shiftSize, excluded: readonly string[] = []): string[] {
   const pool = ANSWERS.cases.filter((a) => DATA.cases.some((c) => c.id === a.caseId))
-  const n = Math.min(size, pool.length)
+  const excludedSet = new Set(excluded)
+  const available = pool.filter((a) => !excludedSet.has(a.caseId))
+  const source = available.length >= size ? available : pool
+  const n = Math.min(size, source.length)
   const groups = [
-    pool.filter((a) => a.stamp === 'approve'),
-    pool.filter((a) => a.stamp === 'suggest'),
-    pool.filter((a) => a.stamp === 'first-step' || a.stamp === 'reject'),
+    source.filter((a) => a.stamp === 'approve'),
+    source.filter((a) => a.stamp === 'suggest'),
+    source.filter((a) => a.stamp === 'first-step' || a.stamp === 'reject'),
   ]
   const covers = (ids: string[]) => {
-    const cats = new Set(pool.filter((a) => ids.includes(a.caseId)).flatMap((a) => Object.values(a.tags)))
+    const cats = new Set(source.filter((a) => ids.includes(a.caseId)).flatMap((a) => Object.values(a.tags)))
     return COUNTER_CATEGORIES.every((c) => cats.has(c))
   }
   const rand = rng(seed)
@@ -169,7 +172,7 @@ export function drawShift(seed: number, size = DATA.shiftSize): string[] {
       const c = shuffled(g, rand)[0]
       if (c && pick.length < n) pick.push(c.caseId)
     }
-    for (const c of shuffled(pool, rand)) {
+    for (const c of shuffled(source, rand)) {
       if (pick.length >= n) break
       if (!pick.includes(c.caseId)) pick.push(c.caseId)
     }
@@ -179,13 +182,17 @@ export function drawShift(seed: number, size = DATA.shiftSize): string[] {
 }
 
 /** สุ่ม seed ใหม่ที่ได้ชุดลูกค้าไม่ซ้ำกับกะก่อน (ถ้าทำได้) */
-export function newShiftSeed(previous?: readonly string[] | null, random: () => number = Math.random): { seed: number; caseIds: string[] } {
+export function newShiftSeed(
+  previous?: readonly string[] | null,
+  random: () => number = Math.random,
+  excluded: readonly string[] = [],
+): { seed: number; caseIds: string[] } {
   const same = (ids: string[]) => !!previous && ids.length === previous.length && ids.every((id) => previous.includes(id))
   let seed = Math.floor(random() * 2 ** 31)
-  let caseIds = drawShift(seed)
+  let caseIds = drawShift(seed, DATA.shiftSize, excluded)
   for (let i = 0; i < 8 && same(caseIds); i++) {
     seed = Math.floor(random() * 2 ** 31)
-    caseIds = drawShift(seed)
+    caseIds = drawShift(seed, DATA.shiftSize, excluded)
   }
   return { seed, caseIds }
 }
@@ -219,7 +226,7 @@ export function counterPoolIds(): string[] {
 
 /**
  * ให้คะแนนทั้งกะ — นับเฉพาะลูกค้าใน `caseIds` (กะที่เซิร์ฟเวอร์จับให้นักเรียนคนนี้)
- * ไม่ส่ง = ใช้ชุดเดิม 4 คน
+ * ไม่ส่ง = ใช้ชุดสำรอง 3 คน
  */
 export function scoreCounter(payload: unknown, caseIds: readonly string[] = LEGACY_SHIFT): { score: number; passed: boolean; detail: unknown } {
   const parsed = payloadSchema.safeParse(payload)

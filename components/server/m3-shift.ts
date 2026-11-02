@@ -28,16 +28,38 @@ export async function readShift(studentId: string): Promise<M3Shift | null> {
   return { seed: p.seed, caseIds }
 }
 
+async function seenCaseIds(studentId: string): Promise<string[]> {
+  const { data, error } = await getServiceClient()
+    .from('events')
+    .select('payload')
+    .eq('student_id', studentId)
+    .eq('type', M3_SHIFT_EVENT)
+    .order('created_at', { ascending: true })
+  if (error) throw new Error(`seenCaseIds: ${error.message}`)
+  const ids = new Set<string>()
+  for (const row of data ?? []) {
+    const payload = row.payload as { caseIds?: unknown } | null
+    if (Array.isArray(payload?.caseIds)) {
+      for (const id of validShift(payload.caseIds)) ids.add(id)
+    }
+  }
+  return [...ids]
+}
+
 export async function startNewShift(studentId: string, previous?: readonly string[] | null): Promise<M3Shift> {
-  const shift = newShiftSeed(previous)
+  const seen = await seenCaseIds(studentId)
+  const shift = newShiftSeed(previous, Math.random, seen)
   await logEvent(studentId, M3_SHIFT_EVENT, shift)
   return shift
 }
 
-/** กะปัจจุบัน ยังไม่มี = จับใหม่ · DB ล่ม = ชุดเดิม 4 คน (เล่นต่อได้เสมอ) */
+/** กะปัจจุบัน ยังไม่มี = จับใหม่ · DB ล่ม = ชุดสำรอง 3 คน (เล่นต่อได้เสมอ) */
 export async function currentShift(studentId: string): Promise<M3Shift> {
   try {
-    return (await readShift(studentId)) ?? (await startNewShift(studentId))
+    const current = await readShift(studentId)
+    // Migrate shifts created before the 3-customer rule; never render an old 4-customer run.
+    if (current && current.caseIds.length === 3) return current
+    return await startNewShift(studentId, current?.caseIds)
   } catch (err) {
     console.error('[m3-shift]', err)
     return { seed: 0, caseIds: [...LEGACY_SHIFT] }
