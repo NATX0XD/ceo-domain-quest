@@ -6,7 +6,7 @@ import { shopStageFromCleared } from '@/components/shop-stages'
 import { SignInGate } from '@/components/student-shell'
 import { SessionClock } from '@/components/session-clock'
 import { BottomNav } from '@/components/bottom-nav'
-import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
+import { AppHeader, AppShell } from '@/components/app-shell'
 import { ChevronRightIcon } from '@/components/ui'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
@@ -110,20 +110,7 @@ export default async function HomePage() {
           </div>
         </AppHeader>
       }
-      footer={
-        <>
-          <AppFooter divider={false} className="home-cta-footer">
-            <Link href={primary.href} className="home-primary-cta">
-              <span className="home-primary-cta-copy">
-                <span className="home-primary-cta-kicker">ภารกิจถัดไป</span>
-                <span>{primary.label}</span>
-              </span>
-              <ChevronRightIcon width={22} height={22} aria-hidden />
-            </Link>
-          </AppFooter>
-          <BottomNav />
-        </>
-      }
+      footer={<BottomNav />}
     >
       <div className="home-lobby">
         <section className="home-shop-card" aria-labelledby="home-shop-title">
@@ -173,9 +160,18 @@ export default async function HomePage() {
               )
             })}
           </ol>
-          <p className="home-path-status">
-            {cleared >= PATH_STAGES.length ? 'ร้านเปิดครบทุกด่านแล้ว' : `ผ่านแล้ว ${cleared} ด่าน · ${PATH_STAGES.length - cleared} ด่านที่รออยู่`}
-          </p>
+          {/* ปุ่มไปต่ออยู่ในการ์ดเส้นทาง ไม่ใช่แถบลอยเหนือเมนูล่าง — เมนูล่างจึงเป็นของชิ้นสุดท้ายของจอ */}
+          <Link href={primary.href} className="home-path-cta">
+            <span className="home-path-cta-copy">
+              <span className="home-path-cta-kicker">
+                {cleared >= PATH_STAGES.length ? 'ร้านเปิดครบทุกด่านแล้ว' : 'ภารกิจถัดไป'}
+              </span>
+              <span className="home-path-cta-label">{primary.label}</span>
+            </span>
+            <span className="home-path-cta-arrow" aria-hidden="true">
+              <ChevronRightIcon width={20} height={20} />
+            </span>
+          </Link>
         </section>
 
         {nudge?.waiting ? <TestNudgeCard nudge={nudge} className="home-nudge" /> : null}

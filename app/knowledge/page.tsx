@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import './knowledge.css'
 import { SignInGate } from '@/components/student-shell'
-import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
+import { AppHeader, AppShell } from '@/components/app-shell'
 import { BottomNav } from '@/components/bottom-nav'
 import {
   BookmarkIcon,
@@ -15,7 +15,6 @@ import {
 } from '@/components/ui'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { missions } from '@/components/missions'
-import { lessonSummary } from '@/components/server/lesson-progress'
 import { KnowledgeSearch } from '@/components/knowledge-search-client'
 import { knowledgeEntries } from '@/components/server/knowledge-search'
 
@@ -51,11 +50,6 @@ export default async function KnowledgePage() {
   const session = await readStudentSession()
   if (!session) return <SignInGate message="ใส่รหัสห้องกับ PIN ที่ครูให้ก่อน แล้วคลังความรู้จะเปิดให้ทบทวนได้ไม่จำกัด" />
 
-  const summary = await lessonSummary(session.studentId)
-  const nextMission = summary.missions.find((m) => !m.passed) ?? null
-  const primaryHref = nextMission ? `/mission/${nextMission.id}` : '/ceo'
-  const primaryLabel = nextMission ? 'กลับไปภารกิจ' : 'ไปด่านบอส'
-
   return (
     <AppShell
       fit
@@ -66,17 +60,7 @@ export default async function KnowledgePage() {
           <h1>คลังความรู้</h1>
         </AppHeader>
       }
-      footer={
-        <>
-          <AppFooter divider={false} className="kr-footer">
-            <Link href={primaryHref} className="kr-primary-cta">
-              {primaryLabel}
-              <ChevronRightIcon width={22} height={22} aria-hidden />
-            </Link>
-          </AppFooter>
-          <BottomNav />
-        </>
-      }
+      footer={<BottomNav />}
     >
       <div className="kr-main">
         <SceneDecor density="full" />

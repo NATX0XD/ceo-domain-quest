@@ -14,25 +14,40 @@
 }
 
 .app-shell:has(> .app-shell-footer > .game-bottom-nav) > .app-shell-main {
-  padding-bottom: var(--bn-fade);
+  padding-bottom: calc(var(--bn-fade) + var(--bn-lift, 0px));
+}
+
+/*
+ * แท็บหลักที่มีปุ่มโดมลอยแต่ไม่มีแถบปุ่มเหนือเมนู: ยกขอบบนของฟุตเตอร์ขึ้นอีก --bn-lift
+ * ให้ปุ่มโดมทั้งปุ่มอยู่ในฟุตเตอร์ (ฟุตเตอร์มี overflow-y:auto จะตัดของที่ล้นขึ้นไป)
+ * main เว้นที่ด้านล่างเท่ากัน ปุ่มโดมจึงไม่ทับเนื้อหาของหน้า
+ */
+.app-shell:has(> .app-shell-footer > .game-bottom-nav--dome):not(:has(> .app-shell-footer > .surface-veil)) {
+  --bn-lift: 46px;
 }
 
 .app-shell-footer:has(> .game-bottom-nav) {
-  margin-top: calc(var(--bn-fade) * -1);
-  padding-top: var(--bn-fade);
+  margin-top: calc((var(--bn-fade) + var(--bn-lift, 0px)) * -1);
+  padding-top: calc(var(--bn-fade) + var(--bn-lift, 0px));
   border: 0 !important;
   box-shadow: none !important;
   background:
     linear-gradient(
       180deg,
       rgb(255 241 214 / 0) 0,
-      rgb(255 241 214 / .18) calc(var(--bn-fade) * .25),
-      rgb(255 241 214 / .5) calc(var(--bn-fade) * .5),
-      rgb(255 241 214 / .85) calc(var(--bn-fade) * .78),
-      #fff1d6 var(--bn-fade),
+      rgb(255 241 214 / 0) var(--bn-lift, 0px),
+      rgb(255 241 214 / .18) calc(var(--bn-lift, 0px) + var(--bn-fade) * .25),
+      rgb(255 241 214 / .5) calc(var(--bn-lift, 0px) + var(--bn-fade) * .5),
+      rgb(255 241 214 / .85) calc(var(--bn-lift, 0px) + var(--bn-fade) * .78),
+      #fff1d6 calc(var(--bn-lift, 0px) + var(--bn-fade)),
       #fbe7c1 100%
     ) !important;
   backdrop-filter: none !important;
+  pointer-events: none;
+}
+
+.app-shell-footer:has(> .game-bottom-nav) > * {
+  pointer-events: auto;
 }
 
 .app-shell-footer:has(> .game-bottom-nav) > .surface-veil {
@@ -63,9 +78,9 @@
   align-items: flex-end;
   gap: 2px;
   width: min(100%, 460px);
-  min-height: 64px;
+  min-height: 72px;
   margin: 0 auto;
-  padding: 5px 6px 5px;
+  padding: 6px 6px 6px;
   border-radius: 24px;
   list-style: none;
   background:
@@ -87,7 +102,7 @@
   position: relative;
   display: flex;
   min-width: 44px;
-  min-height: 54px;
+  min-height: 60px;
   align-items: center;
   justify-content: flex-end;
   flex-direction: column;
@@ -103,16 +118,16 @@
 
 .game-bottom-nav__icon-wrap {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   place-items: center;
   transition: transform 200ms ease, filter 200ms ease;
 }
 
 .game-bottom-nav__icon {
   display: block;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   filter: drop-shadow(0 2px 1px rgb(90 46 20 / .2));
 }
@@ -120,7 +135,7 @@
 .game-bottom-nav__label {
   max-width: 100%;
   overflow: hidden;
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 900;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -133,7 +148,7 @@
 
 /* แท็บที่อยู่: ยกลอยขึ้นจากแถบ มีเหรียญเรืองแสงรองไอคอน */
 .game-bottom-nav__link.is-active {
-  min-height: 62px;
+  min-height: 68px;
   margin-top: -14px;
   color: #4f2a8a;
   background:
@@ -159,11 +174,12 @@
 @media (max-width: 370px) {
   .game-bottom-nav { padding-inline: 6px; }
   .game-bottom-nav__list { padding-inline: 4px; }
-  .game-bottom-nav__link { min-height: 52px; }
-  .game-bottom-nav__link.is-active { min-height: 58px; }
-  .game-bottom-nav__icon-wrap { width: 31px; height: 31px; }
-  .game-bottom-nav__icon { width: 27px; height: 27px; }
-  .game-bottom-nav__label { font-size: .68rem; }
+  .game-bottom-nav__list { min-height: 68px; }
+  .game-bottom-nav__link { min-height: 56px; }
+  .game-bottom-nav__link.is-active { min-height: 64px; }
+  .game-bottom-nav__icon-wrap { width: 36px; height: 36px; }
+  .game-bottom-nav__icon { width: 32px; height: 32px; }
+  .game-bottom-nav__label { font-size: .72rem; }
   .app-shell-footer:has(> .game-bottom-nav--dome) > .surface-veil { padding-right: 74px; }
   .game-bottom-nav__dome { right: 10px; }
 }

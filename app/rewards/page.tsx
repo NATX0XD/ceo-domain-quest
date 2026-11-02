@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import './rewards.css'
 import { SignInGate } from '@/components/student-shell'
-import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
+import { AppHeader, AppShell } from '@/components/app-shell'
 import { BottomNav } from '@/components/bottom-nav'
 import {
   AlertIcon,
@@ -43,6 +43,10 @@ export default async function RewardsPage() {
       : null
   const nextStar = data.missions.find((m) => m.stars < perMissionMax) ?? null
   const nextHref = nextStar ? `/mission/${nextStar.id}` : '/ceo'
+  const starPercent = data.maxStars > 0 ? Math.min(100, (data.totalStars / data.maxStars) * 100) : 0
+  /** หมุดดาวทุก 3 ดวง = ดาวเต็มของ 1 ภารกิจ (ไม่วางที่ปลายราง) */
+  const starTicks: number[] = []
+  for (let at = perMissionMax; perMissionMax > 0 && at < data.maxStars; at += perMissionMax) starTicks.push(at)
 
   return (
     <AppShell
@@ -57,17 +61,7 @@ export default async function RewardsPage() {
           </div>
         </AppHeader>
       }
-      footer={
-        <>
-          <AppFooter divider={false} className="rw-footer">
-            <Link href={nextHref} className="rw-primary-cta">
-              {nextStar ? 'ไปเก็บดาวต่อ' : 'ไปด่านบอส CEO'}
-              <ChevronRightIcon width={22} height={22} aria-hidden />
-            </Link>
-          </AppFooter>
-          <BottomNav />
-        </>
-      }
+      footer={<BottomNav />}
     >
       <div className="rw-main">
         <SceneDecor density="light" />
@@ -85,8 +79,37 @@ export default async function RewardsPage() {
               <span>/ {data.maxStars}</span>
             </div>
           </div>
-          <ProgressBar className="rw-meter-progress" value={data.totalStars} max={data.maxStars} label="ดาวที่เก็บได้จากดาวทั้งหมด" hideLabel showValue={false} tone="quest" size="lg" />
-          <p className="rw-meter-note">{data.totalStars === data.maxStars ? 'เต็มหีบแล้ว ทุกด่านส่องแสงเลย' : `อีก ${Math.max(0, data.maxStars - data.totalStars)} ดวง จะเต็มหีบดาว`}</p>
+          {/* มาตรดาวแบบเกม: รางหนาขอบน้ำตาล ไส้ทองวาว มีหมุดดาวทุก 3 ดวง (1 ภารกิจ) */}
+          <div
+            className="rw-gauge"
+            role="progressbar"
+            aria-label="ดาวที่เก็บได้จากดาวทั้งหมด"
+            aria-valuemin={0}
+            aria-valuemax={data.maxStars}
+            aria-valuenow={data.totalStars}
+          >
+            <span
+              className={`rw-gauge-fill${data.totalStars > 0 ? '' : ' is-empty'}`}
+              style={{ width: `${starPercent}%` }}
+            />
+            {starTicks.map((at) => (
+              <span
+                key={at}
+                className={`rw-gauge-tick${data.totalStars >= at ? ' is-lit' : ''}`}
+                style={{ left: `${(at / data.maxStars) * 100}%` }}
+                aria-hidden="true"
+              >
+                <StarIcon width={13} height={13} filled={data.totalStars >= at} />
+              </span>
+            ))}
+          </div>
+          <div className="rw-meter-foot">
+            <p className="rw-meter-note">{data.totalStars >= data.maxStars ? 'เต็มหีบแล้ว ทุกด่านส่องแสงเลย' : `อีก ${Math.max(0, data.maxStars - data.totalStars)} ดวง จะเต็มหีบดาว`}</p>
+            <Link href={nextHref} className="rw-meter-cta">
+              {nextStar ? 'ไปเก็บดาวต่อ' : 'ไปด่านบอส'}
+              <ChevronRightIcon width={16} height={16} aria-hidden />
+            </Link>
+          </div>
         </section>
 
         <div className="rw-medal-heading">

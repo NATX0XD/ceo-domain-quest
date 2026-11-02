@@ -327,32 +327,9 @@ export function ProfileClient({
       withBottomNav
       className="profile-world-shell profile-v3-world-shell flex h-full min-h-0 flex-col gap-3 pb-6"
       footer={
-        <AppFooter>
-          {flow.state.kind !== 'done' ? <FlowNote state={flow.state} className="mb-2" /> : null}
-          {stepKey === 'card' ? (
-            <div className="mx-auto flex w-full max-w-[20rem] flex-col gap-2">
-            {/* จบขั้นรู้จักตัวเองแล้วไปแผนที่เกาะ — ลิ้นชักล่างของแผนที่เป็นที่เลือกวิธีเรียนของแต่ละภารกิจ */}
-            <Link
-              href="/map"
-              onClick={() => void sendChoice({ finish: true })}
-              className="btn-base min-h-12 rounded-lg px-5 text-body game-button game-button--orange game-button--md w-full"
-            >
-              {identity.startButtonLabel}
-              <ChevronRightIcon width={22} height={22} aria-hidden />
-            </Link>
-            <Button
-              variant="secondary"
-              size="md"
-              fullWidth
-              onClick={() => {
-                setQIndex(0)
-                setStep(0)
-              }}
-            >
-              ทำแบบสอบถามใหม่
-            </Button>
-            </div>
-          ) : (
+        stepKey === 'card' ? undefined : (
+          <AppFooter>
+            {flow.state.kind !== 'done' ? <FlowNote state={flow.state} className="mb-2" /> : null}
             <div className="flex gap-2">
               {stepKey !== 'ask' ? (
                 <Button
@@ -381,8 +358,8 @@ export function ProfileClient({
                 {foot.label}
               </Button>
             </div>
-          )}
-        </AppFooter>
+          </AppFooter>
+        )
       }
     >
       <div className="profile-v3-topline flex shrink-0 items-center gap-2">
@@ -620,6 +597,30 @@ export function ProfileClient({
 
             <p className="profile-v3-encouragement">{identity.encouragement}</p>
           </article>
+          {/* ปุ่มของการ์ดตัวตนอยู่ในเนื้อหาใต้การ์ด ไม่ใช่แถบลอยเหนือเมนูล่าง */}
+          {flow.state.kind !== 'done' ? <FlowNote state={flow.state} className="mt-3" /> : null}
+          <div className="profile-v3-card-actions mx-auto mt-4 flex w-full max-w-[20rem] flex-col gap-2">
+            {/* จบขั้นรู้จักตัวเองแล้วไปแผนที่เกาะ — ลิ้นชักล่างของแผนที่เป็นที่เลือกวิธีเรียนของแต่ละภารกิจ */}
+            <Link
+              href="/map"
+              onClick={() => void sendChoice({ finish: true })}
+              className="btn-base min-h-12 rounded-lg px-5 text-body game-button game-button--orange game-button--md w-full"
+            >
+              {identity.startButtonLabel}
+              <ChevronRightIcon width={22} height={22} aria-hidden />
+            </Link>
+            <Button
+              variant="secondary"
+              size="md"
+              fullWidth
+              onClick={() => {
+                setQIndex(0)
+                setStep(0)
+              }}
+            >
+              ทำแบบสอบถามใหม่
+            </Button>
+          </div>
         </div>
       ) : null}
 

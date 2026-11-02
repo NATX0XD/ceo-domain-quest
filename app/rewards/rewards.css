@@ -38,10 +38,21 @@
 .rw-meter-total svg { align-self: center; color: #e3a20e; filter: drop-shadow(0 2px 0 #fff7bf); animation: rw-star-pulse 2.8s ease-in-out infinite; }
 .rw-meter-total strong { color: #70440e; font-size: 2rem; font-weight: 900; letter-spacing: -.06em; line-height: .9; }
 .rw-meter-total span { color: #9e7444; font-size: .85rem; font-weight: 900; }
-.rw-meter-progress { position: relative; z-index: 1; margin-top: 10px; }
-.rw-meter-progress > div:last-child { border: 2px solid rgb(142 91 18 / .28); background: rgb(255 255 255 / .65); box-shadow: inset 0 2px 3px rgb(124 77 10 / .12); }
-.rw-meter-progress > div:last-child > div { background: linear-gradient(90deg, #e7a51b 0%, #ffce32 55%, #f28518 100%); box-shadow: inset 0 2px 0 rgb(255 255 255 / .55); }
-.rw-meter-note { margin: 6px 0 0; color: #805b2a; font-size: .75rem; font-weight: 800; line-height: 1.3; }
+/* มาตรดาว kit2: รางหนาขอบน้ำตาล + เงาด้านใน · ไส้ทองวาวมีไฮไลต์ · ปลายมนแม้ค่าน้อย (กว้างขั้นต่ำ = ความสูงไส้) */
+.rw-gauge { position: relative; z-index: 1; height: 26px; margin-top: 9px; border: 3px solid var(--rw-brown); border-radius: 999px; padding: 2px; background: linear-gradient(180deg, #e6c48b 0%, #f6e2b8 55%, #fbecc9 100%); box-shadow: inset 0 3px 4px rgb(74 31 10 / .38), inset 0 -1px 0 rgb(255 255 255 / .5), 0 2px 0 rgb(255 255 255 / .7); }
+.rw-gauge-fill { position: absolute; top: 2px; bottom: 2px; left: 2px; display: block; min-width: 24px; max-width: calc(100% - 4px); border-radius: 999px; background: linear-gradient(180deg, #fff6b0 0%, #ffd83d 34%, #f7aa17 68%, #d9780b 100%); box-shadow: inset 0 -2px 0 rgb(150 72 0 / .35), 0 0 6px rgb(255 196 40 / .55); transition: width 600ms var(--ease-pop, ease); }
+.rw-gauge-fill::after { position: absolute; top: 2px; right: 6px; left: 6px; height: 34%; border-radius: 999px; background: linear-gradient(180deg, rgb(255 255 255 / .85), rgb(255 255 255 / .15)); content: ''; }
+.rw-gauge-fill.is-empty { display: none; }
+.rw-gauge-tick { position: absolute; top: 50%; z-index: 1; display: grid; width: 17px; height: 17px; place-items: center; border-radius: 50%; background: rgb(255 248 228 / .7); box-shadow: inset 0 1px 2px rgb(74 31 10 / .25); transform: translate(-50%, -50%); }
+.rw-gauge-tick svg { display: block; }
+.rw-gauge-tick:not(.is-lit) svg { opacity: .7; }
+.rw-gauge-tick.is-lit { background: #fff6cf; box-shadow: 0 0 0 2px #b8620a, 0 1px 3px rgb(74 31 10 / .45); }
+.rw-meter-foot { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 7px; }
+.rw-meter-cta { display: inline-flex; min-height: 34px; flex: 0 0 auto; align-items: center; gap: 2px; border: 2px solid #fff4ce; border-radius: 999px; padding: 2px 8px 2px 13px; color: #4a1f0a; background: linear-gradient(180deg, #ffc51b 0%, #ff7a13 100%); box-shadow: 0 3px 0 var(--rw-brown), inset 0 2px 0 rgb(255 255 255 / .75); font-size: .78rem; font-weight: 900; text-decoration: none; white-space: nowrap; transition: transform 160ms ease, filter 160ms ease; }
+.rw-meter-cta:hover { filter: saturate(1.08) brightness(1.04); transform: translateY(-1px); }
+.rw-meter-cta:active { transform: translateY(2px); }
+.rw-meter-cta:focus-visible { outline: 3px solid #7651d3; outline-offset: 2px; }
+.rw-meter-note { min-width: 0; margin: 0; color: #805b2a; font-size: .75rem; font-weight: 800; line-height: 1.3; }
 
 /* แถบหัวข้อเหรียญ: แผ่นครีมขอบน้ำตาลบาง อ่านออกบนฉากฟ้า */
 .rw-medal-heading { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 8px; border: 2px solid var(--rw-brown); border-radius: 14px; padding: 4px 6px 4px 12px; background: linear-gradient(180deg, #fffaf0 0%, #fbe7c1 100%); box-shadow: 0 3px 0 var(--rw-brown), inset 0 1px 0 rgb(255 255 255 / .9); }
@@ -72,11 +83,6 @@
 .rw-chip-art { display: grid; width: 34px; height: 29px; place-items: center; overflow: hidden; }
 .rw-chip-art img { display: block; width: 42px; height: 30px; object-fit: contain; }
 
-.rw-footer { padding: 7px 14px 7px; }
-
-.rw-primary-cta { display: flex; min-height: 43px; align-items: center; justify-content: center; gap: 5px; border: 3px solid #fff4ce; border-radius: 15px; background: linear-gradient(180deg, #ffc51b 0%, #ff7a13 100%); color: #4a1f0a; box-shadow: 0 5px 0 #4a1f0a, inset 0 2px 0 rgb(255 255 255 / .8); font-size: .95rem; font-weight: 900; text-decoration: none; text-shadow: 0 1px 0 rgb(255 241 214 / .72); transition: transform 160ms ease, filter 160ms ease; }
-.rw-primary-cta:hover { filter: saturate(1.08) brightness(1.04); transform: translateY(-1px); }
-.rw-primary-cta:active { transform: translateY(2px); }
 .rw-empty-state { align-self: center; margin: auto 0; border: 3px solid var(--rw-brown); border-radius: 20px; padding: 20px; background: var(--rw-cream); box-shadow: 0 6px 0 var(--rw-brown); text-align: center; }
 .rw-empty-state p { margin: 0; color: var(--rw-ink); font-size: 1rem; font-weight: 900; }
 .rw-empty-state span { display: block; margin-top: 5px; color: #785b44; font-size: .85rem; line-height: 1.45; }
@@ -114,11 +120,12 @@
   .rw-meter-total svg,
   .rw-medal-visual img,
   .rw-chip,
-  .rw-primary-cta { transition: none; }
+  .rw-meter-cta,
+  .rw-gauge-fill { transition: none; }
   .rw-meter-total svg,
   .rw-medal-card.is-earned .rw-medal-visual img { animation: none; }
   .rw-chip:hover,
-  .rw-primary-cta:hover,
+  .rw-meter-cta:hover,
   .rw-medal-card.is-earned:hover .rw-medal-visual img { transform: none; }
 }
 /* ฉากเดียวต่อเนื่องทั้งหน้า: ภาพเกาะอยู่ที่ตัวหน้า หัวกับเนื้อหาโปร่ง ไม่มีรอยตัดสี */
