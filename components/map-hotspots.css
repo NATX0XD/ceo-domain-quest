@@ -4,19 +4,24 @@
 }
 
 .map-page {
+  position: relative;
   display: flex;
   min-height: 0;
   height: 100%;
   flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   overflow: hidden;
   padding-bottom: 0;
+  container-type: size;
 }
 
+/* คงสัดส่วนภาพแผนที่ (941×1672) ไม่ยืด/บีบ — พอดีความกว้างหรือความสูงที่เหลือ ด้านข้างเป็นทะเลของฉาก */
 .map-artboard {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
-  width: 100%;
-  aspect-ratio: auto;
+  width: min(100cqw, calc((100cqh - 58px) * 941 / 1672));
+  aspect-ratio: 941 / 1672;
 }
 
 .map-artwork {
@@ -24,20 +29,23 @@
 }
 
 .map-boss-entry {
-  position: static;
+  /* แถบเตี้ยใต้แผนที่ — ไม่ทับเกาะ 4 · แผนที่หดตามสัดส่วนแทนการถูกบีบ */
+  position: relative;
+  z-index: 5;
+  width: 100%;
   flex: 0 0 auto;
   margin-bottom: 0;
-  padding: 7px 12px 9px;
+  padding: 4px 12px 6px;
 }
 
 .map-boss-button {
-  min-height: 52px;
-  border-radius: 16px;
-  padding: 7px 13px;
+  min-height: 46px;
+  border-radius: 14px;
+  padding: 5px 12px;
 }
 
-.map-boss-button strong { font-size: 14px; }
-.map-boss-kicker { font-size: 12px; }
+.map-boss-button strong { font-size: 13px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.map-boss-kicker { font-size: 11px; }
 
 .map-ambient,
 .map-dome-guide {
