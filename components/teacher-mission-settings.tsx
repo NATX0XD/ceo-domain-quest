@@ -215,7 +215,7 @@ export function TeacherMissionSettings({ classroomId, initial }: { classroomId: 
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" onClick={reset}>คืนค่าเริ่มต้น</Button>
-          <Button size="sm" kind="primary" onClick={() => void save()} disabled={saving}>
+          <Button size="sm" kind="primary" data-topbar-save onClick={() => void save()} disabled={saving}>
             {saving ? 'กำลังบันทึก…' : 'บันทึกด่านนี้'}
           </Button>
         </div>

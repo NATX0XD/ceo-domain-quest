@@ -80,6 +80,8 @@ export function TeacherShell({
   const [bell, setBell] = useState(false)
   const [term, setTerm] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [mSearch, setMSearch] = useState(false)
+  const [copied, setCopied] = useState(false)
   const bellRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const [navigating, setNavigating] = useState(false)
@@ -121,6 +123,7 @@ export function TeacherShell({
     setSwitcher(false)
     setBell(false)
     setSearchOpen(false)
+    setMSearch(false)
     setTerm('')
   }, [pathname])
 
@@ -181,8 +184,8 @@ export function TeacherShell({
       title: 'นักเรียน',
       items: [
         { href: `/teacher/student${q}`, label: 'นักเรียนรายคน', icon: ico('graduation-cap') },
-        { href: `/teacher/review${q}`, label: 'งานรอตรวจ', icon: ico('memo') },
-        { href: `/teacher/requests${q}`, label: 'คำขอจากนักเรียน', icon: ico('speech-balloon') },
+        { href: `/teacher/review${q}`, label: 'งานรอตรวจ', icon: ico('memo'), badge: badges.review, urgent: true },
+        { href: `/teacher/requests${q}`, label: 'คำขอจากนักเรียน', icon: ico('speech-balloon'), badge: badges.requests },
       ],
     },
     {
@@ -201,6 +204,39 @@ export function TeacherShell({
     },
   ]
   const flat = groups.flatMap((g) => g.items)
+
+  const tab = params.get('tab')
+  const copyJoin = async () => {
+    if (!selected) return
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/join?code=${selected.roomCode}`)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      router.push(`/teacher/settings${q}`)
+    }
+  }
+  const nextReview = () => {
+    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('main a[href*="/teacher/review?"][href*="submission="]'))
+    if (links.length === 0) return
+    const at = links.findIndex((a) => a.getAttribute('aria-current') === 'true')
+    const next = links[(at + 1) % links.length]
+    if (next) router.push(next.getAttribute('href') ?? '/teacher/review')
+  }
+  type TopAction = { label: string; icon: Icon3dName; run: () => void; disabled?: boolean }
+  const topAction: TopAction | null = !classroomId
+    ? null
+    : pathname === '/teacher'
+      ? { label: copied ? 'คัดลอกลิงก์แล้ว ✓' : 'ชวนนักเรียนเข้าห้อง', icon: 'door', run: () => void copyJoin() }
+      : pathname.startsWith('/teacher/review')
+        ? { label: 'ตรวจถัดไป', icon: 'memo', run: nextReview, disabled: badges.review === 0 }
+        : pathname.startsWith('/teacher/student') && params.get('studentId')
+          ? { label: 'พิมพ์รายงาน', icon: 'printer', run: () => window.print() }
+          : pathname.startsWith('/teacher/missions')
+            ? { label: 'บันทึก', icon: 'check-mark-button', run: () => document.querySelector<HTMLButtonElement>('[data-topbar-save]')?.click() }
+            : pathname.startsWith('/teacher/showcase') && tab !== 'screen'
+              ? { label: 'ขึ้นจอ', icon: 'television', run: () => router.push(`/teacher/showcase?${new URLSearchParams({ classroomId, tab: 'screen' }).toString()}`) }
+              : null
 
   const isActive = (href: string) => {
     const path = href.split('?')[0] ?? href
@@ -335,7 +371,7 @@ export function TeacherShell({
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {/* แถบบน */}
-          <header className="t3-top z-20 flex h-16 shrink-0 items-center gap-2 px-3 sm:gap-3 sm:px-6">
+          <header className="t3-top z-20 flex h-16 shrink-0 items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
             <button
               type="button"
               onClick={() => setDrawer(true)}
@@ -348,10 +384,10 @@ export function TeacherShell({
               </svg>
             </button>
 
-            <h1 aria-current="page" className="m-0 min-w-0 shrink truncate text-[18px] leading-7 font-bold text-[var(--c-ink)]">{pageLabel}</h1>
+            <h1 aria-current="page" className="m-0 min-w-0 shrink truncate max-sm:max-w-[6.5rem] max-sm:text-[16px] md:max-w-[220px] md:shrink-0 text-[18px] leading-7 font-bold text-[var(--c-ink)]">{pageLabel}</h1>
 
             {/* ค้นหาหน้า — พิมพ์ชื่อเมนูแล้วกดเข้า */}
-            <div ref={searchRef} className="relative ml-2 hidden min-w-0 max-w-md flex-1 md:block">
+            <div ref={searchRef} className={mSearch ? 'fixed inset-x-3 top-[4.25rem] z-30 md:static md:mx-auto md:block md:min-w-0 md:max-w-[480px] md:flex-1' : 'relative mx-auto hidden min-w-0 max-w-[480px] flex-1 md:block'}>
               <label className="t3-search">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
                   <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" />
@@ -364,7 +400,7 @@ export function TeacherShell({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && hits[0]) { router.push(hits[0].href); setSearchOpen(false); setTerm('') }
                   }}
-                  placeholder="ค้นหาหน้า เช่น งานรอตรวจ, ตั้งค่าด่าน…"
+                  placeholder="ค้นหาหน้า…"
                   autoComplete="off"
                 />
               </label>
@@ -383,8 +419,16 @@ export function TeacherShell({
                 </ul>
               ) : null}
             </div>
-            <span className="flex-1 md:hidden" />
-
+            <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setMSearch((v) => !v)}
+              aria-label="ค้นหาหน้า"
+              aria-expanded={mSearch}
+              className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--c-bg)] text-[var(--c-ink-2)] focus-ring md:hidden"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+            </button>
             {/* สลับห้อง */}
             {classrooms.length > 0 ? (
               <div ref={switcherRef} className="relative shrink-0">
@@ -398,7 +442,7 @@ export function TeacherShell({
                 >
                   <span className="max-sm:hidden"><Icon3d name="school" size={20} /></span>
                   {dot ? <span aria-hidden className="size-2 rounded-full" style={{ background: dot.color }} /> : null}
-                  <span className="max-w-[6.5rem] truncate sm:max-w-[11rem]"><span className="max-sm:hidden">ห้อง </span>{selected?.roomCode}</span>
+                  <span className="max-w-[4.25rem] truncate sm:max-w-[11rem]"><span className="max-sm:hidden">ห้อง </span>{selected?.roomCode}</span>
                   {selected?.isDemo ? (
                     <span className="rounded bg-white/80 px-1.5 text-[11px] font-bold">DEMO</span>
                   ) : null}
@@ -440,6 +484,19 @@ export function TeacherShell({
             ) : (
               <span className="shrink-0 text-[14px] text-ink-muted">ยังไม่มีห้องเรียน</span>
             )}
+
+            {topAction ? (
+              <button
+                type="button"
+                onClick={topAction.run}
+                disabled={topAction.disabled}
+                className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-[var(--c-brand)] bg-[var(--c-brand)] px-3 text-[15px] font-bold whitespace-nowrap text-white shadow-[0_4px_12px_rgb(75_58_122/0.3)] transition-colors hover:bg-[var(--c-brand-hover)] focus-ring disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+              >
+                <Icon3d name={topAction.icon} size={20} />
+                <span className="max-sm:hidden">{topAction.label}</span>
+                <span className="sr-only sm:hidden">{topAction.label}</span>
+              </button>
+            ) : null}
 
             {/* ระฆัง — ตัวเลขจริงจากงานรอตรวจ + คำขอที่รอตอบ */}
             <div ref={bellRef} className="relative shrink-0">
@@ -485,6 +542,7 @@ export function TeacherShell({
               ) : null}
             </div>
 
+            </div>
           </header>
 
           <TeacherDeviceRecommendation />

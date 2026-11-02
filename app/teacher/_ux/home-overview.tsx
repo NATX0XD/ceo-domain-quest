@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  Card, Donut, EmptyState, Legend, STATUS_LEGEND, StatTile,
+  Card, Donut, EmptyState, Legend, STATUS_LEGEND,
   type PassStatus,
 } from './ui'
 import { StudentCards, cardStatus, type StudentCardData } from './student-cards'
-import { Icon3d } from './v2'
+import { Icon3d, type Icon3dName } from './v2'
 import { UrlTabs } from './url-tabs'
 import { MissionTag, StackBar } from './data-viz'
 
@@ -18,6 +18,12 @@ export interface HomeStudent extends StudentCardData {
   startedIds: string[]
 }
 
+export interface HelpStudent {
+  studentId: string
+  nickname: string
+  reason: string
+}
+
 const MISSIONS = [
   { id: 'm1', n: 1, name: 'ด่าน 1 · รู้จักชื่อโดเมน' },
   { id: 'm2', n: 2, name: 'ด่าน 2 · เลือกนามสกุล' },
@@ -25,11 +31,31 @@ const MISSIONS = [
   { id: 'm4', n: 4, name: 'ด่าน 4 · ค้นหาชื่อที่ใช่' },
 ]
 
+const BTN = 'inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-[15px] font-bold whitespace-nowrap text-white transition-[filter,transform] hover:brightness-110 active:translate-y-px focus-ring'
+
+interface Todo {
+  key: string
+  count: number
+  icon: Icon3dName
+  title: string
+  why: string
+  cta: string
+  href: string
+  /** สีใช้เพื่อบอกความเร่งด่วนเท่านั้น */
+  tone: 'rose' | 'amber' | 'teal'
+}
+
+const TONE_BG = { rose: 'var(--s-danger)', amber: '#d98a0b', teal: 'var(--c-brand)' } as const
+
 export function HomeOverview({
   students,
   pendingCount,
   classroomId,
   roomCode,
+  joinPath,
+  qrSvg,
+  help,
+  showcaseCount,
   greeting,
   teacherName,
 }: {
@@ -37,10 +63,16 @@ export function HomeOverview({
   pendingCount: number
   classroomId: string | null
   roomCode: string | null
+  joinPath: string | null
+  qrSvg: string | null
+  help: HelpStudent[]
+  showcaseCount: number
   greeting?: string
   teacherName?: string | null
 }) {
   const [requestCount, setRequestCount] = useState<number | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [share, setShare] = useState(false)
   useEffect(() => {
     if (!classroomId) return
     let alive = true
@@ -53,6 +85,17 @@ export function HomeOverview({
     return () => { alive = false }
   }, [classroomId])
 
+  async function copyLink() {
+    if (!joinPath) return
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}${joinPath}`)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setShare(true)
+    }
+  }
+
   const q = classroomId ? `?classroomId=${classroomId}` : ''
   const total = students.length
   const avg = total > 0 ? Math.round((students.reduce((a, s) => a + Math.min(s.cleared, 5) / 5, 0) / total) * 100) : 0
@@ -61,19 +104,146 @@ export function HomeOverview({
   const notStarted = byStatus('notstarted')
   const requests = requestCount ?? 0
 
+  const todos: Todo[] = [
+    { key: 'review', count: pendingCount, icon: 'memo', title: 'งานรอตรวจ', why: 'นักเรียนรอคะแนนจากครู', cta: 'ตรวจเลย', href: `/teacher/review${q}`, tone: 'rose' },
+    { key: 'requests', count: requests, icon: 'speech-balloon', title: 'คำขอจากนักเรียน', why: 'ตอบแล้วนักเรียนเห็นทันที', cta: 'ตอบ', href: `/teacher/requests${q}`, tone: 'amber' },
+    { key: 'help', count: help.length, icon: 'warning', title: 'นักเรียนต้องช่วย', why: help[0] ? `${help[0].nickname} · ${help[0].reason}${help.length > 1 ? ` และอีก ${help.length - 1} คน` : ''}` : 'ยังไม่เริ่ม ติดอยู่ หรือเงียบไปหลายวัน', cta: 'ดูรายชื่อ', href: `/teacher/student${q}`, tone: 'amber' },
+    { key: 'showcase', count: showcaseCount, icon: 'glowing-star', title: 'ผลงานรอคัด', why: 'ตัวกรองติดธง รอครูตัดสินก่อนเพื่อนเห็น', cta: 'คัดผลงาน', href: `/teacher/showcase${q}`, tone: 'teal' },
+  ]
+  const active = todos.filter((t) => t.count > 0)
+  const clear = todos.filter((t) => t.count === 0 && !(t.key === 'requests' && requestCount === null))
+
+  const actions: { label: string; benefit: string; icon: Icon3dName; href?: string; onClick?: () => void }[] = [
+    { label: 'ชวนนักเรียนเข้าห้อง', benefit: 'ลิงก์และ QR ให้สแกนเข้าห้อง', icon: 'door', onClick: () => setShare((v) => !v) },
+    { label: 'ตั้งค่าด่าน', benefit: 'ปรับเกณฑ์ผ่านและตัวช่วยของแต่ละด่าน', icon: 'gear', href: `/teacher/missions${q}` },
+    { label: 'ดูรายงาน', benefit: 'ผลเรียนรวมทั้งห้อง จุดที่ยังอ่อน', icon: 'bar-chart', href: `/teacher/report${q}` },
+    { label: 'พิมพ์เกียรติบัตร/รายงาน', benefit: 'เลือกนักเรียนแล้วสั่งพิมพ์ได้เลย', icon: 'printer', href: `/teacher/student${q}` },
+    { label: 'ฉายผลงานเด่น', benefit: 'ปักหมุดผลงานขึ้นจอหน้าห้อง', icon: 'television', href: `/teacher/showcase${q ? q + "&" : "?"}tab=screen` },
+    { label: 'จัดการห้อง', benefit: 'รหัสห้อง บัญชี และดาวน์โหลดข้อมูล', icon: 'clipboard', href: `/teacher/settings${q}` },
+  ]
+
+  const sharePanel = (
+    <div className="flex flex-wrap items-center gap-5">
+      {qrSvg ? (
+        // eslint-disable-next-line react/no-danger
+        <div role="img" aria-label="QR code เข้าห้อง" className="size-36 shrink-0 rounded-xl border border-[var(--c-line)] bg-white p-1.5" dangerouslySetInnerHTML={{ __html: qrSvg }} />
+      ) : null}
+      <div className="min-w-0 flex-1 basis-56">
+        <p className="m-0 text-[15px] font-bold text-[var(--c-ink)]">ให้นักเรียนสแกน QR หรือเปิดลิงก์เข้าห้อง</p>
+        <p className="mt-1 mb-3 text-[14px] text-[var(--c-ink-3)]">ส่งลิงก์ในกลุ่มห้องเรียน หรือฉาย QR ขึ้นจอ</p>
+        <button type="button" onClick={() => void copyLink()} disabled={!joinPath} className={`${BTN} max-w-xs bg-[var(--c-brand)] disabled:opacity-50`}>
+          {copied ? 'คัดลอกลิงก์แล้ว ✓' : 'คัดลอกลิงก์เข้าห้อง'}
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <div className="flex flex-col gap-5">
       <p className="m-0 text-[15px] text-[var(--c-ink-2)]">
         {greeting ?? 'สวัสดี'} <strong className="font-bold text-[var(--c-ink)]">{teacherName ?? 'คุณครู'}</strong>
-        {pendingCount + requests === 0 ? ' · ตอนนี้ไม่มีงานค้าง' : ''}
       </p>
 
-      <div className="grid grid-cols-1 gap-4 min-[560px]:grid-cols-2 xl:grid-cols-4">
-        <StatTile tone="blue" href={`/teacher/student${q}`} label="ผู้เรียนในห้อง" value={total} unit="คน" icon={<Icon3d name="busts-in-silhouette" size={30} />} hint={`ส่ง CEO แล้ว ${ceoDone} คน`} />
-        <StatTile tone="rose" href={`/teacher/review${q}`} label="งานรอตรวจ" value={pendingCount} unit="รายการ" icon={<Icon3d name="memo" size={30} />} hint={pendingCount === 0 ? 'ไม่มีงานค้าง' : 'รอครูยืนยันคะแนน'} />
-        <StatTile tone="teal" href={`/teacher/requests${q}`} label="คำขอรอตอบ" value={requests} unit="รายการ" icon={<Icon3d name="speech-balloon" size={30} />} hint={requests === 0 ? 'ไม่มีคำขอค้าง' : 'ตอบแล้วเด็กเห็นทันที'} />
-        <StatTile tone="green" label="ความคืบหน้าเฉลี่ย" value={`${avg}%`} icon={<Icon3d name="chart-increasing" size={30} />} hint="จาก 5 ด่าน (รวม CEO)" />
-      </div>
+      {total === 0 ? (
+        <section aria-labelledby="first-run" className="t3-card overflow-hidden">
+          <div className="border-b border-[var(--c-line)] bg-[var(--c-brand-soft)] p-5 sm:px-6">
+            <h2 id="first-run" className="m-0 text-[20px] leading-7 font-extrabold text-[var(--c-ink)]">เริ่มต้นใน 3 ขั้นตอน</h2>
+            <p className="m-0 mt-1 text-[14px] text-[var(--c-ink-2)]">ห้องนี้ยังไม่มีนักเรียน ชวนนักเรียนเข้าห้องก่อน แล้วผลจะขึ้นที่หน้านี้เอง</p>
+          </div>
+          <ol className="m-0 grid list-none gap-3 p-5 sm:px-6 md:grid-cols-3">
+            {[
+              { n: 1, t: 'สร้าง/เลือกห้อง', d: roomCode ? 'มีห้องพร้อมใช้แล้ว' : 'เปิดห้องใหม่ที่หน้าจัดการห้อง', done: !!roomCode },
+              { n: 2, t: 'แชร์ลิงก์ให้นักเรียน', d: 'คัดลอกลิงก์หรือให้สแกน QR', done: false },
+              { n: 3, t: 'รอดูผล', d: 'ความคืบหน้าและงานรอตรวจจะขึ้นที่นี่', done: false },
+            ].map((st) => (
+              <li key={st.n} className="flex items-start gap-3 rounded-2xl bg-[var(--c-bg)] p-4">
+                <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full text-[15px] font-extrabold text-white" style={{ background: st.done ? 'var(--s-success)' : 'var(--c-brand)' }}>{st.done ? '✓' : st.n}</span>
+                <span className="min-w-0">
+                  <span className="block text-[16px] font-bold text-[var(--c-ink)]">{st.t}</span>
+                  <span className="block text-[14px] text-[var(--c-ink-3)]">{st.d}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+          <div className="border-t border-[var(--c-line)] p-5 sm:px-6">
+            {roomCode ? sharePanel : (
+              <Link href={`/teacher/settings${q}`} className={`${BTN} max-w-xs bg-[var(--c-brand)]`}>เปิดห้องใหม่</Link>
+            )}
+          </div>
+        </section>
+      ) : (
+        <section aria-labelledby="today" className="t3-card p-5 sm:p-6">
+          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h2 id="today" className="m-0 text-[22px] leading-8 font-extrabold text-[var(--c-ink)]">วันนี้ครูต้องทำอะไร</h2>
+            <p className="m-0 text-[14px] text-[var(--c-ink-3)]">
+              {active.length > 0 ? `${active.length} เรื่องที่รอครู · เรียงตามความเร่งด่วน` : `นักเรียน ${total} คน · ความคืบหน้าเฉลี่ย ${avg}%`}
+            </p>
+          </div>
+
+          {active.length > 0 ? (
+            <ul className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2 xl:grid-cols-[repeat(var(--n),minmax(0,1fr))]" style={{ ['--n' as string]: Math.min(active.length, 4) }}>
+              {active.map((t) => (
+                <li key={t.key} className="flex min-w-0 flex-col gap-3 rounded-2xl border-2 bg-white p-4" style={{ borderColor: TONE_BG[t.tone] }}>
+                  <div className="flex items-center gap-3">
+                    <span aria-hidden className="grid size-14 shrink-0 place-items-center rounded-2xl" style={{ background: `color-mix(in srgb, ${TONE_BG[t.tone]} 14%, white)` }}>
+                      <Icon3d name={t.icon} size={34} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[40px] leading-10 font-extrabold tabular-nums text-[var(--c-ink)]">{t.count}</span>
+                      <span className="block truncate text-[15px] font-bold text-[var(--c-ink)]">{t.title}</span>
+                    </span>
+                  </div>
+                  <p className="m-0 min-h-10 text-[14px] leading-5 text-[var(--c-ink-3)]">{t.why}</p>
+                  <Link href={t.href} className={BTN} style={{ background: TONE_BG[t.tone] }}>{t.cta} ›</Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="flex items-center gap-4 rounded-2xl bg-[var(--s-success-soft,#e1f5ea)] p-4">
+              <Icon3d name="party-popper" size={44} />
+              <div>
+                <p className="m-0 text-[18px] font-extrabold text-[var(--c-ink)]">เรียบร้อย ✓ ไม่มีงานค้าง</p>
+                <p className="m-0 text-[14px] text-[var(--c-ink-2)]">ไม่มีงานรอตรวจ คำขอ หรือนักเรียนที่ต้องช่วยในตอนนี้</p>
+              </div>
+            </div>
+          )}
+
+          {active.length > 0 && clear.length > 0 ? (
+            <ul className="m-0 mt-4 flex list-none flex-wrap gap-2 p-0" aria-label="เรื่องที่เรียบร้อยแล้ว">
+              {clear.map((t) => (
+                <li key={t.key} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--c-bg)] px-3 py-1.5 text-[14px] font-semibold text-[var(--c-ink-2)]">
+                  <span aria-hidden className="text-[var(--s-success)]">✓</span>{t.title} เรียบร้อย
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      )}
+
+      <section aria-labelledby="can-do">
+        <h2 id="can-do" className="m-0 mb-3 text-[18px] leading-7 font-bold text-[var(--c-ink)]">ครูทำอะไรได้บ้าง</h2>
+        <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 min-[560px]:grid-cols-2 xl:grid-cols-3">
+          {actions.map((a) => {
+            const inner = (
+              <>
+                <span aria-hidden className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--c-brand-soft)]"><Icon3d name={a.icon} size={30} /></span>
+                <span className="min-w-0 flex-1 text-left">
+                  <span className="block text-[16px] leading-6 font-bold text-[var(--c-ink)]">{a.label}</span>
+                  <span className="block text-[14px] leading-5 text-[var(--c-ink-3)]">{a.benefit}</span>
+                </span>
+                <span aria-hidden className="text-[22px] text-[var(--c-ink-3)]">›</span>
+              </>
+            )
+            const cls = 't3-card flex w-full items-center gap-3 p-3.5 transition-transform hover:-translate-y-0.5 focus-ring'
+            return (
+              <li key={a.label}>
+                {a.href ? <Link href={a.href} className={cls}>{inner}</Link> : <button type="button" onClick={a.onClick} aria-expanded={share} className={cls}>{inner}</button>}
+              </li>
+            )
+          })}
+        </ul>
+        {share && total > 0 ? <div className="t3-card mt-3 p-5">{sharePanel}</div> : null}
+      </section>
 
       <UrlTabs
         label="มุมมองภาพรวม"
