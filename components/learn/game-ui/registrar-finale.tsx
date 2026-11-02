@@ -482,11 +482,14 @@ export function ExplainScreen({
 
 export function RepairScreen({
   missed,
+  tld,
   check,
   onAnswer,
   onFinish,
 }: {
   missed: RegistrarEvent[]
+  /** นามสกุลตามบัตรของผู้เล่น (ชื่อซ้ำในเกมเกิดกับนามสกุลนี้) */
+  tld?: string
   check: Check
   onAnswer: (id: string, choice: number, correct: boolean) => void
   onFinish: () => void
@@ -502,7 +505,7 @@ export function RepairScreen({
             <p className="text-center text-label font-bold text-[#6b4fd8]">
               รอบซ่อม {i + 1}/{missed.length}
             </p>
-            <p className="m4-story">{ev.story}</p>
+            <p className="m4-story">{ev.id === 'ev-taken' && tld ? ev.story.replace(/\.(co|in)\.th/g, tld) : ev.story}</p>
           </ClipPanel>
           <QuizBody
             question={ev.question}

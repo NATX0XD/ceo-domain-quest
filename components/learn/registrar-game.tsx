@@ -99,6 +99,11 @@ export function RegistrarGame({ data, onSubmit, onStep, card, onFinish }: Props)
   const clock = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`
   // 10 วินาทีสุดท้าย: ติ๊กเร่งจังหวะ + ชิปเวลาแดงสั่น (หยุดเมื่อผ่านด่าน/ส่งผล)
   const urgent = useUrgentTick(sec, view !== 'clear' && !result && !submitting)
+  // หมดเวลา = เตือนแล้วเล่นต่อได้ (เวลาไม่มีผลกับคะแนน)
+  const [timeUp, setTimeUp] = useState(false)
+  useEffect(() => {
+    if (sec === 0 && view !== 'intro' && view !== 'clear' && !result && !submitting) setTimeUp(true)
+  }, [sec, view, result, submitting])
   useEffect(() => {
     alive.current = true
     return () => {
@@ -187,7 +192,9 @@ export function RegistrarGame({ data, onSubmit, onStep, card, onFinish }: Props)
   function repair() {
     setRepaired(true)
     if (eventsCorrect < 3) {
-      setRepairIds(missedEvents.map((e) => e.id))
+      // ซ่อมเฉพาะเหตุการณ์ที่เจอจริงแล้วตอบพลาด — ถ้าแค่นั้นยังไม่พอถึงเกณฑ์ จึงเพิ่มเหตุการณ์ที่ยังไม่เคยเจอ
+      const seenWrong = missedEvents.filter((e) => events[e.id])
+      setRepairIds((eventsCorrect + seenWrong.length >= 3 ? seenWrong : missedEvents).map((e) => e.id))
       setView('repair')
     }
     else {
@@ -414,6 +421,7 @@ export function RegistrarGame({ data, onSubmit, onStep, card, onFinish }: Props)
             {view === 'repair' ? (
               <RepairScreen
                 missed={data.events.filter((e) => repairIds.includes(e.id))}
+                tld={myCard.tld}
                 check={check}
                 onAnswer={(id, choice, correct) => record(id, choice, correct, true)}
                 onFinish={() => {
@@ -476,6 +484,35 @@ export function RegistrarGame({ data, onSubmit, onStep, card, onFinish }: Props)
           </motion.div>
         </AnimatePresence>
       </div>
+      <AnimatePresence>
+        {timeUp ? (
+          <motion.div key="time-up" className="m4-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div
+              role="alertdialog"
+              aria-modal="true"
+              aria-label="หมดเวลาแล้ว"
+              initial={reduce ? false : { y: 60, scale: 0.9, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={reduce ? undefined : { y: 60, opacity: 0 }}
+              className="m4-panel m4-modal-card m4-timeup"
+            >
+              <span className="m4-clip" aria-hidden="true" />
+              <PixelDome mood="thinking" size={96} className="self-center" />
+              <p className="text-center text-title-sm font-extrabold text-[#24164f]">หมดเวลาแล้ว</p>
+              <p className="text-center text-body text-pretty text-[#4a3d7a]">ไม่เป็นไร เล่นต่อได้เลย เวลาไม่มีผลกับคะแนนของด่านนี้</p>
+              <GameButton
+                className="w-full"
+                onClick={() => {
+                  setSec(60)
+                  setTimeUp(false)
+                }}
+              >
+                เล่นต่ออีก 60 วินาที
+              </GameButton>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
       <PixelConfetti fire={confetti} />
     </BossShell>
   )

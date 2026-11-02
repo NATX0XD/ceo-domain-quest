@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { CheckIcon, InfoIcon, cn } from '@/components/ui'
 import { CountUp, GameButton, buzz, useGameMotion } from './index'
@@ -299,6 +299,7 @@ export function SearchScreen({
         {rows ? (
           <p className="m4-real-pill">
             <Glyph kind="server" size={16} /> ข้อมูลจริงจากระบบทะเบียน
+            {rows.some((r) => r.simulated) ? <small className="m4-sim-note">ยกเว้นแถวที่เขียนว่าเหตุการณ์จำลองในเกม</small> : null}
           </p>
         ) : (
           <p className="mt-2 text-label text-pretty text-[#4a3d7a]">
@@ -317,7 +318,9 @@ export function SearchScreen({
               const pickable = thTld && r.status === 'not-found' && !noRight
               const sub =
                 r.status === 'registered'
-                  ? 'แตะเพื่อสืบ'
+                  ? r.simulated
+                    ? 'เหตุการณ์จำลองในเกม แตะเพื่อสืบ'
+                    : 'แตะเพื่อสืบ'
                   : r.status === 'unknown'
                     ? 'แตะเพื่อค้นใหม่'
                     : pickable
@@ -335,7 +338,20 @@ export function SearchScreen({
                       : null
               const inner = (
                 <>
-                  <span className="m4-result-domain">{r.domain}</span>
+                  <span className="m4-result-domain">
+                    <b style={{ '--dlen': r.domain.length } as CSSProperties}>
+                      {r.domain.split('.').map((label, k) => (
+                        <Fragment key={k}>
+                          {k > 0 ? (
+                            <>
+                              .<wbr />
+                            </>
+                          ) : null}
+                          <span className="whitespace-nowrap">{label}</span>
+                        </Fragment>
+                      ))}
+                    </b>
+                  </span>
                   <span className={cn('m4-result-status', `is-${tone}`)}>
                     <span className="flex items-center gap-1">
                       <Glyph kind={tone === 'green' ? 'check' : tone === 'red' ? 'cross' : 'warn'} size={16} />

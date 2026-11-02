@@ -498,7 +498,10 @@
 .m4-result-row.is-mine { border-color: var(--m4-purple); }
 .m4-result-row.is-pick { border-color: #2f9e57; box-shadow: 0 0 0 2px #8fe0ab, 0 3px 0 #2f9e57; }
 .m4-result-row:focus-visible { outline: 3px solid #ffcf4a; outline-offset: 1px; }
-.m4-result-domain { display: flex; align-items: center; padding: 4px 6px; font-size: 15px; font-weight: 900; overflow-wrap: anywhere; }
+.m4-result-domain { display: flex; align-items: center; min-width: 0; padding: 4px 6px; container-type: inline-size; }
+.m4-result-domain > b { display: block; width: 100%; font-size: clamp(11px, calc(100cqi / (var(--dlen) * .6)), 15px); font-weight: 900; line-height: 1.25; overflow-wrap: normal; word-break: normal; }
+.m4-sim-note { display: block; width: 100%; font-size: 11px; font-weight: 800; text-align: center; opacity: .85; }
+.m4-real-pill:has(.m4-sim-note) { flex-wrap: wrap; justify-content: center; border-radius: 12px; }
 .m4-result-status {
   display: grid;
   align-content: center;
@@ -630,7 +633,7 @@
   -webkit-user-select: none;
   cursor: grab;
 }
-.m4-tray-card span { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.m4-tray-card span { min-width: 0; flex: 1; overflow-wrap: normal; word-break: normal; line-break: auto; }
 .m4-tray-card:active { cursor: grabbing; }
 .m4-tray-card:disabled { opacity: .6; }
 .m4-tray-card:focus-visible { outline: 3px solid #ffcf4a; outline-offset: 1px; }
@@ -903,6 +906,20 @@
 .m4-medal { display: grid; flex: 0 0 auto; width: 52px; height: 56px; place-items: center; border: 3px solid var(--m4-deep); border-radius: 50% 50% 8px 8px; background: radial-gradient(circle at 50% 40%, #8d74f0, var(--m4-purple)); }
 .m4-medal img { width: 34px !important; height: 34px !important; }
 .m4-clear-dome { align-self: center; }
+/* โทรศัพท์จอเตี้ย: สรุปผลทั้งหมดต้องอยู่เหนือปุ่มล่างโดยไม่ต้องเลื่อน */
+@media (max-height: 820px) {
+  .registrar-game-shell .m4-clear-screen { gap: .5rem; padding-top: 14px; }
+  .m4-clear-screen .m4-domain-pill { margin-bottom: 4px; padding-block: 4px; }
+  .m4-clear-screen .m4-stars { margin: 0 0 4px; }
+  .m4-clear-screen .m4-stars img, .m4-clear-screen .m4-stars svg { width: 38px !important; height: 38px !important; }
+  .m4-clear-screen .m4-stats li { padding: 4px 8px; font-size: 14px; }
+  .m4-clear-screen .m4-stats li b { font-size: 16px; }
+  .m4-clear-screen .m4-title-badge { margin-top: 6px; padding: 4px 8px; }
+  .m4-clear-screen .m4-medal { width: 42px; height: 46px; }
+  .m4-clear-screen .m4-medal img { width: 28px !important; height: 28px !important; }
+  .m4-clear-screen .m4-title-badge b { font-size: 16px; }
+  .m4-clear-dome { display: none; }
+}
 
 @media (max-width: 370px) {
   .m4-hud { gap: 3px; padding-inline: 6px; }
@@ -910,7 +927,7 @@
   .m4-chip-boss b { font-size: 11px; }
   .m4-people { display: none; }
   .m4-intro-dome { margin-right: 60px; }
-  .m4-tray-card { font-size: 11.5px; }
+  .m4-tray-card { gap: 3px; padding-inline: 4px; font-size: 11px; }
   .m4-calendar { width: 130px; height: 124px; }
   .m4-calendar-page b { font-size: 44px; }
 }
