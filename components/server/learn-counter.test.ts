@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import answers from '../../content/learn-counter-answers.json'
 import publicJson from '../../content/learn-counter.json'
 import type { CounterDecision, CounterDetail } from '../learn/counter-types'
-import { LEGACY_SHIFT, checkCounterStep, counterPoolIds, drawShift, newShiftSeed, publicCounterData, scoreCounter, validShift } from './learn-counter'
+import { LEGACY_SHIFT, checkCounterStep, counterPoolIds, drawShift, newShiftSeed, publicCounterData, publicPracticeData, scoreCounter, validShift } from './learn-counter'
 
 type Answer = (typeof answers.cases)[number]
 /** เทสต์คะแนนใช้กะสำรอง 2 คน (ค่าเริ่มต้นของ scoreCounter) */
@@ -264,5 +264,14 @@ describe('ค่าตั้งของครูกับด่าน 3', () =>
     expect(loose.score).toBe(strict.score)
     const asked = decisions.map((d) => ({ ...d, asked: ['a', 'b'] }))
     expect(scoreCounter({ decisions: asked }, LEGACY_SHIFT, { ...base, customerQuestions: 1 }).passed).toBe(false)
+  })
+
+  it('exposes the tutorial key only for the practice case', () => {
+    expect(publicCounterData().practiceKey).toBeUndefined()
+    expect(publicCounterData(['c6']).practiceKey).toBeUndefined()
+    expect(JSON.stringify(publicCounterData())).not.toContain('acceptedExtensions')
+    const practice = publicPracticeData()
+    expect(practice.cases.map((c) => c.id)).toEqual(['c6'])
+    expect(practice.practiceKey).toMatchObject({ caseId: 'c6', stamp: 'suggest', extension: '.in.th', reason: 'r2', keyQuestions: ['q1', 'q5'] })
   })
 })

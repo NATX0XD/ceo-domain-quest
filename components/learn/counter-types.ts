@@ -45,7 +45,20 @@ export interface CounterCase {
   reasons?: { id: string; text: string }[]
 }
 
+/** กุญแจบทซ้อมของลูกค้าฝึก (c6) เซิร์ฟเวอร์ใส่ให้เฉพาะข้อมูลของลูกค้าฝึก ห้ามอยู่ในกะจริง */
+export interface CounterPracticeKey {
+  caseId: string
+  tags: Record<string, CounterCategory>
+  keyQuestions: string[]
+  stamp: CounterStampId
+  extension: string | null
+  reason: string | null
+  tips: { tags: Record<string, string>; questions: Record<string, string>; stamp: string; extension: string; reason: string }
+}
+
 export interface CounterData {
+  /** มีเฉพาะข้อมูลลูกค้าฝึก (ดู publicPracticeData) */
+  practiceKey?: CounterPracticeKey
   title: string
   intro: string
   maxQuestions: number

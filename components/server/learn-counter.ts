@@ -6,6 +6,7 @@ import {
   COUNTER_STAMPS,
   type CounterCaseResult,
   type CounterData,
+  type CounterPracticeKey,
   type CounterDetail,
   type CounterGroupResult,
   type CounterRuntimeSettings,
@@ -85,6 +86,16 @@ const answersSchema = z.object({
       /** บทลูกค้าตอนตัดสินถูก (ไม่มี = เกมใช้บทกลาง) */
       line: z.string().optional(),
       explanation: z.string(),
+      /** ข้อความอธิบายสั้น ๆ ของบทซ้อม (ใช้เฉพาะลูกค้าฝึก) */
+      tutorial: z
+        .object({
+          tags: z.record(z.string(), z.string()),
+          questions: z.record(z.string(), z.string()),
+          stamp: z.string(),
+          extension: z.string(),
+          reason: z.string(),
+        })
+        .optional(),
     }),
   ),
 })
@@ -243,6 +254,31 @@ export function publicCounterData(caseIds?: readonly string[], settings: Partial
   if (!caseIds) return { ...DATA, ...runtimeData }
   const cases = caseIds.map((id) => DATA.cases.find((c) => c.id === id)).filter((c): c is CounterData['cases'][number] => !!c)
   return { ...DATA, ...runtimeData, cases }
+}
+
+/** ลูกค้าฝึกเพียงคนเดียว */
+export const PRACTICE_CASE_ID = 'c6'
+
+/**
+ * ข้อมูลลูกค้าฝึก + กุญแจบทซ้อม (เฉลยของเคสฝึกเท่านั้น) ใช้กับบทแนะนำครั้งแรก
+ * ⚠️ ห้ามใช้กับกะจริง — publicCounterData ไม่ใส่ practiceKey
+ */
+export function publicPracticeData(settings: Partial<CounterRuntimeSettings> = {}): CounterData {
+  const base = publicCounterData([PRACTICE_CASE_ID], settings)
+  const ans = ANSWERS.cases.find((a) => a.caseId === PRACTICE_CASE_ID)
+  const c = base.cases[0]
+  if (!ans?.tutorial || !c) return base
+  const extension = ans.acceptedExtensions.find((x) => c.extensionOptions.includes(x) && !c.domains[0]?.name.endsWith(x)) ?? null
+  const practiceKey: CounterPracticeKey = {
+    caseId: ans.caseId,
+    tags: ans.tags,
+    keyQuestions: ans.keyQuestions,
+    stamp: ans.stamp,
+    extension,
+    reason: ans.reason ?? null,
+    tips: ans.tutorial,
+  }
+  return { ...base, practiceKey }
 }
 
 /** คลังลูกค้าทั้งหมด (ใช้ในเทสต์/ตรวจเนื้อหา) */

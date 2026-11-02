@@ -24,6 +24,7 @@ import type {
   CounterCategory,
   CounterData,
   CounterDecision,
+  CounterPracticeKey,
   CounterDetail,
   CounterMood,
   CounterRuntimeSettings,
@@ -270,19 +271,38 @@ function tutorialSteps(
   extension: string | null,
   reason: string | null,
   feedback: Feedback | null,
+  key?: CounterPracticeKey,
+  data?: CounterData,
+  reasons?: { id: string; text: string }[],
 ): TutorialStep[] {
   const steps: TutorialStep[] = [
     { id: 'call', target: '[data-tut="call"]', text: 'แตะ เรียกคิว' },
-    ...current.domains.map((_, i) => ({ id: `tag-${i}` as const, target: `[data-tut="tag-${i}"]`, text: 'เลือกชั้นของชื่อนี้' })),
+    ...current.domains.map((d, i) => {
+      const cat = key?.tags[d.name]
+      const label = cat ? SHELF[data?.categories.findIndex((c) => c.id === cat) ?? -1] : undefined
+      return {
+        id: `tag-${i}` as const,
+        target: label ? `[data-tut="tag-${i}-ok"]` : `[data-tut="tag-${i}"]`,
+        text: label ? `${d.label} → กด '${label}' ${key?.tips.tags[d.name] ?? ''}` : 'เลือกชั้นของชื่อนี้',
+      }
+    }),
     { id: 'interview', target: '[data-tut="interview"]', text: 'เลือกครบแล้ว แตะสัมภาษณ์ลูกค้า' },
-    ...current.questions.slice(0, maxQuestions).map((q) => ({ id: `question-${q.id}` as const, target: `[data-tut="question-${q.id}"]`, text: 'ถามลูกค้าข้อนี้' })),
+    ...(key
+      ? current.questions.filter((q) => key.keyQuestions.includes(q.id))
+      : current.questions.slice(0, maxQuestions)
+    ).map((q) => ({ id: `question-${q.id}` as const, target: `[data-tut="question-${q.id}"]`, text: key?.tips.questions[q.id] ? `ถามข้อ "${q.text}" ${key.tips.questions[q.id]}` : 'ถามลูกค้าข้อนี้' })),
     { id: 'stamp-button', target: '[data-tut="stamp-button"]', text: 'ถามครบแล้ว แตะไปประทับตรา' },
-    { id: 'stamp-choice', target: '[data-tut="stamp-choice"]', text: 'เลือกตราที่ตรงกับคำตอบ' },
+    key
+      ? { id: 'stamp-choice', target: '[data-tut="stamp-ok"]', text: `กดตรา '${data?.stamps.find((x) => x.id === key.stamp)?.label ?? ''}' ${key.tips.stamp}` }
+      : { id: 'stamp-choice', target: '[data-tut="stamp-choice"]', text: 'เลือกตราที่ตรงกับคำตอบ' },
   ]
   if (stamp) {
     const selected = stamp === 'suggest' || stamp === 'first-step'
-    if (selected && !extension) steps.push({ id: 'extension', target: '[data-tut="extension"]', text: 'เลือกนามสกุลที่เสนอ' })
-    if (!reason) steps.push({ id: 'reason', target: '[data-tut="reason"]', text: 'เลือกเหตุผลที่ตรง' })
+    if (selected && !extension) steps.push(key?.extension ? { id: 'extension', target: '[data-tut="ext-ok"]', text: `เลือก ${key.extension} ${key.tips.extension}` } : { id: 'extension', target: '[data-tut="extension"]', text: 'เลือกนามสกุลที่เสนอ' })
+    if (!reason) {
+      const rtext = key?.reason ? reasons?.find((r) => r.id === key.reason)?.text : undefined
+      steps.push(rtext ? { id: 'reason', target: '[data-tut="reason-ok"]', text: `เลือก "${rtext}" ${key?.tips.reason ?? ''}` } : { id: 'reason', target: '[data-tut="reason"]', text: 'เลือกเหตุผลที่ตรง' })
+    }
     if (reason) steps.push({ id: 'submit', target: '[data-tut="submit"]', text: 'แตะ ประทับตรา เพื่อส่ง' })
   }
   if (feedback?.kind === 'retry') steps.push({ id: 'retry', target: '[data-tut="retry"]', text: 'แตะลองตัดสินใหม่' })
@@ -301,7 +321,9 @@ function tutorialStepFor({
   extension,
   reason,
   feedback,
+  keyQuestions,
 }: {
+  keyQuestions?: string[]
   page: Page
   current: ViewCase
   tags: Record<string, CounterCategory>
@@ -321,7 +343,7 @@ function tutorialStepFor({
     return nextDomain >= 0 ? `tag-${nextDomain}` : 'interview'
   }
   if (page === 'interview') {
-    const nextQuestion = current.questions.slice(0, maxQuestions).find((q) => !asked.includes(q.id))
+    const nextQuestion = (keyQuestions ? current.questions.filter((q) => keyQuestions.includes(q.id)) : current.questions.slice(0, maxQuestions)).find((q) => !asked.includes(q.id))
     return nextQuestion ? `question-${nextQuestion.id}` : 'stamp-button'
   }
   if (!stamp) return 'stamp-choice'
@@ -442,6 +464,16 @@ export function PixelShift({
   }, [caseIndex, decisions, points, penalty, attempt, wrongHint])
 
   const current = cases[caseIndex]
+  /** บทซ้อมแบบบอกคำตอบ: ใช้เฉพาะตอนเป็นบทแนะนำและเซิร์ฟเวอร์ส่งกุญแจของลูกค้าฝึกมา */
+  const tutKey = tutorial && data.practiceKey && data.practiceKey.caseId === current?.id ? data.practiceKey : undefined
+  const [nudge, setNudge] = useState(0)
+  /** แตะผิดระหว่างบทซ้อม: สั่นเบา ๆ แล้วชี้กลับตัวเลือกที่ถูก ไม่หักคะแนน */
+  function tutBlocked(ok: boolean) {
+    if (!tut || !tutKey || ok) return false
+    sfx('bad')
+    setNudge((n) => n + 1)
+    return true
+  }
   const total = cases.length
   const isLast = caseIndex === total - 1
   const stampInfo = data.stamps.find((s) => s.id === stamp)
@@ -688,6 +720,7 @@ export function PixelShift({
     if (!current) return
     const q = current.questions.find((x) => x.id === id)
     if (!q) return
+    if (tutBlocked(!tutKey || tutKey.keyQuestions.includes(id))) return
     if (asked.includes(id)) {
       setTalk((t) => [...t, { key: `a${t.length}`, q: typedText ?? q.text, a: `ตอบไปแล้วนะ${softParticle(current.particle)} ${q.reply}`, mood: 'neutral', kind: 'again' }])
       return
@@ -841,10 +874,10 @@ export function PixelShift({
   useEffect(() => {
     if (!tut || !current) return
     if (look !== 'counter') turn('counter')
-    const next = tutorialStepFor({ page, current, tags, asked, maxQuestions: data.maxQuestions, stamp, needsExt, extension, reason, feedback })
+    const next = tutorialStepFor({ page, current, tags, asked, maxQuestions: data.maxQuestions, stamp, needsExt, extension, reason, feedback, keyQuestions: tutKey?.keyQuestions })
     if (next !== tut) setTut(next)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tutorial follows game state only
-  }, [tut, page, current, tags, asked, data.maxQuestions, stamp, needsExt, extension, reason, feedback, look])
+  }, [tut, page, current, tags, asked, data.maxQuestions, stamp, needsExt, extension, reason, feedback, look, tutKey])
 
   if (!current) return null
 
@@ -977,7 +1010,7 @@ export function PixelShift({
     )
 
   const blur = look === 'counter' && page === 'card' && !feedback ? 'is-blur' : look === 'counter' && page !== 'queue' ? 'is-soft' : ''
-  const coachSteps = tut ? tutorialSteps(current, data.maxQuestions, stamp, extension, reason, feedback) : []
+  const coachSteps = tut ? tutorialSteps(current, data.maxQuestions, stamp, extension, reason, feedback, tutKey, data, reasons) : []
   const coachStep = tut ? coachSteps.find((s) => s.id === tut) : null
 
   /* ---------- การ์ดคำขอ (ใช้ซ้ำทุกขั้น) ---------- */
@@ -1307,8 +1340,10 @@ export function PixelShift({
                                       type="button"
                                       role="radio"
                                       aria-checked={tags[d.name] === c.id}
+                                      data-tut={tutKey && tutKey.tags[d.name] === c.id ? `tag-${current.domains.indexOf(d)}-ok` : undefined}
                                       className={cn(tags[d.name] === c.id && 'is-on', `cat-${i}`)}
                                       onClick={() => {
+                                        if (tutBlocked(!tutKey || tutKey.tags[d.name] === c.id)) return
                                         sfx('ok')
                                         setTags((t) => ({ ...t, [d.name]: c.id }))
                                       }}
@@ -1406,10 +1441,12 @@ export function PixelShift({
                                 type="button"
                                 role="radio"
                                 aria-checked={stamp === s.id}
+                                data-tut={tutKey && tutKey.stamp === s.id ? 'stamp-ok' : undefined}
                                 disabled={locked}
                                 title={s.hint}
                                 className={cn('px-stamp', `is-${s.id}`, stamp === s.id && 'is-on', stamping && stamp === s.id && 'is-press')}
                                 onClick={() => {
+                                  if (tutBlocked(!tutKey || tutKey.stamp === s.id)) return
                                   sfx('tap')
                                   setStamp(s.id)
                                   if (!s.needsExtension) setExtension(null)
@@ -1436,9 +1473,11 @@ export function PixelShift({
                                       type="button"
                                       role="radio"
                                       aria-checked={extension === ext}
+                                      data-tut={tutKey && tutKey.extension === ext ? 'ext-ok' : undefined}
                                       disabled={locked}
                                       className={cn('px-radio', extension === ext && 'is-on')}
                                       onClick={() => {
+                                        if (tutBlocked(!tutKey?.extension || tutKey.extension === ext)) return
                                         sfx('tap')
                                         setExtension(ext)
                                       }}
@@ -1459,9 +1498,11 @@ export function PixelShift({
                                   type="button"
                                   role="radio"
                                   aria-checked={reason === r.id}
+                                  data-tut={tutKey && tutKey.reason === r.id ? 'reason-ok' : undefined}
                                   disabled={locked}
                                   className={cn('px-reason', reason === r.id && 'is-on')}
                                   onClick={() => {
+                                    if (tutBlocked(!tutKey?.reason || tutKey.reason === r.id)) return
                                     sfx('tap')
                                     setReason(r.id)
                                   }}
@@ -1625,6 +1666,7 @@ export function PixelShift({
           text={coachStep?.text ?? 'ทำตามเป้าที่สว่างอยู่'}
           step={Math.max(1, coachSteps.findIndex((s) => s.id === tut) + 1)}
           total={Math.max(1, coachSteps.length)}
+          nudge={nudge}
           onSkip={endTut}
         />
       ) : null}
@@ -1655,9 +1697,11 @@ function Coach({
   text,
   step,
   total,
+  nudge = 0,
   onNext,
   onSkip,
 }: {
+  nudge?: number
   target: string
   text: string
   step: number
@@ -1736,7 +1780,7 @@ function Coach({
       ) : null}
       <div
         ref={cardRef}
-        className="px-coach-card"
+        className={cn('px-coach-card', nudge > 0 && (nudge % 2 ? 'is-nudge-a' : 'is-nudge-b'))}
         style={{ top: cardTop }}
       >
         <PxImg srcs={PX_ASSET.dome('happy')} className="px-coach-dome" />

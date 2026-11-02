@@ -22,7 +22,7 @@ import { M2Flow } from '@/components/learn/m2-flow'
 import { ReplayMarker } from '@/components/mission-revisit'
 import { LEARN_MODES, PASS_SCORE, findLearnPath, loadLearnState, type LearnState } from '@/components/server/learn-path'
 import { DEFAULTS, getMissionSettings } from '@/lib/mission-settings'
-import { publicCounterData } from '@/components/server/learn-counter'
+import { publicCounterData, publicPracticeData } from '@/components/server/learn-counter'
 import { currentShift } from '@/components/server/m3-shift'
 import { startM4Attempt } from '@/components/server/m4-attempt'
 import { publicRegistrarData } from '@/components/server/learn-registrar'
@@ -136,7 +136,7 @@ export default async function MissionPage({
           aiFeedback={mission.id === 'm1' ? (m1Settings?.aiFeedback ?? true) : undefined}
           gameData={kind === 'game' ? buildGameData(studentMission, session.studentId) : null}
           counterData={counterShift ? publicCounterData(counterShift.caseIds, counterShift.settings) : null}
-          counterPracticeData={kind === 'counter' ? publicCounterData(['c6'], counterShift?.settings) : null}
+          counterPracticeData={kind === 'counter' ? publicPracticeData(counterShift?.settings) : null}
           counterSettings={counterShift?.settings ?? null}
           registrarSettings={m4Settings}
           registrarData={kind === 'registrar' ? publicRegistrarData(m4Settings ?? undefined) : null}

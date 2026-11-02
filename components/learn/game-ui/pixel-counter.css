@@ -425,11 +425,15 @@
 /* ---------- โค้ชมาร์ก (บทแนะนำครั้งแรก) ---------- */
 .px-coach { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
 .px-coach-ring { position: fixed; border: 4px solid #ffbe2e; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(20, 10, 40, 0.38), 0 0 18px 4px rgba(255, 190, 46, 0.8); transition: top 0.25s, left 0.25s, width 0.25s, height 0.25s; animation: px-coach-pulse 1.3s ease-in-out infinite; }
+@keyframes px-coach-shake-a { 20%, 60% { translate: -6px 0; } 40%, 80% { translate: 6px 0; } }
+@keyframes px-coach-shake-b { 20%, 60% { translate: -6px 0; } 40%, 80% { translate: 6px 0; } }
+.px-coach-card.is-nudge-a { animation: px-coach-shake-a 0.4s; }
+.px-coach-card.is-nudge-b { animation: px-coach-shake-b 0.4s; }
 @keyframes px-coach-pulse { 50% { border-color: #fff3b0; } }
 .px-coach-card { position: fixed; right: 10px; left: 10px; display: grid; grid-template-columns: 46px 1fr; align-items: start; gap: 8px; max-width: 540px; margin: 0 auto; padding: 8px 10px; border: 3px solid var(--ink); border-radius: 12px; background: #fffaf0; box-shadow: 0 5px 0 var(--ink); pointer-events: auto; }
 .px-coach-dome { width: 46px; height: auto; image-rendering: auto !important; }
 .px-coach-card small { color: var(--purple); font-size: 12px; font-weight: 900; }
-.px-coach-card p { margin: 1px 0 2px; overflow: hidden; color: #241a44; font-size: 14.5px; font-weight: 800; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
+.px-coach-card p { margin: 1px 0 2px; overflow: hidden; color: #241a44; font-size: 14px; font-weight: 800; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
 .px-coach-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .px-coach-actions .px-link { margin: 0; padding: 4px 2px; font-size: 13px; color: #6b5a8f; }
 .px-coach-next { min-height: 40px; padding: 4px 16px; border: 3px solid var(--ink); border-radius: 8px; background: var(--purple); box-shadow: 0 3px 0 var(--ink); color: #fff; font: inherit; font-size: 15px; font-weight: 900; cursor: pointer; }
@@ -500,6 +504,7 @@
 @media (prefers-reduced-motion: reduce) {
   .px-chip--timer.is-urgent { animation: none !important; }
   .px-coach-ring { animation: none; transition: none; }
+  .px-coach-card.is-nudge-a, .px-coach-card.is-nudge-b { animation: none; }
   .px *,
   .px *::before,
   .px *::after { animation: none !important; transition: none !important; }
