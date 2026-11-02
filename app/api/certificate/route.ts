@@ -2,9 +2,10 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { NextResponse } from 'next/server'
 import { certificateData, studentReport, type MissionInput } from '@/core/report'
-import { certificateFileName, renderCertificate } from '@/lib/certificate/render'
-import { DEFAULT_COURSE_NAME } from '@/lib/certificate/data'
-import { PRODUCT_NAME_EN, PRODUCT_NAME_TH } from '@/components/product'
+import { certificateFileName } from '@/lib/certificate/render'
+import { renderGameCertificatePdf } from '@/lib/certificate/game'
+import { loadCertArt } from '@/lib/certificate/art'
+import { missions as missionList } from '@/components/missions'
 import { loadThaiFonts, type ThaiFontSet } from '@/lib/certificate/font'
 import { getProfile, getStudent, listMissionProgress, listSubmissions } from '@/lib/db/repo'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
@@ -116,10 +117,26 @@ export async function GET() {
   const starsTotal = profile?.earned_stars ?? report.starsTotal
   const data = certificateData({ ...report, starsTotal }, Date.now())
 
-  // ชื่อผลงานบนใบประกาศ: อังกฤษเป็นหลัก ไทยเป็นชื่อรอง แล้วต่อท้ายด้วยชื่อวิชา (มติ T40)
-  const pdf = renderCertificate(data, await serverFonts(), {
-    courseName: `${PRODUCT_NAME_EN} · ${PRODUCT_NAME_TH} · ${DEFAULT_COURSE_NAME}`,
-  })
+  // เกียรติบัตรแบบเกม — ภาพจาก public/ui/cert/ (ไม่มีรูปไหนก็วาดรูปทรงแทน)
+  const passedIds = new Set(missionRows.filter((row) => row.passed_at !== null).map((row) => row.mission_id))
+  const [fonts, art] = await Promise.all([serverFonts(), loadCertArt()])
+  const pdf = renderGameCertificatePdf(
+    {
+      nickname: data.nickname,
+      shopName: data.shopName,
+      domainFull: data.domainFull,
+      starsTotal: data.starsTotal,
+      starsMax: data.starsMax,
+      missionsPassed: missionList.filter((m) => passedIds.has(m.id)).length,
+      missionsTotal: missionList.length,
+      ceoScore: standing.score
+        ? { total: standing.score.weightedTotal, max: standing.score.weightedMax, source: standing.score.source }
+        : null,
+      issuedAt: Date.now(),
+    },
+    fonts,
+    art,
+  )
 
   return new NextResponse(pdf as unknown as BodyInit, {
     status: 200,

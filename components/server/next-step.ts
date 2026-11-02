@@ -158,8 +158,8 @@ export function studentNextStep(input: NextStepInput): StudentNextStep {
 
     case 'passed':
       return {
-        badge: 'ครูยืนยันครบทุกด้านแล้ว',
-        line: 'ครูยืนยันแล้วว่าทำได้ครบทั้ง 4 ด้าน ไปรับใบประกาศได้เลย',
+        badge: 'ครูตรวจแล้ว',
+        line: 'ครูตรวจใบเสนอของเราแล้ว ไปดูคะแนน ข้อความจากครู และรับเกียรติบัตรได้เลย',
         primary: { href: '/result', label: 'ดูผลและรับใบประกาศ', longLabel: 'ดูผลและรับใบประกาศ' },
         secondary: { href: '/posttest', label: 'แบบทดสอบหลังเรียน', longLabel: 'ไปทำแบบทดสอบหลังเรียน' },
         tone: 'done',

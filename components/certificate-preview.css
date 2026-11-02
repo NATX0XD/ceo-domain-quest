@@ -1,0 +1,51 @@
+/* พรีวิวเกียรติบัตร — สัดส่วน A4 แนวนอน หน่วยทั้งหมดอิงความกว้างแผ่น (cqw) ให้ตรงกับ PDF */
+.cert-preview { margin: 0; width: 100%; container-type: inline-size; }
+.cert-sheet {
+  position: relative; width: 100%; aspect-ratio: 297 / 210; overflow: hidden;
+  border-radius: 1.6cqw; box-shadow: 0 6px 18px rgb(60 30 10 / .28);
+  color: #3a210e; font-family: var(--font-sans); line-height: 1; text-align: center;
+}
+.cert-sheet.no-bg {
+  background: #fcf1d6;
+  border: 2.7cqw solid #5c3416;
+  box-shadow: inset 0 0 0 1.3cqw #fcf1d6, inset 0 0 0 1.65cqw #d69e24, 0 6px 18px rgb(60 30 10 / .28);
+}
+.cert-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; max-width: none !important; }
+.cert-line {
+  position: absolute; left: 21%; right: 21%; margin: 0; transform: translateY(-82%);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cert-product { color: #a06812; font-weight: 800; }
+.cert-muted { color: #785634; }
+.cert-strong { font-weight: 800; }
+.cert-score { color: #a06812; font-weight: 800; }
+.cert-name { color: #5c3416; font-family: var(--font-display), var(--font-sans); font-weight: 900; line-height: 1.15; }
+.cert-name::after { content: ''; display: block; margin: .6cqw auto 0; width: 40.4cqw; height: .25cqw; background: #d69e24; }
+
+.cert-ribbon { position: absolute; left: 50%; top: 7.6%; width: 50.5cqw; height: 10.1cqw; transform: translateX(-50%); display: grid; place-items: center; }
+.cert-ribbon:not(.has-art) { background: #ba342a; border-radius: 1cqw; box-shadow: inset 0 0 0 .7cqw #ba342a, inset 0 0 0 .9cqw #d69e24; }
+.cert-ribbon img { position: absolute; left: -3.4cqw; top: -1.35cqw; width: calc(100% + 6.8cqw); height: calc(100% + 2.7cqw); object-fit: contain; max-width: none !important; }
+.cert-ribbon span { position: relative; color: #fff8e4; font-family: var(--font-display), var(--font-sans); font-weight: 900; font-size: 4.1cqw; text-shadow: 0 .3cqw 0 rgb(80 20 10 / .45); }
+
+.cert-stars { position: absolute; left: 50%; top: calc(129 / 210 * 100% - 1.45cqw); transform: translateX(-50%); display: flex; gap: .67cqw; }
+.cert-stars img { width: 2.9cqw; height: 2.9cqw; max-width: none !important; }
+.cert-star { width: 2.9cqw; height: 2.9cqw; background: #ecdec4; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.cert-star.on { background: #d69e24; }
+
+.cert-dome { position: absolute; left: 8.1%; top: 61%; width: 14.8cqw; height: 18.9cqw; object-fit: contain; max-width: none !important; }
+.cert-dome-fallback { background: radial-gradient(circle at 50% 55%, #966edc 0 36%, transparent 37%); }
+.cert-seal { position: absolute; right: 8.8%; top: 62.8%; width: 14.8cqw; height: 14.8cqw; object-fit: contain; max-width: none !important; }
+.cert-seal-fallback {
+  display: grid; place-items: center; border-radius: 50%;
+  background: radial-gradient(circle, #d69e24 0 60%, #a06812 61% 64%, #d69e24 65%);
+  color: #5c3416; font-weight: 900; font-size: 3cqw;
+}
+
+/* /result: ย่อเกียรติบัตรให้พอดีทั้งกว้างและสูงของการ์ด (A4 แนวนอน = กว้าง 1.414 เท่าของสูง) */
+.result-cert-fit { flex: 1 1 auto; min-height: 0; width: 100%; container-type: size; display: grid; place-items: center; }
+.result-cert-fit > .cert-preview { width: min(100cqw, 141.4cqh); }
+/* ได้ใบแล้ว: ชิปเรียงแถวเดียวเลื่อนข้างได้ คืนความสูงให้เกียรติบัตร */
+.result-chip-scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; justify-content: safe center; }
+.result-chip-scroll::-webkit-scrollbar { display: none; }
+.result-chip-scroll > * { flex-shrink: 0; }
+.cert-dome-fallback { display: none; }

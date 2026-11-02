@@ -19,6 +19,7 @@ interface ScoreBlock {
   weightedMax?: number
   stars?: number
   feedback?: string
+  dimensions?: RubricDimensionView[]
 }
 
 interface AiScoreBag extends Partial<AiSourceInfo> {
@@ -163,6 +164,7 @@ export async function ReviewList({
     <ul aria-live="polite" className="flex flex-col gap-4">
       {pending.map((row) => {
         const ai = readAiScores(row.ai_scores)
+        const aiDone = ai?.gradingStatus === 'done' && Boolean(ai?.aiProposed)
         // ฉบับทั้งหมดของคนนี้ ใหม่สุดอยู่หน้าสุด (listSubmissions เรียง created_at DESC)
         const versions = historyByStudent.get(row.student_id) ?? []
         const indexFromNewest = versions.findIndex((v) => v.id === row.id)
@@ -278,18 +280,19 @@ export async function ReviewList({
             {/* flow-1 ข้อ 24: บอกให้ชัดว่ากดยืนยันแล้วเกิดอะไรกับเด็ก ครูจะได้ไม่ลังเล */}
             <p className="mt-3 flex items-center gap-2 text-label font-bold text-ink-muted">
               <Icon3d name="light-bulb" size={24} />
-              ยืนยันแล้วนักเรียนเห็นทันที · แก้ทีหลังได้
+              นักเรียนได้คะแนนอัตโนมัติและเกียรติบัตรแล้ว · ครูปรับคะแนน/เขียนความเห็นได้
               <InfoTip
                 label="เรื่องการยืนยันคะแนน"
-                text="กดยืนยันแล้วนักเรียนเห็นคะแนนกับข้อความของครูทันที และได้ใบประกาศถ้าได้ระดับ 3 ครบทั้ง 4 ด้าน แก้คะแนนทีหลังได้ ถ้ายังไม่พร้อมให้คะแนน กด ส่งกลับให้แก้ แล้วเขียนบอกว่าต้องเติมอะไร"
+                text="นักเรียนเห็นคะแนนที่ AI ตรวจ (หรือคะแนนจากกฎถ้า AI ยังไม่เสร็จ) และได้เกียรติบัตรทันทีที่ส่งงาน ไม่ต้องรอครู ถ้าครูยืนยัน/ปรับคะแนน คะแนนของครูจะแทนคะแนนอัตโนมัติ และข้อความของครูจะขึ้นที่หน้าผลของนักเรียน แก้ซ้ำได้เสมอ ส่วน ส่งกลับให้แก้ ใช้เมื่ออยากให้นักเรียนปรับงาน (ไม่ดึงเกียรติบัตรคืน)"
               />
             </p>
 
             <TeacherConfirmScore
               submissionId={row.id}
-              proposedScore={ai?.score ?? 0}
-              maxScore={ai?.maxScore ?? 15}
-              dimensions={ai?.dimensions ?? []}
+              /* นักเรียนเห็นคะแนน AI เมื่อ AI ตรวจเสร็จ — ฟอร์มครูจึงตั้งต้นจากค่าเดียวกัน */
+              proposedScore={(aiDone ? ai?.aiProposed?.weightedTotal : undefined) ?? ai?.score ?? 0}
+              maxScore={(aiDone ? ai?.aiProposed?.weightedMax : undefined) ?? ai?.maxScore ?? 15}
+              dimensions={(aiDone && ai?.aiProposed?.dimensions?.length ? ai.aiProposed.dimensions : ai?.dimensions) ?? []}
               savedScores={readTeacherScores(row.teacher_confirmed_scores)}
               /**
                * ต้องถาม `isTeacherConfirmed()` ไม่ใช่เช็กว่าคอลัมน์ไม่ null

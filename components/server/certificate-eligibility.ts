@@ -59,6 +59,8 @@ export interface CertificateEligibility {
   missionsDone: boolean
   /** คะแนนใบเสนอ CEO ล่าสุด (null = ยังไม่ส่ง) */
   score: CeoScore | null
+  /** ข้อความที่ครูเขียนถึงผู้เรียน (ตอนยืนยัน/ปรับคะแนน หรือตอนส่งกลับให้แก้) */
+  teacherNote: string | null
   dimensions: DimensionStanding[]
   /** ด้านที่ยังไม่ถึงระดับ 3 */
   missing: DimensionStanding[]
@@ -177,6 +179,7 @@ export function certificateStandingOf(
       eligible: false,
       missionsDone,
       score: null,
+      teacherNote: null,
       dimensions: standing(null),
       missing: standing(null),
       passedCount: 0,
@@ -191,6 +194,8 @@ export function certificateStandingOf(
   const scores = readDimensionScores(ceo.teacher_confirmed_scores)
   const dimensions = standing(scores)
   const score = ceoScoreOf(ceo)
+  const revisionNote = revisionRequestOf(ceo)?.note?.trim() || null
+  const teacherNote = readTeacherConfirmedScores(ceo)?.note?.trim() || revisionNote
   /** ส่งใบเสนอแล้ว + ภารกิจย่อยครบ = ได้ใบทันที ครูจะยืนยัน/ปรับ/สั่งแก้ทีหลังก็ไม่ดึงใบคืน */
   const eligible = missionsDone
   const certNext = eligible
@@ -213,6 +218,7 @@ export function certificateStandingOf(
       eligible,
       missionsDone,
       score,
+      teacherNote,
       dimensions,
       missing: toFix,
       passedCount: dimensions.length - toFix.length,
@@ -232,6 +238,7 @@ export function certificateStandingOf(
       eligible,
       missionsDone,
       score,
+      teacherNote,
       dimensions,
       missing,
       passedCount: 0,
@@ -243,39 +250,26 @@ export function certificateStandingOf(
     }
   }
 
-  if (missing.length === 0) {
-    return {
-      status: 'passed',
-      eligible,
-      missionsDone,
-      score,
-      dimensions,
-      missing,
-      passedCount,
-      totalCount: dimensions.length,
-      message: 'ครูยืนยันแล้วว่าทำได้ครบทั้ง 4 ด้าน ใบประกาศเป็นของเราแล้ว',
-      ...certNext,
-    }
-  }
-
   /**
-   * ยังไม่ครบ — ข้อความต้องบอก 3 อย่าง: ทำได้แล้วกี่ด้าน · เหลือด้านไหน · แก้แล้วส่งใหม่ได้
+   * ครูตรวจแล้ว = คำตัดสินสุดท้าย (มติเจ้าของ 2 พ.ย.) — ด้านที่ยังไม่ถึงระดับ 3 เป็นแค่คำแนะนำ
+   * ไม่ใช่คำสั่งให้แก้ (อยากให้แก้ ครูต้องกด "ส่งกลับให้แก้" ซึ่งไปทางสาย revision ข้างบน)
    * ห้ามใช้คำว่า "ไม่ผ่าน" หรือ "ตก" (สเปกข้อ 2.3)
    */
   const names = missing.map((d) => d.shortName).join(' และ ')
   return {
-    status: 'keep-going',
+    status: 'passed',
     eligible,
     missionsDone,
     score,
+    teacherNote,
     dimensions,
     missing,
     passedCount,
     totalCount: dimensions.length,
     message:
-      `ทำได้แล้ว ${passedCount} จาก ${dimensions.length} ด้าน เหลืออีก ${missing.length} ด้านคือ ${names} ` +
-      'แก้แล้วบอกครูให้ดูใหม่ได้เลย ไม่มีคำว่าสาย และคะแนนที่ทำได้แล้วไม่หายไปไหน',
-    nextHref: '/ceo',
-    nextLabel: 'กลับไปแก้งานของฉัน',
+      missing.length === 0
+        ? 'ครูยืนยันแล้วว่าทำได้ครบทั้ง 4 ด้าน เกียรติบัตรเป็นของเราแล้ว'
+        : `ครูตรวจแล้ว ทำได้ดีมาก ${passedCount} จาก ${dimensions.length} ด้าน · ด้านที่ต่อยอดได้อีกคือ ${names}`,
+    ...certNext,
   }
 }

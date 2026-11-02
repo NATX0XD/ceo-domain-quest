@@ -20,6 +20,9 @@ import {
 } from '@/components/ui'
 import { SelfAssessPanel } from '@/components/self-assess/self-assess-panel'
 import { ResultGradePoll } from '@/components/result-grade-poll'
+import { CertificatePreview } from '@/components/certificate-preview'
+import { gameCertificateContent } from '@/lib/certificate/game'
+import { certArtPresence } from '@/lib/certificate/art'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { loadShopProfile, loadSelfProfileDb } from '@/components/server/game-state'
@@ -31,7 +34,6 @@ import {
 } from '@/components/server/lesson-content'
 import { certificateEligibility } from '@/components/server/certificate-eligibility'
 import { posttestGate } from '@/components/server/posttest-gate'
-import { PRODUCT_NAME_EN } from '@/components/product'
 import { getProfile, getStudent, listSubmissions } from '@/lib/db/repo'
 
 export const metadata: Metadata = { title: 'ผลงานของฉัน — CEO Domain Quest' }
@@ -111,7 +113,6 @@ export default async function ResultPage() {
   const showPosttest = postGate.open && (profileRow?.post_test_score ?? null) === null
 
   const nickname = student?.nickname ?? 'ยังไม่มีข้อมูล'
-  const shopName = shop?.shopName?.trim() ? shop.shopName : 'ยังไม่ได้ตั้งชื่อร้าน'
   const goalStars = data.goalStars ?? 0
   const compare = data.outcome ? goalCompareCard(data.outcome) : null
   const weakTopic =
@@ -135,6 +136,21 @@ export default async function ResultPage() {
   const issuedOn = thaiDate(new Date().toISOString())
 
   const score = standing.score
+  /** ข้อความบนเกียรติบัตร — ชุดเดียวกับ PDF ของ /api/certificate */
+  const certContent = earned
+    ? gameCertificateContent({
+        nickname,
+        shopName: shop?.shopName ?? '',
+        domainFull: certDomain,
+        starsTotal: data.totalStars,
+        starsMax: data.maxStars,
+        missionsPassed: data.missions.filter((m) => m.passed).length,
+        missionsTotal: data.missions.length,
+        ceoScore: score ? { total: score.weightedTotal, max: score.weightedMax, source: score.source } : null,
+        issuedAt: Date.now(),
+      })
+    : null
+  const certArt = certContent ? certArtPresence() : null
   const grading = score?.grading === true
   const revise = standing.status === 'keep-going'
 
@@ -198,7 +214,7 @@ export default async function ResultPage() {
               <>
                 <a href="/api/certificate" download className="btn-confirm">
                   <DownloadIcon width={22} height={22} aria-hidden />
-                  ดาวน์โหลดเกียรติบัตร
+                  ดาวน์โหลดเกียรติบัตร (PDF)
                 </a>
                 <Link
                   href="/showcase"
@@ -223,14 +239,14 @@ export default async function ResultPage() {
         {/* ตัวเลขสองตัวที่ต้องอ่านได้จากไกล — ดาวที่เก็บได้ และด้านที่ครูยืนยัน
             ⚠️ ช่องขวาไม่โชว์ "0 จาก 4" ตอนครูยังไม่ตรวจ เลขศูนย์ตรงนั้นอ่านเป็น "ทำไม่ได้เลย" */}
         <div className="grid shrink-0 grid-cols-2 gap-2">
-          <div className="result-stat-card game-card rounded-2xl bg-surface-raised p-3 text-center shadow-soft-1">
+          <div className="result-stat-card game-card rounded-2xl bg-surface-raised px-3 py-2 text-center shadow-soft-1">
             <p className="text-title font-black text-quest-700 tabular-nums">
               {data.totalStars}
               <span className="text-body-lg font-extrabold text-ink-muted"> / {data.maxStars}</span>
             </p>
             <p className="text-note font-bold text-ink-muted">ดาวที่เก็บได้</p>
           </div>
-          <div className="result-stat-card game-card rounded-2xl bg-surface-raised p-3 text-center shadow-soft-1">
+          <div className="result-stat-card game-card rounded-2xl bg-surface-raised px-3 py-2 text-center shadow-soft-1">
             {score ? (
               <>
                 <p className="text-title font-black text-brand-700 tabular-nums">
@@ -253,20 +269,33 @@ export default async function ResultPage() {
 
         {/* การ์ดสถานะเกียรติบัตร — พระเอกของจอ กินพื้นที่ที่เหลือทั้งหมด */}
         <div
-          className={`result-status-card game-card flex min-h-0 flex-1 flex-col items-center justify-center rounded-3xl px-4 py-3 text-center shadow-soft-2 ${
+          className={`result-status-card game-card flex min-h-0 flex-1 flex-col items-center justify-center rounded-3xl text-center shadow-soft-2 ${
+            certContent ? 'px-2 py-2' : 'px-4 py-3'
+          } ${
             earned ? 'bg-reward-100 ring-1 ring-reward-300 ring-inset' : 'bg-surface-raised'
           }`}
         >
-          <AchievementBadge
-            size={84}
-            earned={earned}
-            className={earned ? 'animate-pop-in motion-reduce:animate-none' : undefined}
-          />
-          <p className="mt-2 text-title-sm font-black text-balance text-ink">{statusTitle}</p>
-          <p className="mt-0.5 line-clamp-2 text-label text-pretty text-ink-muted">{standing.message}</p>
-          {score && score.source !== 'teacher' ? (
+          {certContent && certArt ? (
+            /* ได้ใบแล้ว = โชว์เกียรติบัตรจริงเต็มพื้นที่ (ย่อตามความสูงที่เหลือ ไม่ล้นจอ) */
+            <div className="result-cert-fit">
+              <CertificatePreview content={certContent} art={certArt} />
+            </div>
+          ) : (
+            <>
+              <AchievementBadge size={84} earned={earned} />
+              <p className="mt-2 text-title-sm font-black text-balance text-ink">{statusTitle}</p>
+              <p className="mt-0.5 line-clamp-2 text-label text-pretty text-ink-muted">{standing.message}</p>
+            </>
+          )}
+          {standing.teacherNote ? (
+            <p className="mt-1 line-clamp-2 w-full text-label text-pretty text-ink">
+              <span className="font-extrabold text-brand-700">ครูเขียนถึงเรา: </span>“{standing.teacherNote}”
+            </p>
+          ) : score ? (
             <p className="mt-1 text-note text-balance text-ink-subtle">
-              {score.source === 'ai' ? 'AI ตรวจให้' : 'ระบบตรวจให้'} · ครูปรับคะแนนได้ภายหลัง
+              {score.source === 'teacher'
+                ? 'ครูตรวจแล้ว'
+                : `${score.source === 'ai' ? 'AI ตรวจให้' : 'ระบบตรวจให้'} · ครูปรับคะแนนได้ภายหลัง`}
             </p>
           ) : null}
           {earned ? null : (
@@ -283,7 +312,10 @@ export default async function ResultPage() {
         </div>
 
         {/* แถวชิป — ของยาวทั้งหมดอยู่หลังชิปพวกนี้ กดแล้วแผ่นเลื่อนขึ้นมา */}
-        <nav aria-label="รายละเอียดเพิ่มเติม" className="chip-row shrink-0 justify-center">
+        <nav
+          aria-label="รายละเอียดเพิ่มเติม"
+          className={`chip-row shrink-0 ${certContent ? 'result-chip-scroll' : 'justify-center'}`}
+        >
           <Sheet
             id="sheet-cert"
             triggerVariant="chip"
@@ -292,30 +324,23 @@ export default async function ResultPage() {
             title={earned ? 'เกียรติบัตรของฉัน' : 'สิ่งที่ยังเหลืออยู่'}
           >
             {earned ? (
-              <div className="rounded-xl bg-surface-sunken px-4 py-5 text-center ring-2 ring-reward-300 ring-inset">
-                <p className="text-label text-ink-muted">มอบให้</p>
-                <p className="mt-1 text-title font-extrabold text-balance text-ink">{nickname}</p>
-                <p className="mt-4 text-label text-ink-muted">เจ้าของร้าน</p>
-                <p className="text-body-lg font-bold text-balance text-ink">{shopName}</p>
-                {certDomain ? (
-                  <p className="mt-1 text-body font-semibold break-all text-brand-700">{certDomain}</p>
+              <div className="text-center">
+                {certContent && certArt ? <CertificatePreview content={certContent} art={certArt} /> : null}
+                {joinedOn ? <p className="mt-3 text-label text-ink-muted">วันที่เข้าร่วม {joinedOn} · ออกใบ {issuedOn}</p> : null}
+                {standing.teacherNote ? (
+                  <p className="mt-3 rounded-lg bg-surface-sunken p-3 text-left text-body text-pretty text-ink">
+                    <span className="font-extrabold text-brand-700">ครูเขียนถึงเรา: </span>
+                    {standing.teacherNote}
+                  </p>
                 ) : null}
-                <p className="mt-4 border-t border-line pt-3 text-label text-ink-muted">
-                  ปวช.1 · {PRODUCT_NAME_EN}
-                </p>
-                {joinedOn ? <p className="text-label text-ink-muted">วันที่เข้าร่วม {joinedOn}</p> : null}
-                {issuedOn ? <p className="text-label text-ink-muted">วันที่ออกใบ {issuedOn}</p> : null}
-                <p className="mt-4 text-label text-pretty text-ink-muted">
-                  ทำภารกิจครบและส่งใบเสนอ CEO แล้ว ส่วนดาวเป็นของใครของมัน ไม่ต้องเอาไปเทียบกับเพื่อน
-                </p>
                 {revise ? (
-                  <p className="mt-3 rounded-lg bg-surface-raised p-2 text-label text-pretty text-ink">
+                  <p className="mt-3 rounded-lg bg-surface-sunken p-2 text-label text-pretty text-ink">
                     {standing.message}
                   </p>
                 ) : null}
                 <a href="/api/certificate" download className="btn-confirm mt-4">
                   <DownloadIcon width={22} height={22} aria-hidden />
-                  ดาวน์โหลดเกียรติบัตร
+                  ดาวน์โหลดเกียรติบัตร (PDF)
                 </a>
               </div>
             ) : (
