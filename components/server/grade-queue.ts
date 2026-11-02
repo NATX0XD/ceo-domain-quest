@@ -162,11 +162,12 @@ async function writeAiResultBack(job: GradeJob): Promise<void> {
       ? (target.ai_scores as Record<string, unknown>)
       : {}
 
+  const aiSucceeded = job.status === 'done' && job.aiResult?.source === 'ai'
   const merged = {
     ...current,
-    gradingStatus: job.status === 'done' ? 'done' : 'ai-failed',
+    gradingStatus: aiSucceeded ? 'done' : 'ai-failed',
     aiProposed:
-      job.status === 'done' && job.aiResult
+      aiSucceeded && job.aiResult
         ? {
             dimensions: job.aiResult.dimensions,
             emphasisDimensionId: job.aiResult.emphasisDimensionId,
@@ -178,7 +179,7 @@ async function writeAiResultBack(job: GradeJob): Promise<void> {
             provider: job.aiResult.provider,
           }
         : null,
-    aiError: job.status === 'done' ? null : job.error,
+    aiError: aiSucceeded ? null : job.error ?? job.aiResult?.fallbackReason ?? 'AI ไม่ได้ตอบจากผู้ให้บริการจริง',
   }
 
   await updateSubmissionAiScores(

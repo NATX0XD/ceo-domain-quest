@@ -27,6 +27,24 @@ const PERSONAL_PATTERNS = [/\b0\d{1,2}[- ]?\d{3}[- ]?\d{4}\b/, /\b\d{13}\b/, /\b
 const OFFTOPIC = ['การเมือง', 'หุ้น', 'พนัน', 'หวย', 'สูตรอาหาร', 'เกมออนไลน์', 'ดารา', 'ข่าววันนี้', 'ความรัก', 'แฟน', 'ทำการบ้านวิชา', 'คริปโต', 'บอลคืนนี้', 'ฟุตบอล', 'ดูดวง', 'เขียนโค้ด', 'ช่วยทำการบ้าน', 'แต่งเพลง', 'แต่งกลอน']
 /** คำที่บอกว่าอยู่ในเรื่องของโครงการนี้ (ไม่ใช้ตัดสินภารกิจ) */
 const ON_TOPIC = ['โดเมน', 'domain', 'เว็บ', 'ร้าน', 'ภารกิจ', 'ธุรกิจ', 'ขาย', 'ลูกค้า', 'คำใบ้', 'ใบ้', 'งง', 'ไม่เข้าใจ', 'ชื่อ', 'จด', 'ดาว', 'เรียน']
+/** Course terms that must never be refused just because a model misclassified scope. */
+const COURSE_TOPICS = [
+  'โดเมน',
+  'domain',
+  'dns',
+  'นามสกุลโดเมน',
+  'ส่วนขยายโดเมน',
+  'extension',
+  'tld',
+  'co.th',
+  'in.th',
+  '.com',
+  '.th',
+  'จดทะเบียน',
+  'ชื่อเว็บ',
+  'เว็บไซต์ร้าน',
+  'ร้านขนม',
+]
 
 function hit(lower: string, term: string): boolean {
   const t = term.toLowerCase()
@@ -34,6 +52,10 @@ function hit(lower: string, term: string): boolean {
   return lower.includes(t)
 }
 const any = (lower: string, terms: string[]) => terms.some((t) => hit(lower, t))
+
+export function isCourseTopicMessage(message: string): boolean {
+  return any((message ?? '').toLowerCase(), COURSE_TOPICS)
+}
 
 export function classifyDomeMessage(message: string, missionId?: string | null): DomeScope {
   const lower = (message ?? '').toLowerCase()

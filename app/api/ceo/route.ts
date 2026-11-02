@@ -100,7 +100,7 @@ export async function GET() {
 interface ScoreDimensionView {
   id: string
   name: string
-  score: number
+  score: number | null
   levelLabel: string
   evidence: string
   suggestion: string
@@ -137,26 +137,40 @@ function studentFacingFeedback(submission: Submission) {
     ? (source.dimensions as ScoreDimensionView[])
     : []
 
-  if (teacher) return teacherFacingScores(teacher, proposed)
-  if (proposed.length === 0) return null
+  if (teacher) return { ...teacherFacingScores(teacher, proposed), aiStatus: 'ready' as const }
+
+  const gradingStatus = bag?.gradingStatus
+  const aiReady = gradingStatus === 'done' && ai?.source === 'ai' && Array.isArray(ai.dimensions)
+  if (aiReady) {
+    const aiDimensions = ai.dimensions as ScoreDimensionView[]
+    return {
+      dimensions: aiDimensions.map((d) => ({
+        ...d,
+        score: null,
+        evidence: '',
+        suggestion: d.suggestion,
+      })),
+      weightedTotal: null,
+      weightedMax: null,
+      summary: typeof ai.feedback === 'string' ? ai.feedback : null,
+      aiReady: true,
+      aiSummary: typeof ai.feedback === 'string' ? ai.feedback : null,
+      teacherConfirmed: false as const,
+      aiStatus: 'ready' as const,
+    }
+  }
+
+  if (proposed.length === 0 && gradingStatus !== 'pending-ai' && gradingStatus !== 'ai-failed') return null
 
   return {
-    dimensions: proposed.map((d) => ({
-      id: d.id,
-      name: d.name,
-      score: d.score,
-      levelLabel: d.levelLabel,
-      evidence: d.evidence,
-      suggestion: d.suggestion,
-      emphasized: d.emphasized,
-    })),
-    weightedTotal: typeof source?.weightedTotal === 'number' ? source.weightedTotal : null,
-    weightedMax: typeof source?.weightedMax === 'number' ? source.weightedMax : null,
-    summary: typeof source?.feedback === 'string' ? source.feedback : null,
-    /** AI ตรวจเสร็จหรือยัง — บอกเฉย ๆ ไม่ได้เอาคะแนน AI มาแทนของกฎ */
-    aiReady: ai !== null,
-    aiSummary: ai && typeof ai.feedback === 'string' ? ai.feedback : null,
+    dimensions: [],
+    weightedTotal: null,
+    weightedMax: null,
+    summary: null,
+    aiReady: false,
+    aiSummary: null,
     teacherConfirmed: false as const,
+    aiStatus: gradingStatus === 'ai-failed' ? ('unavailable' as const) : ('pending' as const),
   }
 }
 

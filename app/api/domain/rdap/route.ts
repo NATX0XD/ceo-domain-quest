@@ -29,7 +29,7 @@ const BOOTSTRAP_URL = 'https://data.iana.org/rdap/dns.json'
 /** ใช้เมื่อโหลด IANA bootstrap ไม่ได้ (ค่าที่ IANA ประกาศไว้สำหรับ .shop ตรวจ 30 ต.ค. 2569) */
 const SHOP_RDAP_FALLBACK = 'https://rdap.gmoregistry.net/rdap/'
 /** ต่อนักเรียนต่อ 10 นาที (หนึ่งครั้งตรวจ 4 นามสกุล) */
-const MAX_LOOKUPS_PER_STUDENT = 20
+const MAX_LOOKUPS_PER_STUDENT = 40
 
 const NameSchema = z
   .string()

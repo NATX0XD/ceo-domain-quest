@@ -14,7 +14,7 @@
  */
 import { createAiClient } from '../../lib/ai'
 import type { AiClient } from '../../lib/ai/types'
-import { classifyDomeMessage, type DomeScope } from '../../lib/ai/dome-scope'
+import { classifyDomeMessage, isCourseTopicMessage, type DomeScope } from '../../lib/ai/dome-scope'
 import { guardMissionScopedText, missionIndex, normalizeMissionId } from '../../lib/ai/topic-lock'
 import { leaksAnswer } from './dome-guard'
 
@@ -253,7 +253,15 @@ export async function askDome(input: {
     return scriptedFallback(text, scope, `domeChat throw ${error instanceof Error ? error.message : 'unknown'}`)
   }
   if (result.source !== 'ai') return scriptedFallback(text, scope, `provider ไม่ตอบ (${result.fallbackReason ?? 'unknown'})`)
-  if (result.scope === 'off') return domeRefusal('offtopic', missionId) ?? scriptedFallback(text, scope)
+  /**
+   * Models occasionally mark a perfectly valid course question as off-topic
+   * (notably DNS vs domain at the boss stage). The deterministic classifier is
+   * the source of truth for safety; course vocabulary is an explicit allowlist.
+   * Never turn an allowed course question into the scripted off-topic refusal.
+   */
+  if (result.scope === 'off' && !isCourseTopicMessage(text)) {
+    return domeRefusal('offtopic', missionId) ?? scriptedFallback(text, scope)
+  }
 
   const reply = result.text.trim()
   // ย้อนทบทวนภารกิจก่อนหน้า = อนุญาตคำของภารกิจก่อนหน้าในคำตอบ ไม่ให้ตัวกันหัวข้อตีเป็นหลุดเรื่อง
@@ -261,7 +269,7 @@ export async function askDome(input: {
     missionId,
     role: 'dome',
     // คำยึดเรื่อง: คำตอบที่ยังพูดถึงโดเมน/เว็บ/ร้าน ถือว่าอยู่ในเรื่อง (ตัวกัน unsafe/injection ยังทำงานเสมอ)
-    keywords: ['โดเมน', 'ชื่อเว็บ', 'เว็บ', 'ร้าน', 'ภารกิจ'],
+    keywords: ['โดเมน', 'DNS', 'domain', 'นามสกุล', 'ส่วนขยาย', 'ชื่อเว็บ', 'เว็บไซต์', 'เว็บ', 'ร้าน', 'ภารกิจ'],
     fallback: '',
   })
   if (guarded === '') return scriptedFallback(text, scope, 'ตัวกันหัวข้อตีคำตอบตก')

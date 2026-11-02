@@ -76,7 +76,7 @@ interface CeoFeedback {
   dimensions: {
     id: string
     name: string
-    score: number
+    score: number | null
     levelLabel: string
     evidence: string
     suggestion: string
@@ -88,6 +88,7 @@ interface CeoFeedback {
   aiReady: boolean
   aiSummary: string | null
   teacherConfirmed: boolean
+  aiStatus: 'pending' | 'ready' | 'unavailable'
 }
 
 interface CeoRevision {
@@ -243,6 +244,12 @@ export function CeoClient({
   useEffect(() => {
     void loadCeoStatus().finally(() => setLoadingStatus(false))
   }, [loadCeoStatus])
+
+  useEffect(() => {
+    if (!submitted || feedback?.teacherConfirmed || feedback?.aiStatus === 'ready' || feedback?.aiStatus === 'unavailable') return
+    const timer = window.setTimeout(() => void loadCeoStatus(), 5000)
+    return () => window.clearTimeout(timer)
+  }, [submitted, feedback?.aiStatus, feedback?.teacherConfirmed, loadCeoStatus])
 
   const stopTracks = useCallback(() => {
     if (timerRef.current) {
@@ -636,11 +643,23 @@ export function CeoClient({
           */}
         {feedback ? (
           <SectionCard
-            heading={feedback.teacherConfirmed ? 'คะแนนที่ครูยืนยันแล้ว' : 'ความเห็นที่ระบบเสนอ'}
+            heading={
+              feedback.teacherConfirmed
+                ? 'คะแนนที่ครูยืนยันแล้ว'
+                : feedback.aiStatus === 'ready'
+                  ? 'ความเห็นเบื้องต้นจาก AI · คะแนนจริงรอครูยืนยัน'
+                  : feedback.aiStatus === 'unavailable'
+                    ? 'โดมยังอ่านใบเสนอไม่สำเร็จ'
+                    : 'โดมกำลังอ่านใบเสนอ…'
+            }
             description={
               feedback.teacherConfirmed
                 ? 'ครูตรวจและยืนยันคะแนนของงานชิ้นนี้แล้ว นี่คือผลจริงของเรา'
-                : 'เป็นข้อเสนอ ไม่ใช่คะแนนสุดท้าย ครูเป็นคนยืนยันเสมอ'
+                : feedback.aiStatus === 'ready'
+                  ? 'คำแนะนำนี้เป็นความเห็นเบื้องต้นต่อครู ไม่ใช่คะแนนสุดท้าย'
+                  : feedback.aiStatus === 'unavailable'
+                    ? 'ไม่กระทบงานของเรา ครูยังตรวจและยืนยันด้วยตนเองได้'
+                    : 'รอสักครู่นะครับ เดี๋ยวโดมจะส่งคำแนะนำสั้น ๆ ให้ครู'
             }
             icon={
               feedback.teacherConfirmed ? (
@@ -651,6 +670,9 @@ export function CeoClient({
             }
             tone="brand"
           >
+            {feedback.aiStatus === 'pending' ? (
+              <p className="text-body font-bold text-ink">โดมกำลังอ่านใบเสนอ…</p>
+            ) : null}
             {feedback.weightedTotal !== null ? (
               <p className="text-body-lg font-bold text-ink">
                 {feedback.teacherConfirmed ? 'คะแนนที่ครูให้' : 'คะแนนที่เสนอ'}{' '}
@@ -675,7 +697,7 @@ export function CeoClient({
                       ) : null}
                     </span>
                     <span className="shrink-0 tabular-nums text-brand-700">
-                      {d.score}/3 · {d.levelLabel}
+                      {feedback.teacherConfirmed ? `${d.score}/3 · ${d.levelLabel}` : `ระดับเบื้องต้น · ${d.levelLabel}`}
                     </span>
                   </p>
                   <p className="mt-1 text-label text-pretty text-ink-muted">{d.evidence}</p>

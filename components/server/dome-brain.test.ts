@@ -62,6 +62,16 @@ describe('askDome with real-AI path', () => {
     const { reply } = await ask('วันนี้เหนื่อยจัง', 'm1', fakeAi(aiReply('เรื่องบอลคืนนี้ไทยชนะ', 'off')))
     expect(reply.reply).toContain('นอกวิชา')
   })
+  it('never refuses the m5 DNS-vs-domain course question when the model says off', async () => {
+    const { reply } = await ask(
+      'โดเมนกับ DNS ต่างกันยังไง อธิบายแบบร้านขนม',
+      'm5',
+      fakeAi(aiReply('โดเมนคือชื่อที่คนจำง่าย ส่วน DNS ช่วยแปลงชื่อนั้นไปเป็นที่อยู่ของเซิร์ฟเวอร์ เหมือนป้ายหน้าร้านกับคนพาไปหลังร้านครับ', 'off')),
+    )
+    expect(reply.source).toBe('ai')
+    expect(reply.reply).not.toContain('นอกวิชา')
+    expect(reply.scope).toBe('general')
+  })
   it('quick reply buttons stay scripted with jump-to-page action', async () => {
     const { reply, ai } = await askDome({ message: 'x', quickReplyId: 'ready', shopName: 'ร้านทดสอบ', ai: fakeAi(aiReply('x')) }).then((r) => ({ reply: r, ai: null }))
     expect(ai).toBeNull()
