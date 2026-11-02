@@ -7,7 +7,7 @@
   max-width: 25rem;
   grid-template-columns: 1fr 1fr;
   gap: .3rem;
-  margin: 0 auto .35rem;
+  margin: 0 auto .6rem;
   padding: .3rem;
   border: 3px solid #6b2d12;
   border-radius: 9999px;
@@ -39,7 +39,13 @@
 .jn-sub {
   position: relative;
   z-index: 10;
-  margin-bottom: .25rem;
+  align-self: center;
+  margin: 0 auto .6rem;
+  width: fit-content;
+  padding: .2rem .8rem;
+  border-radius: 999px;
+  background: rgb(255 241 214 / .92);
+  box-shadow: 0 2px 0 rgb(107 45 18 / .35);
   color: #4a1f0a;
   font-size: .875rem;
   font-weight: 800;
@@ -64,3 +70,4 @@
 .jn-hint img { width: 1.75rem; height: 1.75rem; max-width: none; flex: none; }
 .jn-tab-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
 .jn-tab-text small { font-size: .75rem; font-weight: 800; opacity: .85; }
+@media (max-height: 760px) { .jn-tabs, .jn-sub { margin-bottom: .35rem; } }

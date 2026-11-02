@@ -160,7 +160,7 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
         </ToastViewport>
       ) : null}
 
-      <div className="media-join-main relative min-h-full px-3 pt-12 pb-4">
+      <div className="media-join-main relative min-h-full px-3 pt-[4.25rem] pb-4">
       <Link
         href="/"
         className="absolute left-3 top-2 z-10 inline-flex min-h-11 items-center gap-1 rounded-full bg-[#fff1d6] px-3 text-label font-bold text-[#6b2d12] shadow-[0_3px_0_#6b2d12] focus-ring"
