@@ -189,7 +189,8 @@ export function BoardScreenClient({
         .board-showcase-card__copy { min-width: 0; text-align: left; }
         .board-domain { margin: 0; overflow-wrap: anywhere; color: #5d4ab5; font-family: var(--font-noto-sans-thai), sans-serif; font-size: clamp(3em, 7vw, 7em); font-weight: 900; line-height: .98; letter-spacing: -.045em; background: linear-gradient(100deg, #5b3d91 8%, #236fc2 52%, #1b9b9d 92%); -webkit-background-clip: text; background-clip: text; color: transparent; }
         .board-reason { margin: .8em 0 0; color: #5a483b; font-size: clamp(1.15em, 2.1vw, 2em); font-weight: 600; line-height: 1.35; }
-        .board-nickname { margin: 1em 0 0; color: #8a6333; font-size: 1.05em; font-weight: 900; }
+        .board-nickname { display: inline-flex; align-items: center; gap: .45em; margin: .9em 0 0; padding: .3em 1em .35em; border-radius: 999px; background: linear-gradient(180deg, #a98bff, #6c43bb); color: #fff; font-size: clamp(1.6em, 2.6vw, 2.6em); font-weight: 900; box-shadow: 0 .18em 0 #3b216f; }
+        .board-nickname small { font-size: .62em; font-weight: 800; opacity: .9; }
         .board-shop-art { width: 100%; max-height: 12em; object-fit: contain; }
         .board-empty { display: grid; width: min(100%, 58em); min-height: 19em; place-items: center; border: .18em solid #e2c58d; border-radius: 1.45em; background: rgb(255 250 239 / .94); padding: 2.5em; text-align: center; box-shadow: 0 1em 2.5em rgb(75 47 22 / .17); }
         .board-empty-title { margin: 0; color: #563a79; font-size: clamp(1.8em, 3.2vw, 3.1em); font-weight: 900; }
@@ -269,7 +270,7 @@ export function BoardScreenClient({
               <div className="board-showcase-card__copy">
                 <p className="board-domain">{activeWork.domain}</p>
                 {activeWork.reason ? <p className="board-reason">“{activeWork.reason}”</p> : null}
-                {activeWork.nickname ? <p className="board-nickname">โดย {activeWork.nickname}</p> : null}
+                {activeWork.nickname ? <p className="board-nickname"><small>ผลงานของ</small> {activeWork.nickname}</p> : null}
               </div>
               {activeWork.shopArt ? <img className="board-shop-art" src={activeWork.shopArt} alt="ภาพร้านของผลงานนี้" /> : <span aria-hidden />}
             </article>
