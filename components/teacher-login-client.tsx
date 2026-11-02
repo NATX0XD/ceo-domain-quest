@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertIcon, Button, InfoIcon, LockIcon, TextField } from '@/components/ui'
+import { AlertIcon, Button, CreamCard, InfoIcon, TextField, WoodSign } from '@/components/ui'
 import { AppFooter, AppShell } from '@/components/app-shell'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -46,6 +46,7 @@ export function TeacherLoginClient() {
   return (
     <AppShell
       student={false}
+      className="teacher-auth-shell"
       footer={
         <AppFooter>
           <Button
@@ -63,24 +64,15 @@ export function TeacherLoginClient() {
         </AppFooter>
       }
     >
-      <div className="px-4 pt-8 pb-6">
-      <header className="mb-6 flex items-start gap-3">
-        <span
-          aria-hidden="true"
-          className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-100 text-brand-700"
-        >
-          <LockIcon width={24} height={24} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-label font-bold text-brand-700">สำหรับครู</p>
-          <h1 className="mt-0.5 text-display font-extrabold text-balance text-ink">ห้องของครู</h1>
-          <p className="mt-2 text-body text-pretty text-ink-muted">
-            เข้าสู่ระบบเพื่อเปิดห้องและดูผลนักเรียน
-          </p>
-        </div>
-      </header>
+      <div className="teacher-auth-content px-4 pt-5 pb-8">
+      <div className="teacher-auth-brand" aria-hidden="true">
+        <img src="/landing/logo.webp" alt="" className="teacher-auth-logo" />
+        <img src="/dome/mascot/dome-greet.webp" alt="" className="teacher-auth-dome" />
+      </div>
+      <WoodSign title="ห้องของครู">เข้าสู่ระบบเพื่อเปิดห้องและดูผลนักเรียน</WoodSign>
 
       {/* ครอบด้วย <form> เพื่อให้กด Enter ในช่องไหนก็ส่งฟอร์มได้ ไม่ต้องเอาเมาส์ไปกดปุ่ม */}
+      <CreamCard className="teacher-auth-card mt-5 p-5">
       <form
         id={FORM_ID}
         onSubmit={(e) => {
@@ -123,7 +115,7 @@ export function TeacherLoginClient() {
 
       {/* วันแข่งจริง ครูที่จำรหัสไม่ได้ต้องรู้ว่าไปต่อทางไหน ไม่ใช่ตันอยู่หน้านี้ (flow-1.md ข้อ 26)
           ระบบนี้ไม่มีเมลรีเซ็ตรหัสเอง ทางออกเดียวคือผู้ดูแลระบบตั้งให้ใหม่ จึงเขียนตรง ๆ แบบนั้น */}
-      <p className="mt-6 flex items-start gap-2 rounded-2xl bg-brand-50 p-4 text-label text-pretty text-ink-muted ring-1 ring-brand-100 ring-inset">
+      <p className="teacher-auth-help mt-6 flex items-start gap-2 rounded-2xl bg-brand-50 p-4 text-label text-pretty text-ink-muted ring-1 ring-brand-100 ring-inset">
         <InfoIcon width={20} height={20} aria-hidden className="mt-0.5 shrink-0 text-brand-700" />
         <span>
           ลืมรหัสผ่าน หรือยังไม่มีบัญชี ให้ติดต่อผู้ดูแลระบบของวิทยาลัยเพื่อตั้งรหัสใหม่ให้
@@ -133,6 +125,7 @@ export function TeacherLoginClient() {
       <p className="mt-4 text-center text-label font-semibold text-brand-700">
         <Link href="/teacher/signup" className="underline underline-offset-4">มีรหัสเชิญ? สมัครครู</Link>
       </p>
+      </CreamCard>
       </div>
     </AppShell>
   )

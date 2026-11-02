@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { HighlightTitle, Icon3d } from '../_ux/v2'
+import { CreamCard, GameButton, WoodSign } from '@/components/ui'
+import { Icon3d } from '../_ux/v2'
 
 function strength(password: string): { label: string; score: number } {
   let score = 0
@@ -48,10 +49,18 @@ export default function SignupClient({ openLabel }: { openLabel: string }) {
 
   return (
     <main className="teacher-cms teacher-signup-page">
-      <section className="teacher-signup-card" aria-labelledby="teacher-signup-title">
+      <section className="teacher-auth-orbit">
+      <div className="teacher-auth-brand" aria-hidden="true">
+        <img src="/landing/logo.webp" alt="" className="teacher-auth-logo" />
+        <img src="/dome/mascot/dome-greet.webp" alt="" className="teacher-auth-dome" />
+      </div>
+      <CreamCard className="teacher-signup-card" aria-labelledby="teacher-signup-title">
         <div className="teacher-signup-mark"><Icon3d name="graduation-cap" size={52} /></div>
+        <WoodSign id="teacher-signup-title" title={succeeded ? 'สมัครสำเร็จ' : 'สมัครบัญชีครู'}>
+          ใช้รหัสเชิญเพื่อเริ่มห้องเรียนของคุณ
+        </WoodSign>
         {succeeded ? (
-          <div id="teacher-signup-title" className="teacher-signup-success" role="status">
+          <div className="teacher-signup-success" role="status">
             <p className="teacher-signup-kicker">สำหรับครู · พร้อมเริ่มต้น</p>
             <p className="teacher-signup-success-message">ลงทะเบียนเรียบร้อย — สร้างห้องเตรียมไว้ได้เลย นักเรียนจะเข้าห้องได้ {openLabel === 'เมื่อระบบเปิด' ? 'เมื่อระบบเปิด' : `ตั้งแต่ ${openLabel}`}</p>
             <Link className="teacher-signup-success-link" href="/teacher">เข้าสู่ระบบครูเพื่อสร้างห้อง</Link>
@@ -59,7 +68,6 @@ export default function SignupClient({ openLabel }: { openLabel: string }) {
         ) : (
           <>
             <p className="teacher-signup-kicker">สำหรับครู · สร้างบัญชีใหม่</p>
-            <div id="teacher-signup-title"><HighlightTitle title="สมัครบัญชีครู" /></div>
             <p className="t2-sub">ใช้รหัสเชิญเพื่อเริ่มห้องเรียนของคุณ</p>
             <form className="teacher-signup-form" onSubmit={submit}>
               <label>ชื่อที่แสดง<input required maxLength={80} value={form.displayName} onChange={update('displayName')} autoComplete="name" /></label>
@@ -69,11 +77,14 @@ export default function SignupClient({ openLabel }: { openLabel: string }) {
               <label>ยืนยันรหัสผ่าน<input required type="password" value={form.confirmPassword} onChange={update('confirmPassword')} autoComplete="new-password" /></label>
               <label>รหัสเชิญครู<input required value={form.inviteCode} onChange={update('inviteCode')} autoComplete="one-time-code" /></label>
               {error ? <p className="teacher-signup-error" role="alert">⚠ {error}</p> : null}
-              <button type="submit" disabled={busy}>{busy ? 'กำลังสร้างบัญชี…' : 'สร้างบัญชีครู'}</button>
+              <GameButton type="submit" disabled={busy} aria-busy={busy || undefined}>
+                {busy ? 'กำลังสร้างบัญชี…' : 'สร้างบัญชีครู'}
+              </GameButton>
             </form>
             <p className="teacher-signup-back">มีบัญชีแล้ว? <Link href="/teacher">เข้าสู่ระบบครู</Link></p>
           </>
         )}
+      </CreamCard>
       </section>
     </main>
   )

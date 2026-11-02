@@ -8,6 +8,7 @@ import {
   Card,
   CheckIcon,
   DomeSays,
+  GameButton,
   PinInput,
   TextField,
   Toast,
@@ -139,32 +140,27 @@ export function JoinClient({ initialRoomCode }: { initialRoomCode: string }) {
         <AppFooter className="flex flex-col gap-2">
           {/* ปุ่มหลักอยู่นอก <form> แต่ยังเป็นปุ่ม submit ของฟอร์มนั้นผ่าน attribute form=
               ทำแบบนี้ปุ่มจึงอยู่ในแถบท้ายที่ไม่เลื่อน นักเรียนเห็นตลอดโดยไม่ต้องไถหา */}
-          <Button
+          <GameButton
             type="submit"
             form={FORM_ID}
-            variant="primary"
-            size="lg"
-            fullWidth
+            className="w-full min-h-16"
             disabled={!ready}
-            loading={busy}
-            loadingLabel="กำลังเข้าห้องเรียน"
-            className="min-h-16 rounded-xl"
+            aria-busy={busy || undefined}
           >
-            {mode === 'join' ? 'เข้าห้องเรียน' : 'เข้าห้องเดิม'}
-          </Button>
+            {busy ? 'กำลังเข้าห้องเรียน…' : mode === 'join' ? 'เข้าห้องเรียน' : 'เข้าห้องเดิม'}
+          </GameButton>
 
-          <Button
-            variant="ghost"
-            size="lg"
-            fullWidth
-            className="min-h-16 rounded-xl"
+          <GameButton
+            type="button"
+            variant="secondary"
+            className="w-full min-h-14"
             onClick={() => {
               setMode(mode === 'join' ? 'resume' : 'join')
               setError(null)
             }}
           >
             {mode === 'join' ? 'เคยเข้าแล้ว ย้ายเครื่อง' : 'ยังไม่เคยเข้า ขอเข้าครั้งแรก'}
-          </Button>
+          </GameButton>
         </AppFooter>
       }
     >

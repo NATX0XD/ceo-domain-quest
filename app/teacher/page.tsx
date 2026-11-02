@@ -26,12 +26,8 @@ export const dynamic = 'force-dynamic'
  */
 function TeacherSignInScreen() {
   return (
-    <div>
+    <div className="teacher-auth-route">
       <TeacherLoginClient />
-      <p className="mx-auto mt-4 max-w-md px-4 pb-8 text-center text-label text-ink-muted">
-        ลืมรหัสผ่าน หรือยังไม่มีบัญชีครู — ติดต่อผู้ดูแลระบบของวิทยาลัยเพื่อขอตั้งรหัสใหม่
-        (ระบบไม่ส่งอีเมลรีเซ็ตรหัสผ่านเอง)
-      </p>
     </div>
   )
 }
