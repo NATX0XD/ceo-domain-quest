@@ -74,6 +74,8 @@ export default async function HomePage() {
   const shopArtStage = shopArtStageFromLevel(level)
   const shopArt = resolveShopArt(profile?.businessTypeId, shopArtStage)
   const shopArtFallback = shopArtFallbackSrc(shopArtStage)
+  // ชื่อสถานะร้านตามขั้นของภาพ (ขั้น 1 ที่ดินเปล่า → ขั้น 5 เปิดร้าน)
+  const shopStageTitle = ['ที่ดินรอสร้างร้าน', 'กำลังก่อสร้างร้าน', 'ร้านเริ่มเป็นรูปเป็นร่าง', 'ร้านพร้อมเปิดแล้ว', 'เปิดร้านเต็มตัวแล้ว!'][shopArtStage - 1] ?? 'ร้านกำลังโต'
   const cleared = Math.min(PATH_STAGES.length, Math.max(0, summary.stagesCleared))
   const activePathStage = Math.min(PATH_STAGES.length - 1, cleared)
   const businessType = BUSINESS_TYPE_LABEL[profile?.businessTypeId ?? ''] ?? 'ร้านค้าของฉัน'
@@ -125,7 +127,7 @@ export default async function HomePage() {
           <div className="home-shop-heading">
             <div className="min-w-0">
               <p className="home-section-kicker">เกาะของฉัน</p>
-              <h1 id="home-shop-title">ร้านกำลังโต</h1>
+              <h1 id="home-shop-title">{shopStageTitle}</h1>
             </div>
             <span className="home-level-badge">เลเวล {shopArtStage}/5</span>
           </div>
