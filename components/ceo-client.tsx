@@ -201,6 +201,7 @@ export function CeoClient({
   nickname,
   shopName,
   alreadySubmitted,
+  posttestDone = false,
   initialRevision = null,
 }: {
   title: string
@@ -219,6 +220,8 @@ export function CeoClient({
   nickname: string
   shopName: string
   alreadySubmitted: boolean
+  /** ทำแบบทดสอบหลังเรียนแล้ว — ปุ่มถัดไปพาไปดูเกียรติบัตรแทนการชวนทำซ้ำ */
+  posttestDone?: boolean
   /** ครูสั่งให้แก้ไว้แล้วตั้งแต่ตอนเรนเดอร์ฝั่งเซิร์ฟเวอร์ (null = ไม่ได้ถูกสั่งแก้) */
   initialRevision?: CeoRevision | null
 }) {
@@ -633,10 +636,10 @@ export function CeoClient({
               </Button>
             ) : (
               <Link
-                href="/posttest"
+                href={posttestDone ? '/result' : '/posttest'}
                 className="btn-quest bg-brand-600 text-ink-onbrand hover:bg-brand-700"
               >
-                ไปทำแบบทดสอบหลังเรียน
+                {posttestDone ? 'ไปดูเกียรติบัตร' : 'ไปทำแบบทดสอบหลังเรียน'}
                 <ChevronRightIcon width={22} height={22} aria-hidden />
               </Link>
             )}
@@ -693,8 +696,8 @@ export function CeoClient({
           {revision
             ? 'แก้ตามที่ครูบอกแล้วกดส่งใหม่ได้เลย ฉบับเดิมยังอยู่ ไม่หาย'
             : feedback?.teacherConfirmed
-              ? 'ครูตรวจและยืนยันคะแนนแล้ว เก่งมาก ไปทำแบบทดสอบหลังเรียนต่อได้เลย'
-              : 'ส่งใบเสนอเรียบร้อยแล้ว ตอนนี้รอครูอ่านและยืนยันคะแนน ระหว่างนี้ไปทำแบบทดสอบหลังเรียนต่อได้เลย'}
+              ? posttestDone ? 'ครูตรวจแล้ว เก่งมาก ไปดูเกียรติบัตรของเราได้เลย' : 'ครูตรวจแล้ว เก่งมาก ไปทำแบบทดสอบหลังเรียนต่อได้เลย'
+              : posttestDone ? 'ส่งใบเสนอแล้ว AI ตรวจให้เรียบร้อย ไปดูเกียรติบัตรได้เลย ครูอาจเขียนความเห็นเพิ่มภายหลัง' : 'ส่งใบเสนอแล้ว AI ตรวจให้เรียบร้อย ไปทำแบบทดสอบหลังเรียนต่อได้เลย'}
         </DomeSays>
 
         {/**
@@ -821,7 +824,7 @@ export function CeoClient({
         <div className="mt-6 flex flex-col gap-2">
           {/* ตอนครูส่งกลับมาให้แก้ แถบท้ายถูกปุ่ม "แก้แล้วส่งใหม่" จองไว้
               ทางไปขั้นต่อไปจึงยังต้องมีให้กดตรงนี้ */}
-          {revision ? (
+          {revision && !posttestDone ? (
             <Link
               href="/posttest"
               className="btn-base min-h-12 w-full bg-surface-raised text-brand-700 shadow-soft-1 ring-2 ring-brand-100 ring-inset hover:bg-brand-50"

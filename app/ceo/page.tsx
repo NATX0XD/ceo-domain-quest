@@ -5,7 +5,7 @@ import { bigMission, rubricForClient } from '@/components/server/lesson-content'
 import { lessonSummary } from '@/components/server/lesson-progress'
 import { loadShopProfile } from '@/components/server/game-state'
 import { revisionDimensions, revisionState } from '@/components/server/revision'
-import { getStudent, listSubmissions } from '@/lib/db/repo'
+import { getProfile, getStudent, listSubmissions } from '@/lib/db/repo'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { resolveBossTemplate } from '@/app/api/ceo/_lib/boss-template'
 import { buildStoryInput } from '@/app/api/story/_lib/input'
@@ -30,13 +30,14 @@ export default async function CeoPage() {
     return <SignInGate message="ใส่รหัสห้อง 6 ตัวกับรหัส 4 หลักที่ครูให้ก่อน แล้วค่อยกลับมาทำด่านบอส" />
   }
 
-  const [student, shop, summary, submissions, bossTemplate] = await Promise.all([
+  const [student, shop, summary, submissions, bossTemplate, profile] = await Promise.all([
     getStudent(session.studentId),
     loadShopProfile(session.studentId),
     lessonSummary(session.studentId),
     listSubmissions(session.studentId),
     // S-22 แม่แบบด่านบอสของคนนี้โดยเฉพาะ ล้มก็ยังเปิดหน้าได้ด้วยสถานการณ์กลาง
     resolveBossTemplate(session.studentId).catch(() => null),
+    getProfile(session.studentId).catch(() => null),
   ])
 
   /**
@@ -104,6 +105,7 @@ export default async function CeoPage() {
       nickname={student?.nickname ?? ''}
       shopName={shop?.shopName ?? ''}
       alreadySubmitted={summary.bigMissionSubmitted}
+      posttestDone={profile?.post_test_score != null}
       initialRevision={
         revision.request
           ? {
