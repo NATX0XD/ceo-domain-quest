@@ -64,12 +64,16 @@ function Fact({ label, children, wide = false }: { label: string; children: Reac
   )
 }
 
-/** ตัดคำแนะนำให้เหลือ 1-2 ประโยคสั้น ๆ */
-export function trimFeedback(text: string | undefined | null, max = 200): string {
+/** ตัดคำสรุปให้เหลือประโยคเดียวและไม่ทวนคะแนนที่แสดงแยกอยู่แล้ว */
+export function trimFeedback(text: string | undefined | null, max = 90): string {
   const t = (text ?? '').replace(/\s+/g, ' ').trim()
   if (!t) return ''
-  const sentences = t.match(/[^.!?。]+[.!?。]?/g) ?? [t]
-  let out = sentences.slice(0, 2).join('').trim()
+  const sentence = t.match(/[^.!?。]+[.!?。]?/)?.[0]?.trim() ?? t
+  let out = sentence
+    .replace(/\s*(?:คะแนน|score)\s*(?:ระบบ|รวม|ที่ได้|AI เสนอ)?\s*\d+\s*\/\s*\d+/gi, '')
+    .replace(/\s*\d+\s*\/\s*\d+\s*(?:คะแนน)?/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
   if (out.length > max) out = out.slice(0, max - 1).trimEnd() + '…'
   return out
 }
@@ -273,11 +277,11 @@ export async function ReviewList({
               </p>
             </details>
 
-            <section aria-label="สิ่งที่นักเรียนส่ง" className="mt-3 rounded-2xl border border-[var(--c-line)] p-3.5">
+            <section aria-label="สิ่งที่นักเรียนส่ง" className="mt-3 rounded-2xl border border-[var(--c-line)] p-3">
               <h3 className="m-0 text-[13px] leading-5 font-bold tracking-wide text-[var(--c-brand)]">สิ่งที่นักเรียนส่ง</h3>
               <p className="m-0 mt-1 text-[12px] leading-4 font-semibold text-ink-muted">ชื่อโดเมนที่เสนอ</p>
               <p className="m-0 text-[26px] leading-9 font-extrabold break-all text-brand-700">{row.domain_name}<span className="text-[var(--c-accent,#7a5cf0)]">{row.tld}</span></p>
-              <dl className="m-0 mt-2 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+              <dl className="m-0 mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
                 {profile?.business_name ? <Fact label="ชื่อร้าน">{profile.business_name}</Fact> : null}
                 {profile?.business_type ? <Fact label="ประเภทธุรกิจ">{businessTypes.items.find((t) => t.id === profile.business_type)?.label ?? profile.business_type}</Fact> : null}
                 {profile?.audience ? <Fact label="กลุ่มลูกค้า">{profile.audience === 'international' ? 'มีลูกค้าต่างชาติด้วย' : 'ลูกค้าในไทย'}</Fact> : null}

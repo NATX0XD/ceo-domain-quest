@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import { getServiceClient } from '@/lib/db/client'
+import missionsContent from '@/content/missions.json' with { type: 'json' }
+import bigMission from '@/content/big-mission.json' with { type: 'json' }
 
 export const MISSION_SETTING_IDS = ['m1', 'm2', 'm3', 'm4', 'ceo'] as const
 export type MissionSettingId = (typeof MISSION_SETTING_IDS)[number]
@@ -174,6 +176,12 @@ export async function snapshotMissionSettings(classroomId: string) {
     missionId,
     {
       ...MISSION_META[missionId],
+      info: missionId === 'ceo'
+        ? { title: bigMission.title, what: bigMission.objective }
+        : {
+            title: missionsContent.missions.find((mission) => mission.id === missionId)?.title ?? MISSION_META[missionId].label,
+            what: missionsContent.missions.find((mission) => mission.id === missionId)?.objective ?? MISSION_META[missionId].help,
+          },
       defaults: DEFAULTS[missionId],
       settings: await getMissionSettings(classroomId, missionId),
     },
@@ -181,6 +189,7 @@ export async function snapshotMissionSettings(classroomId: string) {
   return Object.fromEntries(entries) as Record<MissionSettingId, {
     label: string
     help: string
+    info: { title: string; what: string }
     defaults: MissionSettings[MissionSettingId]
     settings: MissionSettings[MissionSettingId]
   }>

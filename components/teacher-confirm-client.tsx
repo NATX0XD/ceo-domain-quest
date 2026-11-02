@@ -31,6 +31,14 @@ export interface RubricGuide {
 
 export const DEFAULT_NOTE = 'ครูตรวจแล้ว ยืนยันคะแนนนี้'
 
+function shortSummary(text: string | undefined | null, max = 60): string {
+  const clean = (text ?? '').replace(/\s+/g, ' ').trim()
+  if (!clean) return ''
+  const first = clean.match(/[^.!?。]+[.!?。]?/)?.[0]?.trim() ?? clean
+  if (first.length <= max) return first
+  return `${first.slice(0, Math.max(1, max - 1)).trimEnd()}…`
+}
+
 export function TeacherConfirmScore({
   submissionId,
   maxScore,
@@ -224,7 +232,7 @@ export function TeacherConfirmScore({
                         </span>
                       ) : null}
                     </p>
-                    {g?.question ? <p className="m-0 mt-0.5 text-[14px] leading-5 text-ink-muted"><strong className="text-ink">ดูอะไร</strong> {g.question}</p> : null}
+                    {g?.question ? <p className="m-0 mt-0.5 text-[13px] leading-5 text-ink-muted" title={g.question}><strong className="text-ink">ดูอะไร</strong> {shortSummary(g.question, 50)}</p> : null}
                   </div>
                   <div role="radiogroup" aria-label={`ระดับด้าน ${d.name}`} className="grid shrink-0 grid-flow-col gap-1 rounded-xl bg-[var(--c-sunken)] p-1 max-[520px]:w-full max-[520px]:auto-cols-fr">
                     {levels.map((l) => {
@@ -250,13 +258,17 @@ export function TeacherConfirmScore({
                     })}
                   </div>
                 </div>
-                {curLevel?.descriptor ? (
-                  <p className="m-0 mt-2 rounded-lg bg-[var(--c-sunken)] px-3 py-2 text-[14px] leading-5 text-ink-muted">
-                    <strong className="text-ink">ระดับ {cur} {curLevel.label}</strong> {curLevel.descriptor}
-                    {curLevel.teacherCheck ? <span className="mt-1 block text-brand-700">วิธีเช็ก: {curLevel.teacherCheck}</span> : null}
-                  </p>
+                {curLevel || hint ? (
+                  <div className="mt-2 rounded-lg bg-[var(--c-sunken)] px-3 py-2">
+                    {curLevel ? <p className="m-0 text-[13px] leading-5 font-semibold text-ink-muted"><strong className="text-ink">{curLevel.label}</strong> · {shortSummary(curLevel.descriptor)}</p> : null}
+                    <details className="mt-1.5">
+                      <summary className="cursor-pointer text-[12px] font-bold text-brand-700">ดูรายละเอียด</summary>
+                      {curLevel?.descriptor ? <p className="m-1.5 mb-0 text-[13px] leading-5 text-ink-muted">{curLevel.descriptor}</p> : null}
+                      {curLevel?.teacherCheck ? <p className="m-1.5 mb-0 text-[13px] leading-5 text-brand-700"><strong>วิธีเช็ก:</strong> {curLevel.teacherCheck}</p> : null}
+                      {hint ? <p className="m-1.5 mb-0 text-[13px] leading-5 text-ink-muted"><strong className="text-ink">ข้อสังเกตของระบบ:</strong> {hint}</p> : null}
+                    </details>
+                  </div>
                 ) : null}
-                {hint ? <p className="m-0 mt-2 text-[13px] leading-5 text-ink-muted">ข้อสังเกตของระบบ: {hint}</p> : null}
               </li>
             )
           })}
