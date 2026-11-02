@@ -133,6 +133,8 @@
   height: 36px;
   object-fit: contain;
   filter: drop-shadow(0 2px 1px rgb(90 46 20 / .2));
+  /* ขยายเฉพาะภาพ ไม่กระทบขนาดกล่อง/ระยะของเมนู */
+  transform: scale(1.22) translateY(-1px);
 }
 
 .game-bottom-nav__label {

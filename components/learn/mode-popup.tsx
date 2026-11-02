@@ -333,7 +333,7 @@ function OfficialModeArtwork({
           </div>
         </div>
       </div>
-      <div className="relative z-0 mx-[2.85%] -mt-px flex flex-col gap-2 bg-[#fdf3e6] px-[3.6%] pb-[calc(20px+env(safe-area-inset-bottom))] pt-[20px] shadow-[inset_2px_0_0_#efe2cc,inset_-2px_0_0_#efe2cc]">
+      <div className="relative z-20 mx-[2.85%] -mt-px flex flex-col gap-2 bg-[#fdf3e6] px-[3.6%] pb-[calc(20px+env(safe-area-inset-bottom))] pt-[20px] shadow-[inset_2px_0_0_#efe2cc,inset_-2px_0_0_#efe2cc]">
         {error ? <p role="alert" className="text-center text-[clamp(12px,3.2vw,16px)] font-bold text-[#b42318]">{error}</p> : null}
         <button
           type="button"
