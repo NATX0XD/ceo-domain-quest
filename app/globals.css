@@ -1188,7 +1188,20 @@ select {
 }
 .game-button:hover:not(:disabled) { filter: saturate(1.08) brightness(1.04); transform: translateY(-1px); }
 .game-button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 3px 0 #4a1f0a, inset 0 2px 0 rgb(255 255 255 / .6); }
-.game-button:disabled { cursor: not-allowed; filter: saturate(.72) brightness(.88); opacity: 1; }
+/* ปุ่มกดไม่ได้ใช้ชิ้นปุ่มเทาของทีมเสมอ ไม่ว่าเดิมเป็นสีไหน จะได้ไม่ออกน้ำตาลขุ่นจนดูเหมือนกดได้ */
+.game-button:disabled,
+.game-button:disabled:is(.game-button--orange, .game-button--primary, .game-button--green, .game-button--blue, .game-button--purple, .game-button--cream, .game-button--secondary, .game-button--red, .game-button--home) {
+  --game-left: url('/ui/kit/buttons/grey-disabled-left.webp');
+  --game-fill: url('/ui/kit/buttons/grey-disabled-mid.webp');
+  background-color: transparent;
+  --game-right: url('/ui/kit/buttons/grey-disabled-right.webp');
+  cursor: not-allowed;
+  filter: none;
+  opacity: .9;
+  color: #f7f6f5;
+  text-shadow: 0 1px 0 #77706c, 1px 0 0 #77706c, -1px 0 0 #77706c;
+  box-shadow: 0 4px 0 #77706c;
+}
 .game-button--orange,
 .game-button--primary {
   --game-left: url('/ui/kit/buttons/orange-primary-left.webp');

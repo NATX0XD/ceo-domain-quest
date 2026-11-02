@@ -4,19 +4,15 @@ import { SignInGate } from '@/components/student-shell'
 import { AppFooter, AppHeader, AppShell } from '@/components/app-shell'
 import { BottomNav } from '@/components/bottom-nav'
 import {
-  BagIcon,
   BookmarkIcon,
   ChevronRightIcon,
   DomeAvatar,
-  GlobeIcon,
   KnowledgeIcon,
   LightbulbIcon,
   PlayIcon,
   SceneDecor,
   Sheet,
   SpeechBubble,
-  TargetIcon,
-  UsersIcon,
 } from '@/components/ui'
 import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { missions } from '@/components/missions'
@@ -52,11 +48,11 @@ export const dynamic = 'force-dynamic'
  */
 
 /** ไอคอนประจำภารกิจ — ชุดเดียวกับหน้าแผนภารกิจ เด็กจะได้จำภาพเดิมข้ามหน้าได้ */
-const MISSION_ICONS: Record<string, typeof TargetIcon> = {
-  m1: GlobeIcon,
-  m2: LightbulbIcon,
-  m3: BagIcon,
-  m4: UsersIcon,
+const MISSION_ICONS: Record<string, string> = {
+  m1: 'magnifying-glass-tilted-left',
+  m2: 'package',
+  m3: 'clipboard',
+  m4: 'handshake',
 }
 
 export default async function KnowledgePage() {
@@ -123,7 +119,7 @@ export default async function KnowledgePage() {
                 แต่ละช่องคือปุ่มเปิดแผ่นอ่านที่มี id = knowledge-<รหัสภารกิจ> */}
             <ul className="grid min-h-0 flex-1 grid-cols-2 gap-2">
               {missions.map((mission, index) => {
-                const Icon = MISSION_ICONS[mission.id] ?? TargetIcon
+                const icon = MISSION_ICONS[mission.id] ?? 'bullseye'
                 const cardCount = mission.channels.card.cards.length
                 const pointCount = mission.channels.clip.keyPoints.length
                 return (
@@ -134,9 +130,10 @@ export default async function KnowledgePage() {
                       triggerIcon={
                         <span
                           aria-hidden="true"
-                          className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-100 text-brand-700"
+                          className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-50 ring-1 ring-brand-100"
                         >
-                          <Icon width={24} height={24} />
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={`/icons/3d/${icon}.webp`} alt="" width={30} height={30} />
                         </span>
                       }
                       trigger={
