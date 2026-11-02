@@ -233,18 +233,18 @@ export default async function ProfilePage() {
           finished: state.goalId !== null && state.route !== null,
         }}
         certificateNameForm={
-          <form action={saveCertificateName} className="game-card rounded-2xl bg-surface-raised p-3 ring-1 ring-line ring-inset">
+          <form action={saveCertificateName} className="rounded-xl bg-brand-50 p-3 ring-1 ring-brand-200 ring-inset">
             <label htmlFor="certificate-display-name" className="text-label font-bold text-ink">
               ชื่อที่จะแสดงบนเกียรติบัตร
             </label>
-            <p className="mt-1 text-note text-ink-muted">ใส่ชื่อ-นามสกุลเต็มได้ ชื่อนี้จะใช้บน PDF และตัวอย่างผลงาน ถ้าเว้นว่างจะใช้ชื่อเล่น</p>
+            <p className="mt-2 text-note font-semibold text-brand-700">ใส่ชื่อ-นามสกุลเต็มได้ ถ้าเว้นว่างจะใช้ชื่อเล่น</p>
             <input
               id="certificate-display-name"
               name="certificateDisplayName"
               defaultValue={certificateNameFieldValue}
               maxLength={CERTIFICATE_DISPLAY_NAME_MAX_LENGTH}
               placeholder="เช่น อาร์ม ใจดี"
-              className="mt-2 min-h-11 w-full rounded-xl bg-surface-sunken px-3 text-label text-ink ring-1 ring-line ring-inset outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="mt-1 min-h-11 w-full rounded-xl bg-surface-raised px-3 text-label text-ink ring-1 ring-line outline-none focus:ring-2 focus:ring-brand-500"
             />
             {certificateNameNotice ? (
               <p
@@ -256,7 +256,7 @@ export default async function ProfilePage() {
                 {certificateNameNotice.message}
               </p>
             ) : null}
-            <button type="submit" className="btn-base mt-2 w-full rounded-xl bg-brand-600 text-label font-bold text-ink-onbrand hover:bg-brand-700">
+            <button type="submit" className="btn-base mt-3 w-full rounded-xl bg-brand-600 text-label font-bold text-ink-onbrand hover:bg-brand-700">
               บันทึกชื่อบนเกียรติบัตร
             </button>
           </form>

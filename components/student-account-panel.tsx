@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { CloseIcon } from '@/components/ui'
 import { ExitConfirmDialog } from '@/components/student-navigation'
 
@@ -9,10 +9,12 @@ type Notice = { kind: 'success' | 'error'; text: string } | null
 export function StudentAccountPanel({
   initialNickname,
   roomCode,
+  certificateNameForm,
 }: {
   initialNickname: string
   /** รหัสห้องของนักเรียน — โชว์ในกล่องยืนยันออกจากระบบให้จดไว้ใช้กลับเข้ามา */
   roomCode?: string | null
+  certificateNameForm?: ReactNode
 }) {
   const [nickname, setNickname] = useState(initialNickname)
   const [newNickname, setNewNickname] = useState(initialNickname)
@@ -61,6 +63,10 @@ export function StudentAccountPanel({
   function closeSheet() {
     dialogRef.current?.close()
   }
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('account') === '1') openSheet()
+  }, [])
 
   /*
    * ออกจากระบบ — ปิดแผ่นบัญชีก่อน แล้วค่อยเปิดกล่องยืนยัน
@@ -131,7 +137,7 @@ export function StudentAccountPanel({
             onClick={(event) => {
               if (event.target === event.currentTarget) closeSheet()
             }}
-            className="m-auto max-h-[88dvh] w-[calc(100%-1.5rem)] max-w-[26rem] overflow-y-auto rounded-3xl border-[3px] border-[#6b2d12] bg-[#fff1d6] p-0 shadow-[0_6px_0_#4a1f0a] backdrop:bg-[rgb(40_20_8/.5)]"
+            className="m-auto max-h-[calc(100dvh-1rem)] w-[calc(100%-1.5rem)] max-w-[26rem] overflow-y-auto overscroll-contain rounded-3xl border-[3px] border-[#6b2d12] bg-[#fff1d6] p-0 shadow-[0_6px_0_#4a1f0a] backdrop:bg-[rgb(40_20_8/.5)]"
           >
             <div className="flex items-center gap-2 border-b-2 border-[rgb(107_45_18/.2)] px-4 py-3">
               {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D ไฟล์สถิต */}
@@ -176,6 +182,8 @@ export function StudentAccountPanel({
             {busy === 'nickname' ? 'กำลังบันทึก…' : 'บันทึกชื่อเล่น'}
           </button>
         </form>
+
+        {certificateNameForm ? <div className="mt-3">{certificateNameForm}</div> : null}
 
         <form
           className="mt-3 rounded-xl bg-surface-sunken p-3 ring-1 ring-line ring-inset"

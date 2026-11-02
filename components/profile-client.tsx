@@ -371,7 +371,11 @@ export function ProfileClient({
           stage={`รู้จักตัวเอง · ขั้น ${stepNo} จาก ${stepList.length}`}
           className="min-w-0 flex-1"
         />
-        <StudentAccountPanel initialNickname={initial.nickname} roomCode={initial.roomCode} />
+        <StudentAccountPanel
+          initialNickname={initial.nickname}
+          roomCode={initial.roomCode}
+          certificateNameForm={certificateNameForm}
+        />
       </div>
       <ol className="profile-v3-step-rail" aria-label="ขั้นตอนรู้จักตัวเอง">
         {stepList.map((item, index) => (
@@ -381,7 +385,6 @@ export function ProfileClient({
           </li>
         ))}
       </ol>
-      {certificateNameForm ? <div className="profile-certificate-name">{certificateNameForm}</div> : null}
       <span className="sr-only">
         ใช้เวลาประมาณ {meta.minuteFrom}-{meta.minuteTo} นาที
       </span>

@@ -288,9 +288,14 @@ export default async function ResultPage({
         >
           {certContent && certArt ? (
             /* ได้ใบแล้ว = โชว์เกียรติบัตรจริงเต็มพื้นที่ (ย่อตามความสูงที่เหลือ ไม่ล้นจอ) */
-            <div className="result-cert-fit">
-              <CertificatePreview content={certContent} art={certArt} theme={certTheme} />
-            </div>
+            <>
+              <div className="result-cert-fit">
+                <CertificatePreview content={certContent} art={certArt} theme={certTheme} />
+              </div>
+              <Link href="/profile?account=1" className="shrink-0 text-note font-bold text-brand-700 underline underline-offset-2">
+                แก้ชื่อบนเกียรติบัตร
+              </Link>
+            </>
           ) : (
             <>
               <AchievementBadge size={84} earned={earned} />
