@@ -192,12 +192,7 @@ export default async function ShowcasePage() {
             title="ผลงานของเพื่อนในห้อง"
             triggerClassName="game-button game-button--blue game-button--md sc-action"
           >
-            <p className="text-label text-ink-muted">
-              อ่านไอเดียเพื่อนได้เลย แผ่นนี้แสดงเฉพาะชื่อเว็บกับเหตุผล ไม่มีการจัดอันดับ
-            </p>
-            <div className="mt-3">
-              <ShowcaseBoard />
-            </div>
+            <ShowcaseBoard />
           </Sheet>
 
           <Sheet

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getStudent, listClassroomShowcase } from '@/lib/db/repo'
+import { getStudent, listClassroomShowcase, listShowcaseExtras } from '@/lib/db/repo'
+import { shopArtSrc } from '@/components/shop-art'
 import { showcaseSafeForPeers } from '@/components/server/showcase-safety'
 import { readStudentSession, unauthorized } from '../../_lib/session-cookie'
 
@@ -26,9 +27,10 @@ export async function GET() {
   const session = await readStudentSession()
   if (!session) return unauthorized('ยังไม่ได้เข้าห้อง')
 
-  const [items, me] = await Promise.all([
+  const [items, me, extras] = await Promise.all([
     listClassroomShowcase(session.classroomId, session.studentId),
     getStudent(session.studentId),
+    listShowcaseExtras(session.classroomId, session.studentId),
   ])
 
   const myNickname = me?.nickname ?? null
@@ -37,7 +39,25 @@ export async function GET() {
    * ผลงานที่ชื่อเว็บหรือเหตุผลติดตัวกรองคำ (เช่นคำหยาบซ่อนในชื่อเว็บ) ไม่ขึ้นให้เพื่อนเห็น
    * ครูยังเห็นที่ /teacher/showcase พร้อมป้าย "ไม่ขึ้นให้เพื่อนเห็น" · ไม่แตะคะแนนของใคร
    */
-  const showcase = others.filter(showcaseSafeForPeers)
+  const safe = others.filter(showcaseSafeForPeers)
+  /**
+   * แกลเลอรี: คนละ 1 การ์ด (ใบล่าสุด — SQL เรียง created_at จากเก่าไปใหม่) + ภาพร้านขั้นสุดท้าย
+   * ใจ/จำนวนคำชมเป็นแค่ตัวนับบนการ์ด ไม่ใช้เรียงหรือจัดอันดับ ลำดับยังเป็นชื่อเล่นเหมือนเดิม
+   */
+  const latest = new Map<string, (typeof safe)[number]>()
+  for (const row of safe) latest.set(row.nickname, row)
+  const extraOf = new Map(extras.map((row) => [row.nickname, row]))
+  const showcase = [...latest.values()].map((row) => {
+    const extra = extraOf.get(row.nickname)
+    return {
+      ...row,
+      shopName: extra?.businessName ?? null,
+      artSrc: shopArtSrc(extra?.businessType ?? null, 5),
+      likes: extra?.likes ?? 0,
+      likedByMe: extra?.likedByMe ?? false,
+      praises: extra?.praises ?? 0,
+    }
+  })
 
   return NextResponse.json({
     count: showcase.length,

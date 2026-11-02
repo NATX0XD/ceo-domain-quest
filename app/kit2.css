@@ -225,6 +225,12 @@
   outline: none;
   padding-bottom: calc(var(--safe-bottom) + .25rem);
 }
+/* An open sheet lives inside the scrolling main. Lift main above the footer
+   (bottom nav + Dome FAB, which also sit at overlay level) on every shell. */
+.app-shell-main:has(.sheet-panel:target),
+.student-world .app-shell-main:has(.sheet-panel:target) {
+  z-index: calc(var(--z-overlay) + 10);
+}
 .sheet-panel.sheet-panel > .sheet-head + div {
   flex: 1 1 auto;
   min-height: 0;

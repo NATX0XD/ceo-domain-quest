@@ -480,6 +480,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"showcase_likes": {
+                  Row: {
+                    "created_at": string,"from_student_id": string,"to_student_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"from_student_id": string,"to_student_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"from_student_id"?: string,"to_student_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "showcase_likes_from_student_id_fkey"
+      columns: ["from_student_id"]
+isOneToOne: false
+      referencedRelation: "students"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "showcase_likes_to_student_id_fkey"
+      columns: ["to_student_id"]
+isOneToOne: false
+      referencedRelation: "students"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"story_jobs": {
                   Row: {
                     "attempts": number,"created_at": string,"error": string | null,"id": string,"input": NonNullable<Json>,"result": Json | null,"status": string,"student_id": string,"updated_at": string
@@ -882,6 +907,11 @@ isOneToOne: false
 "classroom_showcase":
 { Args: { "p_classroom_id": string,"p_student_id": string }; Returns: {
               "domain_name": string,"nickname": string,"reason_text": string,"tld": string
+            }[]
+                           },
+"classroom_showcase_extras":
+{ Args: { "p_classroom_id": string,"p_student_id": string }; Returns: {
+              "business_name": string,"business_type": string,"liked_by_me": boolean,"likes": number,"nickname": string,"praises": number
             }[]
                            },
 "classroom_voice_paths":
@@ -1930,6 +1960,11 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"set_showcase_like":
+{ Args: { "p_from_student_id": string,"p_liked": boolean,"p_to_student_id": string }; Returns: {
+              "liked": boolean,"likes": number
+            }[]
+                           },
 "set_test_window":
 { Args: { "p_enabled": boolean,"p_session_id": string,"p_teacher_id": string,"p_which": string }; Returns: {
               "ai_enabled": boolean,
@@ -2313,6 +2348,11 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"teacher_showcase_likes":
+{ Args: { "p_classroom_id": string,"p_teacher_id": string }; Returns: {
+              "likes": number,"nickname": string
+            }[]
+                           },
 "teacher_skip_mission":
 { Args: { "p_mission_id": string,"p_note"?: string,"p_reason"?: string,"p_student_id": string,"p_teacher_id": string }; Returns: {
               "id": string,

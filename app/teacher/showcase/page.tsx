@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { listPendingReview } from '@/lib/db/repo'
+import { listPendingReview, listTeacherShowcaseLikes } from '@/lib/db/repo'
 import { TeacherShowcaseClient } from '@/components/teacher-showcase-client'
 import { TeacherFlagsClient } from '@/components/teacher-flags-client'
 import { showcaseSafeForPeers } from '@/components/server/showcase-safety'
@@ -23,9 +23,14 @@ export default async function TeacherShowcasePage({
   const data = await loadTeacherPage(await searchParams)
   if (!data) return <TeacherSignedOut title="ผลงานและจอหน้าห้อง" />
 
-  const pending = data.selectedId
-    ? ((await listPendingReview(data.teacherId, data.selectedId)) ?? [])
-    : []
+  const [pending, likes] = data.selectedId
+    ? await Promise.all([
+        listPendingReview(data.teacherId, data.selectedId).then((rows) => rows ?? []),
+        listTeacherShowcaseLikes(data.teacherId, data.selectedId),
+      ])
+    : [[], []]
+  // ใจที่เพื่อนกดให้บนแกลเลอรี /showcase — ครูเห็นตัวเลข นักเรียนไม่เห็นการจัดอันดับ
+  const liked = likes.filter((row) => row.likes > 0).sort((a, b) => a.nickname.localeCompare(b.nickname, 'th'))
 
   return (
     <PageBody>
@@ -66,6 +71,22 @@ export default async function TeacherShowcasePage({
               }),
             }))}
         />
+
+        <section className="t2-card">
+          <h3 className="t2-card-title">ใจจากเพื่อนบนแกลเลอรี</h3>
+          {liked.length === 0 ? (
+            <p className="t2-empty">ยังไม่มีใครกดใจผลงานเพื่อน</p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {liked.map((row) => (
+                <li key={row.nickname} className="t2-chip">
+                  <span className="font-extrabold">{row.nickname}</span>
+                  <span>♥ {row.likes}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         <section className="t2-note" data-tone="sky">
           <Icon3d name="television" size={32} />

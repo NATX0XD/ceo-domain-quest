@@ -1784,6 +1784,74 @@ export async function listClassroomShowcase(
   }))
 }
 
+/** ของเสริมบนการ์ดแกลเลอรีผลงานเพื่อน — ชื่อร้าน · ประเภท (เลือกภาพร้าน) · ใจ · จำนวนคำชมที่ไม่ถูกซ่อน */
+export type ShowcaseExtra = {
+  nickname: string
+  businessName: string | null
+  businessType: string | null
+  likes: number
+  likedByMe: boolean
+  praises: number
+}
+
+/**
+ * คนนอกห้องได้ [] เสมอ · ถ้าฐานข้อมูลยังไม่มีฟังก์ชันนี้ (ยังไม่ push migration) คืน [] แทนการพัง
+ * แกลเลอรียังเปิดได้ แค่ไม่มีภาพร้านตามประเภทกับตัวนับ
+ */
+export async function listShowcaseExtras(
+  classroomId: string,
+  studentId: string,
+): Promise<ShowcaseExtra[]> {
+  const { data, error } = await getServiceClient().rpc('classroom_showcase_extras', {
+    p_classroom_id: classroomId,
+    p_student_id: studentId,
+  })
+  if (error) {
+    console.warn('[listShowcaseExtras]', error.message)
+    return []
+  }
+  return (data ?? []).map((row) => ({
+    nickname: row.nickname,
+    businessName: row.business_name ?? null,
+    businessType: row.business_type ?? null,
+    likes: row.likes ?? 0,
+    likedByMe: row.liked_by_me === true,
+    praises: row.praises ?? 0,
+  }))
+}
+
+/** กดใจ/เลิกใจ — null = ไม่ได้อยู่ห้องเดียวกัน */
+export async function setShowcaseLike(
+  fromStudentId: string,
+  toStudentId: string,
+  liked: boolean,
+): Promise<{ likes: number; liked: boolean } | null> {
+  const { data, error } = await getServiceClient().rpc('set_showcase_like', {
+    p_from_student_id: fromStudentId,
+    p_to_student_id: toStudentId,
+    p_liked: liked,
+  })
+  if (error) fail('setShowcaseLike', error)
+  const row = data?.[0]
+  return row ? { likes: row.likes ?? 0, liked: row.liked === true } : null
+}
+
+/** ครูดูจำนวนใจของแต่ละคนในห้องตัวเอง · ห้องไม่ใช่ของครู = [] */
+export async function listTeacherShowcaseLikes(
+  teacherId: string,
+  classroomId: string,
+): Promise<Array<{ nickname: string; likes: number }>> {
+  const { data, error } = await getServiceClient().rpc('teacher_showcase_likes', {
+    p_teacher_id: teacherId,
+    p_classroom_id: classroomId,
+  })
+  if (error) {
+    console.warn('[listTeacherShowcaseLikes]', error.message)
+    return []
+  }
+  return (data ?? []).map((row) => ({ nickname: row.nickname, likes: row.likes ?? 0 }))
+}
+
 // --------------------------------------------- นโยบายเก็บไฟล์เสียง 90 วัน (PDPA)
 
 /** ครูสั่งลบไฟล์เสียงก่อนครบกำหนด — ลบทั้งไฟล์ใน bucket และแถวใน DB · null = ไม่ใช่ห้องของครูคนนี้ */

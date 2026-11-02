@@ -221,8 +221,13 @@ export const endgamePaths: Record<string, PathItemObject> = {
                 domainName: str('ชื่อเว็บ'),
                 tld: str('นามสกุล'),
                 reasonText: str('เหตุผลที่เพื่อนเขียน'),
+                shopName: str('ชื่อร้านของเพื่อน (อาจเป็น null)'),
+                artSrc: str('ภาพร้านตามประเภทธุรกิจ ขั้นสุดท้าย'),
+                likes: int('จำนวนใจ (ไม่ใช้จัดอันดับ)'),
+                likedByMe: bool('เรากดใจการ์ดนี้แล้ว'),
+                praises: int('จำนวนคำชมที่ไม่ถูกครูซ่อน'),
               }),
-              '4 คอลัมน์นี้เท่านั้น',
+              'คนละ 1 การ์ด (ใบล่าสุด) เรียงตามชื่อเล่น · ไม่มีดาว/คะแนน',
             ),
             ownHidden: int('งานของตัวเองที่ถูกตัดออกไปกี่ชิ้น'),
           }),
@@ -266,6 +271,54 @@ export const endgamePaths: Record<string, PathItemObject> = {
           [404, ['friend-not-found']],
           [409, ['save-failed']],
           [422, ['content-flagged']],
+        ),
+      },
+    }),
+  },
+
+  '/api/showcase/like': {
+    post: op({
+      id: 'showcaseLike',
+      summary: 'กดใจผลงานเพื่อน',
+      tags: [ENDGAME],
+      security: STUDENT_ONLY,
+      description: `
+ผู้กดอ่านจากคุกกี้เท่านั้น · 1 คนกดใจได้ 1 ครั้งต่อเพื่อน 1 คน (กดซ้ำไม่เพิ่ม) · ต้องอยู่ห้องเดียวกัน
+จำกัด 60 ครั้ง/10 นาที/คน
+`,
+      requestBody: jsonBody(
+        obj({ toNickname: str('ชื่อเล่นเพื่อนในห้องเดียวกัน 1-40', { examples: [DEMO.friendNickname] }) }, {
+          required: ['toNickname'],
+        }),
+        { toNickname: DEMO.friendNickname },
+      ),
+      responses: {
+        ...ok('กดแล้ว', obj({ ok: bool('สำเร็จ'), likes: int('จำนวนใจล่าสุด'), liked: bool('สถานะใจของเรา') })),
+        ...failures(
+          [400, ['bad-request', 'self-like']],
+          [401, ['unauthorized']],
+          [404, ['friend-not-found']],
+          [429, ['rate-limited']],
+        ),
+      },
+    }),
+    delete: op({
+      id: 'showcaseUnlike',
+      summary: 'เลิกกดใจผลงานเพื่อน',
+      tags: [ENDGAME],
+      security: STUDENT_ONLY,
+      description: 'เหมือน POST แต่ถอนใจออก',
+      requestBody: jsonBody(
+        obj({ toNickname: str('ชื่อเล่นเพื่อนในห้องเดียวกัน 1-40') }, { required: ['toNickname'] }),
+        { toNickname: DEMO.friendNickname },
+      ),
+      responses: {
+        ...ok('ถอนแล้ว', obj({ ok: bool('สำเร็จ'), likes: int('จำนวนใจล่าสุด'), liked: bool('สถานะใจของเรา') })),
+        ...failures(
+          [400, ['bad-request', 'self-like']],
+          [401, ['unauthorized']],
+          [404, ['friend-not-found']],
+          [429, ['rate-limited']],
         ),
       },
     }),

@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ShopArtImg } from '@/components/shop-art-img'
 import {
   AlertIcon,
   Button,
   Card,
   CheckIcon,
+  ChevronRightIcon,
   EmptyState,
   SendIcon,
   Skeleton,
@@ -25,16 +27,52 @@ export interface ShowcaseItem {
   domainName: string
   tld: string
   reasonText: string | null
+  shopName?: string | null
+  artSrc?: string
+  likes?: number
+  likedByMe?: boolean
+  praises?: number
+}
+
+/** แกลเลอรีกด "เขียนชม" แล้วฟอร์มในแผ่น #sheet-praise เลือกเพื่อนคนนั้นให้เอง */
+const PRAISE_EVENT = 'showcase:praise'
+const FALLBACK_ART = '/ui/home/shop-stage-5.webp'
+
+function splitReasons(text: string | null): string[] {
+  return (text ?? '')
+    .split(/\n+/)
+    .map((line) => line.replace(/^\s*(?:\d+[.)]|[-•*])\s*/, '').trim())
+    .filter((line) => line.length > 0)
+    .slice(0, 3)
+}
+
+function HeartGlyph({ filled }: { filled: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" width={22} height={22} aria-hidden="true">
+      <path
+        d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.6 4.5 7 4.5c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2Z"
+        fill={filled ? '#e23d3d' : 'none'}
+        stroke={filled ? '#a51d1d' : 'currentColor'}
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
 }
 
 /**
- * กระดานผลงานเพื่อน — ดึงจาก GET /api/me/showcase
- * ⚠️ API คืนมาแค่ 4 ฟิลด์ (ชื่อเล่น โดเมน นามสกุล เหตุผล) ไม่มีตัวเลขวัดผลใด ๆ ไม่มีสถานะผ่าน
- *    ห้ามเพิ่มอะไรที่ทำให้เอาผู้เรียนมาเทียบกันได้
+ * แกลเลอรีผลงานเพื่อน — ปัดซ้าย/ขวา (scroll-snap) + ปุ่มลูกศร + จุดบอกตำแหน่ง x/N
+ * การ์ดหน้าตาเดียวกับการ์ดผลงานของเรา: ภาพร้าน · ป้ายไม้ชื่อเว็บ · ชื่อร้าน · เหตุผล 3 ข้อ
+ * ⚠️ ไม่มีดาว/คะแนน · ใจกับจำนวนคำชมเป็นแค่ตัวนับ ไม่ใช้เรียงหรือจัดอันดับ (เรียงตามชื่อเล่น)
+ * ⚠️ ผลงานที่ติดตัวกรองคำถูกตัดออกตั้งแต่ GET /api/me/showcase
  */
 export function ShowcaseBoard() {
   const [items, setItems] = useState<ShowcaseItem[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [index, setIndex] = useState(0)
+  const [busy, setBusy] = useState<string | null>(null)
+  const [likeError, setLikeError] = useState<string | null>(null)
+  const track = useRef<HTMLUListElement>(null)
 
   useEffect(() => {
     let alive = true
@@ -58,6 +96,57 @@ export function ShowcaseBoard() {
     }
   }, [])
 
+  function onScroll() {
+    const el = track.current
+    if (!el || el.clientWidth === 0) return
+    setIndex(Math.round(el.scrollLeft / el.clientWidth))
+  }
+
+  function go(to: number) {
+    const el = track.current
+    if (!el || !items) return
+    const next = Math.max(0, Math.min(items.length - 1, to))
+    el.scrollTo({ left: next * el.clientWidth, behavior: 'smooth' })
+    setIndex(next)
+  }
+
+  async function toggleLike(item: ShowcaseItem) {
+    if (busy) return
+    const liked = !item.likedByMe
+    setBusy(item.nickname)
+    setLikeError(null)
+    try {
+      const res = await fetch('/api/showcase/like', {
+        method: liked ? 'POST' : 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ toNickname: item.nickname }),
+      })
+      const data = (await res.json().catch(() => null)) as
+        | { likes?: number; liked?: boolean; message?: string }
+        | null
+      if (!res.ok) {
+        setLikeError(data?.message ?? 'กดใจไม่สำเร็จ ลองใหม่อีกครั้ง')
+        return
+      }
+      setItems((prev) =>
+        (prev ?? []).map((row) =>
+          row.nickname === item.nickname
+            ? { ...row, likes: data?.likes ?? row.likes, likedByMe: data?.liked ?? liked }
+            : row,
+        ),
+      )
+    } catch {
+      setLikeError('ต่อเน็ตไม่ได้ ลองใหม่อีกครั้ง')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  function praise(nickname: string) {
+    window.dispatchEvent(new CustomEvent(PRAISE_EVENT, { detail: nickname }))
+    window.location.hash = 'sheet-praise'
+  }
+
   if (error) {
     return (
       <p
@@ -73,13 +162,10 @@ export function ShowcaseBoard() {
   if (items === null) {
     return (
       <SkeletonGroup label="กำลังเปิดกระดานผลงาน" className="flex flex-col gap-3">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="card-soft">
-            <Skeleton shape="text" width="35%" />
-            <Skeleton shape="title" className="mt-2" width="70%" />
-            <Skeleton shape="text" lines={2} className="mt-3" />
-          </div>
-        ))}
+        <div className="card-soft">
+          <Skeleton shape="title" width="60%" />
+          <Skeleton shape="text" lines={3} className="mt-3" />
+        </div>
       </SkeletonGroup>
     )
   }
@@ -95,26 +181,129 @@ export function ShowcaseBoard() {
     )
   }
 
+  const total = items.length
+  const current = Math.min(index, total - 1)
+
   return (
-    <ul className="grid grid-cols-1 gap-3">
-      {items.map((item) => (
-        <Card as="li" key={`${item.nickname}-${item.domainName}${item.tld}`}>
-          <p className="flex items-center gap-1.5 text-label font-bold text-ink-muted">
-            <UsersIcon width={18} height={18} aria-hidden className="shrink-0 text-brand-600" />
-            <span className="min-w-0 truncate">{item.nickname}</span>
-          </p>
-          <p className="mt-1 text-body-lg font-bold break-all text-brand-700">
-            {item.domainName}
-            {item.tld}
-          </p>
-          {item.reasonText ? (
-            <p className="mt-2 text-body whitespace-pre-line text-pretty text-ink">
-              {item.reasonText}
-            </p>
+    <div className="scg" role="region" aria-roledescription="แกลเลอรี" aria-label="ผลงานของเพื่อนในห้อง">
+      <ul ref={track} className="scg-track" onScroll={onScroll}>
+        {items.map((item, i) => {
+          const reasons = splitReasons(item.reasonText)
+          const likes = item.likes ?? 0
+          return (
+            <li
+              key={item.nickname}
+              className="scg-slide"
+              aria-roledescription="การ์ด"
+              aria-label={`${i + 1} จาก ${total}: ${item.nickname}`}
+            >
+              <article className="sc-card scg-card">
+                <div className="sc-card-head">
+                  <p className="sc-kicker">
+                    {item.shopName ? `${item.shopName} · ` : ''}
+                    {item.nickname}
+                  </p>
+                  <span className="scg-praises" title="คำชมที่เพื่อนได้รับ">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- ไอคอน 3D สถิต */}
+                    <img src="/icons/3d/speech-balloon.webp" alt="" aria-hidden="true" width={18} height={18} />
+                    <span className="sr-only">คำชม</span>
+                    {item.praises ?? 0}
+                  </span>
+                </div>
+                <div className="sc-scene scg-scene">
+                  <span className="sc-cloud sc-cloud-one" aria-hidden="true" />
+                  <span className="sc-cloud sc-cloud-two" aria-hidden="true" />
+                  <ShopArtImg
+                    src={item.artSrc ?? FALLBACK_ART}
+                    fallback={FALLBACK_ART}
+                    alt={`ภาพร้านของ ${item.nickname}`}
+                    className="sc-art"
+                    loading={i < 2 ? 'eager' : 'lazy'}
+                  />
+                </div>
+                <div className="sc-sign">
+                  <span className="sc-sign-type">ชื่อเว็บของ {item.nickname}</span>
+                  <strong>
+                    {item.domainName}
+                    {item.tld}
+                  </strong>
+                </div>
+                {reasons.length > 0 ? (
+                  <ol className="sc-reasons" aria-label="เหตุผลที่ตั้งชื่อนี้">
+                    {reasons.map((reason, n) => (
+                      <li key={`${n}-${reason}`}>
+                        <span className="sc-reason-no" aria-hidden="true">{n + 1}</span>
+                        <span className="sc-reason-text">{reason}</span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : null}
+                <div className="scg-actions">
+                  <button
+                    type="button"
+                    className={`scg-like focus-ring${item.likedByMe ? ' is-on' : ''}`}
+                    aria-pressed={item.likedByMe === true}
+                    disabled={busy === item.nickname}
+                    onClick={() => toggleLike(item)}
+                  >
+                    <HeartGlyph filled={item.likedByMe === true} />
+                    <span>ใจ</span>
+                    <span className="scg-like-count" aria-label={`${likes} ใจ`}>{likes}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="game-button game-button--green game-button--sm scg-praise"
+                    onClick={() => praise(item.nickname)}
+                  >
+                    <SendIcon width={18} height={18} aria-hidden />
+                    <span>เขียนชม</span>
+                  </button>
+                </div>
+              </article>
+            </li>
+          )
+        })}
+      </ul>
+
+      {likeError ? (
+        <p role="alert" className="scg-error">
+          {likeError}
+        </p>
+      ) : null}
+
+      <div className="scg-nav">
+        <button
+          type="button"
+          className="scg-arrow focus-ring"
+          onClick={() => go(current - 1)}
+          disabled={current === 0}
+          aria-label="ผลงานก่อนหน้า"
+        >
+          <ChevronRightIcon width={22} height={22} aria-hidden style={{ transform: 'scaleX(-1)' }} />
+        </button>
+        <div className="scg-dots" aria-live="polite">
+          {total <= 12 ? (
+            <span className="scg-dot-row" aria-hidden="true">
+              {items.map((item, i) => (
+                <span key={item.nickname} className={`scg-dot${i === current ? ' is-on' : ''}`} />
+              ))}
+            </span>
           ) : null}
-        </Card>
-      ))}
-    </ul>
+          <span className="scg-count">
+            {current + 1}/{total}
+          </span>
+        </div>
+        <button
+          type="button"
+          className="scg-arrow focus-ring"
+          onClick={() => go(current + 1)}
+          disabled={current >= total - 1}
+          aria-label="ผลงานถัดไป"
+        >
+          <ChevronRightIcon width={22} height={22} aria-hidden />
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -140,6 +329,19 @@ export function ShowcaseFeedbackForm({ myNickname }: { myNickname: string }) {
     return () => {
       alive = false
     }
+  }, [])
+
+  useEffect(() => {
+    function pick(event: Event) {
+      const name = (event as CustomEvent<string>).detail
+      if (typeof name === 'string' && name) {
+        setToNickname(name)
+        setMessage(null)
+        setError(null)
+      }
+    }
+    window.addEventListener(PRAISE_EVENT, pick)
+    return () => window.removeEventListener(PRAISE_EVENT, pick)
   }, [])
 
   const ready =
