@@ -754,10 +754,12 @@ html[data-keyboard='open'] .app-shell-main { scroll-padding-bottom: 1rem; }
      กว้างสูงสุดคุมด้วย max-width + margin-inline:auto (left/right:0) ให้อยู่กลางจอบนจอกว้าง */
   position: fixed;
   top: 0;
-  bottom: 0;
   left: 0;
   right: 0;
-  height: auto;
+  /* ไม่ใช้ bottom:0 — iOS home-screen ให้กรอบ fixed สั้นกว่าจอจริง (เหลือช่องว่างล่าง ~80pt บน iPhone 15)
+     ส่วน 100dvh/lvh ยาวถึงขอบล่างจริง จึงกำหนดความสูงตรง ๆ แทน (--app-h = 100dvh, ตอนคีย์บอร์ดเปิด = px ที่มองเห็น) */
+  bottom: auto;
+  height: var(--app-h);
   max-height: none;
   overflow: hidden;
   width: 100%;
@@ -1027,7 +1029,8 @@ html:has(.student-stage) { background-color: #3f3350; }
 .student-stage::after {
   content: '';
   position: fixed;
-  inset: -2rem;
+  inset: -2rem -2rem auto;
+  height: calc(max(100lvh, 100%) + 4rem);
   pointer-events: none;
 }
 .student-stage::before {

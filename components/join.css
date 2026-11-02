@@ -75,7 +75,8 @@
 /* ---- short viewports (in-browser iPhone: ~660 / ~620 / ~560 tall) ----
    The framed art is percentage-positioned, so on short heights it hides the inputs.
    Below 760px the stage becomes ordinary flow: plaque, then panel; main scrolls if still too tall. */
-@media (max-height: 760px) {
+/* มือถือทุกขนาดใช้ผังเรียงตามปกติ — ผังกรอบภาพแบบ % ทำให้ PIN/คำใบ้จมใต้ปุ่มท้ายจอแม้บนจอสูง (iPhone 15 โหมดโฮมสกรีน) */
+@media (max-width: 600px), (max-height: 760px) {
   .media-join-main { padding-top: 2.9rem; padding-bottom: .6rem; }
   .media-join-main > a { top: .35rem; min-height: 2.25rem; padding: 0 .7rem; font-size: .85rem; box-shadow: 0 2px 0 #6b2d12; }
   .media-join-main .jn-tabs { max-width: 22rem; padding: .2rem; margin-bottom: .35rem; border-width: 2px; box-shadow: 0 3px 0 rgb(107 45 18 / .35); }
@@ -108,3 +109,13 @@
   .media-join-main .join-frame-panel form { gap: .3rem; }
   .media-join-main .join-frame-panel .min-h-14 { min-height: 2.85rem; }
 }
+
+/* มือถือจอสูง: มีที่เหลือ ให้โดมโผล่ใหญ่ขึ้นและเว้นระยะสบายตา */
+@media (max-width: 600px) and (min-height: 761px) {
+  .media-join-main { padding-top: 3.6rem; }
+  .media-join-main .join-frame-art { width: 12rem; height: 5.2rem; margin-bottom: -1.1rem; }
+  .media-join-main .join-frame-panel form { gap: .7rem; }
+}
+/* คำใบ้เป็นบรรทัดเล็กใต้ PIN ไม่ใช่กล่องเส้นประ — กินที่น้อยและไม่ดูเหมือนช่องให้กรอก */
+.media-join-main .jn-hint { padding: 0 .1rem; border: 0; background: none; font-size: .8rem; line-height: 1.3; }
+.media-join-main .jn-hint img { width: 1.2rem; height: 1.2rem; }
