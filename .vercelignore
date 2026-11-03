@@ -1,4 +1,5 @@
 # ไม่ส่งไฟล์ที่เว็บไม่ใช้ขึ้น Vercel (ภาพ QA/เอกสาร ~1.7 GB ทำ Deployment Storage เต็ม)
-docs/
-UI/
-.playwright-cli/
+# ต้องขึ้นต้นด้วย / — "UI/" แบบไม่ยึดราก ไปตัด components/ui ทิ้ง (Vercel เทียบไม่สนตัวพิมพ์) แล้ว build พัง
+/docs/
+/UI/
+/.playwright-cli/
