@@ -211,3 +211,17 @@
   .game-bottom-nav__icon { width: 28px; height: 28px; }
   .game-bottom-nav__label { font-size: .7rem; line-height: 1.1; }
 }
+
+/*
+ * จอที่มีแถบ home indicator (iPhone รุ่นไม่มีปุ่มโฮม โหมดแอป): แถบเมนูยืดลงถึงขอบล่างจอ
+ * เนื้อในเว้นที่ home indicator แทน และมุมล่างโค้งตามขอบจอ (จอ ~55px − ระยะขอบข้าง 10px ≈ 46px)
+ * --safe-bottom = 0 (Android/เบราว์เซอร์ทั่วไป/คีย์บอร์ดเปิด) → สูตรด้านล่างคืนค่าเดิม: ลอยห่าง 6px มุม 24px
+ */
+.game-bottom-nav {
+  padding-bottom: calc(6px - min(6px, var(--safe-bottom, 0px)));
+}
+.game-bottom-nav__list {
+  padding-bottom: calc(6px + var(--safe-bottom, 0px));
+  border-bottom-left-radius: max(24px, calc(min(var(--safe-bottom, 0px), 1px) * 46));
+  border-bottom-right-radius: max(24px, calc(min(var(--safe-bottom, 0px), 1px) * 46));
+}
