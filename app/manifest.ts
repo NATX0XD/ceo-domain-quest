@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'Domain Quest',
     description: 'สื่อการสอนแบบเกม วิชาอินเทอร์เน็ตในงานธุรกิจดิจิทัล',
     lang: 'th',
-    start_url: '/join',
+    start_url: '/start',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
