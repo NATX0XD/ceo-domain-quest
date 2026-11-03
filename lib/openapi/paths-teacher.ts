@@ -827,6 +827,30 @@ access token ของ Supabase **ไม่ถูกส่งกลับไป�
     }),
   },
 
+  '/api/teacher/student/{id}/mission-pass': {
+    post: op({
+      id: 'teacherStudentMissionPass',
+      summary: 'ครูให้ผ่านด่านเพื่อสาธิต/นำเสนอ หรือยกเลิกการข้าม',
+      tags: [TEACHER],
+      security: TEACHER_ONLY,
+      description: 'ใช้ mission_progress แบบเดียวกับการผ่านจริง แต่บันทึก source = teacher-skip แยกไว้และยกเลิกได้ถ้ายังไม่มี real pass เกิดขึ้น',
+      parameters: [
+        { name: 'id', in: 'path', required: true, description: 'รหัสนักเรียนในห้องของครู (uuid)', schema: { type: 'string', format: 'uuid' }, example: FAKE.studentId },
+      ],
+      requestBody: jsonBody(
+        obj({
+          missionId: str('m1 | m2 | m3 | m4 | ceo', { enum: ['m1', 'm2', 'm3', 'm4', 'ceo'] }),
+          action: str('pass หรือ undo', { enum: ['pass', 'undo'] }),
+        }, { required: ['missionId', 'action'] }),
+        { missionId: 'm1', action: 'pass' },
+      ),
+      responses: {
+        ...ok('อัปเดตสถานะด่านแล้ว', obj({ ok: bool('สำเร็จ'), missionId: str('ชื่อด่าน'), action: str('คำสั่ง'), source: str('teacher-skip'), status: str('ผลลัพธ์'), changed: bool('มีการเปลี่ยนแปลงหรือไม่'), progress: opaque('mission_progress หรือ null') })),
+        ...failures([400, ['bad-request']], [401, ['unauthorized']], [404, ['not-found']]),
+      },
+    }),
+  },
+
   '/api/teacher/confirm-score': {
     post: op({
       id: 'confirmScore',

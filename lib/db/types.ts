@@ -317,6 +317,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"mission_pass_overrides": {
+                  Row: {
+                    "after_value": Json,"before_value": Json | null,"created_at": string,"id": string,"mission_id": string,"source": string,"student_id": string,"teacher_id": string,"undone_at": string | null
+                  }
+                  Insert: {
+                    "after_value": Json,"before_value"?: Json | null,"created_at"?: string,"id"?: string,"mission_id": string,"source"?: string,"student_id": string,"teacher_id": string,"undone_at"?: string | null
+                  }
+                  Update: {
+                    "after_value"?: Json,"before_value"?: Json | null,"created_at"?: string,"id"?: string,"mission_id"?: string,"source"?: string,"student_id"?: string,"teacher_id"?: string,"undone_at"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "mission_pass_overrides_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "students"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mission_pass_overrides_teacher_id_fkey"
+      columns: ["teacher_id"]
+isOneToOne: false
+      referencedRelation: "teachers"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"peer_feedback": {
                   Row: {
                     "created_at": string,"from_student_id": string,"hidden_at": string | null,"hidden_by": string | null,"hidden_reason": string | null,"id": string,"praise_text": string,"suggest_text": string,"to_student_id": string
@@ -2146,6 +2171,9 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"teacher_set_mission_pass":
+{ Args: { "p_action": string,"p_mission_id": string,"p_student_id": string,"p_teacher_id": string }; Returns: Json
+                           },
 "teacher_hide_feedback":
 { Args: { "p_feedback_id": string,"p_hidden": boolean,"p_reason"?: string,"p_teacher_id": string }; Returns: {
               "created_at": string,

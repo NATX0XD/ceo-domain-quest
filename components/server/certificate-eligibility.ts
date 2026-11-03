@@ -112,7 +112,10 @@ function standing(scores: Record<string, number> | null): DimensionStanding[] {
  */
 export async function certificateEligibility(studentId: string): Promise<CertificateEligibility> {
   const [rows, missionRows] = await Promise.all([listSubmissions(studentId), loadAllMissionRows(studentId)])
-  return certificateStandingOf(rows, { missionsDone: allMissionsPassed(missionRows) })
+  return certificateStandingOf(rows, {
+    missionsDone: allMissionsPassed(missionRows),
+    ceoSkipped: missionRows.get('boss')?.passed === true,
+  })
 }
 
 /** ภารกิจย่อยทุกข้อผ่านแล้ว (ครูกดข้ามให้ก็นับเป็นผ่าน) */
@@ -168,10 +171,37 @@ export function ceoScoreOf(ceo: Submission | null): CeoScore | null {
  */
 export function certificateStandingOf(
   rows: readonly Submission[],
-  opts: { missionsDone?: boolean } = {},
+  opts: { missionsDone?: boolean; ceoSkipped?: boolean } = {},
 ): CertificateEligibility {
   const ceo = rows.find((row) => row.emphasis_criterion !== null) ?? null
   const missionsDone = opts.missionsDone ?? true
+  const ceoSkipped = opts.ceoSkipped === true
+
+  if (!ceo && ceoSkipped) {
+    // A teacher-skip is the minimum CEO pass: it grants certificate eligibility
+    // once m1-m4 are done, without inventing a submission or a score.
+    const dimensions = standing(null).map((dimension) => ({
+      ...dimension,
+      score: PASS_LEVEL,
+      passed: true,
+    }))
+    return {
+      status: missionsDone ? 'passed' : 'pending-teacher',
+      eligible: missionsDone,
+      missionsDone,
+      score: null,
+      teacherNote: null,
+      dimensions,
+      missing: [],
+      passedCount: dimensions.length,
+      totalCount: dimensions.length,
+      message: missionsDone
+        ? 'ครูให้ผ่านด่าน CEO แล้ว เกียรติบัตรพร้อมดาวน์โหลด'
+        : 'ครูให้ผ่านด่าน CEO แล้ว เหลือภารกิจย่อยอีกนิด ทำให้ครบแล้วรับเกียรติบัตรได้ทันที',
+      nextHref: missionsDone ? '/api/certificate' : '/map',
+      nextLabel: missionsDone ? 'ดาวน์โหลดเกียรติบัตร' : 'ทำภารกิจย่อยให้ครบ',
+    }
+  }
 
   if (!ceo) {
     return {

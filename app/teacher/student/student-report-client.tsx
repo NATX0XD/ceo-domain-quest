@@ -70,6 +70,13 @@ interface BoardStudent {
   cleared?: number
 }
 
+interface MissionPassOverride {
+  missionId: string
+  source: string
+  teacherId: string
+  createdAt: string
+}
+
 const ROUTE_LABEL: Record<string, string> = {
   clip: 'ดูคลิป',
   card: 'อ่านการ์ด',
@@ -148,6 +155,11 @@ export function StudentReportClient({
   const [certificateNameDraft, setCertificateNameDraft] = useState('')
   const [certificateNameBusy, setCertificateNameBusy] = useState(false)
   const [certificateNameNotice, setCertificateNameNotice] = useState<string | null>(null)
+  const [passOverrides, setPassOverrides] = useState<MissionPassOverride[]>([])
+  const [quickPassTarget, setQuickPassTarget] = useState('m1')
+  const [passDialog, setPassDialog] = useState<{ missionId: string; action: 'pass' | 'undo'; through: boolean } | null>(null)
+  const [passBusy, setPassBusy] = useState(false)
+  const [passNotice, setPassNotice] = useState<string | null>(null)
 
   // รายชื่อในห้องมาจากฝั่งเซิร์ฟเวอร์ (หน้า page.tsx) — ไม่พึ่ง endpoint แผงสดที่ปิดอยู่ในโหมดเรียนด้วยตนเอง
   useEffect(() => {
@@ -169,8 +181,9 @@ export function StudentReportClient({
         return
       }
       setError(null)
-      const data = (await res.json()) as { report: StudentReport }
+      const data = (await res.json()) as { report: StudentReport; passOverrides?: MissionPassOverride[] }
       setReport(normalizeReport(data.report))
+      setPassOverrides(data.passOverrides ?? [])
     } catch {
       setError('เชื่อมต่อไม่ได้ ลองอีกครั้ง')
     }
@@ -277,6 +290,36 @@ export function StudentReportClient({
   }
   const passedCount = report ? report.missions.filter((m) => m.passedAt).length : 0
   const clearedCount = Math.min(5, current?.cleared ?? passedCount)
+  const teacherSkipped = new Set(passOverrides.map((item) => item.missionId))
+  const passLabel = (missionId: string) => missionId === 'ceo' || missionId === 'boss' ? 'ด่านบอส CEO' : `ด่าน ${missionId.toUpperCase()}`
+  const passIndex = (missionId: string) => ['m1', 'm2', 'm3', 'm4', 'ceo'].indexOf(missionId === 'boss' ? 'ceo' : missionId)
+
+  const applyMissionPass = async () => {
+    if (!selected || !passDialog || passBusy) return
+    setPassBusy(true)
+    setPassNotice(null)
+    const targets = passDialog.through
+      ? ['m1', 'm2', 'm3', 'm4', 'ceo'].slice(0, passIndex(passDialog.missionId) + 1)
+      : [passDialog.missionId]
+    try {
+      for (const missionId of targets) {
+        const response = await fetch(`/api/teacher/student/${selected}/mission-pass`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ missionId, action: passDialog.action }),
+        })
+        const body = (await response.json().catch(() => null)) as { message?: string } | null
+        if (!response.ok) throw new Error(body?.message ?? 'บันทึกการให้ผ่านไม่สำเร็จ')
+      }
+      await load()
+      setPassDialog(null)
+      setPassNotice(passDialog.action === 'undo' ? 'ยกเลิกการให้ผ่านแล้ว' : `ให้ผ่าน${passDialog.through ? 'ตามลำดับถึง' : ''} ${passLabel(passDialog.missionId)} แล้ว`)
+    } catch (error) {
+      setPassNotice(error instanceof Error ? error.message : 'เชื่อมต่อไม่ได้ ลองอีกครั้ง')
+    } finally {
+      setPassBusy(false)
+    }
+  }
 
   return (
     <div className="grid gap-5">
@@ -472,6 +515,22 @@ export function StudentReportClient({
 
           {/* ── จุดประสงค์ที่ผ่าน */}
           <Card title="เส้นทางภารกิจและจุดประสงค์" icon={<Icon3d name="chequered-flag" size={22} />} tone="blue" flush>
+            <div id="mission-pass" className="flex flex-wrap items-end gap-2 border-b border-[var(--c-line)] bg-[var(--c-sunken)] px-4 py-3 sm:px-5">
+              <label className="grid min-w-44 gap-1 text-[12px] font-semibold text-[var(--c-ink-3)]">
+                ให้ผ่านถึงด่าน…
+                <select
+                  value={quickPassTarget}
+                  onChange={(event) => setQuickPassTarget(event.target.value)}
+                  className="h-10 rounded-lg border border-[var(--c-line-strong)] bg-white px-2.5 text-[14px] font-medium text-[var(--c-ink)] focus:border-[var(--c-brand)] focus:outline-none focus:ring-2 focus:ring-[var(--c-brand-ring)]"
+                >
+                  {['m1', 'm2', 'm3', 'm4', 'ceo'].map((missionId) => <option key={missionId} value={missionId}>{passLabel(missionId)}</option>)}
+                </select>
+              </label>
+              <Button size="sm" kind="primary" onClick={() => setPassDialog({ missionId: quickPassTarget, action: 'pass', through: true })}>
+                ให้ผ่านถึงด่าน…
+              </Button>
+              {passNotice ? <p role="status" className="m-0 basis-full text-[13px] font-medium text-[var(--c-brand)]">{passNotice}</p> : null}
+            </div>
             {report.missions.length === 0 ? (
               <EmptyState title="ยังไม่ได้เริ่มภารกิจ" body="เมื่อนักเรียนเริ่มเล่น ผลของแต่ละด่านจะขึ้นที่นี่" />
             ) : (
@@ -480,6 +539,8 @@ export function StudentReportClient({
                   const n = missionNo(m.missionId)
                   const c = n ? missionColor(n) : 'var(--d-notstarted)'
                   const skipped = report.skips.find((sk) => sk.missionId === m.missionId)
+                  const passMissionId = m.missionId === 'boss' ? 'ceo' : m.missionId
+                  const teacherPass = teacherSkipped.has(passMissionId)
                   return (
                     <li key={m.missionId} className="relative flex gap-4 pb-5 last:pb-0">
                       {i < report.missions.length - 1 ? <span aria-hidden className="absolute top-9 bottom-0 left-[17px] w-0.5 bg-[var(--c-line)]" /> : null}
@@ -500,6 +561,18 @@ export function StudentReportClient({
                           <div className="flex gap-1"><dt>ดาว</dt><dd className="m-0 font-semibold text-[var(--c-ink-2)] tabular-nums">{m.stars ?? 0}</dd></div>
                           <div className="flex gap-1"><dt>เวลา</dt><dd className="m-0 font-semibold text-[var(--c-ink-2)]">{timeText(m.secondsSpent)}</dd></div>
                         </dl>
+                        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--c-line)] pt-3">
+                          {teacherPass ? (
+                            <>
+                              <span className="rounded-full bg-[var(--s-info-soft)] px-2.5 py-1 text-[12px] font-bold text-[var(--s-info-ink)]">ครูให้ผ่าน</span>
+                              <button type="button" className="t2-btn focus-ring min-h-9 px-3 text-[13px]" onClick={() => setPassDialog({ missionId: passMissionId, action: 'undo', through: false })}>ยกเลิก</button>
+                            </>
+                          ) : !m.passedAt ? (
+                            <button type="button" className="t2-btn focus-ring min-h-9 px-3 text-[13px]" onClick={() => setPassDialog({ missionId: passMissionId, action: 'pass', through: false })}>
+                              ให้ผ่านด่านนี้
+                            </button>
+                          ) : null}
+                        </div>
                       </div>
                     </li>
                   )
@@ -696,6 +769,20 @@ export function StudentReportClient({
           >
             {removing ? 'กำลังลบ' : 'ลบถาวร'}
           </button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={passDialog !== null}
+        onClose={() => { if (!passBusy) setPassDialog(null) }}
+        title={passDialog?.action === 'undo' ? `ยกเลิกการให้ผ่าน ${passLabel(passDialog.missionId)}?` : `ให้ผ่าน ${passLabel(passDialog?.missionId ?? '')}?`}
+        description={`ข้ามด่านนี้ให้ ${report?.student.nickname ?? current?.nickname ?? 'นักเรียน'} ใช้ตอนสาธิต/นำเสนอ`}
+      >
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button onClick={() => setPassDialog(null)} disabled={passBusy}>ยกเลิก</Button>
+          <Button kind="primary" onClick={() => void applyMissionPass()} disabled={passBusy}>
+            {passBusy ? 'กำลังบันทึก…' : passDialog?.action === 'undo' ? 'ยกเลิกการให้ผ่าน' : 'ยืนยันให้ผ่าน'}
+          </Button>
         </div>
       </Dialog>
     </div>

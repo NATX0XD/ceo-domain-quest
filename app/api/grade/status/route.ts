@@ -86,7 +86,10 @@ export async function GET() {
     loadAllMissionRows(session.studentId),
   ])
   const state = revisionState(rows)
-  const standing = certificateStandingOf(rows, { missionsDone: allMissionsPassed(missionRows) })
+  const standing = certificateStandingOf(rows, {
+    missionsDone: allMissionsPassed(missionRows),
+    ceoSkipped: missionRows.get('boss')?.passed === true,
+  })
   const latest = state.latest
 
   const gradeState: GradeState =

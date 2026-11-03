@@ -249,8 +249,21 @@ function scoreOf(value: unknown): { score: number; maxScore: number } | null {
  * ไม่ให้ 0 รอครูอีกต่อไป เพราะเป้า 10/14 ดาวจะไม่มีทางถึงภายในคาบ
  */
 export async function loadBigMissionStars(studentId: string): Promise<BigMissionStars> {
-  const rows = await listSubmissions(studentId)
-  const ceo = rows.find((r) => r.emphasis_criterion !== null) ?? rows.at(-1) ?? null
+  const [rows, missionRows] = await Promise.all([listSubmissions(studentId), listMissionProgress(studentId)])
+  const ceoSubmission = rows.find((r) => r.emphasis_criterion !== null) ?? null
+
+  // CEO teacher-skip has no submission to score, but it is still a completed
+  // boss row. Its minimum pass stars are kept in mission_progress like every
+  // other teacher-skip so home/map/certificate all read the same state.
+  const bossPass = missionRows.find((row) => row.mission_id === 'boss' && row.passed_at !== null)
+  if (!ceoSubmission && bossPass) {
+    return {
+      stars: Math.max(0, Math.min(BIG_MISSION_MAX_STARS, bossPass.stars)),
+      pendingTeacher: false,
+      submitted: true,
+    }
+  }
+  const ceo = ceoSubmission ?? rows.at(-1) ?? null
   if (!ceo) return { stars: 0, pendingTeacher: false, submitted: false }
 
   /**

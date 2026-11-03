@@ -3,6 +3,7 @@ import {
   getClassroomReport,
   getStudentReport,
   interpretSurveyMean,
+  listActiveMissionPassOverrides,
   listClassroomBuddyLog,
 } from '@/lib/db/repo'
 import { errorResponse, readTeacherSession, unauthorized } from '../../_lib/session-cookie'
@@ -30,7 +31,16 @@ export async function GET(request: Request) {
   if (studentId) {
     const report = await getStudentReport(session.teacherId, studentId)
     if (!report) return errorResponse('not-found', 'ไม่พบนักเรียนคนนี้ในห้องของคุณ', 404)
-    return NextResponse.json({ report })
+    const passOverrides = await listActiveMissionPassOverrides(session.teacherId, studentId)
+    return NextResponse.json({
+      report,
+      passOverrides: passOverrides.map((item) => ({
+        missionId: item.mission_id === 'boss' ? 'ceo' : item.mission_id,
+        source: item.source,
+        teacherId: item.teacher_id,
+        createdAt: item.created_at,
+      })),
+    })
   }
 
   if (classroomId) {

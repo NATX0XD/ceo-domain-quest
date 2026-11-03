@@ -79,6 +79,7 @@ function CardMenu({ name, reportHref }: { name: string; reportHref: string }) {
       {open ? (
         <div role="menu" className="absolute top-10 right-0 z-20 w-52 rounded-xl bg-white p-1.5 shadow-[var(--sh-pop)] ring-1 ring-[var(--c-line)]">
           <Link role="menuitem" href={reportHref} className={item}>ดูรายงาน</Link>
+          <Link role="menuitem" href={`${reportHref}#mission-pass`} className={item}>ให้ผ่านด่าน…</Link>
           <Link role="menuitem" href={`${reportHref}&print=1`} className={item}>พิมพ์เกียรติบัตร / รายงาน</Link>
         </div>
       ) : null}

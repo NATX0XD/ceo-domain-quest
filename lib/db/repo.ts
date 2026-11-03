@@ -2884,6 +2884,23 @@ export async function getClassroomReport(
 export type TeacherOverride = Tables<'teacher_overrides'>
 export type TeacherNote = Tables<'teacher_notes'>
 export type Broadcast = Tables<'broadcasts'>
+export type MissionPassOverride = Tables<'mission_pass_overrides'>
+
+export type TeacherMissionPassAction = 'pass' | 'undo'
+export type TeacherMissionPassStatus =
+  | 'passed-by-teacher'
+  | 'already-passed-by-teacher'
+  | 'real-pass-preserved'
+  | 'undone'
+  | 'no-active-override'
+
+export interface TeacherMissionPassResult {
+  status: TeacherMissionPassStatus
+  changed: boolean
+  source: 'teacher-skip'
+  overrideId?: string
+  progress: MissionProgress | null
+}
 
 /** เหตุผลสั้นที่ครูต้องเลือกทุกครั้งที่แก้ (สเปก T-06 บังคับ) */
 export const OVERRIDE_REASONS = ['coached', 'device', 'level-fit', 'other'] as const
@@ -2971,6 +2988,41 @@ export async function teacherForcePass(
 
   if (error) fail('teacherForcePass', error)
   return data[0] ?? null
+}
+
+/** ครูให้ผ่านเพื่อสาธิต — เก็บเป็น override แยกและ undo ได้โดยไม่ลบ real pass */
+export async function teacherSetMissionPass(
+  teacherId: string,
+  studentId: string,
+  missionId: MissionTarget,
+  action: TeacherMissionPassAction,
+): Promise<TeacherMissionPassResult | null> {
+  const { data, error } = await getServiceClient().rpc('teacher_set_mission_pass', {
+    p_teacher_id: teacherId,
+    p_student_id: studentId,
+    p_mission_id: missionId,
+    p_action: action,
+  })
+
+  if (error) fail('teacherSetMissionPass', error)
+  return (data as unknown as TeacherMissionPassResult | null) ?? null
+}
+
+/** รายการ teacher-skip ที่ยัง active สำหรับ teacher UI เท่านั้น */
+export async function listActiveMissionPassOverrides(
+  teacherId: string,
+  studentId: string,
+): Promise<MissionPassOverride[]> {
+  const { data, error } = await getServiceClient()
+    .from('mission_pass_overrides')
+    .select('id, student_id, teacher_id, mission_id, source, before_value, after_value, created_at, undone_at, students!inner(classrooms!inner(teacher_id))')
+    .eq('student_id', studentId)
+    .eq('students.classrooms.teacher_id', teacherId)
+    .is('undone_at', null)
+    .order('created_at', { ascending: false })
+
+  if (error) fail('listActiveMissionPassOverrides', error)
+  return data as unknown as MissionPassOverride[]
 }
 
 /**

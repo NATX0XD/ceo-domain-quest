@@ -7,7 +7,6 @@ import {
   progressSummary,
   starsFor,
 } from '@/core/personalize'
-import { listSubmissions } from '@/lib/db/repo'
 import { missions } from '@/components/missions'
 import { findGoal, selfProfile } from '@/components/server/lesson-content'
 import {
@@ -135,10 +134,9 @@ export async function lessonSummary(studentId: string | null): Promise<LessonSum
     }
   }
 
-  const [rowsById, self, submissions, big] = await Promise.all([
+  const [rowsById, self, big] = await Promise.all([
     loadAllMissionRows(studentId),
     loadSelfProfileDb(studentId),
-    listSubmissions(studentId),
     loadBigMissionStars(studentId),
   ])
 
@@ -190,7 +188,7 @@ export async function lessonSummary(studentId: string | null): Promise<LessonSum
   const computedStars = Math.min(summary.stars + big.stars, selfProfile.starBudget.maxStars)
   const totalStars = computedStars
   const goal = self.goalId ? findGoal(self.goalId) : undefined
-  const bigSubmitted = submissions.length > 0
+  const bigSubmitted = big.submitted
   // S-09 นับหัวก่อน แล้วค่อยแปลงเป็นเปอร์เซ็นต์ — ไม่ใช่เอาเปอร์เซ็นต์ไปตัดสินขั้นของร้าน
   const stagesCleared = summary.done + (bigSubmitted ? 1 : 0)
   const percent = Math.round((stagesCleared / SHOP_STAGES_TOTAL) * 100)
