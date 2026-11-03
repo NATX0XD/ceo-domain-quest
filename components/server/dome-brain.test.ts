@@ -94,6 +94,20 @@ describe('askDome with real-AI path', () => {
     expect(domeNextStep(null, true, false).href).toBe('/setup')
   })
 
+  it('want-website follows pretest then self-profile, and never re-offers a finished step', async () => {
+    const ask = (selfProfileDone: boolean, pretestDone: boolean) =>
+      askDome({ message: 'x', quickReplyId: 'want-website', shopName: 'ร้าน', selfProfileDone, pretestDone, ai: fakeAi(aiReply('x')) })
+    expect((await ask(false, false)).action?.href).toBe('/pretest')
+    expect((await ask(false, true)).action?.href).toBe('/profile')
+    expect((await ask(true, true)).action?.href).toBe('/map')
+  })
+
+  it('explain-domain answers about domains, not the self-profile', async () => {
+    const reply = await askDome({ message: 'x', quickReplyId: 'explain-domain', shopName: 'ร้าน', selfProfileDone: true, ai: fakeAi(aiReply('x')) })
+    expect(reply.reply).toContain('ชื่อโดเมนคือ')
+    expect(reply.action?.href).toBe('/mission/m1')
+  })
+
   it('blocks ready intent until the shop is set up', async () => {
     const reply = await askDome({ message: 'ฉันพร้อมเริ่มภารกิจแล้ว', shopName: null, ai: fakeAi(aiReply('ไม่ควรเรียก')) })
     expect(reply.reply).toContain('ตั้งร้านก่อนนะ')

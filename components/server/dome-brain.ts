@@ -130,7 +130,7 @@ const MAP_ACTION: DomeAction = { href: '/map', label: 'ดูแผนภาร�
 const PRETEST_FIRST_ACTION: DomeAction = { href: '/pretest', label: 'ทำแบบทดสอบก่อนเรียนก่อน' }
 
 /**
- * ขั้นถัดไปจริงของผู้เรียนเมื่อบอกว่า "พร้อม" — ลำดับ: ตั้งร้าน → รู้จักตัวเอง (/profile) → แผนที่ (/map)
+ * ขั้นถัดไปจริงของผู้เรียนเมื่อบอกว่า "พร้อม" — ลำดับ: ตั้งร้าน → แบบทดสอบก่อนเรียน (/pretest) → รู้จักตัวเอง (/profile) → แผนที่ (/map)
  * selfProfileDone ไม่ระบุ = ถือว่าทำแล้ว (ไม่บังคับผู้เรียนเก่าย้อนกลับไป)
  */
 export function domeNextStep(shopName: string | null, selfProfileDone = true, pretestDone = true): DomeAction {
@@ -247,10 +247,21 @@ export async function askDome(input: {
   }
 
   if (input.quickReplyId === 'want-website') {
-    return scripted('เยี่ยมเลยครับ งั้นเริ่มจากทำความรู้จักตัวเองก่อน ผมจะได้เสนอวิธีเรียนที่เข้ากับคุณที่สุด แล้วคุณเลือกเองได้ว่าจะเอาตามที่ผมเสนอหรือจะเปลี่ยน', { href: '/profile', label: 'ไปทำความรู้จักตัวเอง' })
+    // ชวนไปขั้นที่ยังไม่ได้ทำจริง — ส่งแบบทดสอบก่อนเรียนก่อน แล้วค่อยรู้จักตัวเอง ทำครบแล้วไม่ชวนกลับไปทำซ้ำ
+    const next = domeNextStep(input.shopName, input.selfProfileDone !== false, input.pretestDone !== false)
+    const reply =
+      next === PRETEST_FIRST_ACTION
+        ? 'เยี่ยมเลยครับ ก่อนเริ่มมาทำแบบทดสอบก่อนเรียนสั้น ๆ กันก่อน ผมจะได้รู้ว่าคุณรู้อะไรแล้วบ้าง ส่งเสร็จภารกิจจะเปิดทันทีครับ'
+        : next === PROFILE_FIRST_ACTION
+          ? 'เยี่ยมเลยครับ งั้นมาทำความรู้จักตัวเองกันก่อน ผมจะได้เสนอวิธีเรียนที่เข้ากับคุณที่สุด แล้วคุณเลือกเองได้ว่าจะเอาตามที่ผมเสนอหรือจะเปลี่ยน'
+          : next === MAP_ACTION
+            ? 'เยี่ยมเลยครับ คุณพร้อมออกเดินทางแล้ว ไปลุยภารกิจต่อได้เลย ทุกภารกิจจะพาไปสู่เว็บของร้านคุณครับ'
+            : SETUP_FIRST_REPLY
+    return scripted(reply, next)
   }
   if (input.quickReplyId === 'explain-domain') {
-    const rule = RULES[0]
+    // หากฎด้วยคำว่า "โดเมน" — อ้างตำแหน่ง RULES[0] พังเมื่อมีกฎใหม่แทรกหน้า
+    const rule = RULES.find((r) => r.keywords.includes('โดเมน'))
     return scripted(rule?.reply ?? FALLBACK_REPLY, rule?.action ?? null)
   }
   if (input.quickReplyId === 'ready') {
