@@ -55,15 +55,35 @@ export function domeQuickReplies(): DomeSuggestion[] {
   return QUICK_REPLIES
 }
 
-export function domeGreeting(shopName: string | null): DomeReply {
-  return {
-    reply: shopName
-      ? `สวัสดีครับ ผมโดม เลขาส่วนตัวของคุณ วันนี้เรามาทำให้ร้าน${shopName} มีชื่อเว็บเป็นของตัวเองกันครับ อยากทำอะไรก่อนดีครับ`
-      : 'สวัสดีครับ ผมโดม เลขาส่วนตัวของคุณ วันนี้เราจะมาตั้งชื่อเว็บให้ร้านของคุณกันครับ เลือกได้เลย หรือพิมพ์คุยกับผมได้',
-    source: 'fallback',
-    suggestions: QUICK_REPLIES,
-    action: shopName ? null : { href: '/setup', label: 'ตั้งชื่อร้านก่อน' },
+/**
+ * ทักแรกของโดม — บอกชัด ๆ ว่าตอนนี้อยู่ขั้นไหนของการเตรียมตัว แล้วมีปุ่มพาไปขั้นนั้นเลย
+ * ลำดับเดียวทั้งระบบ: ตั้งร้าน → แบบทดสอบก่อนเรียน → รู้จักตัวเอง → ออกภารกิจ (ตาม domeNextStep)
+ */
+export function domeGreeting(
+  shopName: string | null,
+  progress: { selfProfileDone?: boolean; pretestDone?: boolean; pretestOpen?: boolean } = {},
+): DomeReply {
+  const next = domeNextStep(shopName, progress.selfProfileDone !== false, progress.pretestDone !== false)
+  const hello = 'สวัสดีครับ ผมโดม เลขาส่วนตัวของคุณ'
+  // ชื่อร้านที่ขึ้นต้นด้วย "ร้าน" อยู่แล้ว ไม่เติมซ้ำ (กัน "ร้านร้าน…")
+  const shop = shopName && !shopName.startsWith('ร้าน') ? `ร้าน${shopName}` : (shopName ?? '')
+  let reply: string
+  let action: DomeAction | null = next
+  if (next === SETUP_FIRST_ACTION) {
+    reply = `${hello} ก่อนออกเดินทางมีเตรียมตัว 3 ขั้นครับ ขั้นที่ 1 ตั้งชื่อร้านของเราก่อนเลย`
+    action = { href: '/setup', label: 'ไปตั้งชื่อร้าน' }
+  } else if (next === PRETEST_FIRST_ACTION) {
+    reply = progress.pretestOpen === false
+      ? `${hello} ${shop}พร้อมแล้ว ขั้นที่ 2 คือแบบทดสอบก่อนเรียน ตอนนี้รอครูเปิดให้ทำก่อนนะครับ ระหว่างรอถามเรื่องโดเมนกับผมได้เลย`
+      : `${hello} ${shop}พร้อมแล้ว ขั้นที่ 2 ทำแบบทดสอบก่อนเรียนสั้น ๆ ครับ ผมจะได้รู้ว่าคุณรู้อะไรแล้วบ้าง ส่งเสร็จภารกิจจะเปิดทันที`
+    action = { href: '/pretest', label: 'ไปทำแบบทดสอบ' }
+  } else if (next === PROFILE_FIRST_ACTION) {
+    reply = `${hello} ส่งแบบทดสอบแล้ว เก่งมากครับ ขั้นที่ 3 มาทำความรู้จักตัวเองกัน ผมจะเสนอวิธีเรียนที่เข้ากับคุณ แล้วคุณเลือกเองได้`
+    action = { href: '/profile', label: 'ทำความรู้จักตัวเอง' }
+  } else {
+    reply = `${hello} เตรียมตัวครบแล้ว ไปลุยภารกิจทำให้${shop}มีชื่อเว็บเป็นของตัวเองกันครับ ติดตรงไหนกดเรียกผมได้ทุกเมื่อ`
   }
+  return { reply, source: 'fallback', suggestions: QUICK_REPLIES, action }
 }
 
 interface Rule {

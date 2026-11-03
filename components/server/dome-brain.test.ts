@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { classifyDomeMessage } from '../../lib/ai/dome-scope'
 import { createAiClient, resetAiRateLimiter } from '../../lib/ai'
 import type { DomeChatInput, DomeChatResult } from '../../lib/ai/types'
-import { askDome, domeNextStep } from './dome-brain'
+import { askDome, domeGreeting, domeNextStep } from './dome-brain'
 import { setAnswerTextsForTest } from './dome-guard'
 
 const aiReply = (text: string, scope: 'on' | 'off' = 'on'): DomeChatResult => ({ text, scope, source: 'ai', provider: 'typhoon', fallbackReason: null })
@@ -106,6 +106,14 @@ describe('askDome with real-AI path', () => {
     const reply = await askDome({ message: 'x', quickReplyId: 'explain-domain', shopName: 'ร้าน', selfProfileDone: true, ai: fakeAi(aiReply('x')) })
     expect(reply.reply).toContain('ชื่อโดเมนคือ')
     expect(reply.action?.href).toBe('/mission/m1')
+  })
+
+  it('greeting names the current prep step and links straight to it', () => {
+    expect(domeGreeting(null).action?.href).toBe('/setup')
+    expect(domeGreeting('ร้าน', { pretestDone: false, selfProfileDone: false }).action?.href).toBe('/pretest')
+    expect(domeGreeting('ร้าน', { pretestDone: false, pretestOpen: false }).reply).toContain('รอครูเปิด')
+    expect(domeGreeting('ร้าน', { pretestDone: true, selfProfileDone: false }).action?.href).toBe('/profile')
+    expect(domeGreeting('ร้าน', { pretestDone: true, selfProfileDone: true }).action?.href).toBe('/map')
   })
 
   it('blocks ready intent until the shop is set up', async () => {

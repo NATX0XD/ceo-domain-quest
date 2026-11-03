@@ -25,7 +25,11 @@ export default async function DomePage({ searchParams }: { searchParams: Promise
     pretestRequirement(session.studentId),
   ])
   const currentMissionId = summary.missions.find((mission) => !mission.passed)?.id ?? 'm5'
-  const greeting = domeGreeting(profile?.shopName ?? null)
+  const greeting = domeGreeting(profile?.shopName ?? null, {
+    selfProfileDone: selfProfile.route !== null,
+    pretestDone: pretest.done,
+    pretestOpen: pretest.open,
+  })
 
   return (
     <DomeChatClient

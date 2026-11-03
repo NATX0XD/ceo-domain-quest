@@ -14,6 +14,7 @@ import { readStudentSession } from '@/app/api/_lib/session-cookie'
 import { TestNudgeCard } from '@/components/test-nudge'
 import { loadTestNudge } from '@/components/server/test-nudge'
 import { requireShopProfile } from '@/components/server/shop-gate'
+import { loadSelfProfileDb } from '@/components/server/game-state'
 import { pretestRequirement } from '@/components/server/pretest-required'
 import { resolveShopArt } from '@/components/server/shop-art-file'
 import { shopArtFallbackSrc, shopArtStageFromLevel } from '@/components/shop-art'
@@ -50,6 +51,7 @@ export default async function HomePage() {
   ])
   const nudge = await loadTestNudge(session.studentId)
   const pretest = await pretestRequirement(session.studentId)
+  const selfProfileDone = (await loadSelfProfileDb(session.studentId)).route !== null
 
   const nextMission = summary.missions.find((m) => !m.passed)
   const stepTotal = summary.missions.length + 1
@@ -59,6 +61,9 @@ export default async function HomePage() {
   // ยังไม่ส่งแบบทดสอบก่อนเรียน = ภารกิจล็อก ปุ่มหลักพาไป /pretest (ครูยังไม่เปิด = บอกให้รอ)
   const primary = !pretest.done
     ? { href: '/pretest', label: pretest.open ? 'ทำแบบทดสอบก่อนเรียนก่อน' : 'รอครูเปิดแบบทดสอบก่อนเรียน' }
+    // ลำดับเดียวกับโดม: แบบทดสอบก่อนเรียน → รู้จักตัวเอง → ภารกิจ (ยังไม่เลือกเส้นทางเรียน = ยังไม่พาเข้าภารกิจ)
+    : !selfProfileDone && summary.stagesCleared === 0
+    ? { href: '/profile', label: 'ทำความรู้จักตัวเอง' }
     : nudge && !nudge.waiting
     ? { href: nudge.href, label: nudge.title }
     : nextMission
