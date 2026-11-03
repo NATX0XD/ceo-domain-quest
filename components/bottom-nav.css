@@ -49,6 +49,11 @@
   pointer-events: none;
 }
 
+/* แถบเมนูเว้นพื้นที่ home indicator ของ iPhone เองแล้ว — ฟุตเตอร์ไม่ต้องเว้นซ้ำ (เดิมซ้อนกันเป็น 74px บน PWA) */
+.app-shell-footer:has(> .game-bottom-nav) {
+  padding-bottom: 0 !important;
+}
+
 .app-shell-footer:has(> .game-bottom-nav) > * {
   pointer-events: auto;
 }
