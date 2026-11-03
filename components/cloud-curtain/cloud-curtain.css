@@ -195,3 +195,14 @@
     animation: none;
   }
 }
+
+/* จอกว้าง: หน้าเกมนักเรียนเป็นกรอบกลางจอกว้าง 30rem (ข้าง ๆ เป็นฉากเบลอ) — ม่านเมฆปิดแค่กรอบนั้น ไม่ใช่ทั้งจอ */
+@media (min-width: 900px) {
+  html:has(.student-stage) .cc-root {
+    left: 50%;
+    right: auto;
+    width: min(100vw, 30rem);
+    transform: translateX(-50%);
+    --cc-puff: min(26vh, 12rem);
+  }
+}
