@@ -37,7 +37,7 @@ export default function LandingPage() {
           <img src="/ui/kit/signs/welcome-logo.webp" alt="โลโก้ CEO Domain Quest" className="welcome-logo object-contain" />
         </div>
         <div className="welcome-dome-stage relative z-10 min-h-0 w-full flex-1">
-          <img src="/ui/welcome/official-dome.webp" alt="โดมกำลังโบกมือทักทาย" className="media-landing-art welcome-dome mx-auto h-full w-full object-contain object-bottom" />
+          <img src="/ui/welcome/official-dome.webp" alt="โดมกำลังโบกมือทักทาย" className="media-landing-art welcome-dome mx-auto h-full w-full object-contain object-center" />
           <div className="welcome-dome-bubble">สวัสดี! มาเล่นกัน</div>
         </div>
         <div className="welcome-tagline relative z-10">สร้างร้านในฝัน เรียนรู้โดเมนอย่างสนุก</div>
