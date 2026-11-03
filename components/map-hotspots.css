@@ -400,3 +400,15 @@
   mask-composite: intersect;
 }
 .map-page { background: linear-gradient(180deg, #2fa7e6 0%, #39b3ec 55%, #5cc4ef 100%); }
+
+/* มือถือ: แผนที่เต็มความกว้างจอ ไม่ย่อตามความสูงจนเหลือแถบทะเลสองข้าง — สูงเกินจอก็เลื่อนลงดูเกาะ 4 กับด่านบอสได้
+   จอคอม/แท็บเล็ตยังพอดีความสูงทั้งภาพเหมือนเดิม */
+@media (max-width: 600px) {
+  .map-page {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .map-artboard { width: 100cqw; }
+}
