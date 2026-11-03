@@ -95,7 +95,8 @@ export async function decideGate(input: {
     return { type: 'redirect', to: '/landing' }
   }
 
-  if (open) return { type: 'next' }
+  // เปิดแล้ว: หน้าแรกของโดเมนยังเป็น landing (ปุ่ม "เข้าสู่ระบบ" แทนที่นาฬิกานับถอยหลัง) — ตัวเกมเริ่มที่ /join
+  if (open) return pathname === '/' ? { type: 'rewrite', to: '/landing' } : { type: 'next' }
 
   if (pathname.startsWith('/_next/') || pathname === '/favicon.ico') return { type: 'next' }
   if (isLandingPath(pathname)) return { type: 'next' }

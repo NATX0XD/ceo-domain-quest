@@ -154,8 +154,8 @@ export function FinalSection({ openAt, openLabel, forceOpen = false }: { openAt:
           <Countdown openAt={openAt} forceOpen={forceOpen} />
           {open && (
             <div className="ld-launch-open-actions">
-              <motion.a className="ld-btn" href="/" whileTap={{ scale: 0.94 }}>
-                เข้าสู่เกม ▶
+              <motion.a className="ld-btn" href="/join" whileTap={{ scale: 0.94 }}>
+                เข้าสู่ระบบ ▶
               </motion.a>
               <a className="ld-launch-teacher-link" href="/teacher">ครูเข้าสู่ระบบ</a>
             </div>

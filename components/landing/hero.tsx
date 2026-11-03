@@ -90,8 +90,8 @@ export function Hero({ openAt, openLabel, forceOpen = false }: { openAt: string 
             )}
             {open ? (
               <div className="ld-launch-open-actions">
-                <motion.a className="ld-btn ld-launch-main" href="/" whileTap={{ scale: 0.94 }}>
-                  เข้าสู่เกม ▶
+                <motion.a className="ld-btn ld-launch-main" href="/join" whileTap={{ scale: 0.94 }}>
+                  เข้าสู่ระบบ ▶
                 </motion.a>
                 <a className="ld-launch-teacher-link" href="/teacher">ครูเข้าสู่ระบบ</a>
               </div>

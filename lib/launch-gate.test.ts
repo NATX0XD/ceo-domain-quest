@@ -79,9 +79,10 @@ describe('preview', () => {
 })
 
 describe('decideGate เมื่อเปิด', () => {
-  it('ผ่านทุกอย่าง', async () => {
+  it('หน้าแรก / ยังเป็น landing ส่วนหน้าอื่นผ่านทั้งหมด', async () => {
     const env = { appOpen: 'true', nodeEnv: 'production' }
-    for (const pathname of ['/', '/join', '/api/me', '/teacher']) {
+    expect(await decideGate({ pathname: '/', env })).toEqual({ type: 'rewrite', to: '/landing' })
+    for (const pathname of ['/join', '/home', '/api/me', '/teacher', '/landing']) {
       expect(await decideGate({ pathname, env })).toEqual({ type: 'next' })
     }
   })
