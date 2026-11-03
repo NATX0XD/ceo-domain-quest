@@ -5,7 +5,7 @@
  * `renderGameCertificatePdf()` วาดด้วย jsPDF + ภาพจาก public/ui/cert/ (ไม่มีรูปไหนก็วาดรูปทรงแทน)
  */
 import { jsPDF } from 'jspdf'
-import { DEFAULT_COURSE_NAME, DEFAULT_SCHOOL_NAME, PAGE_HEIGHT_MM, PAGE_WIDTH_MM, thaiDate } from './data'
+import { DEFAULT_COURSE_NAME, PAGE_HEIGHT_MM, PAGE_WIDTH_MM, thaiDate } from './data'
 import { THAI_FONT_NAME, type ThaiFontSet } from './font'
 import type { CertArt, CertImage, CertTheme } from './art'
 
@@ -23,7 +23,6 @@ export interface GameCertificateInput {
   ceoScore: { total: number; max: number; source: 'teacher' | 'ai' | 'rules' } | null
   issuedAt: number
   courseName?: string
-  schoolName?: string
 }
 
 export interface GameCertificateContent {
@@ -38,7 +37,6 @@ export interface GameCertificateContent {
   starsTotal: number
   starsLabel: string
   course: string
-  school: string
   date: string
 }
 
@@ -72,7 +70,6 @@ export function gameCertificateContent(input: GameCertificateInput): GameCertifi
     starsTotal,
     starsLabel: `เก็บดาวได้ ${starsFilled} จาก ${starsTotal} ดวง`,
     course: input.courseName ?? DEFAULT_COURSE_NAME,
-    school: input.schoolName ?? DEFAULT_SCHOOL_NAME,
     date: `ให้ไว้ ณ วันที่ ${thaiDate(input.issuedAt)}`,
   }
 }
@@ -324,8 +321,8 @@ export function renderGameCertificatePdf(
   centered(doc, c.starsLabel, 140, 11, textW, false, MUTED)
 
   centered(doc, c.course, 152, 12, textW, true, INK)
-  centered(doc, c.school, 159, 11, textW, false, MUTED)
-  centered(doc, c.date, 168, 12, textW, false, INK)
+  // ไม่ระบุชื่อโรงเรียน/มหาวิทยาลัย — วันที่ขยับขึ้นมาแทน
+  centered(doc, c.date, 161, 12, textW, false, INK)
 
   // ธีมโดเมนมีลาย DNS/ร้านโดเมนที่มุมล่าง — ขยับโดมกับตราเข้าในกระดาษ ไม่ให้ทับกัน
   const pos = DECOR_POS[theme]

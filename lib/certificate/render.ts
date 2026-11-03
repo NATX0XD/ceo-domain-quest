@@ -95,7 +95,7 @@ export function renderCertificatePdf(
     doc.setFontSize(blockItem.size)
 
     if (blockItem.id === 'title') doc.setTextColor(ACCENT.r, ACCENT.g, ACCENT.b)
-    else if (blockItem.id === 'course' || blockItem.id === 'school' || blockItem.id === 'issued-at') {
+    else if (blockItem.id === 'course' || blockItem.id === 'issued-at') {
       doc.setTextColor(MUTED.r, MUTED.g, MUTED.b)
     } else doc.setTextColor(INK.r, INK.g, INK.b)
 

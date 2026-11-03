@@ -61,8 +61,8 @@ export function CertificatePreview({
         </div>
         <p className="cert-line cert-muted" style={at(140, 11)}>{content.starsLabel}</p>
         <p className="cert-line cert-strong" style={at(152, 12)}>{content.course}</p>
-        <p className="cert-line cert-muted" style={at(159, 11)}>{content.school}</p>
-        <p className="cert-line" style={at(168, 12)}>{content.date}</p>
+        {/* ไม่ระบุชื่อโรงเรียน/มหาวิทยาลัย (เจ้าของสั่ง) — วันที่ขยับขึ้นมาแทน */}
+        <p className="cert-line" style={at(161, 12)}>{content.date}</p>
         {/* ไม่มีรูปโดม = ไม่วาดอะไร (เดิมเป็นวงกลมม่วงที่ดูเหมือนของหลุด) */}
         {art.dome ? (
           <img className="cert-dome" src={art.dome} alt="" style={box(pos.dome.x, pos.dome.y, pos.dome.w, pos.dome.h)} />

@@ -52,7 +52,6 @@ export interface CertificateLayout {
 export interface LayoutOptions {
   /** ชื่อวิชา ใส่ทับได้จากหน้าจอ */
   courseName?: string
-  schoolName?: string
   /** ชื่อเต็มบนเกียรติบัตร; ว่างหรือไม่ส่ง = ใช้ nickname */
   displayName?: string
   /** วันที่ออกใบประกาศ (epoch ms) ไม่ส่งมาจะไม่พิมพ์บรรทัดวันที่ */
@@ -60,7 +59,6 @@ export interface LayoutOptions {
 }
 
 export const DEFAULT_COURSE_NAME = 'วิชา 21910-2002 อินเทอร์เน็ตในงานธุรกิจดิจิทัล'
-export const DEFAULT_SCHOOL_NAME = 'วิทยาลัยเทคนิคกาญจนบุรี'
 
 const THAI_MONTHS = [
   'มกราคม',
@@ -209,16 +207,6 @@ export function certificateLayout(
       align: 'center',
       maxWidth: contentWidth,
     },
-    {
-      id: 'school',
-      text: options.schoolName ?? DEFAULT_SCHOOL_NAME,
-      x: centerX,
-      y: 176,
-      size: 12,
-      bold: false,
-      align: 'center',
-      maxWidth: contentWidth,
-    },
   ]
 
   if (issuedAt !== null && Number.isFinite(issuedAt)) {
@@ -226,7 +214,7 @@ export function certificateLayout(
       id: 'issued-at',
       text: `ออกให้ ณ วันที่ ${thaiDate(issuedAt)}`,
       x: centerX,
-      y: 186,
+      y: 177,
       size: 12,
       bold: false,
       align: 'center',

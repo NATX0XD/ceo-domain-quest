@@ -86,7 +86,8 @@ describe('โครงใบประกาศ', () => {
     expect(block(layout, 'level')).toBeUndefined()
     expect(block(layout, 'issued-at')?.text).toContain('29 กันยายน 2569')
     expect(block(layout, 'course')?.text).toContain('21910-2002')
-    expect(block(layout, 'school')?.text.length).toBeGreaterThan(0)
+    // เกียรติบัตรไม่ระบุชื่อโรงเรียน/มหาวิทยาลัย
+    expect(block(layout, 'school')).toBeUndefined()
   })
 
   it('ทุกข้อความอยู่ในกรอบกระดาษ ไม่ล้นขอบ', () => {
@@ -162,13 +163,10 @@ describe('ใบประกาศออกให้ทุกคนที่เ�
     expect(block(layout, 'title')?.text).toBe('เกียรติบัตร')
   })
 
-  it('ใส่ชื่อวิชาและสถานศึกษาทับได้จากหน้าจอ', () => {
-    const layout = certificateLayout(makeData(), {
-      courseName: 'วิชาทดสอบ',
-      schoolName: 'โรงเรียนทดสอบ',
-    })
+  it('ใส่ชื่อวิชาทับได้จากหน้าจอ และไม่มีบรรทัดชื่อสถานศึกษา', () => {
+    const layout = certificateLayout(makeData(), { courseName: 'วิชาทดสอบ' })
     expect(block(layout, 'course')?.text).toBe('วิชาทดสอบ')
-    expect(block(layout, 'school')?.text).toBe('โรงเรียนทดสอบ')
+    expect(block(layout, 'school')).toBeUndefined()
   })
 
   it('ใช้ชื่อที่ผู้เรียนกำหนดบนเกียรติบัตรแทนชื่อเล่นได้', () => {
