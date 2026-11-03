@@ -57,6 +57,8 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
         enabledModesByMission={{ m1: LEARN_MODES.filter((mode) => m1Settings.modesEnabled[mode]) }}
         justDone={justDone}
         pretestLock={pretest.done ? null : { open: pretest.open }}
+        // ยังไม่เลือกวิธีเรียนและยังไม่ผ่านภารกิจไหน = ล็อกเกาะ พาไปรู้จักตัวเองก่อน (ผู้เรียนที่เล่นไปแล้วไม่ล็อกย้อนหลัง)
+        profileLock={self.route === null && !data.missions.some((mission) => mission.passed)}
       />
     </AppShell>
   )

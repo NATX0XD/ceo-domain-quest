@@ -129,9 +129,9 @@ export function ModePopup({
         aria-labelledby="mode-popup-title"
         className={
           officialM1
-            ? 'relative mt-auto w-full max-w-[720px]'
+            ? 'relative mt-auto w-full max-w-[30rem]'
             : drawer
-            ? 'relative mt-auto w-full max-w-[720px] max-h-[min(92dvh,780px)] overflow-y-auto rounded-t-[30px] pt-[clamp(116px,31vw,190px)]'
+            ? 'relative mt-auto w-full max-w-[30rem] max-h-[min(92dvh,780px)] overflow-y-auto rounded-t-[30px] pt-[clamp(116px,31vw,190px)]'
             : 'relative my-auto w-full max-w-[560px] pt-[clamp(130px,38vw,210px)]'
         }
         drag={drawer ? 'y' : false}
@@ -304,7 +304,7 @@ function OfficialModeArtwork({
   const visibleModes = MODES.filter((mode) => enabledModes.includes(mode.id))
   return (
     // กรอบทางการตัดขอบล่าง (ปุ่มส้มในภาพ) ออก แล้วต่อพื้นครีมลงถึงขอบจอ = ลิ้นชักล่างจริง ปุ่มเริ่มเป็น HTML มีระยะหายใจ
-    <div className="relative w-full max-w-[720px] select-none [container-type:inline-size]" aria-label={`เลือกวิธีเรียนสำหรับภารกิจที่ ${missionNo}`}>
+    <div className="relative w-full max-w-[30rem] select-none [container-type:inline-size]" aria-label={`เลือกวิธีเรียนสำหรับภารกิจที่ ${missionNo}`}>
       <div className="relative z-10 aspect-[1122/1190] w-full">
         <div className="pointer-events-none absolute inset-x-0 top-0 aspect-[1122/1402]">
           <div aria-hidden="true" className="absolute inset-x-0 top-0 h-[84.88%] overflow-hidden">

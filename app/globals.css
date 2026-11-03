@@ -2159,3 +2159,7 @@ html:has(.student-stage) { background-color: #3f3350; }
   .app-shell-footer > div:not(.game-bottom-nav) { padding-top: .35rem; padding-bottom: .35rem; }
   .app-shell-footer .game-button:not(.game-button--xs):not(.game-button--sm):not(.game-button--md):not(.game-button--icon) { --gb-h: 3rem; }
 }
+
+/* ปัดสองนิ้วซ้าย/ขวาบนแทร็กแพด (Chrome บน Mac) = ย้อนกลับ/ไปหน้า เบราว์เซอร์จะเลื่อนทั้งหน้าออกข้างตามนิ้ว
+   ดูเหมือนแผนที่เลื่อนตามเมาส์ — ปิดท่านี้ในเกม ปุ่มย้อนกลับในแอปยังใช้ได้ตามปกติ */
+html, body { overscroll-behavior-x: none; }

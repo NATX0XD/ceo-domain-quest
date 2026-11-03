@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import type { MissionId } from '@/lib/db/repo'
 import { MissionClient } from '@/components/mission-client'
 import { SignInGate } from '@/components/student-shell'
@@ -78,6 +78,8 @@ export default async function MissionPage({
   const pretest = await pretestRequirement(session.studentId)
   if (!pretest.done) return <PretestGateScreen open={pretest.open} />
   const selfProfile = await loadSelfProfileDb(session.studentId)
+  // ต้องทำความรู้จักตัวเองก่อนเริ่มภารกิจแรก ระบบจะได้แนะนำวิธีเรียนถูก (ผู้เรียนที่ผ่านภารกิจแล้วไม่ล็อกย้อนหลัง)
+  if (selfProfile.route === null && !(await lessonSummary(session.studentId)).missions.some((m) => m.passed)) redirect('/profile')
   const savedRoute = selfProfile.route ?? selfProfile.suggestedRoute
   const recommendedMode: LearnModeId | null =
     savedRoute === 'clip' ? 'watch' : savedRoute === 'card' ? 'read' : savedRoute === 'game' ? 'do' : null
