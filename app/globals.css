@@ -480,6 +480,13 @@ html[data-keyboard='open'] .media-dome-shell .app-shell-main {
 /* คีย์บอร์ดเปิด: กรอบ/การ์ดของ /join คงขนาดเท่าตอนจอเต็ม ให้ main เลื่อนผ่านแทนที่จะบีบการ์ดจนฟอร์มล้นกรอบภาพ */
 html[data-keyboard='open'] .join-frame-stage { min-height: calc(var(--full-h) - 6.5rem); }
 html[data-keyboard='open'] .app-shell-footer:has(> .game-bottom-nav) { display: none; }
+/* ด่านเกมที่วางเต็มจอเอง (fixed inset:0) ไม่ได้อยู่ใน AppShell — ตอนคีย์บอร์ดเปิดต้องหดเหลือพื้นที่เหนือคีย์บอร์ดด้วย
+   ไม่งั้นคีย์บอร์ดทับครึ่งล่าง เบราว์เซอร์คิดว่าช่องพิมพ์ยังมองเห็นอยู่จึงไม่เลื่อนให้ (ภารกิจ 3 ช่องเหตุผลจมใต้คีย์บอร์ด) */
+html[data-keyboard='open'] :is(.m3s, .px, .m1-shell, .m2g-root, .registrar-game-shell.m4-stage, .ceo-game) {
+  bottom: auto;
+  height: var(--app-h);
+  min-height: 0;
+}
 
 html {
   /* พื้นหลังต้องไม่เห็นเป็นขาวครีมถ้าเชลล์สั้นกว่าจอ — หน้านักเรียนใช้สีฉาก */

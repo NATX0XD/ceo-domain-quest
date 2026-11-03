@@ -23,6 +23,13 @@ export function KeyboardInset() {
     let baseline = vv?.height ?? window.innerHeight
     let lastWidth = vv?.width ?? window.innerWidth
     let raf = 0
+    let lastInset = 0
+    let revealTimer = 0
+
+    const reveal = (el: Element | null) => {
+      if (!(el instanceof HTMLElement) || !isTextEntry(el)) return
+      el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' })
+    }
 
     const apply = () => {
       raf = 0
@@ -52,7 +59,14 @@ export function KeyboardInset() {
         const footer = document.querySelector<HTMLElement>('.app-shell-footer')
         const fh = footer && footer.offsetHeight > 0 && getComputedStyle(footer).display !== 'none' ? footer.offsetHeight : 0
         setPillBottom(fh + 8)
+        // คีย์บอร์ดของ iPhone เลื่อนขึ้นช้ากว่า focus — เลื่อนช่องที่พิมพ์อีกรอบหลังกรอบหดเสร็จจริง ไม่งั้นช่องจมใต้คีย์บอร์ด
+        if (editableFocused && Math.abs(s.inset - lastInset) > 24) {
+          window.clearTimeout(revealTimer)
+          revealTimer = window.setTimeout(() => reveal(document.activeElement), 60)
+        }
+        lastInset = s.inset
       } else {
+        lastInset = 0
         delete root.dataset.keyboard
         root.style.removeProperty('--kb-inset')
         root.style.removeProperty('--app-h')
@@ -63,11 +77,6 @@ export function KeyboardInset() {
     }
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(apply)
-    }
-
-    const reveal = (el: Element | null) => {
-      if (!(el instanceof HTMLElement) || !isTextEntry(el)) return
-      el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' })
     }
 
     const onFocusIn = (e: FocusEvent) => {
@@ -125,6 +134,7 @@ export function KeyboardInset() {
       document.removeEventListener('keydown', onKeyDown)
       document.removeEventListener('click', onClick)
       if (raf) cancelAnimationFrame(raf)
+      window.clearTimeout(revealTimer)
       delete root.dataset.keyboard
     }
   }, [])
