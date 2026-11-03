@@ -54,10 +54,11 @@
   backdrop-filter: none !important;
 }
 
-/* /home เท่านั้น: โดมลอยชั้นบนสุด มุมขวาใต้หัวหน้า (ช่องฟ้าระหว่างหัวกับการ์ดร้าน) ไม่กินพื้นที่ใคร */
+/* /home เท่านั้น: โดมลอยชั้นบนสุด มุมขวาใต้หัวหน้า (ช่องฟ้าระหว่างหัวกับการ์ดร้าน) ไม่กินพื้นที่ใคร
+   ยึดกับหัวหน้า (absolute) ไม่ใช่ fixed — บน iPhone ถ้า layout viewport กว้างกว่ากรอบแอป fixed จะหลุดขอบขวาจนโดนตัด */
 .home-header-dome {
-  position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 74px);
+  position: absolute;
+  top: 74px;
   right: 10px;
   z-index: 60;
 }
