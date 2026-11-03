@@ -7,15 +7,15 @@ import { useLandingScroll } from './reveal'
 
 /** หน้าจอจริงของครู (1440×900) + กรอบไฮไลต์เป็น % ของภาพ */
 const SCREENS = [
-  { src: '/manual/teacher-captures/live.png', alt: 'หน้าคุมคาบสด แสดงนักเรียนทั้งห้องและสถานะภารกิจ' },
-  { src: '/manual/teacher-captures/review.png', alt: 'หน้างานรอตรวจ ระบบและ AI เสนอคะแนน ครูยืนยันเอง' },
-  { src: '/manual/teacher-captures/report.png', alt: 'หน้ารายงานผลการเรียนของทั้งห้อง' },
+  { src: '/landing/teacher/home.webp', alt: 'หน้าภาพรวมห้องเรียน โดมสรุปจำนวนนักเรียน เกียรติบัตร และความคืบหน้าเฉลี่ย' },
+  { src: '/landing/teacher/review.webp', alt: 'หน้างานให้ครูดู ระบบและ AI เสนอคะแนน ครูยืนยันเอง' },
+  { src: '/landing/teacher/report.webp', alt: 'หน้ารายงานผลการเรียนของทั้งห้อง คะแนนก่อนและหลังเรียน' },
 ] as const
 
 const STEPS = [
-  { icon: 'stopwatch', title: 'คุมคาบสด', note: 'เห็นทุกคนพร้อมกัน', detail: 'ใครขอช่วย ใครค้าง ขึ้นเตือนทันที', screen: 0, ring: { left: 18, top: 45.2, width: 61.6, height: 46.4 } },
-  { icon: 'robot', title: 'AI ช่วยตรวจ', note: 'ครูตัดสินใจเอง', detail: 'AI เสนอคะแนน ครูกดยืนยันหรือแก้ได้', screen: 1, ring: { left: 19.6, top: 38.6, width: 77.4, height: 15 } },
-  { icon: 'bar-chart', title: 'รายงานผล', note: 'รายคนและทั้งห้อง', detail: 'คะแนนก่อน-หลัง ดูได้ทั้งห้องในหน้าเดียว', screen: 2, ring: { left: 18.4, top: 25.4, width: 79.6, height: 13.6 } },
+  { icon: 'school', title: 'ภาพรวมห้อง', note: 'โดมสรุปให้ครู', detail: 'ใครได้เกียรติบัตร ใครติดตรงไหน เห็นทันที', screen: 0, ring: { left: 20.6, top: 9.4, width: 77.6, height: 46.4 } },
+  { icon: 'robot', title: 'AI ช่วยตรวจ', note: 'ครูตัดสินใจเอง', detail: 'AI เสนอคะแนน ครูดูย้อนหลังแล้วยืนยันหรือแก้ได้', screen: 1, ring: { left: 39.6, top: 29.8, width: 57.4, height: 51.2 } },
+  { icon: 'bar-chart', title: 'รายงานผล', note: 'รายคนและทั้งห้อง', detail: 'คะแนนก่อน-หลัง ดูได้ทั้งห้องในหน้าเดียว', screen: 2, ring: { left: 20.6, top: 16.4, width: 77.6, height: 18.6 } },
 ] as const
 
 const LID_CLOSED = -88
